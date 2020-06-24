@@ -1,6 +1,6 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import static fr.gouv.stopc.robertserver.ws.config.Config.API_V1;
+import static fr.gouv.stopc.robertserver.ws.config.Config.API_V2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -49,10 +49,9 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.dto.RegisterResponseDto;
-import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
+import fr.gouv.stopc.robertserver.ws.service.CaptchaInternalService;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterInternalVo;
-import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import io.micrometer.core.instrument.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,18 +61,18 @@ import lombok.extern.slf4j.Slf4j;
 		RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application.properties")
 @Slf4j
-public class RegisterControllerWsRestTest {
-	@Value("${controller.path.prefix}" + API_V1)
+public class RegisterInternalControllerWsRestTest {
+	@Value("${controller.path.prefix}" + API_V2)
 	private String pathPrefix;
 
 	@Inject
 	private TestRestTemplate restTemplate;
 
-	HttpEntity<RegisterVo> requestEntity;
+	HttpEntity<RegisterInternalVo> requestEntity;
 
 	private URI targetUrl;
 
-	private RegisterVo body;
+	private RegisterInternalVo body;
 
 	private HttpHeaders headers;
 
@@ -81,7 +80,7 @@ public class RegisterControllerWsRestTest {
 	private RegistrationService registrationService;
 
 	@MockBean
-	private CaptchaService captchaService;
+	private CaptchaInternalService captchaInternalService;
 
 	@MockBean
 	ICryptoServerGrpcClient cryptoServerClient;
@@ -113,7 +112,7 @@ public class RegisterControllerWsRestTest {
 
 	@Test
 	public void testBadHttpVerb() {
-		this.body = RegisterVo.builder().captcha("TEST").build();
+		this.body = RegisterInternalVo.builder().captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b").build();
 
 		this.requestEntity = new HttpEntity<>(this.body, this.headers);
 
@@ -125,32 +124,32 @@ public class RegisterControllerWsRestTest {
 		assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
 		verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
 	}
-
-	@Test
-	public void testNullCaptcha() {
-		this.body = RegisterVo.builder().captcha(null).build();
-
-		this.requestEntity = new HttpEntity<>(this.body, this.headers);
-
-		ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
-				this.requestEntity, String.class);
-
-		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-		verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
-	}
-
-	@Test
-	public void testNoCaptcha() {
-		this.body = RegisterVo.builder().build();
-
-		this.requestEntity = new HttpEntity<>(this.body, this.headers);
-
-		ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
-				this.requestEntity, String.class);
-
-		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-		verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
-	}
+// TODO: Uncomment theses tests when the captcha becomes mandatory
+//	@Test
+//	public void testNullCaptcha() {
+//		this.body = RegisterVo.builder().captcha(null).build();
+//
+//		this.requestEntity = new HttpEntity<>(this.body, this.headers);
+//
+//		ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
+//				this.requestEntity, String.class);
+//
+//		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+//		verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
+//	}
+//
+//	@Test
+//	public void testNoCaptcha() {
+//		this.body = RegisterVo.builder().build();
+//
+//		this.requestEntity = new HttpEntity<>(this.body, this.headers);
+//
+//		ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
+//				this.requestEntity, String.class);
+//
+//		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+//		verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
+//	}
 
 
 	@Test
@@ -158,26 +157,34 @@ public class RegisterControllerWsRestTest {
 
 		assertEquals(HttpStatus.BAD_REQUEST, 
 				this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-					RegisterInternalVo.builder().captcha("").clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
+					RegisterInternalVo.builder().captcha("").captchaId("92c9623a7c474c4a92661614cd29d08b").clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
 					, this.headers), String.class).getStatusCode());
 		assertEquals(HttpStatus.BAD_REQUEST, 
 				this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-					RegisterInternalVo.builder().clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
+					RegisterInternalVo.builder().captchaId("92c9623a7c474c4a92661614cd29d08b").clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
 					, this.headers), String.class).getStatusCode());
 		assertEquals(HttpStatus.BAD_REQUEST, 
 				this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-					RegisterInternalVo.builder().captcha("mycaptcha").clientPublicECDHKey("").build()
+					RegisterInternalVo.builder().captcha("mycaptcha").captchaId("").clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
 					, this.headers), String.class).getStatusCode());
 		assertEquals(HttpStatus.BAD_REQUEST, 
 				this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-					RegisterInternalVo.builder().captcha("mycaptcha").build()
+					RegisterInternalVo.builder().captcha("mycaptcha").clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
+					, this.headers), String.class).getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, 
+				this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
+					RegisterInternalVo.builder().captcha("mycaptcha").captchaId("92c9623a7c474c4a92661614cd29d08b").clientPublicECDHKey("").build()
+					, this.headers), String.class).getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, 
+				this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
+					RegisterInternalVo.builder().captcha("mycaptcha").captchaId("92c9623a7c474c4a92661614cd29d08b").build()
 					, this.headers), String.class).getStatusCode());
 	}
-	
+
 	@Test
 	public void testCaptchaFailure() {
-		this.body = RegisterVo.builder()
-		        .captcha("TEST")
+		this.body = RegisterInternalVo.builder()
+		        .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b")
 		        .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
 		        .build();
 
@@ -186,7 +193,7 @@ public class RegisterControllerWsRestTest {
 		// Make it so that CAPTCHA verification fails (either incorrect token or too
 		// great a time
 		// difference between solving and the request)
-		doReturn(false).when(this.captchaService).verifyCaptcha(ArgumentMatchers.any());
+		doReturn(false).when(this.captchaInternalService).verifyCaptcha(ArgumentMatchers.any());
 
 		ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
 				this.requestEntity, String.class);
@@ -199,15 +206,15 @@ public class RegisterControllerWsRestTest {
     public void testRegisterFailsWhenRegistrationFails() {
 
 	    // Given
-        this.body = RegisterVo.builder()
-                .captcha("TEST")
+        this.body = RegisterInternalVo.builder()
+                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
         this.requestEntity = new HttpEntity<>(this.body, this.headers);
 
         // CAPTCHA passes
-        doReturn(true).when(this.captchaService).verifyCaptcha(ArgumentMatchers.any());
+        doReturn(true).when(this.captchaInternalService).verifyCaptcha(ArgumentMatchers.any());
 
         // Error creating registration
         when(this.cryptoServerClient.createRegistration(any())).thenReturn(Optional.empty());
@@ -226,8 +233,8 @@ public class RegisterControllerWsRestTest {
     public void testRegisterFailsWhenCreateRegistrationFails() {
 
         // Given
-        this.body = RegisterVo.builder()
-                .captcha("TEST")
+        this.body = RegisterInternalVo.builder()
+                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
@@ -242,7 +249,7 @@ public class RegisterControllerWsRestTest {
                 .build();
 
         // CAPTCHA passes
-        doReturn(true).when(this.captchaService).verifyCaptcha(ArgumentMatchers.any());
+        doReturn(true).when(this.captchaInternalService).verifyCaptcha(ArgumentMatchers.any());
 
         when(this.cryptoServerClient.createRegistration(any())).thenReturn(Optional.of(createRegistrationResponse));
 
@@ -259,8 +266,9 @@ public class RegisterControllerWsRestTest {
 
 	@Test
 	public void testSuccess() {
-		this.body = RegisterVo.builder()
+		this.body = RegisterInternalVo.builder()
 		        .captcha("TEST")
+		        .captchaId("92c9623a7c474c4a92661614cd29d08b")
 		        .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
 		        .build();
 
@@ -284,7 +292,7 @@ public class RegisterControllerWsRestTest {
 
 		when(this.registrationService.saveRegistration(any())).thenReturn(Optional.of(reg));
 
-		when(this.captchaService.verifyCaptcha(this.body)).thenReturn(true);
+		when(this.captchaInternalService.verifyCaptcha(this.body)).thenReturn(true);
 
 		ResponseEntity<RegisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
 				HttpMethod.POST, this.requestEntity, RegisterResponseDto.class);

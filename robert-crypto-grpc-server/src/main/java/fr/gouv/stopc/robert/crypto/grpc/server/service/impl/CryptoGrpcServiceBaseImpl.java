@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.crypto.spec.SecretKeySpec;
+
+import fr.gouv.stopc.robert.crypto.grpc.server.utils.PropertyLoader;
 import org.bson.internal.Base64;
 import javax.inject.Inject;
 
@@ -60,6 +62,30 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         this.keyService = keyService;
         this.clientStorageService = clientStorageService;
         this.cryptographicStorageService = cryptographicStorageService;
+    }
+
+    @Override
+    public void reloadHSM(ReloadHSMRequest request, StreamObserver<ReloadHSMResponse> responseObserver) {
+
+        boolean success = this.cryptographicStorageService.reloadHSM(
+                request.getPin(),
+                request.getConfigFileName());
+
+        responseObserver.onNext(ReloadHSMResponse.newBuilder()
+                .setSuccess(success)
+                .build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getHSMCacheStatus(HSMCacheStatusRequest request, StreamObserver<HSMCacheStatusResponse> responseObserver) {
+
+        List<String> cachedKeys = this.cryptographicStorageService.getHSMCacheStatus();
+
+        responseObserver.onNext(HSMCacheStatusResponse.newBuilder()
+                .addAllAliases(cachedKeys)
+                .build());
+        responseObserver.onCompleted();
     }
 
     @Override

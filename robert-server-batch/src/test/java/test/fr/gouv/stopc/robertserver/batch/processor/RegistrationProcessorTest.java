@@ -20,6 +20,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,6 +71,7 @@ public class RegistrationProcessorTest {
         this.currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
 
         // TODO: Mock configuration service to simulate overall service having been started since 14 days in order to test purge
+        this.ARBITRARY_SCORE_EPOCH_START = this.currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
     }
 
     @Test
