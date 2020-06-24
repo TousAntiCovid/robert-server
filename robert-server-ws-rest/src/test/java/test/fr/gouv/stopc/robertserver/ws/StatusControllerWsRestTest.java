@@ -1,5 +1,7 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
+import static fr.gouv.stopc.robertserver.ws.config.Config.API_V1;
+import static fr.gouv.stopc.robertserver.ws.config.Config.API_V2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,7 +33,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -74,7 +75,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StatusControllerWsRestTest {
 
-    @Value("${controller.path.prefix}")
+    @Value("${controller.path.prefix}" + API_V1)
+    private String pathPrefix_V1;
+
+    @Value("${controller.path.prefix}" + API_V2)
     private String pathPrefix;
 
     @Inject
@@ -513,8 +517,19 @@ public class StatusControllerWsRestTest {
         return res;
     }
 
+    /** Test the access for API V1, should not be used since API V2 */
     @Test
-    public void testStatusRequestAtRiskSucceeds() {
+    public void testAccessV1() {
+    	statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefix_V1).path(UriConstants.STATUS).build().encode().toUri());
+    }
+
+    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V2 exposure */
+    @Test
+    public void testStatusRequestAtRiskSucceedsV2() {
+    	statusRequestAtRiskSucceeds(this.targetUrl);
+    }
+
+    protected void statusRequestAtRiskSucceeds(URI targetUrl) {
 
         // Given
         byte[] idA = this.generateKey(5);
@@ -550,7 +565,7 @@ public class StatusControllerWsRestTest {
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
         // When
-        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
                 HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
 
         // Then
