@@ -152,7 +152,7 @@ public class ContactsProcessingConfiguration {
 
 		reader.setTargetType(Registration.class);
 
-		reader.setQuery("{}");
+		reader.setQuery("{exposedEpochs: {$ne: []}}");
 		return reader;
 	}
 

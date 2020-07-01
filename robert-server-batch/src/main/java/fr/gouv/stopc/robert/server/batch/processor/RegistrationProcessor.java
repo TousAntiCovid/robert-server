@@ -9,12 +9,10 @@ import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 import java.util.List;
 
-@Slf4j
 @AllArgsConstructor
 public class RegistrationProcessor implements ItemProcessor<Registration, Registration> {
 
@@ -36,7 +34,6 @@ public class RegistrationProcessor implements ItemProcessor<Registration, Regist
                 this.propertyLoader.getContagiousPeriod(),
                 this.serverConfigurationService.getEpochDurationSecs());
 
-        log.info("Epoch to keep:  {} ", epochsToKeep);
         ScoringUtils.updateRegistrationIfRisk(
                 registration,
                 epochsToKeep,

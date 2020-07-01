@@ -35,11 +35,6 @@ public final class ScoringUtils {
                 new ArrayList<>()
                 : exposedEpochs.stream().filter(epoch -> {
             int nbOfEpochsToKeep = (contagiousPeriod * 24 * 3600) / epochDuration;
-            log.info("currentEpochId ({})- epoch.getEpochId() ({})) <= nbOfEpochsToKeep({}); {} ",
-                    currentEpochId,
-                    epoch.getEpochId(),
-                    nbOfEpochsToKeep,
-                    ((currentEpochId - epoch.getEpochId()) <= nbOfEpochsToKeep));
             return (currentEpochId - epoch.getEpochId()) <= nbOfEpochsToKeep;
         }).collect(Collectors.toList());
     }
