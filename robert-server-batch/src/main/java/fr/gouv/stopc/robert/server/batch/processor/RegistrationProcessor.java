@@ -36,7 +36,7 @@ public class RegistrationProcessor implements ItemProcessor<Registration, Regist
                 this.serverConfigurationService.getContagiousPeriod(),
                 this.serverConfigurationService.getEpochDurationSecs());
 
-        ScoringUtils.updateRegistrationIfRisk(
+        boolean isRegistrationAtRisk = ScoringUtils.updateRegistrationIfRisk(
                 registration,
                 epochsToKeep,
                 this.serverConfigurationService.getServiceTimeStart(),
@@ -44,7 +44,10 @@ public class RegistrationProcessor implements ItemProcessor<Registration, Regist
                 this.scoringStrategy
                 );
 
-        this.registrationService.saveRegistration(registration);
+        if(isRegistrationAtRisk){
+            return registration;
+        }
+
         return null;
     }
 }
