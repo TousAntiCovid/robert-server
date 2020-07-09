@@ -1,17 +1,18 @@
 package test.fr.gouv.stopc.robert.server.common.utils;
 
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-@Slf4j
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+
 public class TimeUtilsTest {
 
     @Test
@@ -35,20 +36,6 @@ public class TimeUtilsTest {
         final ZonedDateTime zdt = ldt.atZone(ZoneId.of("UTC"));
         return TimeUtils.convertUnixMillistoNtpSeconds(zdt.toInstant().toEpochMilli());
     }
-    @Test
-    void testGetDateFromEpochTimezone() {
-        for (int i = 0; i < 96 * 2; i++) {
-            log.info("{}: {}", i, TimeUtils.getDateFromEpoch(i, getServiceTimeStart()));
-            log.info("{}", 1 + (96 + 87 - (i % 96)) % 96);
-        }
-    }
-
-    @Test
-    void testGetDateFromEpochBeforeChange() {
-        for (int i = 940; i < 1200; i++) {
-            log.info("{}; i={}",  TimeUtils.getDateFromEpoch(i, getServiceTimeStart()), i);
-        }
-    }
 
     private static int MAX_TEST = 96 * 13;
     @Test
@@ -58,7 +45,6 @@ public class TimeUtilsTest {
         for (int i = 0; i < MAX_TEST; i++) {
             dates[i] = TimeUtils.getDateFromEpoch(i, getServiceTimeStart());
         }
-        //log.info("{}", dates);
 
         boolean error = false;
         int i = 0;
@@ -76,10 +62,8 @@ public class TimeUtilsTest {
             int i1 = remainingEpochsForDay[i];
             int i2 = TimeUtils.remainingEpochsForToday(i);
             if (i1 != i2) {
-                log.error("getDateFrom={}; remainingEpochs={}; i={}", i1, i2, i);
                 error = true;
             } else {
-                log.info("getDateFrom={}; remainingEpochs={}; i={}", i1, i2, i);
             }
         }
         assertTrue(!error);

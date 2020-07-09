@@ -267,15 +267,16 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        CreateRegistrationResponse createRegistrationResponse =
+        CreateRegistrationResponse response =
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.createRegistration(req, observer),
-                        (t) -> log.error(t.getMessage()),
+                        (t) -> fail(),
                         res);
 
-        assertNull(createRegistrationResponse);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -289,15 +290,16 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        CreateRegistrationResponse createRegistrationResponse =
+        CreateRegistrationResponse response =
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.createRegistration(req, observer),
-                        (t) -> assertNotNull(t),
+                        (t) -> fail(),
                         res);
 
-        assertNull(createRegistrationResponse);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -312,15 +314,16 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        CreateRegistrationResponse createRegistrationResponse =
+        CreateRegistrationResponse response =
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.createRegistration(req, observer),
-                        (t) -> assertNotNull(t),
+                        (t) -> fail(),
                         res);
 
-        assertNull(createRegistrationResponse);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @AllArgsConstructor
@@ -533,10 +536,12 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -567,10 +572,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -596,10 +602,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -625,10 +632,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -654,10 +662,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -683,10 +692,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -723,10 +733,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 404);
     }
 
     @Test
@@ -794,9 +805,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -893,9 +906,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 404);
     }
 
     @Test
@@ -924,9 +939,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -957,9 +974,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -984,10 +1003,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -1012,10 +1032,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -1080,9 +1101,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -1199,10 +1222,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -1232,10 +1256,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -1260,10 +1285,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -1288,10 +1314,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
-        assertNull(response);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
@@ -1377,9 +1404,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @AllArgsConstructor
@@ -1498,6 +1527,7 @@ class CryptoServiceGrpcServerTest {
                 .setTimeReceived(bundle.getTimeReceived())
                 .setTimeSent(bundle.getTimeSent())
                 .setEcc(ByteString.copyFrom(bundle.getEcc()))
+                .setServerCountryCode(ByteString.copyFrom(SERVER_COUNTRY_CODE))
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
@@ -1528,7 +1558,7 @@ class CryptoServiceGrpcServerTest {
                 OtherKSEnum.NONE);
 
         // Mess up with mac
-        byte[] mac = new byte[32];
+        byte[] mac = new byte[5];
         System.arraycopy(bundle.getMac(), 0, mac, 0, bundle.getMac().length);
         mac[3] = (byte)(mac[3] ^ 0x4);
 
@@ -1540,6 +1570,7 @@ class CryptoServiceGrpcServerTest {
                 .setTimeReceived(bundle.getTimeReceived())
                 .setTimeSent(bundle.getTimeSent())
                 .setEcc(ByteString.copyFrom(bundle.getEcc()))
+                .setServerCountryCode(ByteString.copyFrom(SERVER_COUNTRY_CODE))
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
@@ -1547,13 +1578,15 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @Test
-    void testGetInfoFromHelloMessageFakeEbidFails() {
+    void testGetInfoFromHelloMessageFakeEbidToFederationSucceeds() {
         byte[][] serverKeys = new byte[1][24];
         new SecureRandom().nextBytes(serverKeys[0]);
 
@@ -1577,6 +1610,7 @@ class CryptoServiceGrpcServerTest {
                 .setTimeReceived(bundle.getTimeReceived())
                 .setTimeSent(bundle.getTimeSent())
                 .setEcc(ByteString.copyFrom(bundle.getEcc()))
+                .setServerCountryCode(ByteString.copyFrom(SERVER_COUNTRY_CODE))
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
@@ -1584,9 +1618,12 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(!response.hasError());
+        assertTrue(response.getIdA().isEmpty());
+        assertEquals(0, response.getEpochId());
     }
 
     @Test
@@ -1630,6 +1667,7 @@ class CryptoServiceGrpcServerTest {
                 .setTimeReceived(bundle.getTimeReceived())
                 .setTimeSent(bundle.getTimeSent())
                 .setEcc(ByteString.copyFrom(bundle.getEcc()))
+                .setServerCountryCode(ByteString.copyFrom(SERVER_COUNTRY_CODE))
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
@@ -1671,6 +1709,7 @@ class CryptoServiceGrpcServerTest {
                 .setTimeReceived(bundle.getTimeReceived())
                 .setTimeSent(bundle.getTimeSent())
                 .setEcc(ByteString.copyFrom(bundle.getEcc()))
+                .setServerCountryCode(ByteString.copyFrom(SERVER_COUNTRY_CODE))
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
@@ -1678,9 +1717,11 @@ class CryptoServiceGrpcServerTest {
                 sendCryptoRequest(
                         request,
                         (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
-                        (t) -> {},
+                        (t) -> fail(),
                         res);
-        assertTrue(res.isError());
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 400);
     }
 
     @AllArgsConstructor

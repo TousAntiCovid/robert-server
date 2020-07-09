@@ -71,6 +71,21 @@ public class StatusControllerImpl implements IStatusController {
 
 		GetIdFromStatusResponse response = validationResult.getResponse();
 
+		if (response.hasError()) {
+			// If there is an error but Id is provided, log error in DB
+			if (Objects.nonNull(response.getIdA())) {
+				Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
+				if (record.isPresent()) {
+					int currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
+					Registration registration = record.get();
+					registration.setLastFailedStatusRequestEpoch(currentEpoch);
+					registration.setLastFailedStatusRequestMessage(response.getError().getDescription());
+					this.registrationService.saveRegistration(registration);
+				}
+			}
+			return ResponseEntity.badRequest().build();
+		}
+
 		Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
 		if (record.isPresent()) {
 			try {
@@ -120,9 +135,24 @@ public class StatusControllerImpl implements IStatusController {
 		int epochDistance = currentEpoch - record.getLastStatusRequestEpoch();
 		if(epochDistance < this.serverConfigurationService.getStatusRequestMinimumEpochGap() 
 		        && this.propertyLoader.getEsrLimit() != 0) {
-			log.info("Discarding ESR request because epochs are too close: {} < {} (tolerance)",
+
+            String message = "Discarding ESR request because epochs are too close:";
+            String errorMessage = String.format("%s"
+                    + " last ESR request epoch %d vs current epoch %d => %d < %d (tolerance)",
+                    message,
+                    record.getLastStatusRequestEpoch(),
+                    currentEpoch,
+                    epochDistance,
+                    this.serverConfigurationService.getStatusRequestMinimumEpochGap());
+
+			log.info("{} {} < {} (tolerance)",
+			        message,
 					epochDistance,
 					this.serverConfigurationService.getStatusRequestMinimumEpochGap());
+
+			record.setLastFailedStatusRequestEpoch(currentEpoch);
+			record.setLastFailedStatusRequestMessage(errorMessage);
+			this.registrationService.saveRegistration(record);
 			return Optional.of(ResponseEntity.badRequest().build());
 		}
 

@@ -166,7 +166,7 @@ public class DeleteHistoryControllerWsRestTest {
 				.build();
 
 		// WHEN - THEN
-		callWsAndAssertResponse(reg, this.requestBody, HttpStatus.OK, 1, 0);
+		callWsAndAssertResponse(reg, this.requestBody, HttpStatus.OK, 2, 1);
 	}
 
     /** Test the access for API V1, should not be used since API V2 */
@@ -219,9 +219,9 @@ public class DeleteHistoryControllerWsRestTest {
 
 		// THEN
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		verify(this.registrationService, times(1)).findById(ArgumentMatchers.any());
+		verify(this.registrationService, times(2)).findById(ArgumentMatchers.any());
 		ArgumentCaptor<Registration> captor = ArgumentCaptor.forClass(Registration.class);
-		verify(this.registrationService).saveRegistration(captor.capture());
+		verify(this.registrationService, times(2)).saveRegistration(captor.capture());
 
 		Registration arg = captor.getValue();
 		assertTrue(arg.getExposedEpochs().isEmpty());
@@ -259,7 +259,7 @@ public class DeleteHistoryControllerWsRestTest {
 				.mac(Base64.encode(reqContent[2])).build();
 
 		// WHEN - THEN
-		callWsAndAssertResponse(reg, this.requestBody, HttpStatus.NOT_FOUND, 1, 0);
+		callWsAndAssertResponse(reg, this.requestBody, HttpStatus.NOT_FOUND, 2, 0);
 	}
 
 	@Test
@@ -313,7 +313,7 @@ public class DeleteHistoryControllerWsRestTest {
 				.mac(Base64.encode(reqContent[2]))
 				.build();
 		// WHEN - THEN
-		callWsAndAssertResponse(reg, this.requestBody, HttpStatus.OK, 1, 1);
+		callWsAndAssertResponse(reg, this.requestBody, HttpStatus.OK, 2, 2);
 	}
 
 	@Test
