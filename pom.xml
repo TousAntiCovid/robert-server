@@ -19,7 +19,7 @@
 
 	<groupId>fr.gouv.stopc</groupId>
 	<artifactId>robert-server</artifactId>
-	<version>1.4.0</version>
+	<version>1.4.1</version>
 	<name>robert-server</name>
 	<packaging>pom</packaging>
 	<description>Projet principal</description>
