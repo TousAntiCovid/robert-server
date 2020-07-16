@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robertserver.ws.vo;
+package fr.gouv.stopc.robertserver.ws.dto;
 
 import java.time.LocalDate;
 
@@ -37,4 +37,9 @@ public class RobertServerKpi {
 	 * notified
 	 */
 	private Long nbInfectedUsersNotNotified;
+
+	/**
+	 * Number of users already notified and scored again
+	 */
+	private Long nbNotifiedUsersScoredAgain;
 }
