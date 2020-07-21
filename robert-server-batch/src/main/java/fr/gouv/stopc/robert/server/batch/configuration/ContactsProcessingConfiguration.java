@@ -1,22 +1,11 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
-import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
-import fr.gouv.stopc.robert.server.batch.listener.ProcessingJobExecutionListener;
-import fr.gouv.stopc.robert.server.batch.model.ItemIdMapping;
-import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
-import fr.gouv.stopc.robert.server.batch.processor.*;
-import fr.gouv.stopc.robert.server.batch.service.ItemIdMappingService;
-import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.writer.ContactItemWriter;
-import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
-import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.ContactService;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -34,7 +23,7 @@ import org.springframework.batch.item.data.builder.MongoItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
@@ -42,10 +31,27 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
-import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
+import fr.gouv.stopc.robert.server.batch.listener.ProcessingJobExecutionListener;
+import fr.gouv.stopc.robert.server.batch.model.ItemIdMapping;
+import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
+import fr.gouv.stopc.robert.server.batch.processor.ContactIdMappingProcessor;
+import fr.gouv.stopc.robert.server.batch.processor.ContactProcessor;
+import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
+import fr.gouv.stopc.robert.server.batch.processor.RegistrationIdMappingProcessor;
+import fr.gouv.stopc.robert.server.batch.processor.RegistrationProcessor;
+import fr.gouv.stopc.robert.server.batch.service.ItemIdMappingService;
+import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.writer.ContactItemWriter;
+import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.database.model.Contact;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.ContactService;
+import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
@@ -219,7 +225,7 @@ public class ContactsProcessingConfiguration {
 
 	public TaskExecutor taskExecutor() {
 
-		return new SimpleAsyncTaskExecutor();
+		return new SyncTaskExecutor();
 	}
 
 	public Step contactWorkerStep(StepBuilderFactory stepBuilderFactory, MongoItemReader<Contact> mongoItemReader) {
@@ -259,7 +265,7 @@ public class ContactsProcessingConfiguration {
 														   @Value("#{stepExecutionContext[start]}") final int start,
 														   @Value("#{stepExecutionContext[end]}") final int end) {
 
-		log.info("{} currently reading registrations from itemId collections from id={} - to id= {} ", name, start, end);
+		log.info("{} currently reading Contact(s) from itemId collections from id={} - to id= {} ", name, start, end);
 
 		List<String> itemIdentifiers = (List<String>)itemIdMappingService.getItemIdMappingsBetweenIds(start, end);
 
@@ -279,7 +285,7 @@ public class ContactsProcessingConfiguration {
 																	 @Value("#{stepExecutionContext[name]}") final String name,
 																	 @Value("#{stepExecutionContext[start]}") final int start,
 																	 @Value("#{stepExecutionContext[end]}") final int end) {
-		log.info("{} currently reading registrations from itemId collections from id={} - to id= {} ", name, start, end);
+		log.info("{} currently reading Registration(s) from itemId collections from id={} - to id= {} ", name, start, end);
 
 		List<byte[]> itemIdentifiers = (List<byte[]>)itemIdMappingService.getItemIdMappingsBetweenIds(start, end);
 
@@ -299,7 +305,7 @@ public class ContactsProcessingConfiguration {
 																	   @Value("#{stepExecutionContext[name]}") final String name,
 																	   @Value("#{stepExecutionContext[start]}") final long start,
 																	   @Value("#{stepExecutionContext[end]}") final long end) {
-		log.info("{} currently reading registrations from itemId collections from id={} - to id= {} ", name, start, end);
+		log.info("{} currently reading Registration(s) from itemId collections from id={} - to id= {} ", name, start, end);
 
 		List<byte[]> itemIdentifiers = (List<byte[]>)itemIdMappingService.getItemIdMappingsBetweenIds(start, end);
 
