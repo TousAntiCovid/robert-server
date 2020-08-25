@@ -212,7 +212,7 @@ public class StatusControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(idA))
                 .setTuples(ByteString.copyFrom("EncryptedJSONStringWithTuples".getBytes()))
                 .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         statusBody = StatusVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -249,7 +249,7 @@ public class StatusControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(modifiedIdA))
                 .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
                 .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
         when(this.registrationService.findById(modifiedIdA)).thenReturn(Optional.empty());
 
         statusBody = StatusVo.builder()
@@ -304,6 +304,44 @@ public class StatusControllerWsRestTest {
     }
 
     @Test
+    public void testBadTimeFutureFailsEvenWithPuhsInfoShouldNotCallPushRegister() {
+
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(true)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(ArgumentMatchers.any());
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch, 0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1));
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2]))
+                .pushInfo(PushInfoVo.builder()
+                        .token("token")
+                        .locale("en-US")
+                        .timezone("Europe/Paris")
+                        .build())
+                .build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(this.registrationService, times(0)).findById(ArgumentMatchers.any());
+        verify(this.registrationService, times(0)).saveRegistration(reg);
+        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+    }
+
+    @Test
     public void testBadTimePastFails() {
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
@@ -332,6 +370,49 @@ public class StatusControllerWsRestTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.registrationService, times(0)).findById(ArgumentMatchers.any());
         verify(this.registrationService, times(0)).saveRegistration(reg);
+    }
+
+    @Test
+    public void testBadTimePastFailsEvenWithPushInfoShouldNotCallPushRegister() {
+
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(true)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(ArgumentMatchers.any());
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch, 0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1));
+
+        PushInfoVo pushInfo = PushInfoVo.builder()
+                .token("token")
+                .locale("en-US")
+                .timezone("Europe/Paris")
+                .build();
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2]))
+                .pushInfo(pushInfo)
+                .build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
+
+        // Then
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(this.registrationService, times(0)).findById(ArgumentMatchers.any());
+        verify(this.registrationService, times(0)).saveRegistration(reg);
+        verify(this.restApiService, never()).registerPushNotif(pushInfo);
     }
 
     @Test
@@ -414,7 +495,7 @@ public class StatusControllerWsRestTest {
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
 
         doReturn(Optional.empty())
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         // Mess up with MAC
         reqContent[2][3] = 0x00;
@@ -543,7 +624,7 @@ public class StatusControllerWsRestTest {
     /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V2 exposure */
     @Test
     public void testStatusRequestAtRiskSucceedsV3() {
-    	statusRequestAtRiskSucceeds(this.targetUrl);
+        statusRequestAtRiskSucceeds(this.targetUrl);
     }
 
     protected void statusRequestAtRiskSucceeds(URI targetUrl) {
@@ -573,11 +654,11 @@ public class StatusControllerWsRestTest {
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
-                    .setEpochId(currentEpoch)
-                    .setIdA(ByteString.copyFrom(idA))
-                    .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
-                    .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+                .setEpochId(currentEpoch)
+                .setIdA(ByteString.copyFrom(idA))
+                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                .build()))
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -629,7 +710,7 @@ public class StatusControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(idA))
                 .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
                 .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -693,7 +774,7 @@ public class StatusControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(idA))
                 .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
                 .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         doReturn(Optional.of(reg)).when(this.registrationService).saveRegistration(reg);
 
@@ -765,7 +846,7 @@ public class StatusControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(idA))
                 .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
                 .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         statusBody = StatusVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -830,7 +911,74 @@ public class StatusControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(idA))
                 .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
                 .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
+
+        // Then
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
+        assertEquals(currentEpoch, reg.getLastFailedStatusRequestEpoch());
+        assertEquals(errorMessage, reg.getLastFailedStatusRequestMessage());
+        verify(this.registrationService, times(2)).findById(idA);
+        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+    }
+
+    @Test
+    public void testStatusRequestESRThrottleFailsEvenWithPushInfo() {
+
+        // Given
+        String message = "Discarding ESR request because epochs are too close:";
+        String errorMessage = String.format("%s"
+                + " last ESR request epoch %d vs current epoch %d => %d < %d (tolerance)",
+                message,
+                currentEpoch,
+                currentEpoch,
+                0,
+                this.propertyLoader.getStatusRequestMinimumEpochGap());
+
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(false)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        PushInfoVo pushInfo = PushInfoVo.builder()
+                .token("token")
+                .locale("en-US")
+                .timezone("Europe/Paris")
+                .build();
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2]))
+                .pushInfo(pushInfo)
+                .build();
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
+                .setEpochId(currentEpoch)
+                .setIdA(ByteString.copyFrom(idA))
+                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                .build()))
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -877,11 +1025,11 @@ public class StatusControllerWsRestTest {
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
-                    .setEpochId(currentEpoch)
-                    .setIdA(ByteString.copyFrom(idA))
-                    .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
-                    .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+                .setEpochId(currentEpoch)
+                .setIdA(ByteString.copyFrom(idA))
+                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                .build()))
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         when(this.propertyLoader.getEsrLimit()).thenReturn(0);
 
@@ -938,11 +1086,11 @@ public class StatusControllerWsRestTest {
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
-                    .setEpochId(currentEpoch)
-                    .setIdA(ByteString.copyFrom(idA))
-                    .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
-                    .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+                .setEpochId(currentEpoch)
+                .setIdA(ByteString.copyFrom(idA))
+                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                .build()))
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         when(this.propertyLoader.getEsrLimit()).thenReturn(0);
 
@@ -1013,7 +1161,7 @@ public class StatusControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(idA))
                 .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
                 .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         statusBody = StatusVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -1073,7 +1221,7 @@ public class StatusControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(idA))
                 .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
                 .build()))
-                .when(this.cryptoServerClient).getIdFromStatus(any());
+        .when(this.cryptoServerClient).getIdFromStatus(any());
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
