@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.bson.internal.Base64;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -98,7 +99,10 @@ public class StatusControllerImpl implements IStatusController {
 
 				if (responseEntity.isPresent()) {
 
-				    Optional.ofNullable(statusVo.getPushInfo()).ifPresent(this.restApiService::registerPushNotif);
+				    Optional.ofNullable(statusVo.getPushInfo())
+				    .filter(push -> Objects.nonNull(responseEntity.get().getStatusCode()))
+				    .filter(push -> responseEntity.get().getStatusCode().equals(HttpStatus.OK))
+				    .ifPresent(this.restApiService::registerPushNotif);
 
 					return responseEntity.get();
 				} else {
