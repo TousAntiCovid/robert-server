@@ -9,7 +9,6 @@ import lombok.Setter;
 /**
  * Configuration class of the scoring algorithm
  * 
- * @author plant-stopcovid
  *
  */
 @Getter

@@ -16,7 +16,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.ws.dto.CaptchaDto;
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
@@ -29,17 +28,13 @@ public class CaptchaServiceImpl implements CaptchaService {
 
 	private RestTemplate restTemplate;
 
-	private IServerConfigurationService serverConfigurationService;
-
 	private PropertyLoader propertyLoader;
 
 	@Inject
 	public CaptchaServiceImpl(RestTemplate restTemplate,
-							  IServerConfigurationService serverConfigurationService,
 							  PropertyLoader propertyLoader) {
 
 		this.restTemplate = restTemplate;
-		this.serverConfigurationService = serverConfigurationService;
 		this.propertyLoader = propertyLoader;
 	}
 
@@ -84,7 +79,7 @@ public class CaptchaServiceImpl implements CaptchaService {
 		return this.propertyLoader.getCaptchaHostname().equals(captchaDto.getHostname())
 				&& Math.abs(sendingDate.getTime()
 						- captchaDto.getChallengeTimestamp()
-									.getTime()) <= this.serverConfigurationService.getCaptchaChallengeTimestampTolerance()
+									.getTime()) <= this.propertyLoader.getCaptchaChallengeTimestampTolerance()
 											* 1000L;
 	}
 

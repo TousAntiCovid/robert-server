@@ -43,6 +43,7 @@ import fr.gouv.stopc.robert.crypto.grpc.server.service.IECDHKeyService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.IClientKeyStorageService;
+import fr.gouv.stopc.robert.crypto.grpc.server.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -71,19 +72,22 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     private final IECDHKeyService keyService;
     private final IClientKeyStorageService clientStorageService;
     private final ICryptographicStorageService cryptographicStorageService;
+    private final PropertyLoader propertyLoader;
 
     @Inject
     public CryptoGrpcServiceBaseImpl(final ICryptoServerConfigurationService serverConfigurationService,
                                      final CryptoService cryptoService,
                                      final IECDHKeyService keyService,
                                      final IClientKeyStorageService clientStorageService,
-                                     final ICryptographicStorageService cryptographicStorageService) {
+                                     final ICryptographicStorageService cryptographicStorageService,
+                                     final PropertyLoader propertyLoader) {
 
         this.serverConfigurationService = serverConfigurationService;
         this.cryptoService = cryptoService;
         this.keyService = keyService;
         this.clientStorageService = clientStorageService;
         this.cryptographicStorageService = cryptographicStorageService;
+        this.propertyLoader = propertyLoader;
     }
 
     @Override
@@ -626,7 +630,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         byte[] idA = getIdFromDecryptedEBID(decryptedEbid);
         int ebidEpochId = getEpochIdFromDecryptedEBID(decryptedEbid);
 
-        if ((authRequestEpoch != ebidEpochId)) {
+        if (authRequestEpoch != ebidEpochId) {
             log.warn("Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = {} vs auth request epoch = {}", ebidEpochId, authRequestEpoch);
 
             if(enableEpochOverlapping && (Math.abs(authRequestEpoch - ebidEpochId) == 1)) {
@@ -702,7 +706,8 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         ZonedDateTime zonedDateTime = Instant
                 .ofEpochMilli(TimeUtils.convertNTPSecondsToUnixMillis(timeReceived))
                 .atZone(ZoneOffset.UTC);
-        int tolerance = this.serverConfigurationService.getHelloMessageTimestampTolerance();
+
+        int tolerance = this.propertyLoader.getHelloMessageTimeStampTolerance();
 
         if (zonedDateTime.getHour() == 0
                 && (zonedDateTime.getMinute() * 60 + zonedDateTime.getSecond()) < tolerance) {
@@ -854,4 +859,4 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
 }
- 
+

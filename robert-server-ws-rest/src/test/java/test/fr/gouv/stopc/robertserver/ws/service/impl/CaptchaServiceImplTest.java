@@ -20,7 +20,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.ws.dto.CaptchaDto;
 import fr.gouv.stopc.robertserver.ws.service.impl.CaptchaServiceImpl;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
@@ -44,9 +43,6 @@ public class CaptchaServiceImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-
-    @Mock
-    private IServerConfigurationService serverConfigurationService;
 
     @Mock
     private PropertyLoader propertyLoader;
@@ -97,7 +93,9 @@ public class CaptchaServiceImplTest {
         when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
         when(this.propertyLoader.getCaptchaSecret()).thenReturn(this.captchaSecret);
         when(this.propertyLoader.getCaptchaHostname()).thenReturn(this.captchaHostname);
-        when(this.serverConfigurationService.getCaptchaChallengeTimestampTolerance()).thenReturn(3600);
+
+        when(this.propertyLoader.getCaptchaChallengeTimestampTolerance()).thenReturn(3600);
+
 
         // When
         boolean isVerified = this.captchaServiceImpl.verifyCaptcha(this.registerVo);
@@ -113,7 +111,8 @@ public class CaptchaServiceImplTest {
         when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
         when(this.propertyLoader.getCaptchaSecret()).thenReturn(this.captchaSecret);
         when(this.propertyLoader.getCaptchaHostname()).thenReturn(this.captchaHostname);
-        when(this.serverConfigurationService.getCaptchaChallengeTimestampTolerance()).thenReturn(3600);
+
+        when(this.propertyLoader.getCaptchaChallengeTimestampTolerance()).thenReturn(3600);
         when(this.restTemplate.postForEntity(any(String.class), any(), any())).thenThrow(RestClientException.class);
 
         // When

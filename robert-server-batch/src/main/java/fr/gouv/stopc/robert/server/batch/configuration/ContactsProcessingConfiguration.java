@@ -127,21 +127,24 @@ public class ContactsProcessingConfiguration {
 			log.info("Launching registration batch (No contact scoring, risk computation)");
 			return this.jobBuilderFactory.get("processRegistration")
 					.listener(new ProcessingJobExecutionListener(TOTAL_REGISTRATION_COUNT_KEY,
-							registrationService, contactService, serverConfigurationService, itemIdMappingService))
+							registrationService, contactService, serverConfigurationService,
+							propertyLoader, itemIdMappingService))
 					.start(populateRegistrationIdMappingStep)
 					.next(processRegistrationStep).build();
 		} else if (batchMode == BatchMode.SCORE_CONTACTS_AND_COMPUTE_RISK) {
 			log.info("Launching contact batch (Contact scoring, Risk computation)");
 			return this.jobBuilderFactory.get("processContacts")
 					.listener(new ProcessingJobExecutionListener(TOTAL_CONTACT_COUNT_KEY,
-							registrationService, contactService, serverConfigurationService, itemIdMappingService))
+							registrationService, contactService, serverConfigurationService,
+							propertyLoader, itemIdMappingService))
 					.start(populateContactIdMappingStep)
 					.next(contactProcessingStep).build();
 		} else if (batchMode == BatchMode.PURGE_OLD_EPOCH_EXPOSITIONS) {
 			log.info("Launching purge old epoch exposition batch");
 			return this.jobBuilderFactory.get("purgeOldEpochExpositions")
 					.listener(new ProcessingJobExecutionListener(TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY,
-							registrationService, contactService, serverConfigurationService, itemIdMappingService))
+							registrationService, contactService, serverConfigurationService,
+							propertyLoader, itemIdMappingService))
 					.start(populateRegistrationIdMappingForEpochPurgeStep)
 					.next(purgeOldEpochExpositionsStep).build();
 		}
@@ -352,7 +355,6 @@ public class ContactsProcessingConfiguration {
 	public ItemProcessor<Registration, Registration> registrationsProcessor() {
 		return new RegistrationProcessor(
 				this.serverConfigurationService,
-				this.registrationService,
 				this.scoringStrategyService,
 				this.propertyLoader) {
 		};
@@ -360,7 +362,8 @@ public class ContactsProcessingConfiguration {
 
 	public ItemProcessor<Registration, Registration> purgeOldExpositionsProcessor() {
 		return new PurgeOldEpochExpositionsProcessor(
-				this.serverConfigurationService) {
+				this.serverConfigurationService,
+				this.propertyLoader) {
 		};
 	}
 
@@ -417,7 +420,7 @@ public class ContactsProcessingConfiguration {
 	@Bean
 	public MongoItemReader<Registration> mongoRegistrationIdMappingForPurgeItemReader(MongoTemplate mongoTemplate) {
 		int currentEpochId = TimeUtils.getCurrentEpochFrom(serverConfigurationService.getServiceTimeStart());
-		int contagiousPeriod = this.serverConfigurationService.getContagiousPeriod();
+		int contagiousPeriod = this.propertyLoader.getContagiousPeriod();
 		int minEpochId = currentEpochId - contagiousPeriod * 96;
 		String query = "{exposedEpochs:{$elemMatch:{epochId:{$lte:"+minEpochId+"}}}}}";
 

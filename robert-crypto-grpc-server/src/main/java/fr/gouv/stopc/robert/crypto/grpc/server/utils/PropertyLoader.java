@@ -19,4 +19,9 @@ public class PropertyLoader {
     @Value("${robert.crypto.server.keystore.config.file}")
     private String keyStoreConfigFile;
 
+    @Value("${robert.server.time-start}")
+    private String timeStart;
+
+    @Value("${robert.protocol.hello-message-timestamp-tolerance}")
+    private Integer helloMessageTimeStampTolerance;
 }

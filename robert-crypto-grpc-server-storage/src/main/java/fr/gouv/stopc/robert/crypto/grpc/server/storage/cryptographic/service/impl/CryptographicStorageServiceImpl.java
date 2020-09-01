@@ -44,11 +44,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     private static final int SERVER_KEY_SIZE = 24;
 
     // Because Java does not know Skinny64, specify AES instead
-    private static final String KEYSTORE_SKINNY64_ALGONAME = "AES";
-    private static final String KEYSTORE_KEK_ALGONAME = "AES";
     private static final String KEYSTORE_KG_ALGONAME = "AES";
-    private static final String SERVER_KEY_CERTIFICATE_CN = "CN=stopcovid.gouv.fr";
-    private static final String ECDH_ALGORITHM = "EC";
 
     //private static final String ALIAS_SERVER_ECDH_PUBLIC_KEY = "server-ecdh-key";
     private static final String ALIAS_SERVER_ECDH_PRIVATE_KEY = "register-key"; // ECDH
@@ -69,8 +65,6 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
 
     private Provider provider;
     private KeyStore keyStore;
-
-    private PublicKey publicKey;
 
     private Key federationKeyCached;
 

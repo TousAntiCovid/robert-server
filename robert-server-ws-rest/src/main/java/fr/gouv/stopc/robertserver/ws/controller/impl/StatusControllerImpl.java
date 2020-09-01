@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.bson.internal.Base64;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -17,7 +18,6 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.ApplicationConfigurationModel;
-import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
@@ -26,6 +26,7 @@ import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
+import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
@@ -44,18 +45,23 @@ public class StatusControllerImpl implements IStatusController {
 
 	private final PropertyLoader propertyLoader;
 
+	private final IRestApiService restApiService;
+
 	@Inject
 	public StatusControllerImpl(
 			final IServerConfigurationService serverConfigurationService,
 			final IRegistrationService registrationService,
 			final IApplicationConfigService applicationConfigService,
 			final AuthRequestValidationService authRequestValidationService,
-			final PropertyLoader propertyLoader) {
+			final PropertyLoader propertyLoader,
+			final IRestApiService restApiService) {
+
 		this.serverConfigurationService = serverConfigurationService;
 		this.registrationService = registrationService;
 		this.applicationConfigService = applicationConfigService;
 		this.authRequestValidationService = authRequestValidationService;
 		this.propertyLoader = propertyLoader;
+		this.restApiService = restApiService;
 	}
 
 	@Override
@@ -92,6 +98,12 @@ public class StatusControllerImpl implements IStatusController {
 				Optional<ResponseEntity> responseEntity = validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
 
 				if (responseEntity.isPresent()) {
+
+				    Optional.ofNullable(statusVo.getPushInfo())
+				    .filter(push -> Objects.nonNull(responseEntity.get().getStatusCode()))
+				    .filter(push -> responseEntity.get().getStatusCode().equals(HttpStatus.OK))
+				    .ifPresent(this.restApiService::registerPushNotif);
+
 					return responseEntity.get();
 				} else {
 					log.info("Status request failed validation");
@@ -106,21 +118,6 @@ public class StatusControllerImpl implements IStatusController {
 		}
 	}
 
-	/**
-	 * Sort list of epochs and get last
-	 * @param exposedEpochs
-	 * @return
-	 */
-	private int findLastExposedEpoch(List<EpochExposition> exposedEpochs) {
-		if (CollectionUtils.isEmpty(exposedEpochs)) {
-			return 0;
-		}
-
-		List<EpochExposition> sortedEpochs = exposedEpochs.stream()
-				.sorted((a, b) -> new Integer(a.getEpochId()).compareTo(b.getEpochId()))
-				.collect(Collectors.toList());
-		return sortedEpochs.get(sortedEpochs.size() - 1).getEpochId();
-	}
 
 	public Optional<ResponseEntity> validate(Registration record, int epoch, byte[] tuples) throws RobertServerException {
 		if (Objects.isNull(record)) {
@@ -133,7 +130,7 @@ public class StatusControllerImpl implements IStatusController {
 		// Step #7: Check that epochs are not too distant
 		int currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
 		int epochDistance = currentEpoch - record.getLastStatusRequestEpoch();
-		if(epochDistance < this.serverConfigurationService.getStatusRequestMinimumEpochGap() 
+		if(epochDistance < this.propertyLoader.getStatusRequestMinimumEpochGap() 
 		        && this.propertyLoader.getEsrLimit() != 0) {
 
             String message = "Discarding ESR request because epochs are too close:";
@@ -143,12 +140,12 @@ public class StatusControllerImpl implements IStatusController {
                     record.getLastStatusRequestEpoch(),
                     currentEpoch,
                     epochDistance,
-                    this.serverConfigurationService.getStatusRequestMinimumEpochGap());
+                    this.propertyLoader.getStatusRequestMinimumEpochGap());
 
 			log.info("{} {} < {} (tolerance)",
 			        message,
 					epochDistance,
-					this.serverConfigurationService.getStatusRequestMinimumEpochGap());
+					this.propertyLoader.getStatusRequestMinimumEpochGap());
 
 			record.setLastFailedStatusRequestEpoch(currentEpoch);
 			record.setLastFailedStatusRequestMessage(errorMessage);

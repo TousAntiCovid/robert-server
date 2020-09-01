@@ -48,11 +48,6 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
         this.registrationService = registrationService;
     }
 
-    private ResponseEntity createErrorIdNotFound() {
-        log.info("Discarding authenticated request because id unknown (fake or was deleted)");
-        return ResponseEntity.notFound().build();
-    }
-
     private ResponseEntity createErrorValidationFailed() {
         log.info("Discarding authenticated request because validation failed");
         return ResponseEntity.badRequest().build();
