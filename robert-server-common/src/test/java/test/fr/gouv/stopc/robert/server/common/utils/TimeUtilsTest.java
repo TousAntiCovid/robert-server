@@ -4,15 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Test;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import org.junit.jupiter.api.Test;
-
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class TimeUtilsTest {
 
     @Test
@@ -35,6 +37,21 @@ public class TimeUtilsTest {
         final LocalDateTime ldt = LocalDateTime.of(2020, 6, 1, 00, 00);
         final ZonedDateTime zdt = ldt.atZone(ZoneId.of("UTC"));
         return TimeUtils.convertUnixMillistoNtpSeconds(zdt.toInstant().toEpochMilli());
+    }
+
+    @Test
+    void testGetDateFromEpochTimezone() {
+        for (int i = 0; i < 96 * 2; i++) {
+            log.info("{}: {}", i, TimeUtils.getDateFromEpoch(i, getServiceTimeStart()));
+            log.info("{}", 1 + (96 + 87 - (i % 96)) % 96);
+        }
+    }
+
+    @Test
+    void testGetDateFromEpochBeforeChange() {
+        for (int i = 940; i < 1200; i++) {
+            log.info("{}; i={}",  TimeUtils.getDateFromEpoch(i, getServiceTimeStart()), i);
+        }
     }
 
     private static int MAX_TEST = 96 * 13;
@@ -63,7 +80,6 @@ public class TimeUtilsTest {
             int i2 = TimeUtils.remainingEpochsForToday(i);
             if (i1 != i2) {
                 error = true;
-            } else {
             }
         }
         assertTrue(!error);

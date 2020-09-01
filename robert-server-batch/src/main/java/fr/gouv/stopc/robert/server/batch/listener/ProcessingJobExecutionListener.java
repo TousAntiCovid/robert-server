@@ -2,6 +2,7 @@ package fr.gouv.stopc.robert.server.batch.listener;
 
 import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
 import fr.gouv.stopc.robert.server.batch.service.ItemIdMappingService;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
@@ -22,6 +23,7 @@ public class ProcessingJobExecutionListener implements JobExecutionListener {
     private IRegistrationService registrationService;
     private ContactService contactService;
     private IServerConfigurationService serverConfigurationService;
+    private PropertyLoader propertyLoader;
     private ItemIdMappingService itemIdMappingService;
 
 
@@ -51,7 +53,7 @@ public class ProcessingJobExecutionListener implements JobExecutionListener {
 
     private int computeMinOldEpochId(){
         int currentEpochId = TimeUtils.getCurrentEpochFrom(serverConfigurationService.getServiceTimeStart());
-        int contagiousPeriod = this.serverConfigurationService.getContagiousPeriod();
+        int contagiousPeriod = this.propertyLoader.getContagiousPeriod();
         int minEpochId = currentEpochId - contagiousPeriod * 96;
 
         log.debug("Min EpochId for the purge of old epoch expositions : {}", minEpochId);

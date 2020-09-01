@@ -1,5 +1,14 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.util.CollectionUtils;
+
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageRequest;
@@ -18,10 +27,7 @@ import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.util.CollectionUtils;
 
-import java.util.*;
 
 @Slf4j
 public class ContactProcessor implements ItemProcessor<Contact, Contact> {
@@ -174,7 +180,7 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
         // Process 16-bit values for sanity check
         final long timeFromHelloNTPsecAs16bits = castIntegerToLong(helloMessageDetail.getTimeFromHelloMessage(), 2);
         final long timeFromDeviceAs16bits = castLong(helloMessageDetail.getTimeCollectedOnDevice(), 2);
-        final int timeDiffTolerance = this.serverConfigurationService.getHelloMessageTimeStampTolerance();
+        final int timeDiffTolerance = this.propertyLoader.getHelloMessageTimeStampTolerance();
 
         if (TimeUtils.toleranceCheckWithWrap(timeFromHelloNTPsecAs16bits, timeFromDeviceAs16bits, timeDiffTolerance)) {
             return true;
@@ -237,7 +243,7 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
         List<EpochExposition> epochsToKeep = ScoringUtils.getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
                 exposedEpochs,
                 currentEpochId,
-                this.serverConfigurationService.getContagiousPeriod(),
+                this.propertyLoader.getContagiousPeriod(),
                 this.serverConfigurationService.getEpochDurationSecs());
         registrationRecord.setExposedEpochs(epochsToKeep);
         return epochsToKeep;

@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Scoring strategy that implements the algorithm version 2
  * 
- * @author plant-stopcovid
  */
 @Slf4j
 @Service

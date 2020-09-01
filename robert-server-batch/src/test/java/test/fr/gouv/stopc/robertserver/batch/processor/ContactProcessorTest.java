@@ -1,6 +1,44 @@
 package test.fr.gouv.stopc.robertserver.batch.processor;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.security.Key;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+import javax.crypto.spec.SecretKeySpec;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.CollectionUtils;
+
 import com.google.protobuf.ByteString;
+
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
@@ -23,28 +61,8 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.util.CollectionUtils;
 import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
-import java.security.SecureRandom;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @Slf4j
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
@@ -420,7 +438,7 @@ public class ContactProcessorTest {
 			byte[] time = new byte[2];
 
 			byte[] timeOfDevice = new byte[4];
-			System.arraycopy(ByteUtils.longToBytes(currentTime + this.serverConfigurationService.getHelloMessageTimeStampTolerance() + 1), 4, timeOfDevice, 0, 4);
+			System.arraycopy(ByteUtils.longToBytes(currentTime + this.propertyLoader.getHelloMessageTimeStampTolerance() + 1), 4, timeOfDevice, 0, 4);
 
 			byte[] timeHelloB = new byte[4];
 			System.arraycopy(ByteUtils.longToBytes(currentTime), 4, timeHelloB, 0, 4);
@@ -686,6 +704,7 @@ public class ContactProcessorTest {
             fail(SHOULD_NOT_FAIL);
         }
     }
+
 	@Test
 	public void testProcessContactWhenTheMacIsInvalidFails() {
 
@@ -899,7 +918,7 @@ public class ContactProcessorTest {
             byte[] time = new byte[2];
 
             byte[] timeOfDevice = new byte[4];
-            System.arraycopy(ByteUtils.longToBytes(currentTime + this.serverConfigurationService.getHelloMessageTimeStampTolerance() + 1), 4, timeOfDevice, 0, 4);
+            System.arraycopy(ByteUtils.longToBytes(currentTime + this.propertyLoader.getHelloMessageTimeStampTolerance() + 1), 4, timeOfDevice, 0, 4);
 
             byte[] validTimeOfDevice = new byte[4];
             System.arraycopy(ByteUtils.longToBytes(currentTime + 10), 4, validTimeOfDevice, 0, 4);
@@ -991,6 +1010,7 @@ public class ContactProcessorTest {
             fail(SHOULD_NOT_FAIL);
         }
     }
+
 	@Test
 	public void testProcessContactWhenTheRegistrationHasTooOldExposedEpochsFails() {
 
@@ -1003,7 +1023,7 @@ public class ContactProcessorTest {
 			final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
 
 			final int currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);
-			int val = (this.serverConfigurationService.getContagiousPeriod() * 24 * 3600)
+			int val = (this.propertyLoader.getContagiousPeriod() * 24 * 3600)
 					/ this.serverConfigurationService.getEpochDurationSecs();
 			val++;
 			int tooOldEpochId = currentEpochId - val;

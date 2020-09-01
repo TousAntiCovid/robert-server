@@ -1,15 +1,15 @@
 package test.fr.gouv.stopc.robertserver.batch.processor;
 
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
-import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
-import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
-import fr.gouv.stopc.robertserver.database.model.EpochExposition;
-import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import lombok.extern.slf4j.Slf4j;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,15 +20,18 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
+import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
+import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 
-import static org.junit.jupiter.api.Assertions.*;
 
-@Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { RobertServerBatchApplication.class })
@@ -49,13 +52,17 @@ public class PurgeOldEpochExpositionsProcessorTest {
     @Autowired
     private IRegistrationService registrationService;
 
+    @Autowired
+    private PropertyLoader propertyLoader;
+
     private Optional<Registration> registration;
 
     private int currentEpoch;
 
     @BeforeEach
     public void beforeEach() {
-        this.purgeOldEpochExpositionsProcessor = new PurgeOldEpochExpositionsProcessor(serverConfigurationService);
+        this.purgeOldEpochExpositionsProcessor = new PurgeOldEpochExpositionsProcessor(this.serverConfigurationService,
+                this.propertyLoader);
         this.registrationItemWriter =  new RegistrationItemWriter(registrationService,
                 ContactsProcessingConfiguration.TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY);
         

@@ -1,31 +1,47 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.service.impl;
 
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+
 import org.springframework.stereotype.Service;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.service.ICryptoServerConfigurationService;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import fr.gouv.stopc.robert.crypto.grpc.server.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 
 
 /**
- * TODO : remove or update this class
- * Implementation of a service while waiting for a server repository to be accessible.
+ * Default implementation of the ICryptoServerConfigurationService
  */
 @Service
 public class CryptoServerConfigurationServiceImpl implements ICryptoServerConfigurationService {
 
-    @Override
-    public long getServiceTimeStart() {
-        final LocalDateTime ldt = LocalDateTime.of(2020, 6, 1, 00, 00);
-        final ZonedDateTime zdt = ldt.atZone(ZoneId.of("UTC"));
-        return TimeUtils.convertUnixMillistoNtpSeconds(zdt.toInstant().toEpochMilli());
+    private long timeStartNtp;
+
+    private final PropertyLoader propertyLoader;
+
+    @Inject
+    public CryptoServerConfigurationServiceImpl(final PropertyLoader propertyLoader) {
+        this.propertyLoader = propertyLoader;
+    }
+    /**
+     * Initializes the timeStartNtp field
+     */
+    @PostConstruct
+    private void initTimeStartNtp() {
+        LocalDate ld = LocalDate.parse(this.propertyLoader.getTimeStart(), DateTimeFormatter.BASIC_ISO_DATE);
+        final ZonedDateTime zdt = ld.atStartOfDay().atZone(ZoneId.of("UTC"));
+        timeStartNtp = TimeUtils.convertUnixMillistoNtpSeconds(zdt.toInstant().toEpochMilli());
     }
 
     @Override
-    public int getHelloMessageTimestampTolerance() {
-        return 180;
+    public long getServiceTimeStart() {
+        return this.timeStartNtp;
     }
+
 }
