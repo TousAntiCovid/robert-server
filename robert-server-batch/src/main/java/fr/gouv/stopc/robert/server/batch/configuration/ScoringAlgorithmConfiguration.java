@@ -8,7 +8,6 @@ import lombok.Setter;
 
 /**
  * Configuration class of the scoring algorithm
- * 
  *
  */
 @Getter
@@ -21,7 +20,7 @@ public class ScoringAlgorithmConfiguration {
 	private int rssiMax;
 
 	// Weighting vector for the # of packets received per window values
-	private double[] deltas;
+	private String[] deltas;
 
 	// limit power in Db below which the collected value is assumed to be zero
 	private double p0;
