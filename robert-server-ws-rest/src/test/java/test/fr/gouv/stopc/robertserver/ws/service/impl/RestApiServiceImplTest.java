@@ -4,15 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,14 +18,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
 import fr.gouv.stopc.robertserver.ws.service.impl.RestApiServiceImpl;
@@ -39,8 +35,6 @@ import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 @TestPropertySource("classpath:application.properties")
 public class RestApiServiceImplTest {
 
-    private static final String SHOULD_NOT_FAIL = "It should not fail";
-
     @InjectMocks
     private RestApiServiceImpl restApiServiceImpl;
 
@@ -49,6 +43,9 @@ public class RestApiServiceImplTest {
 
     @Mock
     private PropertyLoader propertyLoader;
+
+    @Mock
+    private WebClient webClient;
 
     @Value("${controller.internal.path.prefix}")
     private String internalPathPrefix;
@@ -68,12 +65,20 @@ public class RestApiServiceImplTest {
     @Value("${push.api.path.token}")
     private String pushApiTokenPath;
 
+    private PushInfoVo pushInfoVo;
+
     @BeforeEach
     public void beforeEach() {
 
         assertNotNull(restApiServiceImpl);
         assertNotNull(restTemplate);
         assertNotNull(propertyLoader);
+
+        this.pushInfoVo = PushInfoVo.builder()
+                .token("token")
+                .locale("fr_FR")
+                .timezone("Europe/Paris")
+                .build();
 
         when(this.propertyLoader.getServerCodeHost()).thenReturn("localhost");
         when(this.propertyLoader.getServerCodePort()).thenReturn("8080");
@@ -173,44 +178,86 @@ public class RestApiServiceImplTest {
         this.restApiServiceImpl.registerPushNotif(pushInfo);
 
         // Then
-        verify(this.restTemplate, never()).postForEntity(any(URI.class), any(PushInfoVo.class), any());
+        verify(this.webClient, never()).post();
     }
 
     @Test
-    public void testRegisterPushNotifShouldNotThrownAnExceptionEvenIfCallFail() {
+    public void testRegisterPushNotifShouldNotCallPushServerWhenPushInfoTokenIsNull() {
 
         // Given
-        PushInfoVo pushInfo = PushInfoVo.builder().build();
-
-        when(this.restTemplate.postForEntity(any(URI.class), any(PushInfoVo.class), any()))
-        .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+        this.pushInfoVo.setToken(null);
 
         // When
-        this.restApiServiceImpl.registerPushNotif(pushInfo);
+        this.restApiServiceImpl.registerPushNotif(this.pushInfoVo);
 
         // Then
-        verify(this.restTemplate).postForEntity(any(URI.class), any(PushInfoVo.class), any());
+        verify(this.webClient, never()).post();
     }
 
     @Test
-    public void testRegisterPushNotifShouldCallPushServerWhenPushInfoIsNotNull() {
+    public void testRegisterPushNotifShouldNotCallPushServerWhenPushInfoTokenIsBlank() {
 
-        try {
-            // Given
-            PushInfoVo pushInfo = PushInfoVo.builder().build();
+        // Given
+        this.pushInfoVo.setToken("");
 
-            when(this.restTemplate.postForEntity(any(URI.class), any(PushInfoVo.class), any()))
-            .thenReturn(ResponseEntity.status(HttpStatus.CREATED).build());
+        // When
+        this.restApiServiceImpl.registerPushNotif(this.pushInfoVo);
 
-            // When
-            this.restApiServiceImpl.registerPushNotif(pushInfo);
+        // Then
+        verify(this.webClient, never()).post();
+    }
 
-            // Then
-            verify(this.restTemplate).postForEntity(any(URI.class), any(PushInfoVo.class), any());
-        } catch (Exception e) {
+    @Test
+    public void testRegisterPushNotifShouldNotCallPushServerWhenPushInfoLocaleIsNull() {
 
-            fail(SHOULD_NOT_FAIL);
-        }
+        // Given
+        this.pushInfoVo.setToken(null);
+
+        // When
+        this.restApiServiceImpl.registerPushNotif(this.pushInfoVo);
+
+        // Then
+        verify(this.webClient, never()).post();
+    }
+
+    @Test
+    public void testRegisterPushNotifShouldNotCallPushServerWhenPushInfoLocaleIsBlank() {
+
+        // Given
+        this.pushInfoVo.setLocale("");
+
+        // When
+        this.restApiServiceImpl.registerPushNotif(this.pushInfoVo);
+
+        // Then
+        verify(this.webClient, never()).post();
+    }
+
+    @Test
+    public void testRegisterPushNotifShouldNotCallPushServerWhenPushInfoTimezoneIsNull() {
+
+        // Given
+        this.pushInfoVo.setTimezone(null);
+
+        // When
+        this.restApiServiceImpl.registerPushNotif(this.pushInfoVo);
+
+        // Then
+        verify(this.webClient, never()).post();
+    }
+
+    @Test
+    public void testRegisterPushNotifShouldNotCallPushServerWhenPushInfoTimezoneIsBlank() {
+
+        // Given
+        this.pushInfoVo.setTimezone("");
+
+        // When
+        this.restApiServiceImpl.registerPushNotif(this.pushInfoVo);
+
+        // Then
+        verify(this.webClient, never()).post();
+
     }
 
     @Test
@@ -223,72 +270,7 @@ public class RestApiServiceImplTest {
         this.restApiServiceImpl.unregisterPushNotif(pushToken);
 
         // Then
-        verify(this.restTemplate, never()).getForEntity(any(URI.class), any());
+        verify(this.webClient, never()).delete();
     }
 
-    @Test
-    public void testUnregisterPushNotifShouldNotCallPushServerWhenPushTokenIsEmpty() {
-
-        // Given
-        String pushToken = "";
-
-        // When
-        this.restApiServiceImpl.unregisterPushNotif(pushToken);
-
-        // Then
-        verify(this.restTemplate, never()).getForEntity(any(URI.class), any());
-    }
-
-    @Test
-    public void testUnregisterPushNotifShouldCallPushServerWhenPushTokenIsNotEmpty() {
-
-        try {
-            // Given
-            String pushToken = "token";
-
-            when(this.restTemplate.exchange(this.buildRegistertPushNotifURI(pushToken), HttpMethod.DELETE, null, Object.class))
-            .thenReturn(ResponseEntity.accepted().build());
-
-            // When
-            this.restApiServiceImpl.unregisterPushNotif(pushToken);
-
-            // Then
-            verify(this.restTemplate).exchange(this.buildRegistertPushNotifURI(pushToken), HttpMethod.DELETE, null, Object.class);
-
-        } catch (Exception e) {
-            fail(SHOULD_NOT_FAIL);
-        }
-    }
-
-    @Test
-    public void testUnregisterPushNotifShouldCallPushServerThrownAnExceptionEvenIfCallFail() {
-
-        // Given
-        String pushToken = "token";
-
-        when(this.restTemplate.exchange(this.buildRegistertPushNotifURI(pushToken), HttpMethod.DELETE, null, Object.class))
-        .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
-
-
-        // When
-        this.restApiServiceImpl.unregisterPushNotif(pushToken);
-
-        // Then
-        verify(this.restTemplate).exchange(this.buildRegistertPushNotifURI(pushToken), HttpMethod.DELETE, null, Object.class);
-    }
-
-    private URI buildRegistertPushNotifURI(String pushToken) {
-
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("token", pushToken);
-
-        return UriComponentsBuilder.newInstance().scheme("http")
-                .host(this.propertyLoader.getPushServerHost())
-                .port(this.propertyLoader.getPushServerPort())
-                .path(this.propertyLoader.getInternalPathPrefix())
-                .path(this.propertyLoader.getPushApiVersion())
-                .path(this.propertyLoader.getPushApiPath())
-                .path(this.propertyLoader.getPushApiTokenPath())
-                .build(parameters);
-    }
 }
