@@ -1,0 +1,6 @@
+image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-oraclejava8:latest
+
+build:
+  stage: build
+  script:
+    - mvn compile
