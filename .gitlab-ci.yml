@@ -3,4 +3,4 @@ image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-oracleja
 build:
   stage: build
   script:
-    - mvn compile
+    - mvn package -B
