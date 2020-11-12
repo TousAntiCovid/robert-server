@@ -1,10 +1,11 @@
 package fr.gouv.tacw.ws.dto;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
 public class StatusResponseDto {
-	public enum code { OK, KO, MORE };
 	private boolean warn;
-	private code returnCode;
+	private List<String> tokensOfInterest;
 }

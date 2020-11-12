@@ -4,8 +4,12 @@ import lombok.Data;
 
 @Data
 public class QRcodeVo {
-	public enum type { STATIC, DYNAMIC };
+	public enum type {
+		STATIC, DYNAMIC
+	};
+
+	private String formatVersion;
 	private type qrType;
-	private String qrCode;
+	private String qrCode; // base64-encoded?
 	private String timestamp;
 }

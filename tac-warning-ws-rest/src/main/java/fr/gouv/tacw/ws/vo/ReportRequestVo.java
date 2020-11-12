@@ -2,11 +2,14 @@ package fr.gouv.tacw.ws.vo;
 
 import java.util.List;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Data
-@Builder
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class ReportRequestVo {
-	private List<QRcodeVo> localList;
+	private List<QRcodeVo> qrcodes;
+	private List<TokenVo> tokens;
 }
