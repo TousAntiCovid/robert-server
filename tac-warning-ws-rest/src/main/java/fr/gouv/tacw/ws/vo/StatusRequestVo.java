@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReportRequestVo {
+public class StatusRequestVo {
 	private List<QRcodeVo> qrcodes;
+	private List<TokenVo> tokens;
 }

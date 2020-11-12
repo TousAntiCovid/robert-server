@@ -13,9 +13,11 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import fr.gouv.tacw.ws.dto.StatusResponseDto;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRcodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
+import fr.gouv.tacw.ws.vo.StatusRequestVo;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class TacWarningWsRestApplicationTests {
@@ -27,7 +29,7 @@ class TacWarningWsRestApplicationTests {
 
 	@Test
 	void testInfectedUserCanDeclareItselfAsInfected() {
-		ReportRequestVo request = new ReportRequestVo(new ArrayList<QRcodeVo>(), null);
+		ReportRequestVo request = new ReportRequestVo(new ArrayList<QRcodeVo>());
 
 		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, request,
 				String.class);
@@ -35,4 +37,13 @@ class TacWarningWsRestApplicationTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
+	@Test
+	void testCanGetStatus() {
+		StatusRequestVo request = new StatusRequestVo(new ArrayList<QRcodeVo>(), null);
+
+		ResponseEntity<StatusResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.STATUS, request,
+				StatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+	}
 }
