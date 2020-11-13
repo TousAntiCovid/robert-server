@@ -1,0 +1,122 @@
+openapi: 3.0.0
+info:
+  description: "#TOUSANTICOVID, Warning API"
+  version: 1.0.0
+  title: "#TOUSANTICOVID, Warning"
+#  termsOfService: https://github.com/ROBERT-proximity-tracing/
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags: []
+paths:
+  /status:
+    post:
+      tags: []
+      summary: Exposure Status Request
+      description: >-
+        App requests if its user has been exposed
+
+
+        The request is a POST even if no information is contributed to the server because parameters should not be passed as queryparams.
+
+
+        App should continue to send ESR requests even after having been notified of a risk, in case new risks are detected.
+      operationId: ESR
+      requestBody:
+        $ref: "#/components/requestBodies/ExposureStatusRequest"
+      responses:
+        "200":
+          description: Returns whether the app user was exposed to a risk. The app must
+            display associated hardcoded content accordingly and send local
+            notification.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExposureStatusResponse"
+        "400":
+          description: bad request
+        "401":
+          description: invalid authentication
+  /report:
+    post:
+      tags: []
+      summary: Report visited enclosed area history
+      description: >-
+        Report convisited enclosed area historytacts from the last X days 
+        stored by the app once user has been diagnosed as infected by a healthcare professional.
+
+
+        Requires a token provided by the Robert Server Report answer.
+      operationId: Report
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportRequest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+        "400":
+          description: bad request
+        "401":
+          description: invalid authentication
+      security: []
+servers:
+  - url: https://yourtacwarningserver.org/v1
+components:
+  requestBodies:
+    ExposureStatusRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExposureStatusRequest"
+  schemas:
+    ExposureStatusRequest:
+      type: object
+      properties:
+        qrcodes:
+          type: array
+          items: "#/components/schemas/QRCode"
+          description: List of QR-codes to check
+        tokens:
+          type: array
+          items: "#/components/schemas/Token"
+          description: List of tokens to check
+    ExposureStatusResponse:
+      type: object
+      properties:
+        atRisk:
+          type: boolean
+          description: |-
+            Optional. If the Exposure Status Request is done with a list of QR-codes, it answers 
+            True if was exposed at risk. If already notified of a risk exposure,
+            means exposed to a new risk since.
+        tokenOfInterest:
+          description: |-
+            Optional. If the Exposure Status Request is done with a list of tokens, tokenOfInterest
+            contains the list (possibly empty) of tokens that should be verified (because thay have been exposed to a risk) with the corresponding 
+            QR-code. The client will then issue a new Exposure Status Request by providing the list of QR-codes corresponding to the list of tokens of interest.
+
+    ReportRequest:
+      type: object
+      properties:
+        visitedEnclosedAreas:
+          type: array
+          items: "#/components/schemas/QRCode"
+          description: >-
+            The list of visited enclosed Areas stored in the LocalList
+    ReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
