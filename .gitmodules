@@ -1,0 +1,6 @@
+[submodule "robert-push-notif-server"]
+	path = robert-push-notif-server
+	url = git@gitlab.inria.fr:stemcovid19/wp3-robert-server/robert-push-notif-server.git
+[submodule "submission-code-server"]
+	path = submission-code-server
+	url = git@gitlab.inria.fr:stemcovid19/wp3-submission-code-server/submission-code-server.git
