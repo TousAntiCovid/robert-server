@@ -50,6 +50,8 @@ paths:
 
         Requires a token provided by the Robert Server Report answer.
       operationId: Report
+      security:
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -66,10 +68,14 @@ paths:
           description: bad request
         "401":
           description: invalid authentication
-      security: []
 servers:
   - url: https://yourtacwarningserver.org/v1
 components:
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 
   requestBodies:
     ExposureStatusRequest:
       content:
@@ -80,14 +86,19 @@ components:
     ExposureStatusRequest:
       type: object
       properties:
-        qrcodes:
+        visitTokens:
           type: array
-          items: "#/components/schemas/QRCode"
-          description: List of QR-codes to check
-        tokens:
-          type: array
-          items: "#/components/schemas/Token"
-          description: List of tokens to check
+          items: 
+            $ref: "#/components/schemas/VisitToken"
+          description: |-
+            List of tokens computed from the venue static QR-code and a client timestamp of the time of visit
+            using token=hash(salt|uuid|time). 
+            TODO specify hash method
+          example: 
+            - type: "STATIC"
+              payload: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+            - type: "DYNAMIC"
+              payload: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
     ExposureStatusResponse:
       type: object
       properties:
@@ -97,7 +108,10 @@ components:
             Optional. If the Exposure Status Request is done with a list of QR-codes, it answers 
             True if was exposed at risk. If already notified of a risk exposure,
             means exposed to a new risk since.
-        tokenOfInterest:
+        tokensOfInterest:
+          type: array
+          items: 
+            $ref: "#/components/schemas/VisitToken"
           description: |-
             Optional. If the Exposure Status Request is done with a list of tokens, tokenOfInterest
             contains the list (possibly empty) of tokens that should be verified (because thay have been exposed to a risk) with the corresponding 
@@ -106,9 +120,10 @@ components:
     ReportRequest:
       type: object
       properties:
-        visitedEnclosedAreas:
+        visits:
           type: array
-          items: "#/components/schemas/QRCode"
+          items: 
+            $ref: "#/components/schemas/Visit"
           description: >-
             The list of visited enclosed Areas stored in the LocalList
     ReportResponse:
@@ -120,3 +135,46 @@ components:
           type: string
       required:
         - success
+    VisitToken:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: 
+            - STATIC
+            - DYNAMIC
+          example: DYNAMIC
+        payload:
+          type: string
+          example: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+      required:
+        - type
+        - payload
+    Visit:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          description: "TODO refine timestamp type"
+          example: ""
+        qrcode:
+          $ref: "#/components/schemas/QRCode"
+          example: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+      required:
+        - timestamp
+        - payload
+    QRCode:
+      type: object
+      properties:
+        type: 
+          type: string
+          enum: 
+            - STATIC
+            - DYNAMIC
+          example: DYNAMIC
+        venueType:
+          type: string
+        venueCapacity:
+          type: integer
+        uuid:
+          type: string
