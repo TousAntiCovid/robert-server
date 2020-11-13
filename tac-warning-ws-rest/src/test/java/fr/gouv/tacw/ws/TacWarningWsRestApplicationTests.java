@@ -13,11 +13,12 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import fr.gouv.tacw.ws.dto.StatusResponseDto;
+import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.utils.UriConstants;
+import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRcodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
-import fr.gouv.tacw.ws.vo.StatusRequestVo;
+import fr.gouv.tacw.ws.vo.VisitTokenVo;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class TacWarningWsRestApplicationTests {
@@ -39,10 +40,10 @@ class TacWarningWsRestApplicationTests {
 
 	@Test
 	void testCanGetStatus() {
-		StatusRequestVo request = new StatusRequestVo(new ArrayList<QRcodeVo>(), null);
+		ExposureStatusRequestVo request = new ExposureStatusRequestVo( new ArrayList<VisitTokenVo>() );
 
-		ResponseEntity<StatusResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.STATUS, request,
-				StatusResponseDto.class);
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.STATUS, request,
+				ExposureStatusResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
