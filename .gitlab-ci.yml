@@ -1,7 +1,7 @@
 image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-oraclejava8:latest
 
 variables:
-  MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository --batch-mode"
 
 cache:
   paths:
