@@ -12,7 +12,7 @@ build:
   script:
     - mvn $MAVEN_CLI_OPTS compile
 
-test:
+Robert tests:
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS verify
@@ -22,4 +22,15 @@ test:
       junit:
         - "*/target/surefire-reports/TEST-*.xml"
         - "*/target/failsafe-reports/TEST-*.xml"
+        
+TAC Warning tests:
+    stage: test
+    script:
+      - mvn $MAVEN_CLI_OPTS --file tac-warning/pom.xml verify
+    artifacts:
+      when: always
+      reports:
+        junit:
+          - "tac-warning/*/target/surefire-reports/TEST-*.xml"
+          - "tac-warning/*/target/failsafe-reports/TEST-*.xml"
        
