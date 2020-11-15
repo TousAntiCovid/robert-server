@@ -27,7 +27,7 @@
 
 	<modules>
 		<module>tac-warning-ws-rest</module>
-<!-- 		<module>tac-warning-database</module> -->
+ 		<module>tac-warning-database</module>
 	</modules>
 
 	<properties>
