@@ -37,8 +37,6 @@ paths:
                 $ref: "#/components/schemas/ExposureStatusResponse"
         "400":
           description: bad request
-        "401":
-          description: invalid authentication
   /report:
     post:
       tags: []
