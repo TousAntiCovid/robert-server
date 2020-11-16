@@ -27,7 +27,7 @@ public class WarningServiceTests {
 	@Test
 	public void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(VisitTokenVo.tokenType.STATIC,
+		visitTokens.add(new VisitTokenVo(TokenType.STATIC,
 				"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"));
 
 		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(visitTokens);
@@ -40,7 +40,7 @@ public class WarningServiceTests {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
 		when(tokenService.infectedStaticTokensIncludes(infectedToken)).thenReturn(true);
 		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(VisitTokenVo.tokenType.STATIC, infectedToken));
+		visitTokens.add(new VisitTokenVo(TokenType.STATIC, infectedToken));
 
 		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(visitTokens);
 

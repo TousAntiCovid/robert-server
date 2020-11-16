@@ -14,14 +14,14 @@ public class WarningService {
 	
 	public boolean getStatus(ExposureStatusRequestVo statusRequestVo) {
 		return statusRequestVo.getVisitTokens().stream()
-				.filter(token -> token.isStatic())
+				.filter(token -> token.getType().isStatic())
 				.map(token -> StaticVisitToken.fromVo(token, tokenService))
 				.anyMatch(token -> token.isInfected());
 	}
 
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
 		reportRequestVo.getQrCodes().stream()
-			.filter(reportRequest -> reportRequest.getQrCode().isStatic())
+			.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
 			.forEach(reportRequest -> tokenService.registerInfectedStaticToken(reportRequest.getQrCode().getUuid()));
 	}
 }

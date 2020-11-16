@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
+import fr.gouv.tacw.ws.service.TokenType;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
@@ -50,7 +51,7 @@ class TacWarningIntegrationTests {
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add( new VisitVo("timestamp", new QRCodeVo(
-				VisitTokenVo.tokenType.STATIC, 
+				TokenType.STATIC, 
 				"restaurant", 
 				60,
 				"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc")));
@@ -69,7 +70,7 @@ class TacWarningIntegrationTests {
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("timestamp", new QRCodeVo(VisitTokenVo.tokenType.STATIC, "restaurant", 60, "UUID")));
+		visits.add(new VisitVo("timestamp", new QRCodeVo(TokenType.STATIC, "restaurant", 60, "UUID")));
 
 		this.report(visits);
 	}
@@ -83,7 +84,7 @@ class TacWarningIntegrationTests {
 	}
 
 	protected List<VisitTokenVo> staticVisitTokenVoFrom(List<String> tokens) {
-		return tokens.stream().map(token -> new VisitTokenVo(VisitTokenVo.tokenType.STATIC, token))
+		return tokens.stream().map(token -> new VisitTokenVo(TokenType.STATIC, token))
 				.collect(Collectors.toList());
 	}
 
