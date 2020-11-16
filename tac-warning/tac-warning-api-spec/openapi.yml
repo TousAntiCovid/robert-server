@@ -106,14 +106,6 @@ components:
             Optional. If the Exposure Status Request is done with a list of QR-codes, it answers 
             True if was exposed at risk. If already notified of a risk exposure,
             means exposed to a new risk since.
-        tokensOfInterest:
-          type: array
-          items: 
-            $ref: "#/components/schemas/VisitToken"
-          description: |-
-            Optional. If the Exposure Status Request is done with a list of tokens, tokenOfInterest
-            contains the list (possibly empty) of tokens that should be verified (because thay have been exposed to a risk) with the corresponding 
-            QR-code. The client will then issue a new Exposure Status Request by providing the list of QR-codes corresponding to the list of tokens of interest.
 
     ReportRequest:
       type: object
