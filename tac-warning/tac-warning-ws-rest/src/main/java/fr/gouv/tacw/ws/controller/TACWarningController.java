@@ -7,10 +7,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
+import fr.gouv.tacw.ws.dto.ReportResponseDto;
 import fr.gouv.tacw.ws.service.WarningService;
 import fr.gouv.tacw.ws.utils.UriConstants;
-import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
+import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -29,7 +30,9 @@ public class TACWarningController {
 	}
 
 	@PostMapping(value = UriConstants.REPORT)
-	protected void reportEnclosedAreaQRcodes(@RequestBody(required = true) ReportRequestVo reportRequestVo) {
+	protected ReportResponseDto reportEnclosedAreaQRcodes(@RequestBody(required = true) ReportRequestVo reportRequestVo) {
 		log.debug("reportEnclosedAreaQRcodes called");
+		warningService.reportVisitsWhenInfected(reportRequestVo);
+		return new ReportResponseDto(true, "Report successful");
 	}
 }

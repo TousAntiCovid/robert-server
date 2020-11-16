@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.service.TokenService;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
+import fr.gouv.tacw.ws.vo.ReportRequestVo;
 
 @Service
 public class WarningService {
@@ -16,5 +17,11 @@ public class WarningService {
 				.filter(token -> token.isStatic())
 				.map(token -> StaticVisitToken.fromVo(token, tokenService))
 				.anyMatch(token -> token.isInfected());
+	}
+
+	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
+		reportRequestVo.getQrCodes().stream()
+			.filter(reportRequest -> reportRequest.getQrCode().isStatic())
+			.forEach(reportRequest -> tokenService.registerInfectedStaticToken(reportRequest.getQrCode().getUuid()));
 	}
 }

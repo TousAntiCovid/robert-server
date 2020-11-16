@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReportRequestVo {
-	private List<QRcodeVo> qrcodes;
+	private List<VisitVo> qrCodes;
 }
