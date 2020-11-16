@@ -20,8 +20,8 @@ Robert tests:
     when: always
     reports:
       junit:
-        - "*/target/surefire-reports/TEST-*.xml"
-        - "*/target/failsafe-reports/TEST-*.xml"
+        - "robert-server/*/target/surefire-reports/TEST-*.xml"
+        - "robert-server/*/target/failsafe-reports/TEST-*.xml"
         
 TAC Warning tests:
     stage: test
