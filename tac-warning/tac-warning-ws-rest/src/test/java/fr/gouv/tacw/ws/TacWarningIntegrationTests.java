@@ -44,7 +44,6 @@ class TacWarningIntegrationTests {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody().isAtRisk()).isFalse();
-		assertThat(response.getBody().getTokensOfInterest()).isEmpty();
 	}
 
 	@Test
