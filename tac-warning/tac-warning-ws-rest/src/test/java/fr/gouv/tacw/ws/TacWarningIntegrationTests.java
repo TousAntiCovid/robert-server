@@ -1,7 +1,6 @@
 package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +21,9 @@ import fr.gouv.tacw.ws.dto.ReportResponseDto;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
-import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
+import fr.gouv.tacw.ws.vo.VisitVo;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class TacWarningIntegrationTests {
