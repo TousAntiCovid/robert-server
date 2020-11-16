@@ -8,7 +8,6 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
-import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,12 +18,14 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.CaptchaDto;
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
 import fr.gouv.stopc.robertserver.ws.service.impl.utils.CaptchaAccessException;
 import fr.gouv.stopc.robertserver.ws.service.impl.utils.CaptchaErrorHandler;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
+import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.ToString;
@@ -38,12 +39,16 @@ public class CaptchaServiceImpl implements CaptchaService {
 
 	private PropertyLoader propertyLoader;
 
+	private WsServerConfiguration config;
+ 
 	@Inject
 	public CaptchaServiceImpl(RestTemplate restTemplate,
-							  PropertyLoader propertyLoader) {
+							  PropertyLoader propertyLoader,
+							  WsServerConfiguration config) {
 		this.restTemplate = restTemplate;
 		this.restTemplate.setErrorHandler(new CaptchaErrorHandler());
 		this.propertyLoader = propertyLoader;
+		this.config = config;
 	}
 
 	@AllArgsConstructor
@@ -56,7 +61,8 @@ public class CaptchaServiceImpl implements CaptchaService {
 	
 	@Override
 	public boolean verifyCaptcha(final RegisterVo registerVo) {
-
+		if (!this.config.getActivateCaptcha())
+			return true;
 		return Optional.ofNullable(registerVo).map(captcha -> {
 
 			HttpEntity<CaptchaServiceDto> request = new HttpEntity<CaptchaServiceDto>(

@@ -21,5 +21,10 @@ public class WsServerConfiguration {
 
 	@Value("${robert.server.status-request-minimum-epoch-gap}")
 	private Integer statusRequestMinimumEpochGap;
-
+	
+	@Value("${robert.server.activate-captcha-check}")
+	private Boolean activateCaptcha;
+	
+	@Value("${robert.server.check-token}")
+	private Boolean checkToken;
 }
