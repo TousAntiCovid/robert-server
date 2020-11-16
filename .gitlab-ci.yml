@@ -15,7 +15,7 @@ build:
 Robert tests:
   stage: test
   script:
-    - mvn $MAVEN_CLI_OPTS verify
+    - mvn $MAVEN_CLI_OPTS -file robert-server/pom.xml verify
   artifacts:
     when: always
     reports:
