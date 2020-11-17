@@ -1,7 +1,7 @@
 image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-oraclejava8:latest
 
 variables:
-  MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository --batch-mode"
 
 cache:
   paths:
@@ -12,14 +12,25 @@ build:
   script:
     - mvn $MAVEN_CLI_OPTS compile
 
-test:
+Robert tests:
   stage: test
   script:
-    - mvn $MAVEN_CLI_OPTS verify
+    - mvn $MAVEN_CLI_OPTS -file robert-server/pom.xml verify
   artifacts:
     when: always
     reports:
       junit:
-        - "*/target/surefire-reports/TEST-*.xml"
-        - "*/target/failsafe-reports/TEST-*.xml"
+        - "robert-server/*/target/surefire-reports/TEST-*.xml"
+        - "robert-server/*/target/failsafe-reports/TEST-*.xml"
+        
+TAC Warning tests:
+    stage: test
+    script:
+      - mvn $MAVEN_CLI_OPTS --file tac-warning/pom.xml verify
+    artifacts:
+      when: always
+      reports:
+        junit:
+          - "tac-warning/*/target/surefire-reports/TEST-*.xml"
+          - "tac-warning/*/target/failsafe-reports/TEST-*.xml"
        

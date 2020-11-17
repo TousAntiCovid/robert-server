@@ -19,5 +19,6 @@
 
 	<modules>
 		<module>robert-server</module>
+        <module>tac-warning</module>
 	</modules>
 </project>
