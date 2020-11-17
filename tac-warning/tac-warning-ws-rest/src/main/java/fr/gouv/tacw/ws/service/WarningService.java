@@ -20,7 +20,7 @@ public class WarningService {
 	}
 
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
-		reportRequestVo.getQrCodes().stream()
+		reportRequestVo.getVisits().stream()
 			.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
 			.forEach(reportRequest -> tokenService.registerInfectedStaticToken(reportRequest.getQrCode().getUuid()));
 	}
