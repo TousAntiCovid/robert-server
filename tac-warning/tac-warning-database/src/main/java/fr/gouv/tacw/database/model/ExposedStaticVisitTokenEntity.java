@@ -14,8 +14,8 @@ import lombok.ToString;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name="STATIC_VISIT_TOKEN")
-public class StaticVisitTokenEntity {
+@Table(name="EXPOSED_STATIC_VISIT_TOKEN")
+public class ExposedStaticVisitTokenEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
 	@ToString.Exclude
@@ -24,7 +24,7 @@ public class StaticVisitTokenEntity {
     @NotNull
 	String token;
     
-    public StaticVisitTokenEntity(String token) {
+    public ExposedStaticVisitTokenEntity(String token) {
     	this.token = token;
     }
 }

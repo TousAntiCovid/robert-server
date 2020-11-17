@@ -3,7 +3,7 @@ package fr.gouv.tacw.database.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import fr.gouv.tacw.database.model.StaticVisitTokenEntity;
+import fr.gouv.tacw.database.model.ExposedStaticVisitTokenEntity;
 import fr.gouv.tacw.database.repository.StaticTokenRepository;
 
 @Service
@@ -12,7 +12,7 @@ public class TokenService {
 	StaticTokenRepository staticTokenRepository;
 
 	public void registerInfectedStaticToken(String token) {
-		staticTokenRepository.save(new StaticVisitTokenEntity(token));
+		staticTokenRepository.save(new ExposedStaticVisitTokenEntity(token));
 	}
 
 	public boolean infectedStaticTokensIncludes(String token) {
