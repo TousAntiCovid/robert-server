@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -74,8 +76,12 @@ class TacWarningIntegrationTests {
 	}
 
 	private void report(List<VisitVo> visits) {
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setBearerAuth("foo");
+		HttpEntity<ReportRequestVo> entity = new HttpEntity<>(new ReportRequestVo(visits), headers);
 		ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT,
-				new ReportRequestVo(visits), ReportResponseDto.class);
+				entity, ReportResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody().isSuccess()).isEqualTo(true);

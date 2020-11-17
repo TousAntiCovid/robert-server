@@ -66,4 +66,13 @@ public class PropertyLoader {
     @Value("${push.api.path.token}")
     private String pushApiTokenPath;
 
+    @Value("${robert.jwt.privatekey}")
+    private String jwtPrivateKey;
+
+    @Value("${robert.jwt.lifetime}")
+    private int jwtLifeTime;
+
+    @Value("${robert.jwt.use-transient-key}")
+    private Boolean jwtUseTransientKey;
+
 }

@@ -233,7 +233,8 @@ public class ReportControllerWsRestTest {
             assertNotNull(response.getHeaders());
             assertEquals(MediaType.APPLICATION_JSON, response.getHeaders().getContentType());
             assertNotNull(response.getBody());
-            assertThat(response.getBody(), equalTo(buildReportBatchResponseDto()));
+            assertEquals(MessageConstants.SUCCESSFUL_OPERATION.getValue(), response.getBody().getMessage());
+            assertEquals(true, response.getBody().getSuccess());
             verify(this.contactDtoService, atLeast(1)).saveContacts(any());
         } catch (RobertServerException e) {
             fail(EXCEPTION_FAIL_MESSAGE);
@@ -269,7 +270,8 @@ public class ReportControllerWsRestTest {
             assertNotNull(response.getHeaders());
             assertEquals(MediaType.APPLICATION_JSON, response.getHeaders().getContentType());
             assertNotNull(response.getBody());
-            assertThat(response.getBody(), equalTo(buildReportBatchResponseDto()));
+            assertEquals(MessageConstants.SUCCESSFUL_OPERATION.getValue(), response.getBody().getMessage());
+            assertEquals(true, response.getBody().getSuccess());
 
             verify(this.restApiService).verifyReportToken(token, "1");
             verify(this.contactDtoService, atLeast(1)).saveContacts(any());
@@ -297,7 +299,8 @@ public class ReportControllerWsRestTest {
             assertNotNull(response.getHeaders());
             assertEquals(MediaType.APPLICATION_JSON, response.getHeaders().getContentType());
             assertNotNull(response.getBody());
-            assertThat(response.getBody(), equalTo(buildReportBatchResponseDto()));
+            assertEquals(MessageConstants.SUCCESSFUL_OPERATION.getValue(), response.getBody().getMessage());
+            assertEquals(true, response.getBody().getSuccess());
 
             verify(this.restApiService).verifyReportToken(token, "1");
             verify(this.contactDtoService, atLeast(1)).saveContacts(any());
@@ -434,11 +437,6 @@ public class ReportControllerWsRestTest {
         verify(this.restApiService).verifyReportToken(token, "1");
         verify(this.contactDtoService, never()).saveContacts(any());
 
-    }
-
-    private ReportBatchResponseDto buildReportBatchResponseDto() {
-
-        return ReportBatchResponseDto.builder().message(MessageConstants.SUCCESSFUL_OPERATION.getValue()).success(true).build();
     }
 
     private ApiError buildApiError(String message) {
