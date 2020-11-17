@@ -1,7 +1,29 @@
 # mvn package -Dmaven.test.skip=true
+# Warning hsm tool must be ./hsm-tools do not forget to call
+# git clone https://gitlab.inria.fr/stemcovid19/wp3-robert-server/hsm-tools
+# and then rm -rf hsm-tools
 # docker build -f src/main/docker/Dockerfile -t tac/robert-crypto-grpc-server .
 
-FROM store/oracle/serverjre:8
+FROM tac/jdk8:latest
+RUN apt-get -y install git build-essential libtool botan libssl-dev libbotan-2-dev python3 python3-pip opensc
+RUN git clone https://github.com/opendnssec/SoftHSMv2
+WORKDIR SoftHSMv2
+RUN ./autogen.sh
+RUN ./configure
+RUN make
+RUN make install
+WORKDIR /
+
+ADD ./hsm-tools /hsm-tools
+# RUN git clone https://gitlab.inria.fr/stemcovid19/wp3-robert-server/hsm-tools
+WORKDIR /hsm-tools/key-management/init-from-scratch
+# vérifier que python3 est installé sur votre système puis
+RUN pip3 install python-pkcs11
+#vérifier aussi que votre JAVA_HOME et votre PATH pointe bien vers la jdk oracle
+RUN ./reinstall_HSM_keys.sh
+RUN ./install_register_keys.sh 1234
+
+WORKDIR / 
 ADD ./target/robert-crypto-grpc-server-1.7.0-SNAPSHOT.jar /app.jar
 ADD ./src/main/resources/application.properties /work/config/application.properties
 CMD ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
