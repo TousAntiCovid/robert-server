@@ -40,6 +40,8 @@ wreport () {
          "${TACW_BASE_URL}"/api/tac-warning/"${VERSION}"/report
 }
 
-extract_status_at_risk () {
-    echo "$1" | jq .atRisk
+test_status_at_risk () {
+    # jq -e exits with a nonzero error when the last boolean 
+    # comparison is false
+    echo "$1" | jq -e ".atRisk == $2"
 }
