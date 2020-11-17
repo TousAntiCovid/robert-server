@@ -10,7 +10,7 @@ source ./common.sh
 # Hugo checks his status in the app, he will not be considered at risk yet
 
 hugo_first_check=$(wstatus "@01-visits-hugo-tokens.json")
-extract_status_at_risk $hugo_first_check
+test_status_at_risk "$hugo_first_check" "false"
 
 # Stacy performs a COVID test that comes back positive. 
 # She uploads her visit history to the server which hashes it
@@ -19,6 +19,6 @@ wreport "g00d4utht0k3n" "@01-visits-stacy.json"
 
 # Later, Hugo performs another status check. This time, it comes back positive.
 hugo_second_check=$(wstatus "@01-visits-hugo-tokens.json")
-extract_status_at_risk $hugo_second_check
+test_status_at_risk "$hugo_second_check" "true"
 
 echo 'done!'
