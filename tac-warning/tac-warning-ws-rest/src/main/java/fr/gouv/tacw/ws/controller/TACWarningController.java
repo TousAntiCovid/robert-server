@@ -30,8 +30,8 @@ public class TACWarningController {
 	}
 
 	@PostMapping(value = UriConstants.REPORT)
-	protected ReportResponseDto reportEnclosedAreaQRcodes(@RequestBody(required = true) ReportRequestVo reportRequestVo) {
-		log.debug("reportEnclosedAreaQRcodes called");
+	protected ReportResponseDto reportVisits(@RequestBody(required = true) ReportRequestVo reportRequestVo) {
+		log.debug("reportVisits called");
 		warningService.reportVisitsWhenInfected(reportRequestVo);
 		return new ReportResponseDto(true, "Report successful");
 	}
