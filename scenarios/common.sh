@@ -35,3 +35,7 @@ wreport () {
          --data "$2" \
          "${TACW_BASE_URL}"/api/tac-warning/"${VERSION}"/report
 }
+
+extract_status_at_risk () {
+    echo "$1" | jq .atRisk
+}
