@@ -6,7 +6,7 @@ TACW_BASE_URL=${TACW_BASE_URL:-"http://localhost:8080"}
 VERSION=${VERSION:-"v1"}
 
 # Register to the TAC server
-# (out-of scope for the initial POC)
+# (out of scope for the initial POC)
 register () {
     true
 }
@@ -14,7 +14,7 @@ register () {
 # Send a report to ROBERT
 # This will return a token that can be used
 # to authenticate TAC-W report requests
-# (out-of scope for the initial POC)
+# (out of scope for the initial POC)
 rreport () {
     true
 }
