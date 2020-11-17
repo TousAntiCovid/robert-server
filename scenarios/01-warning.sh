@@ -8,7 +8,6 @@ source ./common.sh
 # Stacy [sick] visits the same restaurant and logs this visit on her phone
 
 # Hugo checks his status in the app, he will not be considered at risk yet
-
 hugo_first_check=$(wstatus "@01-visits-hugo-tokens.json")
 test_status_at_risk "$hugo_first_check" "false"
 
