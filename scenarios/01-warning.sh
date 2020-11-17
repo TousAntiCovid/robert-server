@@ -7,8 +7,10 @@ source ./common.sh
 
 # Stacy [sick] visits the same restaurant and logs this visit on her phone
 
-# Hugo checks his status in the app, will not be at risk yet
-wstatus "@01-visits-hugo-tokens.json"
+# Hugo checks his status in the app, he will not be considered at risk yet
+
+hugo_first_check=$(wstatus "@01-visits-hugo-tokens.json")
+extract_status_at_risk $hugo_first_check
 
 # Stacy performs a COVID test that comes back positive. 
 # She uploads her visit history to the server which hashes it
@@ -16,4 +18,7 @@ wstatus "@01-visits-hugo-tokens.json"
 wreport "g00d4utht0k3n" "@01-visits-stacy.json"
 
 # Later, Hugo performs another status check. This time, it comes back positive.
-wstatus "@01-visits-hugo-tokens.json"
+hugo_second_check=$(wstatus "@01-visits-hugo-tokens.json")
+extract_status_at_risk $hugo_second_check
+
+echo 'done!'

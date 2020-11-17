@@ -21,7 +21,9 @@ rreport () {
 
 # Perform a TAC-warning status query
 wstatus () {
-    curl --header "Content-Type: application/json" \
+    curl --fail \
+         --no-progress-meter \
+         --header "Content-Type: application/json" \
          --request POST \
          --data "$1" \
          "${TACW_BASE_URL}"/api/tac-warning/"${VERSION}"/status
@@ -29,7 +31,9 @@ wstatus () {
 
 # Perform a TAC-warning visit report
 wreport () {
-    curl --header "Content-Type: application/json" \
+    curl --fail \
+         --no-progress-meter \
+         --header "Content-Type: application/json" \
          --header "Authorization: Bearer $1" \
          --request POST \
          --data "$2" \
