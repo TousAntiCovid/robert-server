@@ -147,7 +147,7 @@ components:
           type: string
           description: "TODO refine timestamp type"
           example: ""
-        qrcode:
+        qrCode:
           $ref: "#/components/schemas/QRCode"
           example: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
       required:

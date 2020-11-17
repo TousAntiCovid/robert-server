@@ -21,6 +21,7 @@ rreport () {
 
 # Perform a TAC-warning status query
 wstatus () {
+    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl --fail \
          --no-progress-meter \
          --header "Content-Type: application/json" \
@@ -31,6 +32,7 @@ wstatus () {
 
 # Perform a TAC-warning visit report
 wreport () {
+    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl --fail \
          --no-progress-meter \
          --header "Content-Type: application/json" \
