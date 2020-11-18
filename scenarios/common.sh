@@ -27,7 +27,7 @@ wstatus () {
          --header "Content-Type: application/json" \
          --request POST \
          --data "$1" \
-         "${TACW_BASE_URL}"/api/tac-warning/"${VERSION}"/status
+         "${TACW_BASE_URL}/${VERSION}"/status
 }
 
 # Perform a TAC-warning visit report
@@ -39,11 +39,12 @@ wreport () {
          --header "Authorization: Bearer $1" \
          --request POST \
          --data "$2" \
-         "${TACW_BASE_URL}"/api/tac-warning/"${VERSION}"/report
+         "${TACW_BASE_URL}/${VERSION}"/report
 }
 
 test_status_at_risk () {
-    # jq -e exits with a nonzero error when the last boolean 
+    # jq -e exits with a nonzero error when the last boolean
     # comparison is false
-    echo "$1" | jq -e ".atRisk == $2"
+   echo "$1" |  jq  -e ".atRisk==$2"
+
 }
