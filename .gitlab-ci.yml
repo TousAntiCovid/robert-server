@@ -1,36 +1,111 @@
 image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-oraclejava8:latest
 
 variables:
-  MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository --batch-mode"
-
+  MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository"
+#  GIT_SUBMODULE_STRATEGY: recursive
+  
 cache:
   paths:
     - .m2/repository/
 
+stages:
+  - build
+  - test
+  - docker
+  - deploy
+
 build:
   stage: build
   script:
-    - mvn $MAVEN_CLI_OPTS compile
+    # build all (for other phase such as docker) but skip tests
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true package
+  artifacts:
+    paths:
+      - robert-server/robert-server-ws-rest/target/*.jar
+      - robert-server/robert-crypto-grpc-server/target/*.jar
+      - tac-warning/tac-warning-ws-rest/target/*.jar
 
-Robert tests:
+test:
   stage: test
   script:
-    - mvn $MAVEN_CLI_OPTS -file robert-server/pom.xml verify
+    - mvn $MAVEN_CLI_OPTS verify
   artifacts:
     when: always
     reports:
       junit:
         - "robert-server/*/target/surefire-reports/TEST-*.xml"
-        - "robert-server/*/target/failsafe-reports/TEST-*.xml"
-        
-TAC Warning tests:
-    stage: test
-    script:
-      - mvn $MAVEN_CLI_OPTS --file tac-warning/pom.xml verify
-    artifacts:
-      when: always
-      reports:
-        junit:
-          - "tac-warning/*/target/surefire-reports/TEST-*.xml"
-          - "tac-warning/*/target/failsafe-reports/TEST-*.xml"
-       
+        - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
+        - "tac-warning/*/target/surefire-reports/TEST-*.xml"
+        - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
+  except:
+    - build_docker #disable branch for speeding up ci in pipeline dev mode
+  
+docker-robert-crypto-grpc-server:
+  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
+  tags:    
+    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
+  stage: docker
+  allow_failure: true  #  investigating for EOF failure
+  script:
+    - cd robert-server/robert-crypto-grpc-server
+    - ps
+    - ls
+    - ls target
+    - cat src/main/docker/Dockerfile
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/hsm-tools 
+    - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:latest -f src/main/docker/Dockerfile .
+    - echo $CI_COMMIT_BRANCH
+    - | 
+      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
+      then 
+         echo pushing to registry
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:latest
+      else
+         echo not in develop branch, do not push to registry
+      fi
+    
+docker-robert-server-ws-rest:
+  image: docker:19.03.12
+  tags:    
+    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
+  stage: docker
+  dependencies:
+    - build
+  script:
+    - cd robert-server/robert-server-ws-rest
+    - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-server-ws-rest:latest -f src/main/docker/Dockerfile .
+    - echo $CI_COMMIT_BRANCH
+    - | 
+      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
+      then 
+         echo pushing to registry
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-server-ws-rest:latest
+      else
+         echo not in develop branch, do not push to registry
+      fi  
+      
+docker-tac-warning-ws-rest:
+  image: docker:19.03.12
+  tags:    
+    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
+  stage: docker
+  dependencies:
+    - build
+  script:
+    - cd tac-warning/tac-warning-ws-rest
+    - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:latest -f src/main/docker/Dockerfile .
+    - echo $CI_COMMIT_BRANCH
+    - | 
+      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
+      then 
+         echo pushing to registry
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:latest
+      else
+         echo not in develop branch, do not push to registry
+      fi
