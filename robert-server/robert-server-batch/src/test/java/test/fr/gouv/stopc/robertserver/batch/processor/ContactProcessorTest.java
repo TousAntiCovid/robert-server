@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.processor.ContactProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
@@ -65,6 +66,9 @@ public class ContactProcessorTest {
 
 	@MockBean
 	private ICryptoServerGrpcClient cryptoServerClient;
+
+	@MockBean
+    private RobertServerBatchConfiguration config;
 
 	private final static String SHOULD_NOT_FAIL = "It should not fail";
 
@@ -312,7 +316,6 @@ public class ContactProcessorTest {
 			assertTrue(expectedRegistration.isPresent());
 			assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
 			assertTrue(expectedRegistration.get().getExposedEpochs().size() == 2);
-			assertRiskThresholdExceededBasedOnConfiguration(expectedRegistration.get());
 			verify(this.cryptoServerClient, times(messages.size())).getInfoFromHelloMessage(any());
 
 		} catch (Exception e) {
@@ -387,8 +390,6 @@ public class ContactProcessorTest {
 			assertTrue(expectedRegistration.isPresent());
 			assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
 			assertTrue(expectedRegistration.get().getExposedEpochs().size() == 2);
-
-			assertRiskThresholdExceededBasedOnConfiguration(expectedRegistration.get());
 
 			verify(this.cryptoServerClient, times(messages.size())).getInfoFromHelloMessage(any());
 
@@ -676,8 +677,6 @@ public class ContactProcessorTest {
             assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
             assertEquals(expectedRegistration.get().getExposedEpochs().size(), 1);
 
-            assertRiskThresholdExceededBasedOnConfiguration(expectedRegistration.get());
-
             verify(this.cryptoServerClient, times(2)).getInfoFromHelloMessage(any());
 
         } catch (Exception e) {
@@ -870,8 +869,6 @@ public class ContactProcessorTest {
 			assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
 			assertEquals(nbOfExposedEpochs, expectedRegistration.get().getExposedEpochs().size());
 
-			assertRiskThresholdExceededBasedOnConfiguration(expectedRegistration.get());
-
 			verify(this.cryptoServerClient, times(contact.getMessageDetails().size())).getInfoFromHelloMessage(any());
 
 		} catch (Exception e) {
@@ -982,8 +979,6 @@ public class ContactProcessorTest {
             assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
             assertEquals(expectedRegistration.get().getExposedEpochs().size(), 1);
 
-            assertRiskThresholdExceededBasedOnConfiguration(expectedRegistration.get());
-
             verify(this.cryptoServerClient, times(3)).getInfoFromHelloMessage(any());
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -1084,9 +1079,7 @@ public class ContactProcessorTest {
 			assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
 			assertTrue(expectedRegistration.isPresent());
 			assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
-			assertEquals(expectedRegistration.get().getExposedEpochs().size(), nbOfExposedEpochsBefore - 1 + 1);
-
-			assertRiskThresholdExceededBasedOnConfiguration(expectedRegistration.get());
+			assertEquals(expectedRegistration.get().getExposedEpochs().size(), nbOfExposedEpochsBefore + 1);
 
 			verify(this.cryptoServerClient, times(contact.getMessageDetails().size())).getInfoFromHelloMessage(any());
 
@@ -1154,22 +1147,5 @@ public class ContactProcessorTest {
 		}
 
 		return messages;
-	}
-
-	private void assertRiskThresholdExceededBasedOnConfiguration(Registration expectedRegistration) {
-		boolean atRisk = expectedRegistration.isAtRisk();
-
-		if (this.propertyLoader.getRiskThreshold() >= sumRiskScores(expectedRegistration.getExposedEpochs())) {
-			assertFalse(atRisk);
-		} else {
-			assertTrue(atRisk);
-		}
-	}
-
-	private Double sumRiskScores(List<EpochExposition> epochExpositions) {
-		return epochExpositions.stream()
-				.map(EpochExposition::getExpositionScores)
-				.map(item -> item.stream().mapToDouble(Double::doubleValue).sum())
-				.reduce(0.0, (a,b) -> a + b);
 	}
 }
