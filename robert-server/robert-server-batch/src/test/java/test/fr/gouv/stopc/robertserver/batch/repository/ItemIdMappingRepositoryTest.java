@@ -1,25 +1,26 @@
 package test.fr.gouv.stopc.robertserver.batch.repository;
 
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.model.ItemIdMapping;
-import fr.gouv.stopc.robert.server.batch.repository.ItemIdMappingRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.bson.types.Binary;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.bson.types.Binary;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 
-@Slf4j
+import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
+import fr.gouv.stopc.robert.server.batch.model.ItemIdMapping;
+import fr.gouv.stopc.robert.server.batch.repository.ItemIdMappingRepository;
+
 @TestPropertySource("classpath:application.properties")
 @ContextConfiguration(classes = RobertServerBatchApplication.class)
 @SpringBootTest(properties = "robert.scoring.algo-version=0")
@@ -27,6 +28,9 @@ public class ItemIdMappingRepositoryTest {
 
     @Autowired
     private ItemIdMappingRepository itemIdMappingRepository;
+
+    @MockBean
+    private RobertServerBatchConfiguration config;
 
     @Test
     public void testGetItemIdMappingsBetweenIds() {

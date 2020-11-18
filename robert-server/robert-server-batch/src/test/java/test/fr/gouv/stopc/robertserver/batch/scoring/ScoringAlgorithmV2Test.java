@@ -1,19 +1,5 @@
 package test.fr.gouv.stopc.robertserver.batch.scoring;
 
-import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvException;
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
-import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
-import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
-import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -24,6 +10,25 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
+
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
+
+import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
+import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
+import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
+import fr.gouv.stopc.robertserver.database.model.Contact;
+import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
+import lombok.extern.slf4j.Slf4j;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
@@ -33,6 +38,9 @@ public class ScoringAlgorithmV2Test {
 
     @Autowired
     private ScoringStrategyService serviceScoring;
+
+    @MockBean
+    private RobertServerBatchConfiguration configuration;
 
     @Test
     public void test_C4_20_A() {

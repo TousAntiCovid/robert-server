@@ -15,14 +15,13 @@ import java.util.Random;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
@@ -33,9 +32,8 @@ import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@TestPropertySource("classpath:application.properties")
-@ContextConfiguration(classes = RobertServerBatchApplication.class)
-@SpringBootTest(properties = "robert.scoring.algo-version=0")
+@ExtendWith(SpringExtension.class)
+@TestPropertySource(value="classpath:application.properties", properties = "robert.scoring.algo-version=0")
 public class RSSICalibratedScoringStrategyTest {
 
 	private final static String FAIL_EXCEPTION = "Should not fail";

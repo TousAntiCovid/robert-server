@@ -1,22 +1,19 @@
 package test.fr.gouv.stopc.robertserver.batch.service;
 
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.repository.ItemIdMappingRepository;
-import fr.gouv.stopc.robert.server.batch.service.impl.ItemIdMappingServiceImpl;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-
 import static org.mockito.Mockito.verify;
 
-@Slf4j
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import fr.gouv.stopc.robert.server.batch.repository.ItemIdMappingRepository;
+import fr.gouv.stopc.robert.server.batch.service.impl.ItemIdMappingServiceImpl;
+
 @TestPropertySource("classpath:application.properties")
-@ContextConfiguration(classes = RobertServerBatchApplication.class)
-@SpringBootTest(properties = "robert.scoring.algo-version=0")
+@ExtendWith(SpringExtension.class)
 public class ItemIdMappingServiceTest {
 
     @InjectMocks
