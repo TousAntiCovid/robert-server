@@ -2,7 +2,7 @@ image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-oracleja
 
 variables:
   MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository"
-  GIT_SUBMODULE_STRATEGY: recursive
+#  GIT_SUBMODULE_STRATEGY: recursive
   
 cache:
   paths:
