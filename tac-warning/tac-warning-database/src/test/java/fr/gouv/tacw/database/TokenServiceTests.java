@@ -16,15 +16,15 @@ class TokenServiceTests {
 	@Test
 	void testRegisteredStaticTokenIsIncludedInInfectedTokens() {
 		String token = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
-		tokenService.registerInfectedStaticToken(token);
+		tokenService.registerExposedStaticToken(12345L, token);
 
-		assertThat(tokenService.infectedStaticTokensIncludes(token)).isEqualTo(true);
+		assertThat(tokenService.exposedStaticTokensIncludes(token)).isEqualTo(true);
 	}
 
 	@Test
 	void testStaticTokenNotRegisteredIsNotIncludedInInfectedTokens() {
 		String token = "DOESNOTEXISTS";
 
-		assertThat(tokenService.infectedStaticTokensIncludes(token)).isEqualTo(false);
+		assertThat(tokenService.exposedStaticTokensIncludes(token)).isEqualTo(false);
 	}
 }

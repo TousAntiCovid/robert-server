@@ -1,7 +1,9 @@
 package fr.gouv.tacw.ws.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +44,7 @@ public class WarningServiceTests {
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
-		when(tokenService.infectedStaticTokensIncludes(infectedToken)).thenReturn(true);
+		when(tokenService.exposedStaticTokensIncludes(infectedToken)).thenReturn(true);
 		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
 		visitTokens.add(new VisitTokenVo(TokenType.STATIC, infectedToken));
 
@@ -54,10 +56,10 @@ public class WarningServiceTests {
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("timestamp", new QRCodeVo(TokenType.STATIC, "restaurant", 60, "UUID")));
+		visits.add(new VisitVo("12345", new QRCodeVo(TokenType.STATIC, "restaurant", 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
 
-		verify(tokenService).registerInfectedStaticToken(anyString());
+		verify(tokenService, times(ExposedTokenGenerator.numberOfGeneratedTokens())).registerExposedStaticToken(anyLong(), anyString());
 	}
 }

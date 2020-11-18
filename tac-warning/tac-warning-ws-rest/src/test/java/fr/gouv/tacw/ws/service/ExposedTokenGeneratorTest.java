@@ -24,7 +24,7 @@ public class ExposedTokenGeneratorTest {
 
 		assertThat(tokens).isNotNull();
 		assertThat(tokens).isNotEmpty();
-		assertThat(tokens.size()).isEqualTo(ExposedTokenGenerator.MAX_SALT * 3); // H-1, H, H+1
+		assertThat(tokens.size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
 	}
 
 	// TODO: more tests with invalid data (e.g. wrong timestamp string), limit
