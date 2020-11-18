@@ -36,7 +36,8 @@ test:
         - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
         - "tac-warning/*/target/surefire-reports/TEST-*.xml"
         - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
-
+  except:
+    - build_docker #disable branch for speeding up ci in pipeline dev mode
   
 docker-robert-crypto-grpc-server:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
@@ -45,6 +46,10 @@ docker-robert-crypto-grpc-server:
   stage: docker
   script:
     - cd robert-server/robert-crypto-grpc-server
+    - ps
+    - ls
+    - ls target
+    - cat src/main/docker/Dockerfile
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/hsm-tools 
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
