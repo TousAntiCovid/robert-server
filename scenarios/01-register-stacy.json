@@ -1,0 +1,10 @@
+{
+  "captcha": "string",
+  "captchaId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "clientPublicECDHKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEB+Q03HmTHYPpHUs3UZIcY0robfRuP0zIVwItwseq8JMCl8W9yCuVRyFGTqL7VqnhZN1tQqS4nwbEW4FSK/JLbg==",
+  "pushInfo": {
+    "locale": "fr",
+    "timezone": "Europe/Paris",
+    "token": "string"
+  }
+}

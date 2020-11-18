@@ -2,7 +2,7 @@
    "visits": [
      {
        "timestamp": "3814657232",
-       "qrcode": {
+       "qrCode": {
          "type": "STATIC",
          "venueType": "N",
          "venueCapacity": 42,
