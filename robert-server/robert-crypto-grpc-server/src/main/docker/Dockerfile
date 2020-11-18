@@ -4,7 +4,7 @@
 # and then rm -rf hsm-tools
 # docker build -f src/main/docker/Dockerfile -t tac/robert-crypto-grpc-server .
 
-FROM tac/jdk8:latest
+FROM registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-oraclejava8-jdk
 RUN apt-get -y install git build-essential libtool botan libssl-dev libbotan-2-dev python3 python3-pip opensc
 RUN git clone https://github.com/opendnssec/SoftHSMv2
 WORKDIR SoftHSMv2
