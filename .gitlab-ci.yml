@@ -45,6 +45,7 @@ docker-robert-crypto-grpc-server:
   stage: docker
   script:
     - cd robert-server/robert-crypto-grpc-server
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/hsm-tools 
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:latest -f src/main/docker/Dockerfile .
