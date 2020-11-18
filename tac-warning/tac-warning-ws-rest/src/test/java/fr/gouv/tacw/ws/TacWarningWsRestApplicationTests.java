@@ -2,6 +2,7 @@ package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ class TacWarningWsRestApplicationTests {
 
 	@Autowired
 	private WarningService warningService;
-	
+
 	@Value("${controller.path.prefix}" + UriConstants.API_V1)
 	private String pathPrefixV1;
 
@@ -52,12 +53,23 @@ class TacWarningWsRestApplicationTests {
 
 	@Test
 	void testCanGetStatus() {
-		ExposureStatusRequestVo request = new ExposureStatusRequestVo( new ArrayList<VisitTokenVo>() );
+		ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
 		when(warningService.getStatus(any(ExposureStatusRequestVo.class))).thenReturn(true);
 
-		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.STATUS, request,
-				ExposureStatusResponseDto.class);
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate
+				.postForEntity(pathPrefixV1 + UriConstants.STATUS, request, ExposureStatusResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+	}
+
+	@Test
+	void testWhenExposureStatusRequestWithNullVisitTokensThenGetError() {
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				new ExposureStatusRequestVo(null), 
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		verifyNoMoreInteractions(warningService);
 	}
 }

@@ -8,6 +8,8 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,7 +44,7 @@ public class TACWarningController {
 	private WarningService warningService;
 	
 	@PostMapping(value = UriConstants.STATUS)
-	protected ExposureStatusResponseDto getStatus(@RequestBody(required = true) ExposureStatusRequestVo statusRequestVo) {
+	protected ExposureStatusResponseDto getStatus(@Valid @RequestBody(required = true) ExposureStatusRequestVo statusRequestVo) {
 		log.debug("getStatus called");
 		boolean atRisk = warningService.getStatus(statusRequestVo);
 		return new ExposureStatusResponseDto(atRisk);
