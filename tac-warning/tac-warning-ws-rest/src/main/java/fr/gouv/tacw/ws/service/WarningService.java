@@ -22,6 +22,10 @@ public class WarningService {
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
 		reportRequestVo.getVisits().stream()
 			.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
-			.forEach(reportRequest -> tokenService.registerInfectedStaticToken(reportRequest.getQrCode().getUuid()));
+			.forEach(visit ->  {
+					long timestamp = Long.parseLong(visit.getTimestamp());
+					new ExposedTokenGenerator(visit).generateAllExposedTokens().stream()
+						.forEach(visitToken -> tokenService.registerExposedStaticToken(timestamp, visitToken.getPayload()));						
+			});
 	}
 }

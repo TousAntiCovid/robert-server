@@ -21,6 +21,6 @@ public class StaticVisitToken {
 	}
 
 	protected boolean isInfected() {
-		return tokenService.infectedStaticTokensIncludes(this.payload);
+		return tokenService.exposedStaticTokensIncludes(this.payload);
 	}
 }

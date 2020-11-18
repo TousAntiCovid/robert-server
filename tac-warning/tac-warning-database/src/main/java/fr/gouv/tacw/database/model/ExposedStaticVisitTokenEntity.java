@@ -22,9 +22,13 @@ public class ExposedStaticVisitTokenEntity {
     private Long id;
     
     @NotNull
-	String token;
+	private String token;
+
+    @NotNull
+    private long timestamp;
     
-    public ExposedStaticVisitTokenEntity(String token) {
+    public ExposedStaticVisitTokenEntity(long timestamp, String token) {
+    	this.timestamp = timestamp;
     	this.token = token;
     }
 }

@@ -11,11 +11,11 @@ public class TokenService {
 	@Autowired
 	StaticTokenRepository staticTokenRepository;
 
-	public void registerInfectedStaticToken(String token) {
-		staticTokenRepository.save(new ExposedStaticVisitTokenEntity(token));
+	public void registerExposedStaticToken(long timestamp, String token) {
+		staticTokenRepository.save(new ExposedStaticVisitTokenEntity(timestamp, token));
 	}
 
-	public boolean infectedStaticTokensIncludes(String token) {
+	public boolean exposedStaticTokensIncludes(String token) {
 		return staticTokenRepository.findByToken(token).isPresent();
 	}
 }

@@ -17,6 +17,13 @@ public class ExposedTokenGenerator {
 	private TokenType tokenType;
 	private ArrayList<VisitTokenVo> exposedTokens;
 
+	/**
+	 * Used by tests
+	 */
+	public static int numberOfGeneratedTokens() {
+		return MAX_SALT * 3; // H-1, H, H+1
+	}
+	
 	public ExposedTokenGenerator(VisitVo visit) {
 		this.uuid = visit.getQrCode().getUuid();
 		this.timestamp = Long.parseLong(visit.getTimestamp());
