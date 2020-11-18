@@ -1,0 +1,9 @@
+{
+  "visitTokens" : [ {
+    "type" : "STATIC",
+    "payload" : "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+  }, {
+    "type" : "DYNAMIC",
+    "payload" : "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+  } ]
+}

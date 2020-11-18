@@ -1,0 +1,13 @@
+{
+   "visits": [
+     {
+       "timestamp": "3814657232",
+       "qrcode": {
+         "type": "STATIC",
+         "venueType": "N",
+         "venueCapacity": 42,
+         "uuid": "9fb80fea-b3ac-4603-b40a-0be8879dbe79"
+       }
+     }
+   ]
+}
