@@ -80,7 +80,7 @@ docker-robert-server-ws-rest:
          echo not in develop branch, do not push to registry
       fi  
       
-  docker-tac-warning-ws-rest:
+docker-tac-warning-ws-rest:
   image: docker:19.03.12
   tags:    
     - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
