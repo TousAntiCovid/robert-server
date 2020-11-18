@@ -145,11 +145,13 @@ components:
       properties:
         timestamp:
           type: string
-          description: "TODO refine timestamp type"
-          example: ""
+          description: "timestamp is a NTP timestamp. It express the number of second relative to 0h on 1 january 1900.
+          It corresponds to the unix timestamp with a shift of (70 * 365 + 17) * 86400 seconds.
+           ntp-timestamp = unix-timestamp + (70 * 365 + 17) * 86400"
+          example: "3814601613"
         qrcode:
           $ref: "#/components/schemas/QRCode"
-          example: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+          example: '{"type":"STATIC","venueType":"J","venueCapacity":"20","uuid":"18ef4c39-9f15-4da1-8136-d482c51c74fe"}'
       required:
         - timestamp
         - payload
@@ -164,10 +166,13 @@ components:
           example: DYNAMIC
         venueType:
           type: string
+          example: "J"
         venueCapacity:
           type: integer
+          example: 20
         uuid:
           type: string
+          example: "18ef4c39-9f15-4da1-8136-d482c51c74fe"
       required:
         - type
         - uuid
