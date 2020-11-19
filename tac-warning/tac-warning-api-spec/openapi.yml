@@ -129,10 +129,7 @@ components:
       type: object
       properties:
         type:
-          type: string
-          enum: 
-            - STATIC
-            - DYNAMIC
+          $ref: "#/components/schemas/TokenType"
           example: DYNAMIC
         payload:
           type: string
@@ -159,10 +156,7 @@ components:
       type: object
       properties:
         type: 
-          type: string
-          enum: 
-            - STATIC
-            - DYNAMIC
+          $ref: "#/components/schemas/TokenType"
           example: DYNAMIC
         venueType:
           type: string
@@ -176,3 +170,10 @@ components:
       required:
         - type
         - uuid
+    TokenType:
+      type: string
+      enum: 
+        - STATIC
+        - DYNAMIC
+      example: DYNAMIC
+    
