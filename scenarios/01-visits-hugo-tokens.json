@@ -1,9 +1,6 @@
 {
   "visitTokens" : [ {
     "type" : "STATIC",
-    "payload" : "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
-  }, {
-    "type" : "DYNAMIC",
-    "payload" : "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+    "payload" : "509d01e8e879ad89969ca913d9fad0a7cabd5413790623bfd95be8ecbdb69098"
   } ]
 }

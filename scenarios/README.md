@@ -7,3 +7,7 @@ A few helper scripts to semi-interactively run scenarios in absence of a client.
 - Ensure that system requirements described in the `apt.txt` file are installed
 - Ensure that the backend is running 
 - Run the scenarios (e.g. `./01-warning.sh`)
+
+## Debugging
+
+Run `bash -x ./01-warning.sh` (or any other scenario) to display an execution trace.
