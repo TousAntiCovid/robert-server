@@ -1,7 +1,7 @@
 image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-oraclejava8:latest
 
 variables:
-  MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository --batch-mode"
   GIT_SUBMODULE_STRATEGY: recursive
   
 cache:
@@ -139,8 +139,6 @@ docker-robert-push-notif-server:
     - build_robert-push-notif-server 
   script:
     - cd robert-push-notif-server/robert-push-notif-server-ws-rest
-    - ls
-    - ls src/main
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-push-notif-server-ws-rest:latest -f src/main/docker/Dockerfile .
@@ -163,8 +161,6 @@ docker-submission-code-server:
     - build_submission-code-server
   script:
     - cd submission-code-server/submission-code-server-ws-rest
-    - ls
-    - ls src/main/docker
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:latest -f src/main/docker/Dockerfile .
@@ -187,16 +183,14 @@ docker-captcha-orange-server:
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/cicd/deploy_captcha-orange.git
     - cd deploy_captcha-orange
-    - ls
-    - cat docker/Dockerfile
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/captcha-orange-server:latest -f docker/Dockerfile .
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:latest -f docker/Dockerfile .
     - echo $CI_COMMIT_BRANCH
     - | 
       if [[ $CI_COMMIT_BRANCH = "develop" ]] 
       then 
          echo pushing to registry
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/captcha-orange-server:latest
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:latest
       else
          echo not in develop branch, do not push to registry
       fi 
