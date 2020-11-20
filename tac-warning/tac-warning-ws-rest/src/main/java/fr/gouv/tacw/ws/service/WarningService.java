@@ -1,5 +1,7 @@
 package fr.gouv.tacw.ws.service;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ public class WarningService {
 				.anyMatch(token -> token.isInfected());
 	}
 
+	@Transactional
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
 		reportRequestVo.getVisits().stream()
 			.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
