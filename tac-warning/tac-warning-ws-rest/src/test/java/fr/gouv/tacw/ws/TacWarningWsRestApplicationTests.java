@@ -6,7 +6,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +20,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
@@ -63,10 +67,50 @@ class TacWarningWsRestApplicationTests {
 	}
 
 	@Test
-	void testWhenExposureStatusRequestWithNullVisitTokensThenGetError() {
+	void testWhenRequestExposureStatusWithInvalidMediaTypeThenGetUnsupportedMediaType() {
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				new HttpEntity<String>("foo"),
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
+	void testWhenRequestExposureStatusWithInvalidJsonDataThenGetBadRequest() throws JSONException {
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("id", 1);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				new HttpEntity<String>(jsonObject.toString(), headers),
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
+	void testWhenExposureStatusRequestWithNullVisitTokensThenGetBadRequest() {
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.STATUS, 
 				new ExposureStatusRequestVo(null), 
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
+	void testWhenVisitTokenVoWithNullTokenTypeThenGetBadRequest() {
+		ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
+		visitTokens.add(new VisitTokenVo(null, "payload"));
+		ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				entity, 
 				ExposureStatusResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
