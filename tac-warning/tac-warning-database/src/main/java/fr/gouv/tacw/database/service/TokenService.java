@@ -1,5 +1,8 @@
 package fr.gouv.tacw.database.service;
 
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,9 @@ public class TokenService {
 		staticTokenRepository.save(new ExposedStaticVisitTokenEntity(timestamp, token));
 	}
 
+	public void registerExposedStaticTokens(List<ExposedStaticVisitTokenEntity> l ) {
+		staticTokenRepository.saveAll(l);
+	}
 	public boolean exposedStaticTokensIncludes(String token) {
 		return staticTokenRepository.findByToken(token).isPresent();
 	}
