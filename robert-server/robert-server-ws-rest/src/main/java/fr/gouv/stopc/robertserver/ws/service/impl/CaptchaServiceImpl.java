@@ -8,6 +8,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
+import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,13 +18,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
 import fr.gouv.stopc.robertserver.ws.dto.CaptchaDto;
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
 import fr.gouv.stopc.robertserver.ws.service.impl.utils.CaptchaAccessException;
 import fr.gouv.stopc.robertserver.ws.service.impl.utils.CaptchaErrorHandler;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
-import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.ToString;
@@ -55,9 +56,6 @@ public class CaptchaServiceImpl implements CaptchaService {
 	
 	@Override
 	public boolean verifyCaptcha(final RegisterVo registerVo) {
-		// add the ability to disconnect the captcha check
-		if (!this.propertyLoader.getActivateCaptcha())
-			return true;
 
 		return Optional.ofNullable(registerVo).map(captcha -> {
 
