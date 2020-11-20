@@ -91,12 +91,12 @@ components:
           description: |-
             List of tokens computed from the venue static QR-code and a client timestamp of the time of visit
             using token=hash(salt|uuid|time). 
-            TODO specify hash method
+            We use sha256 and is expressed in hexa.
           example: 
             - type: "STATIC"
-              payload: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+              payload: "88d84f0b72dd2ff8702a60365cf88672dff93329aeb3fb7c24951808a0fa7641"
             - type: "DYNAMIC"
-              payload: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+              payload: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
     ExposureStatusResponse:
       type: object
       properties:
@@ -133,7 +133,7 @@ components:
           example: DYNAMIC
         payload:
           type: string
-          example: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+          example: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
       required:
         - type
         - payload
@@ -143,12 +143,11 @@ components:
         timestamp:
           type: string
           description: "timestamp is a NTP timestamp. It express the number of second relative to 0h on 1 january 1900.
-          It corresponds to the unix timestamp with a shift of (70 * 365 + 17) * 86400 seconds.
-           ntp-timestamp = unix-timestamp + (70 * 365 + 17) * 86400"
+          It corresponds to the unix timestamp with a shift of (70 * 365 + 18) * 86400 seconds.
+           ntp-timestamp = unix-timestamp + (70 * 365 + 18) * 86400. The timestamp express the time at with the QR-CODE is scanned"
           example: "3814601613"
         qrCode:
           $ref: "#/components/schemas/QRCode"
-          example: '{"type":"STATIC","venueType":"J","venueCapacity":"20","uuid":"18ef4c39-9f15-4da1-8136-d482c51c74fe"}'
       required:
         - timestamp
         - payload
@@ -157,7 +156,7 @@ components:
       properties:
         type: 
           $ref: "#/components/schemas/TokenType"
-          example: DYNAMIC
+          example: STATIC
         venueType:
           type: string
           example: "J"
