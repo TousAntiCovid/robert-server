@@ -18,8 +18,8 @@ public class TokenService {
 		staticTokenRepository.save(new ExposedStaticVisitTokenEntity(timestamp, token));
 	}
 
-	public void registerExposedStaticTokens(List<ExposedStaticVisitTokenEntity> l ) {
-		staticTokenRepository.saveAll(l);
+	public void registerExposedStaticTokens(List<ExposedStaticVisitTokenEntity> exposedStaticVisitTokenEntities ) {
+		staticTokenRepository.saveAll(exposedStaticVisitTokenEntities);
 	}
 	public boolean exposedStaticTokensIncludes(String token) {
 		return staticTokenRepository.findByToken(token).isPresent();
