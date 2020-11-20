@@ -18,7 +18,7 @@ build_robert-server:
   stage: build
   script:
     # build all (for other phase such as docker) but skip tests
-    - mvn $MAVEN_CLI_OPTS -DskipTests=true package
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true -P swagger,logstash  package
   artifacts:
     paths:
       - robert-server/robert-server-ws-rest/target/*.jar
