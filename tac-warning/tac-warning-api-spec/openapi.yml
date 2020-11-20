@@ -15,22 +15,18 @@ paths:
     post:
       tags: []
       summary: Exposure Status Request
-      description: >-
-        App requests if its user has been exposed
-
-
+      description: "App requests if its user has been exposed
         The request is a POST even if no information is contributed to the server because parameters should not be passed as queryparams.
-
-
         App should continue to send ESR requests even after having been notified of a risk, in case new risks are detected.
+        WARNING : DYNAMIC token are ignored for the moment"
       operationId: ESR
       requestBody:
         $ref: "#/components/requestBodies/ExposureStatusRequest"
       responses:
         "200":
-          description: Returns whether the app user was exposed to a risk. The app must
+          description: "Returns whether the app user was exposed to a risk. The app must
             display associated hardcoded content accordingly and send local
-            notification.
+            notification."
           content:
             application/json:
               schema:
@@ -41,12 +37,10 @@ paths:
     post:
       tags: []
       summary: Report visited enclosed area history
-      description: >-
-        Report visited enclosed area from the last X days 
+      description: "Report visited venue from the last X days
         stored by the app once user has been diagnosed as infected by a healthcare professional.
-
-
         Requires a Bearer Token for authorization (provided by the Robert Server Report answer).
+        WARNING : DYNAMIC token are ignored for the moment"
       operationId: Report
       security:
         - bearerAuth: []
@@ -88,25 +82,22 @@ components:
           type: array
           items: 
             $ref: "#/components/schemas/VisitToken"
-          description: |-
-            List of tokens computed from the venue static QR-code and a client timestamp of the time of visit
-            using token=hash(salt|uuid|time). 
-            TODO specify hash method
+          description: "List of tokens computed from the venue static QR-code and a client timestamp of the time of visit
+            using token=hash(salt|uuid|time). Where salt is a random number between 1 and MAX_SALT.
+            We use sha256 and is expressed in hexa."
           example: 
             - type: "STATIC"
-              payload: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+              payload: "88d84f0b72dd2ff8702a60365cf88672dff93329aeb3fb7c24951808a0fa7641"
             - type: "DYNAMIC"
-              payload: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+              payload: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
     ExposureStatusResponse:
       type: object
       properties:
         atRisk:
           type: boolean
-          description: |-
-            Optional. If the Exposure Status Request is done with a list of QR-codes, it answers 
+          description: "Optional. If the Exposure Status Request is done with a list of QR-codes, it answers
             True if was exposed at risk. If already notified of a risk exposure,
-            means exposed to a new risk since.
-
+            means exposed to a new risk since."
     ReportRequest:
       type: object
       properties:
@@ -114,8 +105,7 @@ components:
           type: array
           items: 
             $ref: "#/components/schemas/Visit"
-          description: >-
-            The list of visited enclosed Areas stored in the LocalList
+          description: "The list of visited venue stored in the LocalList"
     ReportResponse:
       type: object
       properties:
@@ -133,7 +123,7 @@ components:
           example: DYNAMIC
         payload:
           type: string
-          example: "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"
+          example: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
       required:
         - type
         - payload
@@ -143,12 +133,11 @@ components:
         timestamp:
           type: string
           description: "timestamp is a NTP timestamp. It express the number of second relative to 0h on 1 january 1900.
-          It corresponds to the unix timestamp with a shift of (70 * 365 + 17) * 86400 seconds.
-           ntp-timestamp = unix-timestamp + (70 * 365 + 17) * 86400"
+          The timestamp express the time at with the QR-CODE is scanned.
+          The timestamp is rounded to S seconds"
           example: "3814601613"
         qrCode:
           $ref: "#/components/schemas/QRCode"
-          example: '{"type":"STATIC","venueType":"J","venueCapacity":"20","uuid":"18ef4c39-9f15-4da1-8136-d482c51c74fe"}'
       required:
         - timestamp
         - payload
@@ -157,7 +146,7 @@ components:
       properties:
         type: 
           $ref: "#/components/schemas/TokenType"
-          example: DYNAMIC
+          example: STATIC
         venueType:
           type: string
           example: "J"
