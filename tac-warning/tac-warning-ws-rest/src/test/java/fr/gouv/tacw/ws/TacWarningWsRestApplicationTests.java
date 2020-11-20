@@ -116,4 +116,23 @@ class TacWarningWsRestApplicationTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		verifyNoMoreInteractions(warningService);
 	}
+
+	@Test
+	void testWhenVisitTokenVoWithInvalidTokenTypeThenGetBadRequest() throws JSONException {
+		String json = "{\n"
+				+ "  \"visitTokens\" : [ {\n"
+				+ "    \"type\" : \"UNKNOWN\",\n"
+				+ "    \"payload\" : \"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc\"\n"
+				+ "  } ]\n"
+				+ "}";
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				new HttpEntity<String>(json, headers),
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		verifyNoMoreInteractions(warningService);
+	}
 }
