@@ -65,25 +65,19 @@ docker-robert-crypto-grpc-server:
   stage: docker
   dependencies:
     - build_robert-server
-  allow_failure: true  #  investigating for EOF failure
   script:
+    - source .gitlab-ci/compute_extra_env.sh
     - cd robert-server/robert-crypto-grpc-server
-    - ps
-    - ls
-    - ls target
-    - cat src/main/docker/Dockerfile
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/hsm-tools 
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:latest -f src/main/docker/Dockerfile .
-    - echo $CI_COMMIT_BRANCH
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:$DOCKER_TAG -f src/main/docker/Dockerfile .
     - | 
-      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
-      then 
-         echo pushing to registry
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:latest
+      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
+      then         
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:$DOCKER_TAG
       else
-         echo not in develop branch, do not push to registry
+         echo not in a branch, do not push to registry
       fi
     
 docker-robert-server-ws-rest:
@@ -94,18 +88,18 @@ docker-robert-server-ws-rest:
   dependencies:
     - build_robert-server
   script:
+    - source .gitlab-ci/compute_extra_env.sh
     - cd robert-server/robert-server-ws-rest
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-server-ws-rest:latest -f src/main/docker/Dockerfile .
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-server-ws-rest:$DOCKER_TAG -f src/main/docker/Dockerfile .
     - echo $CI_COMMIT_BRANCH
     - | 
-      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
-      then 
-         echo pushing to registry
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-server-ws-rest:latest
+      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
+      then
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-server-ws-rest:$DOCKER_TAG
       else
-         echo not in develop branch, do not push to registry
+         echo not in a branch, do not push to registry
       fi  
       
 docker-tac-warning:
@@ -116,18 +110,17 @@ docker-tac-warning:
   dependencies:
     - build_robert-server
   script:
+    - source .gitlab-ci/compute_extra_env.sh
     - cd tac-warning/tac-warning-ws-rest
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:latest -f src/main/docker/Dockerfile .
-    - echo $CI_COMMIT_BRANCH
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:$DOCKER_TAG -f src/main/docker/Dockerfile .
     - | 
-      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
+      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
       then 
-         echo pushing to registry
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:latest
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:$DOCKER_TAG
       else
-         echo not in develop branch, do not push to registry
+         echo not in a branch, do not push to registry
       fi
       
 docker-robert-push-notif-server:
@@ -138,18 +131,17 @@ docker-robert-push-notif-server:
   dependencies:
     - build_robert-push-notif-server 
   script:
+    - source .gitlab-ci/compute_extra_env.sh
     - cd robert-push-notif-server/robert-push-notif-server-ws-rest
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-push-notif-server-ws-rest:latest -f src/main/docker/Dockerfile .
-    - echo $CI_COMMIT_BRANCH
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-push-notif-server-ws-rest:$DOCKER_TAG -f src/main/docker/Dockerfile .
     - | 
-      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
+      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
       then 
-         echo pushing to registry
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-push-notif-server-ws-rest:latest
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-push-notif-server-ws-rest:$DOCKER_TAG
       else
-         echo not in develop branch, do not push to registry
+         echo not in a branch, do not push to registry
       fi 
       
 docker-submission-code-server:
@@ -160,18 +152,17 @@ docker-submission-code-server:
   dependencies:
     - build_submission-code-server
   script:
+    - source .gitlab-ci/compute_extra_env.sh
     - cd submission-code-server/submission-code-server-ws-rest
     - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:latest -f src/main/docker/Dockerfile .
-    - echo $CI_COMMIT_BRANCH
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:$DOCKER_TAG -f src/main/docker/Dockerfile .
     - | 
-      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
+      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
       then 
-         echo pushing to registry
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:latest
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:$DOCKER_TAG
       else
-         echo not in develop branch, do not push to registry
+         echo not in a branch, do not push to registry
       fi 
       
       
@@ -181,16 +172,16 @@ docker-captcha-orange-server:
     - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
   stage: docker
   script:
+    - source .gitlab-ci/compute_extra_env.sh
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/cicd/deploy_captcha-orange.git
     - cd deploy_captcha-orange
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:latest -f docker/Dockerfile .
-    - echo $CI_COMMIT_BRANCH
+    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:$DOCKER_TAG -f docker/Dockerfile .
     - | 
-      if [[ $CI_COMMIT_BRANCH = "develop" ]] 
+      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
       then 
-         echo pushing to registry
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:latest
+         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:$DOCKER_TAG
       else
-         echo not in develop branch, do not push to registry
+          echo not in a branch, do not push to registry
       fi 
+      
