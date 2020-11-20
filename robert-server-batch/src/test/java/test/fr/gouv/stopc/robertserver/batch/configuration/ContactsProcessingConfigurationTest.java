@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -331,7 +332,7 @@ public class ContactsProcessingConfigurationTest {
 
             assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
             assertEquals(1, this.contactService.findAll().size());
-            log.info("Before Current EPOCHHHHHHHHHHHHHH = {} vs {}", currentEpochId, registrationWithEE.getExposedEpochs());
+
             // When
             this.jobLauncherTestUtils.launchJob();
 
@@ -349,6 +350,138 @@ public class ContactsProcessingConfigurationTest {
             assertFalse(expectedRegistration.get().isAtRisk());
 
             verify(this.cryptoServerClient, times(contact.getMessageDetails().size())).getInfoFromHelloMessage(any());
+
+        } catch (Exception e) {
+            fail(SHOULD_NOT_FAIL);
+        }
+    }
+
+    @Test
+    public void testScoreAndProcessRiskskWhenScoresEqualsZeroldShouldNotBeAtRisk() {
+
+        try {
+            // Given
+            this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+            assertTrue(this.registration.isPresent());
+
+
+            final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
+            final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
+
+            final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
+            final int previousEpoch = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime - 900);
+
+            // Setup id with an existing score below threshold
+            Registration registrationWithEE = this.registration.get();
+            registrationWithEE.setExposedEpochs(Arrays.asList(EpochExposition.builder()
+                    .epochId(previousEpoch)
+                    .expositionScores(Arrays.asList(10.0))
+                    .build(),
+                    EpochExposition.builder()
+                    .epochId(currentEpochId)
+                    .expositionScores(Arrays.asList(1.0))
+                    .build()));
+
+            this.registrationService.saveRegistration(registrationWithEE);
+
+            // When
+            this.jobLauncherTestUtils.launchJob();
+
+            // Then
+            Optional<Registration> expectedRegistration = this.registrationService
+                    .findById(registrationWithEE.getPermanentIdentifier());
+
+            assertTrue(expectedRegistration.isPresent());
+            assertFalse(expectedRegistration.get().isAtRisk());
+            verify(this.cryptoServerClient, never()).getInfoFromHelloMessage(any());
+
+        } catch (Exception e) {
+            fail(SHOULD_NOT_FAIL);
+        }
+    }
+    @Test
+    public void testScoreAndProcessRiskskWhenRecentExposedEpochScoreGreaterThanRiskThresholdShouldBeAtRisk() {
+
+        try {
+            // Given
+            this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+            assertTrue(this.registration.isPresent());
+
+
+            final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
+            final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
+
+            final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
+            final int previousEpoch = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime - 900);
+
+            // Setup id with an existing score below threshold
+            Registration registrationWithEE = this.registration.get();
+            registrationWithEE.setExposedEpochs(Arrays.asList(EpochExposition.builder()
+                    .epochId(previousEpoch)
+                    .expositionScores(Arrays.asList(14.0))
+                    .build(),
+                    EpochExposition.builder()
+                    .epochId(currentEpochId)
+                    .expositionScores(Arrays.asList(2.0))
+                    .build()));
+
+            this.registrationService.saveRegistration(registrationWithEE);
+
+            // When
+            this.jobLauncherTestUtils.launchJob();
+
+            // Then
+            Optional<Registration> expectedRegistration = this.registrationService
+                    .findById(registrationWithEE.getPermanentIdentifier());
+
+            assertTrue(expectedRegistration.isPresent());
+            assertTrue(expectedRegistration.get().isAtRisk());
+            verify(this.cryptoServerClient, never()).getInfoFromHelloMessage(any());
+
+        } catch (Exception e) {
+            fail(SHOULD_NOT_FAIL);
+        }
+    }
+
+    @Test
+    public void testScoreAndProcessRiskskWhenEpochScoresLesserThanRiskThresholdShouldNotBeAtRisk() {
+
+        try {
+            // Given
+            this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+            assertTrue(this.registration.isPresent());
+
+
+            final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
+            final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
+
+            final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
+            final int previousEpoch = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime - 900);
+
+            // Setup id with an existing score below threshold
+            Registration registrationWithEE = this.registration.get();
+            registrationWithEE.setExposedEpochs(Arrays.asList(EpochExposition.builder()
+                    .epochId(previousEpoch)
+                    .expositionScores(Arrays.asList(0.0))
+                    .build(),
+                    EpochExposition.builder()
+                    .epochId(currentEpochId)
+                    .expositionScores(Arrays.asList(0.0))
+                    .build()));
+
+            this.registrationService.saveRegistration(registrationWithEE);
+
+            // When
+            this.jobLauncherTestUtils.launchJob();
+
+            // Then
+            Optional<Registration> expectedRegistration = this.registrationService
+                    .findById(registrationWithEE.getPermanentIdentifier());
+
+            assertTrue(expectedRegistration.isPresent());
+            assertFalse(expectedRegistration.get().isAtRisk());
+
+            verify(this.cryptoServerClient, never()).getInfoFromHelloMessage(any());
 
         } catch (Exception e) {
             fail(SHOULD_NOT_FAIL);
