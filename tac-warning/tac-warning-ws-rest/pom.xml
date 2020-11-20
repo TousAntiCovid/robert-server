@@ -49,17 +49,6 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-     	<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-boot-starter</artifactId>
-			<version>3.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>net.logstash.logback</groupId>
-			<artifactId>logstash-logback-encoder</artifactId>
-			<version>6.4</version>
-		</dependency>
-
 	</dependencies>
 
 	<build>
@@ -70,5 +59,26 @@
 			</plugin>
 		</plugins>
 	</build>
-
+	<profiles>
+		<profile>
+			<id>swagger</id>
+			<dependencies>
+				<dependency>
+					<groupId>io.springfox</groupId>
+					<artifactId>springfox-boot-starter</artifactId>
+					<version>3.0.0</version>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>logstash</id>
+			<dependencies>
+				<dependency>
+					<groupId>net.logstash.logback</groupId>
+					<artifactId>logstash-logback-encoder</artifactId>
+					<version>6.4</version>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
 </project>
