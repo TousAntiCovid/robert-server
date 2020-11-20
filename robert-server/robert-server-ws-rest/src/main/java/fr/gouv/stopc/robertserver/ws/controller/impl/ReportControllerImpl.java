@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -21,8 +22,6 @@ import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import io.micrometer.core.instrument.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Objects;
-
 @Service
 @Slf4j
 public class ReportControllerImpl implements IReportController {
@@ -33,11 +32,15 @@ public class ReportControllerImpl implements IReportController {
     private final IRestApiService restApiService;
 
 
-    @Inject
-    public ReportControllerImpl(final ContactDtoService contactDtoService, final IRestApiService restApiService) {
+    private final PropertyLoader propertyLoader;
 
+    @Inject
+    public ReportControllerImpl(final ContactDtoService contactDtoService, 
+       final IRestApiService restApiService,
+       final PropertyLoader propertyLoader) {
         this.contactDtoService = contactDtoService;
         this.restApiService = restApiService;
+        this.propertyLoader = propertyLoader;
     }
 
     private boolean areBothFieldsPresent(ReportBatchRequestVo reportBatchRequestVo) {
@@ -64,7 +67,9 @@ public class ReportControllerImpl implements IReportController {
             return ResponseEntity.badRequest().build();
         }
 
-        checkValidityToken(reportBatchRequestVo.getToken());
+        //Add the ability to disconnect the check in dev profile
+        if (this.propertyLoader.getCheckToken())
+        	checkValidityToken(reportBatchRequestVo.getToken());
 
         contactDtoService.saveContacts(reportBatchRequestVo.getContacts());
 
