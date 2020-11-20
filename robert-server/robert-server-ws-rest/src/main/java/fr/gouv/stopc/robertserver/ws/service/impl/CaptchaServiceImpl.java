@@ -17,8 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.CaptchaDto;
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
 import fr.gouv.stopc.robertserver.ws.service.impl.utils.CaptchaAccessException;
@@ -39,16 +37,12 @@ public class CaptchaServiceImpl implements CaptchaService {
 
 	private PropertyLoader propertyLoader;
 
-	private WsServerConfiguration config;
- 
 	@Inject
 	public CaptchaServiceImpl(RestTemplate restTemplate,
-							  PropertyLoader propertyLoader,
-							  WsServerConfiguration config) {
+							  PropertyLoader propertyLoader) {
 		this.restTemplate = restTemplate;
 		this.restTemplate.setErrorHandler(new CaptchaErrorHandler());
 		this.propertyLoader = propertyLoader;
-		this.config = config;
 	}
 
 	@AllArgsConstructor
@@ -61,8 +55,10 @@ public class CaptchaServiceImpl implements CaptchaService {
 	
 	@Override
 	public boolean verifyCaptcha(final RegisterVo registerVo) {
-		if (!this.config.getActivateCaptcha())
+		// add the ability to disconnect the captcha check
+		if (!this.propertyLoader.getActivateCaptcha())
 			return true;
+
 		return Optional.ofNullable(registerVo).map(captcha -> {
 
 			HttpEntity<CaptchaServiceDto> request = new HttpEntity<CaptchaServiceDto>(

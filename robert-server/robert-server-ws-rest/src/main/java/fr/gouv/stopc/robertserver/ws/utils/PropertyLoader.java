@@ -66,4 +66,9 @@ public class PropertyLoader {
     @Value("${push.api.path.token}")
     private String pushApiTokenPath;
 
+    @Value("${robert.server.activate-captcha-check}")
+	private Boolean activateCaptcha;
+	
+	@Value("${robert.server.check-token}")
+	private Boolean checkToken;
 }

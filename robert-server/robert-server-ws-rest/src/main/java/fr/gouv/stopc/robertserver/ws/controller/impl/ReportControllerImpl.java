@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IReportController;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
@@ -33,14 +32,15 @@ public class ReportControllerImpl implements IReportController {
     private final IRestApiService restApiService;
 
 
-    private final WsServerConfiguration config;
+    private final PropertyLoader propertyLoader;
 
     @Inject
-    public ReportControllerImpl(final ContactDtoService contactDtoService, final IRestApiService restApiService, final WsServerConfiguration config) {
-
+    public ReportControllerImpl(final ContactDtoService contactDtoService, 
+       final IRestApiService restApiService,
+       final PropertyLoader propertyLoader) {
         this.contactDtoService = contactDtoService;
         this.restApiService = restApiService;
-        this.config=config;
+        this.propertyLoader = propertyLoader;
     }
 
     private boolean areBothFieldsPresent(ReportBatchRequestVo reportBatchRequestVo) {
@@ -68,7 +68,7 @@ public class ReportControllerImpl implements IReportController {
         }
 
         //Add the ability to disconnect the check in dev profile
-        if (this.config.getCheckToken())
+        if (this.propertyLoader.getCheckToken())
         	checkValidityToken(reportBatchRequestVo.getToken());
 
         contactDtoService.saveContacts(reportBatchRequestVo.getContacts());
