@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
+import fr.gouv.tacw.ws.service.TokenType;
 import fr.gouv.tacw.ws.service.WarningService;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
@@ -104,7 +105,7 @@ class TacWarningWsRestApplicationTests {
 	}
 
 	@Test
-	void testWhenVisitTokenVoWithNullTokenTypeThenGetBadRequest() {
+	void testWhenExposureStatusRequestWithNullTokenTypeThenGetBadRequest() {
 		ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
 		visitTokens.add(new VisitTokenVo(null, "payload"));
 		ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
@@ -118,7 +119,7 @@ class TacWarningWsRestApplicationTests {
 	}
 
 	@Test
-	void testWhenVisitTokenVoWithInvalidTokenTypeThenGetBadRequest() throws JSONException {
+	void testWhenExposureStatusRequestWithInvalidTokenTypeThenGetBadRequest() throws JSONException {
 		String json = "{\n"
 				+ "  \"visitTokens\" : [ {\n"
 				+ "    \"type\" : \"UNKNOWN\",\n"
@@ -131,6 +132,46 @@ class TacWarningWsRestApplicationTests {
 				pathPrefixV1 + UriConstants.STATUS, 
 				new HttpEntity<String>(json, headers),
 				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
+	void testWhenExposureStatusRequestWithNullPayloadThenGetBadRequest() {
+		ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
+		visitTokens.add(new VisitTokenVo(TokenType.STATIC, null));
+		ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				entity, 
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
+	void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
+		ResponseEntity<String> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.REPORT, 
+				new HttpEntity<String>("foo"),
+				String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
+	void testWhenReportRequestWithInvalidJsonDataThenGetBadRequest() throws JSONException {
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("id", 1);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		ResponseEntity<String> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.REPORT, 
+				new HttpEntity<String>(jsonObject.toString(), headers),
+				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		verifyNoMoreInteractions(warningService);
