@@ -3,7 +3,9 @@ package fr.gouv.tacw.ws.service;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import fr.gouv.tacw.database.service.TokenService;
+import fr.gouv.tacw.ws.controller.TACWarningController;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
+import lombok.extern.slf4j.Slf4j;
 
 public class StaticVisitToken {
 	@Autowired

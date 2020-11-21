@@ -15,4 +15,5 @@ public class ReportBatchResponseDto {
 	@NotNull
 	private Boolean success;
 	private String message;
+	private String token;
 }

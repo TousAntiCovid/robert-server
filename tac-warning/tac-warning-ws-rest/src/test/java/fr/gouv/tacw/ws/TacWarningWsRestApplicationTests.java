@@ -13,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -39,7 +41,10 @@ class TacWarningWsRestApplicationTests {
 	@Test
 	void testInfectedUserCanReportItselfAsInfected() {
 		ReportRequestVo request = new ReportRequestVo(new ArrayList<VisitVo>());
-		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, request,
+		HttpHeaders headers = new HttpHeaders();
+		headers.setBearerAuth("foo");
+		HttpEntity<ReportRequestVo> entity = new HttpEntity<>(request, headers);
+		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, entity,
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
