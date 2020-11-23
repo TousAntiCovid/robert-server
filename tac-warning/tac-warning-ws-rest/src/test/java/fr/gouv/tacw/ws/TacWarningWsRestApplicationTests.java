@@ -45,18 +45,6 @@ class TacWarningWsRestApplicationTests {
 	private String pathPrefixV1;
 
 	@Test
-	void testInfectedUserCanReportItselfAsInfected() {
-		ReportRequestVo request = new ReportRequestVo(new ArrayList<VisitVo>());
-		HttpHeaders headers = new HttpHeaders();
-		headers.setBearerAuth("foo");
-		HttpEntity<ReportRequestVo> entity = new HttpEntity<>(request, headers);
-		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, entity,
-				String.class);
-
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-	}
-
-	@Test
 	void testCanGetStatus() {
 		ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
 		when(warningService.getStatus(any(ExposureStatusRequestVo.class))).thenReturn(true);
@@ -68,29 +56,12 @@ class TacWarningWsRestApplicationTests {
 	}
 
 	@Test
-	void testWhenRequestExposureStatusWithInvalidMediaTypeThenGetUnsupportedMediaType() {
-		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.STATUS, 
-				new HttpEntity<String>("foo"),
-				ExposureStatusResponseDto.class);
+	void testInfectedUserCanReportItselfAsInfected() {
+		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
+		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, this.getReportEntityWithBearer(reportRequest),
+				String.class);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
-		verifyNoMoreInteractions(warningService);
-	}
-
-	@Test
-	void testWhenRequestExposureStatusWithInvalidJsonDataThenGetBadRequest() throws JSONException {
-		JSONObject jsonObject = new JSONObject();
-		jsonObject.put("id", 1);
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.STATUS, 
-				new HttpEntity<String>(jsonObject.toString(), headers),
-				ExposureStatusResponseDto.class);
-
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-		verifyNoMoreInteractions(warningService);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
 	@Test
@@ -126,11 +97,9 @@ class TacWarningWsRestApplicationTests {
 				+ "    \"payload\" : \"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc\"\n"
 				+ "  } ]\n"
 				+ "}";
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.STATUS, 
-				new HttpEntity<String>(json, headers),
+				new HttpEntity<String>(json, this.newJsonHeader()),
 				ExposureStatusResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -152,10 +121,37 @@ class TacWarningWsRestApplicationTests {
 	}
 
 	@Test
+	void testWhenExposureStatusRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				new HttpEntity<String>("foo"),
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
+	void testWhenExposureStatusRequestsWithInvalidJsonDataThenGetBadRequest() throws JSONException {
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("id", 1);
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				new HttpEntity<String>(jsonObject.toString(), this.newJsonHeader()),
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
 	void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
+		HttpHeaders headers = new HttpHeaders();
+		this.addBearerAuthTo(headers);
+		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				new HttpEntity<String>("foo"),
+				new HttpEntity<String>("foo", headers),
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
@@ -166,11 +162,9 @@ class TacWarningWsRestApplicationTests {
 	void testWhenReportRequestWithInvalidJsonDataThenGetBadRequest() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("id", 1);
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				new HttpEntity<String>(jsonObject.toString(), headers),
+				new HttpEntity<String>(jsonObject.toString(), this.newJsonHeaderWithBearer()),
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -181,9 +175,9 @@ class TacWarningWsRestApplicationTests {
 	void testWhenReportRequestWithNullVisitTokensThenGetBadRequest() {
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				new ReportRequestVo(null), 
+				this.getReportEntityWithBearer(new ReportRequestVo(null)), 
 				String.class);
-
+		
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		verifyNoMoreInteractions(warningService);
 	}
@@ -192,10 +186,11 @@ class TacWarningWsRestApplicationTests {
 	void testWhenReportRequestWithNullTimestampTypeThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(new VisitVo(null, new QRCodeVo(TokenTypeVo.STATIC, "venueType", 60, "uuid")));
-		ReportRequestVo entity = new ReportRequestVo(visitQrCodes);
+		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
+		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				entity, 
+				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -206,10 +201,11 @@ class TacWarningWsRestApplicationTests {
 	void testWhenReportRequestWithNullQRCodeTypeThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(new VisitVo("12345", null));
-		ReportRequestVo entity = new ReportRequestVo(visitQrCodes);
+		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
+		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				entity, 
+				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -232,11 +228,10 @@ class TacWarningWsRestApplicationTests {
 				+ "   ]\n"
 				+ "}\n"
 				+ "";
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
+		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				new HttpEntity<String>(json, headers),
+				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -247,16 +242,17 @@ class TacWarningWsRestApplicationTests {
 	void testWhenReportRequestWithNullUuidThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "venueType", 60, null)));
-		ReportRequestVo entity = new ReportRequestVo(visitQrCodes);
+		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
+		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				entity, 
+				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		verifyNoMoreInteractions(warningService);
 	}
-	
+
 	@Test
 	void testWhenReportRequestWithNullVenueCategoryOrVenueTypeOrVenueCapacityThenRequestSucceeds() {
 		String json = "{\n"
@@ -271,12 +267,10 @@ class TacWarningWsRestApplicationTests {
 				+ "   ]\n"
 				+ "}\n"
 				+ "";
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				new HttpEntity<String>(json, headers), 
+				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()), 
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -298,14 +292,34 @@ class TacWarningWsRestApplicationTests {
 				+ "   ]\n"
 				+ "}\n"
 				+ "";
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
-				new HttpEntity<String>(json, headers),
+				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
+
+	protected HttpEntity<ReportRequestVo> getReportEntityWithBearer(ReportRequestVo entity) {
+		HttpHeaders headers = new HttpHeaders();
+		this.addBearerAuthTo(headers);
+		return new HttpEntity<>(entity, headers);
+	}
+	
+	protected HttpHeaders newJsonHeader() {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		return headers;
+	}
+	
+	protected HttpHeaders newJsonHeaderWithBearer() {
+		HttpHeaders headers = this.newJsonHeader();
+		this.addBearerAuthTo(headers);
+		return headers;
+	}
+
+	protected void addBearerAuthTo(HttpHeaders headers) {
+		headers.setBearerAuth("sample-bearer");
+	}	
 }
