@@ -8,7 +8,7 @@
 - TAC-W-QR-SERVER : Application web permettant de générer des QR-CODE pour TAC-WARNING de type statique à imprimer. 
 - OTP : One Time Password
 - TERMINAL : l’appareil utilisé pour présenter le QR-CODE à scanner au CLIENT. Ce peut-être un téléphone, une tablette ou tout autre terminal électronique avec un écran et permettant la présentation du QR CODE au CLIENT.  
-- LIEU CLOS : le lieu accueillant le public, qu’il soit public ou privé, restaurant, salle de spectacle
+- LIEU CLOS  (*venue*): le lieu accueillant le public, qu’il soit public ou privé, restaurant, salle de spectacle
 RESPONSABLE : Suivant le type de lieu clos, ce peut être le restaurateur, l’organisateur du rassemblement...
 
 ## Remarques préliminaires
@@ -36,7 +36,6 @@ restaurant, lorsqu’il s’installe, lorsqu’il consulte le menu ou lorsqu’i
 paye, il scanne le QR-code mis à disposition par le restaurateur. Le QR code
 contient comme information :
 
-- La version de la définition du QR-CODE : version 1
 - Le type du QR-CODE : STATIC/DYNAMIC  
 - le type et la classe de l’ERP
 - la jauge de l’ERP
