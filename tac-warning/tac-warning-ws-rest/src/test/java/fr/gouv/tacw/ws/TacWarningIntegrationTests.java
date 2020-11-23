@@ -18,16 +18,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
-import fr.gouv.tacw.ws.service.ExposedTokenGenerator;
-import fr.gouv.tacw.ws.service.TokenType;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
+import fr.gouv.tacw.ws.vo.TokenTypeVo;
+
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class TacWarningIntegrationTests {
@@ -40,7 +41,7 @@ class TacWarningIntegrationTests {
 	@Test
 	void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<VisitVo> tokens = Stream
-				.of(new VisitVo("12345", new QRCodeVo(TokenType.STATIC, "restaurant", 60, "TokenNotInExposedList")))
+				.of(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60, "TokenNotInExposedList")))
 				.collect(Collectors.toList());
 		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(this.staticVisitTokenVoFrom(tokens));
 
@@ -54,7 +55,7 @@ class TacWarningIntegrationTests {
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", new QRCodeVo(TokenType.STATIC, "restaurant", 60,
+		visits.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60,
 				"4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd")));
 		List<VisitTokenVo> tokensVo = this.staticVisitTokenVoFrom(visits);
 		this.report(visits);
@@ -70,7 +71,7 @@ class TacWarningIntegrationTests {
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", new QRCodeVo(TokenType.STATIC, "restaurant", 60, "UUID")));
+		visits.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60, "UUID")));
 
 		this.report(visits);
 	}
@@ -94,7 +95,7 @@ class TacWarningIntegrationTests {
 	protected VisitTokenVo staticVisitTokenVoFrom(VisitVo visit) {
 		String exposedToken = new ExposedTokenGenerator(visit).hash(1, visit.getQrCode().getUuid(),
 				Long.parseLong(visit.getTimestamp()));
-		return new VisitTokenVo(TokenType.STATIC, exposedToken);
+		return new VisitTokenVo(TokenTypeVo.STATIC, exposedToken);
 	}
 
 	/**
@@ -106,13 +107,13 @@ class TacWarningIntegrationTests {
 	@Test
 	public void testGivenAVisitTokenInfectedNotIdenticalToReportedTokenWhenCheckingStatusThenIsAtRisk() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("24356657", new QRCodeVo(TokenType.STATIC, "restaurant", 60,
+		visits.add(new VisitVo("24356657", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60,
 				"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc")));
 
 		this.report(visits);
 		String exposedToken = "f4870249da823379ba646f4ead4fcf703416e3ef45e22a7c6fe8890665ccd733";
 		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenType.STATIC, exposedToken));
+		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, exposedToken));
 
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.STATUS, new ExposureStatusRequestVo(visitTokens),
