@@ -24,12 +24,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
-import fr.gouv.tacw.ws.service.TokenType;
 import fr.gouv.tacw.ws.service.WarningService;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
+import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 
@@ -141,7 +141,7 @@ class TacWarningWsRestApplicationTests {
 	@Test
 	void testWhenExposureStatusRequestWithNullPayloadThenGetBadRequest() {
 		ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenType.STATIC, null));
+		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, null));
 		ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.STATUS, 
@@ -192,7 +192,7 @@ class TacWarningWsRestApplicationTests {
 	@Test
 	void testWhenReportRequestWithNullTimestampTypeThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
-		visitQrCodes.add(new VisitVo(null, new QRCodeVo(TokenType.STATIC, "venueType", 60, "uuid")));
+		visitQrCodes.add(new VisitVo(null, new QRCodeVo(TokenTypeVo.STATIC, "venueType", 60, "uuid")));
 		ReportRequestVo entity = new ReportRequestVo(visitQrCodes);
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
@@ -247,7 +247,7 @@ class TacWarningWsRestApplicationTests {
 	@Test
 	void testWhenReportRequestWithNullUuidThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
-		visitQrCodes.add(new VisitVo("12345", new QRCodeVo(TokenType.STATIC, "venueType", 60, null)));
+		visitQrCodes.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "venueType", 60, null)));
 		ReportRequestVo entity = new ReportRequestVo(visitQrCodes);
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 

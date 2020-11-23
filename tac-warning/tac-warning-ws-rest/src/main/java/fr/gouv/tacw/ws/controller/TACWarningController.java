@@ -72,7 +72,7 @@ public class TACWarningController {
 	}
 
 	@PostMapping(value = UriConstants.REPORT)
-	protected ReportResponseDto reportVisits(@Valid @RequestBody(required = true) ReportRequestVo reportRequestVo) {
+	protected ReportResponseDto reportVisits(@Valid @RequestBody(required = true) ReportRequestVo reportRequestVo,
 			@RequestHeader("Authorization") String jwtToken) {
 		jwtToken = jwtToken.replace("Bearer ", ""); // TODO validate properly
 		log.info("Authorization header: " + jwtToken);
