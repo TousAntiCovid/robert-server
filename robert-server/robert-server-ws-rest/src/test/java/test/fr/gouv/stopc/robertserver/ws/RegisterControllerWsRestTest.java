@@ -67,6 +67,9 @@ public class RegisterControllerWsRestTest {
     private String pathPrefixV2;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V3)
+    private String pathPrefixV3;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V4)
     private String pathPrefix;
 
     @Inject
@@ -274,6 +277,12 @@ public class RegisterControllerWsRestTest {
     @Test
     public void testSuccessV2() {
         testRegisterSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REGISTER).build().toUri()
+                .toString());
+    }
+
+    @Test
+    public void testSuccessV3() {
+        testRegisterSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REGISTER).build().toUri()
                 .toString());
     }
 
