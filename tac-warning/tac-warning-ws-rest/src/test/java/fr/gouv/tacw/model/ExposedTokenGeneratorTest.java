@@ -1,4 +1,4 @@
-package fr.gouv.tacw.ws.service;
+package fr.gouv.tacw.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
+import fr.gouv.tacw.ws.vo.TokenTypeVo;
 
 /*
 * For privacy purposes, tokens area anonymized with token = hash(salt|uuid|time).
@@ -42,7 +43,7 @@ public class ExposedTokenGeneratorTest {
 
 	protected VisitVo visitVoExample() {
 		VisitVo visit = new VisitVo("24356657", 
-				new QRCodeVo(TokenType.STATIC, "restaurant", 60,
+				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60,
 						"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"));
 		return visit;
 	}

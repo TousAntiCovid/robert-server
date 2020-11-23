@@ -1,4 +1,4 @@
-package fr.gouv.tacw.ws.service;
+package fr.gouv.tacw.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,13 +8,14 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
+import fr.gouv.tacw.ws.vo.TokenTypeVo;
 
 public class ExposedTokenGenerator {
 	/* Salt is used to randomize the tuple token, timestamp */
 	public final static int MAX_SALT = 1000;
 	private String uuid;
 	private long timestamp;
-	private TokenType tokenType;
+	private TokenTypeVo tokenTypeVo;
 	private ArrayList<VisitTokenVo> exposedTokens;
 
 	/**
@@ -27,7 +28,7 @@ public class ExposedTokenGenerator {
 	public ExposedTokenGenerator(VisitVo visit) {
 		this.uuid = visit.getQrCode().getUuid();
 		this.timestamp = Long.parseLong(visit.getTimestamp());
-		this.tokenType = visit.getQrCode().getType();
+		this.tokenTypeVo = visit.getQrCode().getType();
 		this.exposedTokens = new ArrayList<VisitTokenVo>();
 	}
 	
@@ -49,7 +50,7 @@ public class ExposedTokenGenerator {
 	}
 	
 	private void addExposedToken(String hash) {
-		VisitTokenVo token = new VisitTokenVo(this.tokenType, hash);
+		VisitTokenVo token = new VisitTokenVo(this.tokenTypeVo, hash);
 		exposedTokens.add(token);
 	}
 

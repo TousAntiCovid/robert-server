@@ -16,13 +16,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import fr.gouv.tacw.database.service.TokenService;
+import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
+import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
+import fr.gouv.tacw.ws.vo.TokenTypeVo;
 
-@SpringBootTest(classes = { WarningService.class, TokenService.class })
+
+@SpringBootTest(classes = { WarningService.class, TokenService.class, TokenMapper.class, ExposureStatusService.class })
 @MockBean(TokenService.class)
 public class WarningServiceTests {
 	@Autowired
@@ -34,7 +38,7 @@ public class WarningServiceTests {
 	@Test
 	public void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenType.STATIC, "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"));
+		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"));
 
 		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(visitTokens);
 
@@ -46,7 +50,7 @@ public class WarningServiceTests {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
 		when(tokenService.exposedStaticTokensIncludes(infectedToken)).thenReturn(true);
 		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenType.STATIC, infectedToken));
+		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, infectedToken));
 
 		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(visitTokens);
 
@@ -56,7 +60,7 @@ public class WarningServiceTests {
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", new QRCodeVo(TokenType.STATIC, "restaurant", 60, "UUID")));
+		visits.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
 
