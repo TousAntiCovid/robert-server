@@ -63,22 +63,21 @@ Important : l’ERP ne collecte aucune donnée, et notamment aucune donnée per
 
 ### Configuration
 
-Le restaurateur imprime des QR-code émis par un serveur web. Les information
+Le restaurateur imprime des QR-code émis par un serveur web. Les informations
 encodées dans le QR-CODE sont codées en json :
 
 ```
 {
- “version” : défini la version du format utilisé, ici 10
 "type" : STATIC ou DYNAMIQUE,
- "erp-category" : 1 à 5 (Catégories d'ERP en fonction de la capacité d'accueil, y compris le personnel. On peut affiner les petites capacités : moins de 20, ente 21 et 50, entre 51 e 100, 101-200, 201-300),
- "erp-type" : ENUM Lettre (et on pourra ajouter lieu clos privés)
+ "venueCategory" : 1 à 5 (Catégories d'ERP en fonction de la capacité d'accueil, y compris le personnel. On peut affiner les petites capacités : moins de 20, ente 21 et 50, entre 51 e 100, 101-200, 201-300),
+ "venueType" : ENUM Lettre (et on pourra ajouter lieu clos privés)
  “capacity” : capacité du lieu en # de personnes 
  "uuid" : code aléatoire unique UUID 64
 }
 ```
 
-Tous les champs sont obligatoires sauf le champ erp-category qui n’est
-obligatoire que lorsque le erp-type n’est pas de type Lieu clos privé
+Tous les champs sont obligatoires sauf le champ ``venueCategory`` qui n’est
+obligatoire que lorsque le `venueType` n’est pas de type Lieu clos privé
 
 Il est recommandé de lui demander les dates où il souhaite mettre à
 dispositions les QR-CODE et de donner cette date lisible sous le QR-CODE.
@@ -116,7 +115,7 @@ Il est recommandé de générer d'autres QR-code. Soit de façon automatique en 
 
 -Quand le client rentre dans un restaurant, il scanne avec TAC-W le code QR courant QR qui lui est présenté par le restaurateur et le stocke avec un timestamp arrondi à S seoondes (timestamp=NOW - NOW % S  )l'heure dans une liste locale LocalListlocalList pendant x (x=12?) jours (x étant défini dans le config.json, et par défaut à 14 jours).
 
-#### Déeclaration d'utilisateur infecté
+#### Déclaration d'utilisateur infecté
 
 Si le client est testé positif, il utilise TAC pour se déclarer. En même temps qu'il upload ses contacts, il télécharge sa liste localList sur le backend TAC-W  
 
@@ -194,8 +193,8 @@ The location is not collecting any data in PAC-W.
 
 
 PU3: No location confirmation attacks given phone. The system should hide which locations somebody has visited. PU1 and PU2 imply that this information should not be available centrally or at the location itself. This information should not be available to attackers that have access to the phone. In particular:
-● The UI should not reveal which locations the user visited (e.g., to prevent (retroactive) location tracking by intimate partners and law enforcement).
-● The data stored on the phone should not reveal or enable confirmation of visited locations to determined attackers (e.g., law enforcement). Such attackers can gain access to internal storage (i.e., information stored internally by the app), and can also be assumed to have visited specific locations.
+- The UI should not reveal which locations the user visited (e.g., to prevent (retroactive) location tracking by intimate partners and law enforcement).
+- The data stored on the phone should not reveal or enable confirmation of visited locations to determined attackers (e.g., law enforcement). Such attackers can gain access to internal storage (i.e., information stored internally by the app), and can also be assumed to have visited specific locations.
 
 The data that are stored on the user’s device is encrypted.
 
@@ -354,6 +353,8 @@ Module d'initialisation des données des ERP
 On doit pouvoir changer à la volée les heures avant après d'un ERP: https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351
 
 Fichier JSON par exemple erp_config.json :
+
+```
 {
 {
  “Version” : 
@@ -374,5 +375,6 @@ Fichier JSON par exemple erp_config.json :
 “Seuil” : 1
 }
 }
+```
 
 ## Diagramme de séquence
