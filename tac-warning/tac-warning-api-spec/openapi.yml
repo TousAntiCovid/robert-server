@@ -3,7 +3,7 @@ info:
   description: "#TOUSANTICOVID, Warning API"
   version: 1.0.0
   title: "#TOUSANTICOVID, Warning"
-#  termsOfService: https://github.com/ROBERT-proximity-tracing/
+  #  termsOfService: https://github.com/ROBERT-proximity-tracing/
   contact:
     email: stopcovid@inria.fr
   license:
@@ -67,7 +67,7 @@ components:
     bearerAuth:            # arbitrary name for the security scheme
       type: http
       scheme: bearer
-      bearerFormat: JWT 
+      bearerFormat: JWT
   requestBodies:
     ExposureStatusRequest:
       content:
@@ -77,15 +77,16 @@ components:
   schemas:
     ExposureStatusRequest:
       type: object
+      description: List of tokens corresponding to the visits
       properties:
         visitTokens:
           type: array
-          items: 
-            $ref: "#/components/schemas/VisitToken"
           description: "List of tokens computed from the venue static QR-code and a client timestamp of the time of visit
-            using token=hash(salt|uuid|time). Where salt is a random number between 1 and MAX_SALT.
+            using token=hash(salt|uuid|time).
             We use sha256 and is expressed in hexa."
-          example: 
+          items:
+            $ref: "#/components/schemas/VisitToken"
+          example:
             - type: "STATIC"
               payload: "88d84f0b72dd2ff8702a60365cf88672dff93329aeb3fb7c24951808a0fa7641"
             - type: "DYNAMIC"
@@ -103,7 +104,7 @@ components:
       properties:
         visits:
           type: array
-          items: 
+          items:
             $ref: "#/components/schemas/Visit"
           description: "The list of visited venue stored in the LocalList"
     ReportResponse:
@@ -119,11 +120,20 @@ components:
       type: object
       properties:
         type:
-          $ref: "#/components/schemas/TokenType"
+          type: string
+          enum:
+            - STATIC
+            - DYNAMIC
           example: DYNAMIC
         payload:
+          description: "List of tokens computed from the venue static QR-code and a client timestamp of the time of visit
+            using token=hash(salt|uuid|time).
+            We use sha256 and is expressed in hexa."
           type: string
+          minLength: 64
+          maxLength: 64
           example: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
+          pattern: '^[a-fA-F0-9]{64}$'
       required:
         - type
         - payload
@@ -132,6 +142,8 @@ components:
       properties:
         timestamp:
           type: string
+          minLength: 10
+          maxLength: 10
           description: "timestamp is a NTP timestamp. It express the number of second relative to 0h on 1 january 1900.
           The timestamp express the time at with the QR-CODE is scanned.
           The timestamp is rounded to S seconds"
@@ -144,8 +156,11 @@ components:
     QRCode:
       type: object
       properties:
-        type: 
-          $ref: "#/components/schemas/TokenType"
+        type:
+          type: string
+          enum:
+            - STATIC
+            - DYNAMIC
           example: STATIC
         venueType:
           type: string
@@ -159,10 +174,3 @@ components:
       required:
         - type
         - uuid
-    TokenType:
-      type: string
-      enum: 
-        - STATIC
-        - DYNAMIC
-      example: DYNAMIC
-    
