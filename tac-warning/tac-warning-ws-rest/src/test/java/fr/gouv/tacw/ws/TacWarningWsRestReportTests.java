@@ -25,6 +25,7 @@ import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
+import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -89,7 +90,8 @@ class TacWarningWsRestReportTests {
 	@Test
 	void testWhenReportRequestWithNullTimestampTypeThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
-		visitQrCodes.add(new VisitVo(null, new QRCodeVo(TokenTypeVo.STATIC, "venueType", 60, "uuid")));
+		visitQrCodes.add(new VisitVo(null, 
+				new QRCodeVo(TokenTypeVo.STATIC, "venueType",VenueCategoryVo.CAT1, 60, "uuid")));
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
@@ -145,7 +147,8 @@ class TacWarningWsRestReportTests {
 	@Test
 	void testWhenReportRequestWithNullUuidThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
-		visitQrCodes.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "venueType", 60, null)));
+		visitQrCodes.add(
+				new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "venueType", VenueCategoryVo.CAT1, 60, null)));
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
@@ -157,6 +160,30 @@ class TacWarningWsRestReportTests {
 		verifyNoMoreInteractions(warningService);
 	}
 
+	@Test
+	void testWhenReportRequestWithInvalidVenueCategoryThenRequestSucceeds() throws JSONException {
+		String json = "{\n"
+				+ "   \"visits\": [\n"
+				+ "     {\n"
+				+ "       \"timestamp\": \"3814657232\",\n"
+				+ "       \"qrCode\": {\n"
+				+ "         \"type\": \"STATIC\",\n"
+				+ "         \"venueCategorie\": \"CAT FOO\",\n"
+				+ "         \"uuid\": \"9fb80fea-b3ac-4603-b40a-0be8879dbe79\"\n"
+				+ "       }\n"
+				+ "     }\n"
+				+ "   ]\n"
+				+ "}\n"
+				+ "";
+		
+		ResponseEntity<String> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.REPORT, 
+				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
+				String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+	}
+	
 	@Test
 	void testWhenReportRequestWithNullVenueCategoryOrVenueTypeOrVenueCapacityThenRequestSucceeds() {
 		String json = "{\n"
@@ -189,6 +216,7 @@ class TacWarningWsRestReportTests {
 				+ "       \"qrCode\": {\n"
 				+ "         \"type\": \"STATIC\",\n"
 				+ "         \"venueType\": \"N\",\n"
+				+ "         \"venueCategory\": \"CAT1\",\n"
 				+ "         \"venueCapacity\": 42,\n"
 				+ "         \"uuid\": \"9fb80fea-b3ac-4603-b40a-0be8879dbe79\"\n"
 				+ "       }\n"
