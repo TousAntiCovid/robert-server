@@ -38,6 +38,9 @@ public class CaptchaServiceImplTest {
     @Value("${captcha.internal.success.code}")
     private String captchaSuccessCode;
 
+    @Value("${robert.server.disable-check-captcha}")
+	private Boolean disableCaptcha;
+
     @InjectMocks
     private CaptchaServiceImpl captchaStrictServiceImpl;
 
@@ -54,13 +57,13 @@ public class CaptchaServiceImplTest {
 
     @BeforeEach
     public void beforeEach() {
-
         this.registerVo = RegisterVo.builder().captcha("captcha").captchaId("captchaId").build();
     }
 
     @Test
     public void testVerifyCaptchaWhenVoIsNull() {
-
+        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
+        
         // When
         boolean isVerified = this.captchaStrictServiceImpl.verifyCaptcha(null);
 
@@ -70,6 +73,7 @@ public class CaptchaServiceImplTest {
 
     @Test
     public void testVerifyCaptchaWhenVoHasNoCaptcha() {
+        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
 
         // Given
         this.registerVo.setCaptcha(null);
@@ -92,7 +96,7 @@ public class CaptchaServiceImplTest {
                 .build();
         when(this.restTemplate.postForEntity(any(URI.class), any(),
                 any())).thenReturn(ResponseEntity.ok(captchaDto));
-
+        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
         when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
         when(this.propertyLoader.getCaptchaSuccessCode()).thenReturn(this.captchaSuccessCode);
 
@@ -114,7 +118,7 @@ public class CaptchaServiceImplTest {
                 .build();
         when(this.restTemplate.postForEntity(any(URI.class), any(),
                 any())).thenReturn(ResponseEntity.ok(captchaDto));
-
+        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
         when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
         when(this.propertyLoader.getCaptchaSuccessCode()).thenReturn(this.captchaSuccessCode);
 
@@ -131,6 +135,8 @@ public class CaptchaServiceImplTest {
         // Given
         when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
         when(this.propertyLoader.getCaptchaSuccessCode()).thenReturn(this.captchaSuccessCode);
+        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
+
         when(this.restTemplate.postForEntity(any(String.class), any(), any())).thenThrow(RestClientException.class);
 
         // When
@@ -146,6 +152,7 @@ public class CaptchaServiceImplTest {
         // Given
         when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
         when(this.propertyLoader.getCaptchaSuccessCode()).thenReturn(this.captchaSuccessCode);
+        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
         when(this.restTemplate.postForEntity(any(String.class), any(), any()))
                 .thenThrow( new CaptchaAccessException(HttpStatus.NOT_FOUND,
                         CaptchaErrorMessage.builder().httpStatus(HttpStatus.NOT_FOUND).message("The captcha does not exist").code("0002").build(),
