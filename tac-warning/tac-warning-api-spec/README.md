@@ -118,7 +118,9 @@ Il est recommandé de générer d'autres QR-code. Soit de façon automatique en 
 
 Si le client est testé positif, il utilise TAC pour se déclarer. En même temps qu'il upload ses contacts, il télécharge sa liste localList sur le backend TAC-W  
 
-Option 1 : TAC peut donner en retour un OTP généré par le backend TAC-W, qui est employé par le client pour remonter sa liste LocalListlocalList directement au backend TAC-W,. sans passer par TAC.
+À la déclaration (`/report`) dans TAC, le client reçoit un token JWT qu'il utilisera 
+ensuite pour remonter ses visites à TAC-W.
+
 
 - pour chaque élément {QRc,timestamp} de cette liste localList, le backend:
 1-parse QRc pour retrouver 
@@ -156,6 +158,109 @@ au lieu de faire des requêtes avec la liste de {QRcodes;time} le client fait de
 quand un utilisateur est testé positif, il remonte sa liste de {time;QRcode}. Le backend calcule alors les 3*max tokens possibles, (hash(i|uuid|time-1), hash(i|uuid|time),hash(i|uuid|time+1)) pour i=1 à max). et les stocke dans sa liste exposedList...
 Lors d'une requête, si un uuid, uuid_c, apparait dans ExposedList  l'utilisateur est averti...
 
+## Fonctionnement du serveur
+
+Modèle SGBD
+Le modèle de SGBD est postgreSQL. Les records sont fixes en format.
+Peu d'écriture. Il n'est remonté que quelques centaines à quelques milliers de report par jour, les seuls qui impliquent des écritures en base. Les statuts n'induisant que des lectures. 
+
+
+### Service web
+
+Les tâches réalisées par le webservice =
+A la réception d’une requête status V1/tacw/status:
+Extraire du POST :
+listQrStatic = POST[‘static’]
+listToken = POST[‘dynamic’]
+warn = FALSE
+res = []
+(codeProcessStatic , warn ) = PROCESS_STATIC_QRCODE_LIST(listQrStatic)
+SI warn alors:
+Retourner{“CODE”: code, “WARN”: warn, “RES”: res}
+
+(codeProcessDynamic,warn ,res)=PROCESS_DYNAMIC_TOKEN_LIST(listToken)
+Retourner une réponse {“CODE”: code, “WARN”: warn, “RES”: res}
+
+PROCESS_STATIC_QRCODE_LIST(listQrStatic) : (code , warn )
+Pour chaque éléments e={QR-Code, timestamp} dans listQrStatic
+parse QR-codes pour retrouver 
+Le type du QR-Code. Si différent de Static passer au suivant. 
+Le type ERP / catégorie ERP pour obtenir la durée de la plage horaire [-h1, +h2], 
+L'UUID
+Le timestamp arrondi à l'heure. (ou la demie heure
+Récupère h1 et h2 en fonction du type et de la catégorie. Valeur par défaut h1=h2=1h.
+Récupère le seuil (valeur par défaut 2)
+Récupère la précision du timestamps (120, 60 ou 30 min) 
+génère la clef k=<UUID | timestamp > 
+vérifie si k, | timestamp1 | timestamp2 intersect d'autres plages
+res = SELECT k  FROM InfectedLISTist where (timestamp1, timestamp1) OVERLAPS (InfectedListIST.Begin , InfectedLISTist.End) and InfectedLISTist.compteur >= seuil;
+Si |res| > 0 return (code, TRUE)
+return (code, FALSE)
+
+
+A la réception d’une requête TACW_REPORT upload V1/tacw/report:
+Extraire de la réponse du POST au serveur Robert le JWT.
+Vérifier que le JWT est valide. (définir la durée de validité du JWT e timestamp_émission + 1h ? )
+Si KO exit avec ERROR CODE correspondant à l’erreur rencontrée:
+ERROR_JWT_EXPIRED
+ERROR_JWT_SIGNATURE_INVALID
+Extraire du POST :
+listQrStatic = POST[‘static’]
+listQrDynamic = POST[‘dynamic’]
+ENQUEUE listQrStatic dans listQrStaticToProcess
+ENQUEUE listQrDynamiq dans listQrDynamicToProcess
+SI ENQUEUE OK? EXIT SUCCESS else EXIT KO
+Définir la liste des codes d’erreur possibles
+
+
+
+Traitement asynchrone non prioritaire de la liste listQrStaticToProcess :
+
+DEQUEUE e={qrCode,timestamp) de  listQrStaticToProcess
+parse qrCode pour retrouver 
+La version. 
+Le type / catégorie 
+L'UUID
+Le timestamp .
+Récupère h1 et h2 en fonction du type et de la catégorie. Valeur par défault h1=h2=60min.
+Récupère la précision du timestamps (120, 60 ou 30 min)
+Arrondir le timestamps en fonction de la précision.
+Si <UUID | timestamp >  not in InfectedLISTist insert <UUID | timestamp , timestamp1 | timestamp2, score=1> sinon incrédmenter le score de 1
+
+Purge de la table :
+Exécuter une tâche asynchrone (cron) pour purger les entrées dans Infected-List dont la date d'expiration a expirée. 
+purger tous les OTP qui sont expirés.   (date d’émission + 1h) > NOW
+
+
+QUESTION : avoir 2 tables ? Infected-ListIST pour les QR remontés, Exposure-LISTist pour les contacts exposés (ie dont le score est > seuil). 
+
+## Module d'initialisation des données des ERP
+On doit pouvoir changer à la volée les heures avant après d'un ERP: https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351
+
+Fichier JSON par exemple erp_config.json :
+
+```
+{
+{
+ “Version” : 
+ "categorie" : INT, / 1 à 5
+ "type" : STRING, / J, L, M, N, O, P, R, S? T, U, V, PA, SG, PS, GA, OA, REF, DEFAULT
+ "jauge" : INT
+ "Timestamp1" : NB OF SECONDS,
+"Timestamp2" : NB OF SECONDS,
+“Seuil” : INT
+},
+...
+{
+ "categorie" : 0,
+ "type" : DEFAULT,
+ "jauge" : 0
+ "Timestamp1" : 60,
+"Timestamp2" : 60,
+“Seuil” : 1
+}
+}
+```
 ## Analyse
 
 (https://github.com/CrowdNotifier/documents/blob/main/CrowdNotifier%20-%20White%20Paper.pdf)
@@ -272,108 +377,6 @@ Voir la [description OpenAPI](../../robert-server/robert-client-api-spec/openapi
 
 Voir la [description OpenAPI](openapi.yaml)
 
-## Composant `tacw-server`
 
-Modèle SGBD
-Le modèle de SGBD est postgreSQL. Les records sont fixes en format.
-Peu d'écriture. Il n'est remonté que quelques centaines à quelques milliers de report par jour, les seuls qui impliquent des écritures en base. Les statuts n'induisant que des lectures . 
-
-
-Webservice
-
-Les tâches réalisées par le webservice =
-A la réception d’une requête status V1/tacw/status:
-Extraire du POST :
-listQrStatic = POST[‘static’]
-listToken = POST[‘dynamic’]
-warn = FALSE
-res = []
-(codeProcessStatic , warn ) = PROCESS_STATIC_QRCODE_LIST(listQrStatic)
-SI warn alors:
-Retourner{“CODE”: code, “WARN”: warn, “RES”: res}
-
-(codeProcessDynamic,warn ,res)=PROCESS_DYNAMIC_TOKEN_LIST(listToken)
-Retourner une réponse {“CODE”: code, “WARN”: warn, “RES”: res}
-
-PROCESS_STATIC_QRCODE_LIST(listQrStatic) : (code , warn )
-Pour chaque éléments e={QR-Code, timestamp} dans listQrStatic
-parse QR-codes pour retrouver 
-Le type du QR-Code. Si différent de Static passer au suivant. 
-Le type ERP / catégorie ERP pour obtenir la durée de la plage horaire [-h1, +h2], 
-L'UUID
-Le timestamp arrondi à l'heure. (ou la demie heure
-Récupère h1 et h2 en fonction du type et de la catégorie. Valeur par défaut h1=h2=1h.
-Récupère le seuil (valeur par défaut 2)
-Récupère la précision du timestamps (120, 60 ou 30 min) 
-génère la clef k=<UUID | timestamp > 
-vérifie si k, | timestamp1 | timestamp2 intersect d'autres plages
-res = SELECT k  FROM InfectedLISTist where (timestamp1, timestamp1) OVERLAPS (InfectedListIST.Begin , InfectedLISTist.End) and InfectedLISTist.compteur >= seuil;
-Si |res| > 0 return (code, TRUE)
-return (code, FALSE)
-
-
-A la réception d’une requête TACW_REPORT upload V1/tacw/report:
-Extraire de la réponse du POST au serveur Robert le JWT.
-Vérifier que le JWT est valide. (définir la durée de validité du JWT e timestamp_émission + 1h ? )
-Si KO exit avec ERROR CODE correspondant à l’erreur rencontrée:
-ERROR_JWT_EXPIRED
-ERROR_JWT_SIGNATURE_INVALID
-Extraire du POST :
-listQrStatic = POST[‘static’]
-listQrDynamic = POST[‘dynamic’]
-ENQUEUE listQrStatic dans listQrStaticToProcess
-ENQUEUE listQrDynamiq dans listQrDynamicToProcess
-SI ENQUEUE OK? EXIT SUCCESS else EXIT KO
-Définir la liste des codes d’erreur possibles
-
-
-
-Traitement asynchrone non prioritaire de la liste listQrStaticToProcess :
-
-DEQUEUE e={qrCode,timestamp) de  listQrStaticToProcess
-parse qrCode pour retrouver 
-La version. 
-Le type / catégorie 
-L'UUID
-Le timestamp .
-Récupère h1 et h2 en fonction du type et de la catégorie. Valeur par défault h1=h2=60min.
-Récupère la précision du timestamps (120, 60 ou 30 min)
-Arrondir le timestamps en fonction de la précision.
-Si <UUID | timestamp >  not in InfectedLISTist insert <UUID | timestamp , timestamp1 | timestamp2, score=1> sinon incrédmenter le score de 1
-
-Purge de la table :
-Exécuter une tâche asynchrone (cron) pour purger les entrées dans Infected-List dont la date d'expiration a expirée. 
-purger tous les OTP qui sont expirés.   (date d’émission + 1h) > NOW
-
-
-QUESTION : avoir 2 tables ? Infected-ListIST pour les QR remontés, Exposure-LISTist pour les contacts exposés (ie dont le score est > seuil). 
-
-Module d'initialisation des données des ERP
-On doit pouvoir changer à la volée les heures avant après d'un ERP: https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351
-
-Fichier JSON par exemple erp_config.json :
-
-```
-{
-{
- “Version” : 
- "categorie" : INT, / 1 à 5
- "type" : STRING, / J, L, M, N, O, P, R, S? T, U, V, PA, SG, PS, GA, OA, REF, DEFAULT
- "jauge" : INT
- "Timestamp1" : NB OF SECONDS,
-"Timestamp2" : NB OF SECONDS,
-“Seuil” : INT
-},
-...
-{
- "categorie" : 0,
- "type" : DEFAULT,
- "jauge" : 0
- "Timestamp1" : 60,
-"Timestamp2" : 60,
-“Seuil” : 1
-}
-}
-```
 
 ## Diagramme de séquence
