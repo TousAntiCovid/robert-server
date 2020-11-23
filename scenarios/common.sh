@@ -44,7 +44,7 @@ wstatus () {
          --header "Content-Type: application/json" \
          --request POST \
          --data "$1" \
-         "${TACW_BASE_URL}/${TACW_VERSION}"/status
+         "${TACW_BASE_URL}/${TACW_VERSION}"/wstatus
 }
 
 # Perform a TAC-warning visit report
@@ -56,7 +56,7 @@ wreport () {
          --header "Authorization: Bearer $1" \
          --request POST \
          --data "$2" \
-         "${TACW_BASE_URL}/${TACW_VERSION}"/report
+         "${TACW_BASE_URL}/${TACW_VERSION}"/wreport
 }
 
 test_status_at_risk () {
