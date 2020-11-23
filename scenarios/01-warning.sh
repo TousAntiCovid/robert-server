@@ -2,6 +2,11 @@
 set -euo pipefail
 source ./common.sh
 
+#Initialise the UUID for the visited locations
+ERP1=`uuid`
+ERP2=`uuid`
+ERP3=`uuid`
+
 echo "----Stacy registers"
 register "@01-register-stacy.json"
 
@@ -15,8 +20,8 @@ hugo_tk1=$(createVisitToken "STATIC" $(computeTokenPayload 1 $ERP1))
 hugo_tk2=$(createVisitToken "STATIC" $(computeTokenPayload 2 $ERP2))
 hugo_tk3=$(createVisitToken "STATIC" $(computeTokenPayload 3 $ERP3))
 hugo_tk4=$(createVisitToken "STATIC" $(computeTokenPayload 3 $ERP1))
-hugo_visitTokens= $(createVisitTokens "$hugo_tk1","$hugo_tk2","$hugo_tk3","$hugo_tk4")
-hugo_first_check=$(wstatus $hugo_visitTokens)
+hugo_visitTokens=$(createVisitTokens "$hugo_tk1","$hugo_tk2","$hugo_tk3","$hugo_tk4")
+hugo_first_check=$(wstatus "$hugo_visitTokens")
 test_status_at_risk "$hugo_first_check" "false"
 
 # Stacy performs a COVID test that comes back positive.
