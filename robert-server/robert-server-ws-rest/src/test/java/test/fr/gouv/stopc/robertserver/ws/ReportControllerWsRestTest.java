@@ -81,6 +81,9 @@ public class ReportControllerWsRestTest {
     private String pathPrefixV2;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V3)
+    private String pathPrefixV3;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V4)
     private String pathPrefix;
 
 	@Value("${robert.server.disable-check-token}")
@@ -256,7 +259,14 @@ public class ReportControllerWsRestTest {
         reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REPORT).build().encode().toUri());
     }
 
-    /** {@link #reportContactHistorySucceeds(URI)} and shortcut to test for API V2 exposure */
+    /** Test the access for API V2, should not be used since API V4 */
+    @Test
+    public void testAccessV3() {
+        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REPORT).build().encode().toUri());
+    }
+
+    
+    /** {@link #reportContactHistorySucceeds(URI)} and shortcut to test for API V4 exposure */
     @Test
     public void testReportContactHistorySucceedsV3() {
     	reportContactHistorySucceeds(this.targetUrl);
