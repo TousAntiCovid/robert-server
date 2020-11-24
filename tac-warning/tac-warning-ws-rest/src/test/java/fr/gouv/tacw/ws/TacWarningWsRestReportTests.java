@@ -4,12 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.security.KeyFactory;
-import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -27,10 +25,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.service.WarningService;
-import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -39,8 +37,6 @@ import fr.gouv.tacw.ws.vo.VisitVo;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.io.Encoders;
-import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @MockBean(WarningService.class)
@@ -64,6 +60,10 @@ class TacWarningWsRestReportTests {
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+	}
+
+	private Object getReportEntityWithBearer(ReportRequestVo reportRequest) {
+		return new HttpJwtHeaderUtils(jwtPrivateKey).getReportEntityWithBearer(reportRequest);
 	}
 
 	@Test
@@ -91,7 +91,7 @@ class TacWarningWsRestReportTests {
 	@Test
 	void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
 		HttpHeaders headers = new HttpHeaders();
-		this.addBearerAuthTo(headers);
+		new HttpJwtHeaderUtils(jwtPrivateKey).addBearerAuthTo(headers);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
@@ -113,6 +113,10 @@ class TacWarningWsRestReportTests {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		verifyNoMoreInteractions(warningService);
+	}
+
+	private MultiValueMap<String, String> newJsonHeaderWithBearer() {
+		return new HttpJwtHeaderUtils(jwtPrivateKey).newJsonHeaderWithBearer();
 	}
 
 	@Test
@@ -243,48 +247,6 @@ class TacWarningWsRestReportTests {
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-	}
-
-	protected HttpEntity<ReportRequestVo> getReportEntityWithBearer(ReportRequestVo entity) {
-		HttpHeaders headers = new HttpHeaders();
-		this.addBearerAuthTo(headers);
-		return new HttpEntity<>(entity, headers);
-	}
-	
-	protected HttpHeaders newJsonHeader() {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		return headers;
-	}
-	
-	protected HttpHeaders newJsonHeaderWithBearer() {
-		HttpHeaders headers = this.newJsonHeader();
-		this.addBearerAuthTo(headers);
-		return headers;
-	}
-
-	protected void addBearerAuthTo(HttpHeaders headers) {
-		Date now = new Date();
-		Date expiration = new Date(now.getTime() + 60000); 
-		try {
-			String jwtToken = this.newJwtToken(now, expiration);
-			headers.setBearerAuth(jwtToken);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}	
-
-	protected String newJwtToken(Date now, Date expiration) throws NoSuchAlgorithmException, InvalidKeySpecException {
-		PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(Decoders.BASE64.decode(jwtPrivateKey));
-		KeyFactory keyFactory = KeyFactory.getInstance(AuthorizationService.algo.getFamilyName());
-		PrivateKey jwtPrivateKey = keyFactory.generatePrivate(privateKeySpec);
-
-		return Jwts.builder()
-				.setHeaderParam("type", "JWT")
-				.setIssuedAt(now)
-				.setExpiration(expiration)
-				.signWith(jwtPrivateKey, SignatureAlgorithm.RS256)
-				.compact();
 	}
 
 }

@@ -38,6 +38,9 @@ class TacWarningIntegrationTests {
 	@Value("${controller.path.prefix}" + UriConstants.API_V1)
 	private String pathPrefixV1;
 
+	@Value("${robert.jwt.privatekey}")
+	private String jwtPrivateKey;
+	
 	@Test
 	void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<VisitVo> tokens = Stream
@@ -72,15 +75,13 @@ class TacWarningIntegrationTests {
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60, "UUID")));
-
 		this.report(visits);
 	}
 
 	private void report(List<VisitVo> visits) {
+		HttpEntity<ReportRequestVo> entity = new HttpJwtHeaderUtils(jwtPrivateKey).
+				getReportEntityWithBearer(new ReportRequestVo(visits));
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setBearerAuth("foo");
-		HttpEntity<ReportRequestVo> entity = new HttpEntity<>(new ReportRequestVo(visits), headers);
 		ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT,
 				entity, ReportResponseDto.class);
 
