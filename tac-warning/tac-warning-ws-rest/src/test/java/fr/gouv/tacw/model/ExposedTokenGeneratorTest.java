@@ -11,6 +11,7 @@ import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
+import fr.gouv.tacw.ws.vo.VenueTypeVo;
 
 /*
 * For privacy purposes, tokens area anonymized with token = hash(salt|uuid|time).
@@ -44,7 +45,7 @@ public class ExposedTokenGeneratorTest {
 
 	protected VisitVo visitVoExample() {
 		VisitVo visit = new VisitVo("24356657", 
-				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60,
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
 						"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"));
 		return visit;
 	}

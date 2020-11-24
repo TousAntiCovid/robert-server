@@ -164,7 +164,37 @@ components:
           example: STATIC
         venueType:
           type: string
+          enum:
+            - J
+            - L
+            - M
+            - N
+            - O
+            - P
+            - R
+            - S
+            - T
+            - U
+            - V
+            - W
+            - X
+            - Y
+            - PA
+            - SG
+            - PS
+            - GA
+            - OA
+            - REF
           example: "J"
+        venuCategory:
+            type: string
+            enum:
+                - CAT1
+                - CAT2
+                - CAT3
+                - CAT4
+                - CAT5
+            example: "CAT3"
         venueCapacity:
           type: integer
           example: 20

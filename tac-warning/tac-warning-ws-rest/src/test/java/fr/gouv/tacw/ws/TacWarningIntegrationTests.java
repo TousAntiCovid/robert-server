@@ -29,6 +29,7 @@ import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
+import fr.gouv.tacw.ws.vo.VenueTypeVo;
 
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -43,7 +44,7 @@ class TacWarningIntegrationTests {
 	void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<VisitVo> tokens = Stream
 				.of(new VisitVo("12345", 
-						new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60, "TokenNotInExposedList")))
+						new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "TokenNotInExposedList")))
 				.collect(Collectors.toList());
 		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(this.staticVisitTokenVoFrom(tokens));
 
@@ -58,7 +59,7 @@ class TacWarningIntegrationTests {
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add(new VisitVo("12345", 
-				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60,
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
 				"4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd")));
 		List<VisitTokenVo> tokensVo = this.staticVisitTokenVoFrom(visits);
 		this.report(visits);
@@ -75,7 +76,7 @@ class TacWarningIntegrationTests {
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add(new VisitVo("12345", 
-				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60, "UUID")));
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		this.report(visits);
 	}
@@ -112,7 +113,7 @@ class TacWarningIntegrationTests {
 	public void testGivenAVisitTokenInfectedNotIdenticalToReportedTokenWhenCheckingStatusThenIsAtRisk() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add(new VisitVo("24356657", 
-				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60,
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
 						"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc")));
 
 		this.report(visits);
