@@ -159,30 +159,6 @@ class TacWarningWsRestReportTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		verifyNoMoreInteractions(warningService);
 	}
-
-	@Test
-	void testWhenReportRequestWithInvalidVenueCategoryThenRequestSucceeds() throws JSONException {
-		String json = "{\n"
-				+ "   \"visits\": [\n"
-				+ "     {\n"
-				+ "       \"timestamp\": \"3814657232\",\n"
-				+ "       \"qrCode\": {\n"
-				+ "         \"type\": \"STATIC\",\n"
-				+ "         \"venueCategorie\": \"CAT FOO\",\n"
-				+ "         \"uuid\": \"9fb80fea-b3ac-4603-b40a-0be8879dbe79\"\n"
-				+ "       }\n"
-				+ "     }\n"
-				+ "   ]\n"
-				+ "}\n"
-				+ "";
-		
-		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
-				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
-				String.class);
-
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-	}
 	
 	@Test
 	void testWhenReportRequestWithNullVenueCategoryOrVenueTypeOrVenueCapacityThenRequestSucceeds() {
