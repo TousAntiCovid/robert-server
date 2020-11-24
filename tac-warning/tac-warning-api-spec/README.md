@@ -37,7 +37,7 @@ paye, il scanne le QR-code mis à disposition par le restaurateur. Le QR code
 contient comme information :
 
 - Le type du QR-CODE : STATIC/DYNAMIC  
-- le type et la classe de l’ERP
+- le type et la classe de l’ERP (cf https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351)
 - la jauge de l’ERP
 - un UUID aléatoire et unique
 
@@ -86,8 +86,8 @@ optionnelle. Mais si présente, est checkée par l’application TAC-w à la
 lecture du QR-code.
 
 Le restaurateur peut aussi télécharger TAC-Wpro, choisir le type de QR-CODE
-Static, et TAC-Wpro affichera un qr-code. Il doit y avoir un moyen de changer
-de QR code après confirmation.
+Static, et TAC-Wpro affichera un QRcode. Il doit y avoir un moyen de changer
+de QRcode après confirmation.
 
 L’utilisateur client télécharge TAC-W mais n’a pas besoin de s’enregistrer
 pour utiliser le service. Le seul enregistrement est fait dans TAC, est
@@ -106,13 +106,13 @@ Présenter le QR-code aux clients
 
 Quand un terminal TAC-Wpro en mode réplication esclave recopie un QR- code à l'initialisation il ne peut pas en générer d'autres. Il est lié au qr-code du terminal TAC-Wpro principal (pour éviter d’avoir des qr-code différents pour le même lieu. ex: un responsable de salle ave terminal principal et plusieurs serveurs avec chacun un terminal en mode réplication). 
 
-Il est recommandé de générer d'autres QR-code. Soit de façon automatique en pré-programmant les heures de changement, soit de façon manuelle. Si d'autres terminaux (réplicats) ont été initialiséser à partir de celui cio il faut re-déclencher la manipulation de réplication.'initialisation 
+Il est recommandé de générer d'autres QR-code. Soit de façon automatique en pré-programmant les heures de changement, soit de façon manuelle. Si d'autres terminaux (réplicats) ont été initialisés à partir de celui cio il faut re-déclencher la manipulation de réplication. 
 
 ### Operations de TAC-W (application du client)
 
 #### QR code scanning
 
--Quand le client rentre dans un restaurant, il scanne avec TAC-W le code QR courant QR qui lui est présenté par le restaurateur et le stocke avec un timestamp arrondi à S seoondes (timestamp=NOW - NOW % S  )l'heure dans une liste locale LocalListlocalList pendant x (x=12?) jours (x étant défini dans le config.json, et par défaut à 14 jours).
+Quand le client rentre dans un restaurant, il scanne avec TAC-W le code QR courant, QR qui lui est présenté par le restaurateur, et le stocke avec un timestamp arrondi à S seoondes (timestamp=NOW - NOW % S) l'heure dans une liste locale localList pendant x (x=12?) jours (x étant défini dans le config.json, et par défaut à 14 jours).
 
 #### Déclaration d'utilisateur infecté
 
@@ -122,45 +122,26 @@ Si le client est testé positif, il utilise TAC pour se déclarer. En même temp
 ensuite pour remonter ses visites à TAC-W.
 
 
-- pour chaque élément {QRc,timestamp} de cette liste localList, le backend:
-1-parse QRc pour retrouver 
-LE type de QR-code. Si le type est dynamique, il le passe au module TAC-W-DYNAMIQUE
-Le type / catégorie d’établissement pour obtenir la durée de la plage horaire [-h1, +h2]
-L'UUID
-Le timestamp arrondi à S secondes. 
-
-2- génère la clef k=<UUID | YYYYMMAA | timestamp-h1 | timestamp + h2>
-
-2- vérifie si k est déjà présent dans infectedList. 
-Si oui, incrémente le compteur de visiteur dans ce lieu à cette plage horaire. 
-Sinon insère k dans InfectedList
+pour chaque élément {timestamp, QRcode} de cette liste localList, le backend:
+1. Regarde si le type du QRcode est dynamique, il le passe au module TAC-W-DYNAMIQUE
+2. Récupère le type / catégorie d’établissement pour obtenir la durée de la plage horaire [-h1, +h2]
+3. Calcule alors les 3*max tokens possibles et les stocke dans sa liste exposedList
+  - (hash(i|uuid|time-1), 
+  - hash(i|uuid|time),
+  - hash(i|uuid|time+1)) pour i=1 à max 
 
 #### Status Request
 
-Régulièrement le client envoie une requête au backend TAC-W qui contient les codes QR de sa liste localList qu'il a collecté les x derniers jours. Ces requêtes sont stateless et anonymes.
--Pour chaque couple{QR-CODE,timestamp} de cette requête, le backend
-parse QR-CODE pour retrouver 
-Le type de QR-code. Si le type est dynamique, il la passe au module TAC-W-DYNAMIQUE
-Le type / catégorie d’établissement pour obtenir la durée de la plage horaire [-h1, +h2]
-L'UUID
-Le timestamp arrondi à S secondes.
-Le seuil de risque définit pour le type de lieu
-génère la clef k=<UUID | timestamp> | vérifie si k est déjà présent dans infectedList et si <timestamp-h1, timesalp, timestamp + h2> intersecte une plage
-Si oui, regarde si le compteur de de infectedList[k] > seuil
-Si oui renvoie TRUE sans traiter la suite. 
+Régulièrement le client envoie une requête au backend TAC-W qui contient les tokens de sa liste localList qu'il a collecté les x derniers jours. Ces requêtes sont stateless et anonymes.
+Le token est définit par token=hash(salt|uuid|time), ou uuid est récupéré du QR code, salt est un valeur aléatoire de 0 à max (max=1000?) choisie par l'app. du client et time est le temps NTP arrondi à l'heure.
 
-
-
-MODIFICATIONS / 
-
-Désolé, je n’ai pas le temps de reporter cette modification dans les SPEC et le CTD, mais le cas statique va s’aligner avec le cas dynamique sur les status, on remonte un token ce qui va garantit plus de privacy. 
-au lieu de faire des requêtes avec la liste de {QRcodes;time} le client fait des requêtes avec la liste de tokens définis comme token=hash(salt|uuid|time), ou uuid est récupéré du QR code, salt est un valeur aléatoire de 0 à max (max=1000?) choisie par l'app. du client et time est le temps NTP arrondi à l'heure.
-quand un utilisateur est testé positif, il remonte sa liste de {time;QRcode}. Le backend calcule alors les 3*max tokens possibles, (hash(i|uuid|time-1), hash(i|uuid|time),hash(i|uuid|time+1)) pour i=1 à max). et les stocke dans sa liste exposedList...
-Lors d'une requête, si un uuid, uuid_c, apparait dans ExposedList  l'utilisateur est averti...
+Pour chaque token de cette requête, le backend:
+1. Regarde si le type du QRcode est dynamique, il le passe au module TAC-W-DYNAMIQUE
+2. Regarde si un uuid, uuid_c, apparait dans ExposedList, l'utilisateur est averti...
 
 ## Fonctionnement du serveur
 
-Modèle SGBD
+### Modèle SGBD
 Le modèle de SGBD est postgreSQL. Les records sont fixes en format.
 Peu d'écriture. Il n'est remonté que quelques centaines à quelques milliers de report par jour, les seuls qui impliquent des écritures en base. Les statuts n'induisant que des lectures. 
 
@@ -169,24 +150,6 @@ Peu d'écriture. Il n'est remonté que quelques centaines à quelques milliers d
 
 Les tâches réalisées par le webservice =
 A la réception d’une requête status V1/tacw/status:
-Extraire du POST :
-listQrStatic = POST[‘static’]
-listToken = POST[‘dynamic’]
-warn = FALSE
-res = []
-(codeProcessStatic , warn ) = PROCESS_STATIC_QRCODE_LIST(listQrStatic)
-SI warn alors:
-Retourner{“CODE”: code, “WARN”: warn, “RES”: res}
-
-(codeProcessDynamic,warn ,res)=PROCESS_DYNAMIC_TOKEN_LIST(listToken)
-Retourner une réponse {“CODE”: code, “WARN”: warn, “RES”: res}
-
-PROCESS_STATIC_QRCODE_LIST(listQrStatic) : (code , warn )
-Pour chaque éléments e={QR-Code, timestamp} dans listQrStatic
-parse QR-codes pour retrouver 
-Le type du QR-Code. Si différent de Static passer au suivant. 
-Le type ERP / catégorie ERP pour obtenir la durée de la plage horaire [-h1, +h2], 
-L'UUID
 Le timestamp arrondi à l'heure. (ou la demie heure
 Récupère h1 et h2 en fonction du type et de la catégorie. Valeur par défaut h1=h2=1h.
 Récupère le seuil (valeur par défaut 2)
@@ -199,43 +162,24 @@ return (code, FALSE)
 
 
 A la réception d’une requête TACW_REPORT upload V1/tacw/report:
-Extraire de la réponse du POST au serveur Robert le JWT.
-Vérifier que le JWT est valide. (définir la durée de validité du JWT e timestamp_émission + 1h ? )
-Si KO exit avec ERROR CODE correspondant à l’erreur rencontrée:
-ERROR_JWT_EXPIRED
-ERROR_JWT_SIGNATURE_INVALID
-Extraire du POST :
-listQrStatic = POST[‘static’]
-listQrDynamic = POST[‘dynamic’]
-ENQUEUE listQrStatic dans listQrStaticToProcess
-ENQUEUE listQrDynamiq dans listQrDynamicToProcess
-SI ENQUEUE OK? EXIT SUCCESS else EXIT KO
+1. Extraire de la réponse du POST au serveur Robert le JWT.
+2. Vérifier que le JWT est valide. (définir la durée de validité du JWT e timestamp_émission + 1h ? )
+  - Si KO exit avec ERROR CODE correspondant à l’erreur rencontrée:
+    - ERROR_JWT_EXPIRED
+    - ERROR_JWT_SIGNATURE_INVALID
+3. Traiter les tokens en mode non prioritaire
 Définir la liste des codes d’erreur possibles
 
-
-
-Traitement asynchrone non prioritaire de la liste listQrStaticToProcess :
-
-DEQUEUE e={qrCode,timestamp) de  listQrStaticToProcess
-parse qrCode pour retrouver 
-La version. 
-Le type / catégorie 
-L'UUID
-Le timestamp .
-Récupère h1 et h2 en fonction du type et de la catégorie. Valeur par défault h1=h2=60min.
-Récupère la précision du timestamps (120, 60 ou 30 min)
-Arrondir le timestamps en fonction de la précision.
-Si <UUID | timestamp >  not in InfectedLISTist insert <UUID | timestamp , timestamp1 | timestamp2, score=1> sinon incrédmenter le score de 1
 
 Purge de la table :
 Exécuter une tâche asynchrone (cron) pour purger les entrées dans Infected-List dont la date d'expiration a expirée. 
 purger tous les OTP qui sont expirés.   (date d’émission + 1h) > NOW
 
 
-QUESTION : avoir 2 tables ? Infected-ListIST pour les QR remontés, Exposure-LISTist pour les contacts exposés (ie dont le score est > seuil). 
+QUESTION : avoir 2 tables ? Infected-List pour les QR remontés, Exposure-List pour les contacts exposés (ie dont le score est > seuil). 
 
 ## Module d'initialisation des données des ERP
-On doit pouvoir changer à la volée les heures avant après d'un ERP: https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351
+On doit pouvoir changer à la volée les heures avant / après d'un ERP: https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351
 
 Fichier JSON par exemple erp_config.json :
 
