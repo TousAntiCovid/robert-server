@@ -4,7 +4,6 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.ws.exception.TacWarningUnauthorizedException;
@@ -18,8 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class AuthorizationServiceImpl implements AuthorizationService {
-	@Autowired
 	private PropertyLoader propertyLoader;
+
+	public AuthorizationServiceImpl(PropertyLoader propertyLoader) {
+		this.propertyLoader = propertyLoader;
+	}
 
 	public boolean checkAuthorization(String jwtToken) throws TacWarningUnauthorizedException {
 		jwtToken = jwtToken.replace("Bearer ", ""); // TODO validate properly
@@ -41,15 +43,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
 			jwtPublicKey = keyFactory.generatePublic(keySpec);
-		} catch (Exception e) {
-			throw new TacWarningUnauthorizedException();
-		}
-
-		try {
 			Jwts.parserBuilder().setSigningKey(jwtPublicKey).build().parseClaimsJws(token);
 		} catch (Exception e) {
 			throw new TacWarningUnauthorizedException();
 		}
-
 	}
 }
