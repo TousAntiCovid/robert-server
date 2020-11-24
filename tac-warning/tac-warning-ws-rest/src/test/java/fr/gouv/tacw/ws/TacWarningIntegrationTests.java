@@ -33,6 +33,8 @@ import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
+import fr.gouv.tacw.ws.vo.TokenTypeVo;
+import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 
@@ -62,7 +64,8 @@ class TacWarningIntegrationTests {
 	@Test
 	void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<VisitVo> tokens = Stream
-				.of(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60, "TokenNotInExposedList")))
+				.of(new VisitVo("12345", 
+						new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60, "TokenNotInExposedList")))
 				.collect(Collectors.toList());
 		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(this.staticVisitTokenVoFrom(tokens));
 
@@ -76,7 +79,8 @@ class TacWarningIntegrationTests {
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60,
+		visits.add(new VisitVo("12345", 
+				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60,
 				"4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd")));
 		List<VisitTokenVo> tokensVo = this.staticVisitTokenVoFrom(visits);
 		this.report(visits);
@@ -92,7 +96,9 @@ class TacWarningIntegrationTests {
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60, "UUID")));
+		visits.add(new VisitVo("12345", 
+				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60, "UUID")));
+
 		this.report(visits);
 	}
 
@@ -131,8 +137,9 @@ class TacWarningIntegrationTests {
 	@Test
 	public void testGivenAVisitTokenInfectedNotIdenticalToReportedTokenWhenCheckingStatusThenIsAtRisk() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("24356657", new QRCodeVo(TokenTypeVo.STATIC, "restaurant", 60,
-				"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc")));
+		visits.add(new VisitVo("24356657", 
+				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60,
+						"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc")));
 
 		this.report(visits);
 		String exposedToken = "f4870249da823379ba646f4ead4fcf703416e3ef45e22a7c6fe8890665ccd733";
