@@ -22,6 +22,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,6 +49,7 @@ import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
+import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.ContactVo;
 import fr.gouv.stopc.robertserver.ws.vo.HelloMessageDetailVo;
@@ -72,13 +74,22 @@ public class ReportControllerWsRestTest {
     @MockBean
     private IRestApiService restApiService;
 
+    @Mock
+    private PropertyLoader propertyLoader;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
     private String pathPrefixV2;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V3)
+    private String pathPrefixV3;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V4)
     private String pathPrefix;
 
+	@Value("${robert.server.disable-check-token}")
+	private Boolean disableCheckToken;
+
+    
     @MockBean
     private RobertServerWsConfiguration config;
 
@@ -124,8 +135,9 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
+            when(this.propertyLoader.getDisableCheckToken()).thenReturn(this.disableCheckToken);
             ResponseEntity<ApiError> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
-
+            
             // Then
             assertNotNull(response);
             assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -247,7 +259,14 @@ public class ReportControllerWsRestTest {
         reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REPORT).build().encode().toUri());
     }
 
-    /** {@link #reportContactHistorySucceeds(URI)} and shortcut to test for API V2 exposure */
+    /** Test the access for API V2, should not be used since API V4 */
+    @Test
+    public void testAccessV3() {
+        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REPORT).build().encode().toUri());
+    }
+
+    
+    /** {@link #reportContactHistorySucceeds(URI)} and shortcut to test for API V4 exposure */
     @Test
     public void testReportContactHistorySucceedsV3() {
     	reportContactHistorySucceeds(this.targetUrl);

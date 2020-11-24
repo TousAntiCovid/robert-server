@@ -113,7 +113,8 @@ public class ReportControllerImpl implements IReportController {
             return ResponseEntity.badRequest().build();
         }
 
-        checkValidityToken(reportBatchRequestVo.getToken());
+        if (!this.propertyLoader.getDisableCheckToken())
+		    checkValidityToken(reportBatchRequestVo.getToken());
 
         contactDtoService.saveContacts(reportBatchRequestVo.getContacts());
 

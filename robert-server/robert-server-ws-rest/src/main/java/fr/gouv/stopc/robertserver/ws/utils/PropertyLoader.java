@@ -75,4 +75,10 @@ public class PropertyLoader {
     @Value("${robert.jwt.use-transient-key}")
     private Boolean jwtUseTransientKey;
 
+
+    @Value("${robert.server.disable-check-captcha}")
+	private Boolean disableCaptcha;
+	
+	@Value("${robert.server.disable-check-token}")
+	private Boolean disableCheckToken;
 }

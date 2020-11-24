@@ -3,8 +3,10 @@
 # Utility functions (e.g. for performing requests)
 # Most/all of these functions require TACW_BASE_URL to be set
 ROBERT_BASE_URL=${ROBERT_BASE_URL:-"http://localhost:8086/api/"}
+
 ROBERT_VERSION=${ROBERT_VERSION:-"v3"}
 TACW_BASE_URL=${TACW_BASE_URL:-"http://localhost:8080/api/tac-warning"}
+
 TACW_VERSION=${TACW_VERSION:-"v1"}
 SALT_RANGE=1000
 TIME_ROUNDING=3600
@@ -44,7 +46,7 @@ wstatus () {
          --header "Content-Type: application/json" \
          --request POST \
          --data "$1" \
-         "${TACW_BASE_URL}/${TACW_VERSION}"/status
+         "${TACW_BASE_URL}/${TACW_VERSION}"/wstatus
 }
 
 # Perform a TAC-warning visit report
@@ -56,7 +58,7 @@ wreport () {
          --header "Authorization: Bearer $1" \
          --request POST \
          --data "$2" \
-         "${TACW_BASE_URL}/${TACW_VERSION}"/report
+         "${TACW_BASE_URL}/${TACW_VERSION}"/wreport
 }
 
 test_status_at_risk () {
@@ -91,7 +93,7 @@ createVisitTokens(){
 # arg 3 = offset in day
 createVisit(){
 #  jq -n --arg type $1 --arg payload $2 '"visitTokens" \: [ {    "type" : $type,    "payload" : $payload}]}'
-  echo '{ "timestamp": "'$(roundedntptimestamp $3)'", "qrCode": { "type": "'$1'", "venueType": "N", "venueCapacity": 42, "uuid": "'$2'"  } }'
+  echo '{ "timestamp": "'$(roundedntptimestamp $3)'", "qrCode": { "type": "'$1'", "venueType": "N", "venueCapacity": 42, "uuid": "'$2'"  } }' | jq .
 }
 
 #arg visits

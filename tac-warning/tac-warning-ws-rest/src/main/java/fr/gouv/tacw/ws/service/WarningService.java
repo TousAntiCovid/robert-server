@@ -1,10 +1,13 @@
 package fr.gouv.tacw.ws.service;
 
+import java.util.stream.Collectors;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import fr.gouv.tacw.database.model.ExposedStaticVisitTokenEntity;
 import fr.gouv.tacw.database.service.TokenService;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
@@ -30,12 +33,12 @@ public class WarningService {
 
 	@Transactional
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
-		reportRequestVo.getVisits().stream()
-			.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
-			.forEach(visit ->  {
+		reportRequestVo.getVisits().stream().filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
+				.forEach(visit -> {
 					long timestamp = Long.parseLong(visit.getTimestamp());
-					new ExposedTokenGenerator(visit).generateAllExposedTokens().stream()
-						.forEach(visitToken -> tokenService.registerExposedStaticToken(timestamp, visitToken.getPayload()));						
-			});
+					tokenService.registerExposedStaticTokens(new ExposedTokenGenerator(visit).generateAllExposedTokens()
+							.stream().map(e -> new ExposedStaticVisitTokenEntity(timestamp, e.getPayload()))
+							.collect(Collectors.toList()));
+				});
 	}
 }

@@ -56,6 +56,8 @@ public class CaptchaServiceImpl implements CaptchaService {
 	
 	@Override
 	public boolean verifyCaptcha(final RegisterVo registerVo) {
+		if (this.propertyLoader.getDisableCaptcha())
+			return true;
 
 		return Optional.ofNullable(registerVo).map(captcha -> {
 
