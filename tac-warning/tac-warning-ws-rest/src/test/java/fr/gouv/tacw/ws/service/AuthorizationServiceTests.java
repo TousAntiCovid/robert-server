@@ -31,7 +31,7 @@ public class AuthorizationServiceTests {
 
 	@BeforeEach
 	public void setUp() {
-		keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+		keyPair = Keys.keyPairFor(AuthorizationService.algo);
 		String jwtPublicKey = Encoders.BASE64.encode(keyPair.getPublic().getEncoded());
 
 		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);

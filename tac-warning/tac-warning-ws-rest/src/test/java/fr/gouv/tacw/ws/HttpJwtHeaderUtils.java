@@ -18,10 +18,16 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 
 public class HttpJwtHeaderUtils {
-	private String jwtPrivateKey;
+	private PrivateKey jwtPrivateKey;
 
-	public HttpJwtHeaderUtils(String jwtPrivateKey) {
+	public HttpJwtHeaderUtils(PrivateKey jwtPrivateKey) {
 		this.jwtPrivateKey = jwtPrivateKey;
+	}
+
+	public HttpJwtHeaderUtils(String jwtPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+		PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(Decoders.BASE64.decode(jwtPrivateKey));
+		KeyFactory keyFactory = KeyFactory.getInstance(AuthorizationService.algo.getFamilyName());
+		this.jwtPrivateKey = keyFactory.generatePrivate(privateKeySpec);
 	}
 
 	public HttpEntity<ReportRequestVo> getReportEntityWithBearer(ReportRequestVo entity) {
@@ -53,12 +59,12 @@ public class HttpJwtHeaderUtils {
 		}
 	}
 
-	public String newJwtToken(Date now, Date expiration) throws NoSuchAlgorithmException, InvalidKeySpecException {
-		PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(Decoders.BASE64.decode(jwtPrivateKey));
-		KeyFactory keyFactory = KeyFactory.getInstance(AuthorizationService.algo.getFamilyName());
-		PrivateKey jwtPrivateKey = keyFactory.generatePrivate(privateKeySpec);
-
-		return Jwts.builder().setHeaderParam("type", "JWT").setIssuedAt(now).setExpiration(expiration)
-				.signWith(jwtPrivateKey, SignatureAlgorithm.RS256).compact();
+	public String newJwtToken(Date now, Date expiration) {
+		return Jwts.builder()
+				.setHeaderParam("type", "JWT")
+				.setIssuedAt(now)
+				.setExpiration(expiration)
+				.signWith(jwtPrivateKey, SignatureAlgorithm.RS256)
+				.compact();
 	}
 }

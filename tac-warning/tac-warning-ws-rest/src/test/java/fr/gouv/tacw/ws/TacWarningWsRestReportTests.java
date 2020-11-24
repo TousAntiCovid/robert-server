@@ -2,17 +2,14 @@ package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.KeyPair;
 import java.util.ArrayList;
-import java.util.Date;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,36 +20,46 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.service.WarningService;
+import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @MockBean(WarningService.class)
+@MockBean(PropertyLoader.class)
 class TacWarningWsRestReportTests {
+	@Value("${controller.path.prefix}" + UriConstants.API_V1)
+	private String pathPrefixV1;
+
 	@Autowired
 	private TestRestTemplate restTemplate;
 
 	@Autowired
 	private WarningService warningService;
 	
-	@Value("${robert.jwt.privatekey}")
-	private String jwtPrivateKey;
+	@Autowired
+	private PropertyLoader propertyLoader;
 	
-	@Value("${controller.path.prefix}" + UriConstants.API_V1)
-	private String pathPrefixV1;
+	private KeyPair keyPair;
+	
+	@BeforeEach
+	public void setUp() {
+		keyPair = Keys.keyPairFor(AuthorizationService.algo);
 
+		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
+		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+	}
+	
 	@Test
 	void testInfectedUserCanReportItselfAsInfected() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
@@ -63,7 +70,7 @@ class TacWarningWsRestReportTests {
 	}
 
 	private Object getReportEntityWithBearer(ReportRequestVo reportRequest) {
-		return new HttpJwtHeaderUtils(jwtPrivateKey).getReportEntityWithBearer(reportRequest);
+		return new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequest);
 	}
 
 	@Test
@@ -91,7 +98,7 @@ class TacWarningWsRestReportTests {
 	@Test
 	void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
 		HttpHeaders headers = new HttpHeaders();
-		new HttpJwtHeaderUtils(jwtPrivateKey).addBearerAuthTo(headers);
+		new HttpJwtHeaderUtils(keyPair.getPrivate()).addBearerAuthTo(headers);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
@@ -116,7 +123,7 @@ class TacWarningWsRestReportTests {
 	}
 
 	private MultiValueMap<String, String> newJsonHeaderWithBearer() {
-		return new HttpJwtHeaderUtils(jwtPrivateKey).newJsonHeaderWithBearer();
+		return new HttpJwtHeaderUtils(keyPair.getPrivate()).newJsonHeaderWithBearer();
 	}
 
 	@Test
