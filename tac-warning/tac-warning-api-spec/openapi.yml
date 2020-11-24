@@ -171,6 +171,7 @@ components:
         uuid:
           type: string
           example: "18ef4c39-9f15-4da1-8136-d482c51c74fe"
+          description: UUIDv4 identifier
       required:
         - type
         - uuid
