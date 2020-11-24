@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.tacw.database.utils.TimeUtils;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitTokenEntity;
 import fr.gouv.tacw.database.repository.StaticTokenRepository;

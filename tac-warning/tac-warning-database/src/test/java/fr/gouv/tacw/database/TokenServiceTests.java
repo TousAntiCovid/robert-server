@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.database.service.TokenService;
 
 @SpringBootTest
