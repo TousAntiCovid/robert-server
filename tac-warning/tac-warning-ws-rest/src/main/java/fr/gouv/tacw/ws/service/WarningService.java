@@ -1,5 +1,6 @@
 package fr.gouv.tacw.ws.service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
@@ -12,6 +13,7 @@ import fr.gouv.tacw.database.service.TokenService;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
+import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
 
 @Service
@@ -33,12 +35,19 @@ public class WarningService {
 
 	@Transactional
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
-		reportRequestVo.getVisits().stream().filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
-				.forEach(visit -> {
-					long timestamp = Long.parseLong(visit.getTimestamp());
-					tokenService.registerExposedStaticTokens(new ExposedTokenGenerator(visit).generateAllExposedTokens()
-							.stream().map(e -> new ExposedStaticVisitTokenEntity(timestamp, e.getPayload()))
-							.collect(Collectors.toList()));
-				});
+		reportRequestVo.getVisits().stream()
+				.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
+				.forEach(visit -> this.registerAllExposedStaticTokens(visit));
+	}
+	
+	protected void registerAllExposedStaticTokens(VisitVo visit) {
+		tokenService.registerExposedStaticTokens( this.allTokensFromVisit(visit) );
+	}
+
+	protected List<ExposedStaticVisitTokenEntity> allTokensFromVisit(VisitVo visit) {
+		long timestamp = Long.parseLong(visit.getTimestamp());
+		return new ExposedTokenGenerator(visit).generateAllExposedTokens().stream()
+				.map(exposedToken -> new ExposedStaticVisitTokenEntity(timestamp, exposedToken.getPayload()))
+				.collect(Collectors.toList());
 	}
 }
