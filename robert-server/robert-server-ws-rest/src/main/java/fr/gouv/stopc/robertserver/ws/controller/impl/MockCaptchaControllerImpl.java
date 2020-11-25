@@ -118,7 +118,7 @@ public class MockCaptchaControllerImpl implements ICaptchaController {
 			return response;
 			
 		}
-		byte[] aByteArray = { 0xa, 0x2, 0xf, (byte) 0xff, (byte) 0xff, (byte) 0xff };
+		/*byte[] aByteArray = { 0xa, 0x2, 0xf, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 		int width = 1;
 		int height = 2;
 
@@ -128,11 +128,20 @@ public class MockCaptchaControllerImpl implements ICaptchaController {
 				new int[] { 0, 1, 2 }, (Point) null);
 		ColorModel cm = new ComponentColorModel(ColorModel.getRGBdefault().getColorSpace(), false, true,
 				Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
-		BufferedImage image = new BufferedImage(cm, raster, true, null);
+		BufferedImage image = new BufferedImage(cm, raster, true, null);*/
+		// Will be inject through volume in the docker
+		BufferedImage image= null;
+		try {
+			image = ImageIO.read(new File("/tmp/CC.png"));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
+			if (image != null)
 			ImageIO.write(image, "png", baos);
-			ImageIO.write(image, "png", new File("/tmp/image.png"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
