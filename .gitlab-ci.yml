@@ -24,7 +24,9 @@ build_robert-server:
       - robert-server/robert-server-ws-rest/target/*.jar
       - robert-server/robert-crypto-grpc-server/target/*.jar
       - tac-warning/tac-warning-ws-rest/target/*.jar
-
+  rules:
+    - when: always
+    
 build_robert-push-notif-server:
   stage: build
   script:
@@ -34,7 +36,9 @@ build_robert-push-notif-server:
   artifacts:
     paths:
       - robert-push-notif-server/robert-push-notif-server-ws-rest/target/*.jar
-
+  rules:
+    - when: always
+    
 build_submission-code-server:
   stage: build
   script:
@@ -44,7 +48,9 @@ build_submission-code-server:
   artifacts:
     paths:
       - submission-code-server/submission-code-server-ws-rest/target/*.jar
-
+  rules:
+    - when: always
+    
 test:
   stage: test
   script:
@@ -57,6 +63,10 @@ test:
         - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
         - "tac-warning/*/target/surefire-reports/TEST-*.xml"
         - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /.*skip_ut.*/'
+      when: never
+    - when: on_success
  
 docker-robert-crypto-grpc-server:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
@@ -65,6 +75,12 @@ docker-robert-crypto-grpc-server:
   stage: docker
   dependencies:
     - build_robert-server
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual
+    - if: $CI_MERGE_REQUEST_ID
+      when: manual
   script:
     - source .gitlab-ci/compute_extra_env.sh
     - cd robert-server/robert-crypto-grpc-server
@@ -87,6 +103,12 @@ docker-robert-server-ws-rest:
   stage: docker
   dependencies:
     - build_robert-server
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual 
+    - if: $CI_MERGE_REQUEST_ID
+      when: manual
   script:
     - source .gitlab-ci/compute_extra_env.sh
     - cd robert-server/robert-server-ws-rest
@@ -109,6 +131,12 @@ docker-tac-warning:
   stage: docker
   dependencies:
     - build_robert-server
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual 
+    - if: $CI_MERGE_REQUEST_ID
+      when: manual
   script:
     - source .gitlab-ci/compute_extra_env.sh
     - cd tac-warning/tac-warning-ws-rest
@@ -130,6 +158,12 @@ docker-robert-push-notif-server:
   stage: docker
   dependencies:
     - build_robert-push-notif-server 
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual 
+    - if: $CI_MERGE_REQUEST_ID
+      when: manual
   script:
     - source .gitlab-ci/compute_extra_env.sh
     - cd robert-push-notif-server/robert-push-notif-server-ws-rest
@@ -151,6 +185,12 @@ docker-submission-code-server:
   stage: docker
   dependencies:
     - build_submission-code-server
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual 
+    - if: $CI_MERGE_REQUEST_ID
+      when: manual
   script:
     - source .gitlab-ci/compute_extra_env.sh
     - cd submission-code-server/submission-code-server-ws-rest
@@ -171,6 +211,12 @@ docker-captcha-orange-server:
   tags:    
     - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
   stage: docker
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual 
+    - if: $CI_MERGE_REQUEST_ID
+      when: manual
   script:
     - source .gitlab-ci/compute_extra_env.sh
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/cicd/deploy_captcha-orange.git
