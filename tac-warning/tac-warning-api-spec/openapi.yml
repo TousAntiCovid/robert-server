@@ -164,19 +164,41 @@ components:
           example: STATIC
         venueType:
           type: string
+          enum:
+            - J
+            - L
+            - M
+            - N
+            - O
+            - P
+            - R
+            - S
+            - T
+            - U
+            - V
+            - W
+            - X
+            - Y
+            - PA
+            - SG
+            - PS
+            - GA
+            - OA
+            - REF
           example: "J"
         venueCategory:
-          type: integer
-          enum:
-            - 1
-            - 2
-            - 3
-            - 4
-            - 5
+            type: string
+            enum:
+              - CAT1
+              - CAT2
+              - CAT3
+              - CAT4
+              - CAT5
+            example: "CAT3"
           description: "See issue #32 for resolution on type and content, https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351"
         venueCapacity:
           type: integer
-          example: 1
+          example: 20
         uuid:
           type: string
           example: "18ef4c39-9f15-4da1-8136-d482c51c74fe"
