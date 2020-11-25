@@ -9,10 +9,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.utils.TimeUtils;
-
+import lombok.extern.slf4j.Slf4j;
 import fr.gouv.tacw.database.model.ExposedStaticVisitTokenEntity;
 import fr.gouv.tacw.database.repository.StaticTokenRepository;
 
+@Slf4j
 @Service
 public class TokenService {
 	@Autowired
@@ -28,6 +29,7 @@ public class TokenService {
 	}
 
 	public void registerExposedStaticTokens(List<ExposedStaticVisitTokenEntity> exposedStaticVisitTokenEntities ) {
+		log.info(String.format("Registering %d static tokens in exposed tokens", exposedStaticVisitTokenEntities.size()));
 		staticTokenRepository.saveAll(exposedStaticVisitTokenEntities);
 	}
 	
@@ -39,6 +41,7 @@ public class TokenService {
 	public void deleteExpiredTokens() {
 		final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
 		final long retentionStart = currentNtpTime - (visitTokenRetentionPeriodDays * SECONDS_PER_DAY);
-		staticTokenRepository.deleteByTimestampLessThan(retentionStart);
+		final long nbDeletedTokens = staticTokenRepository.deleteByTimestampLessThan(retentionStart);
+		log.info(String.format("Deleted %d static tokens from exposed tokens", nbDeletedTokens));
 	}
 }

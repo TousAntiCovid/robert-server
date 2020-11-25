@@ -8,7 +8,8 @@ import org.springframework.stereotype.Repository;
 import fr.gouv.tacw.database.model.ExposedStaticVisitTokenEntity;
 
 @Repository
-public interface StaticTokenRepository extends JpaRepository<ExposedStaticVisitTokenEntity, Long>{
+public interface StaticTokenRepository extends JpaRepository<ExposedStaticVisitTokenEntity, Long> {
 	Optional<String> findByToken(String token);
-	void deleteByTimestampLessThan(long timestamp);
+
+	long deleteByTimestampLessThan(long timestamp);
 }
