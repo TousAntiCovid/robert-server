@@ -187,14 +187,14 @@ components:
             - REF
           example: "J"
         venueCategory:
-            type: string
-            enum:
-              - CAT1
-              - CAT2
-              - CAT3
-              - CAT4
-              - CAT5
-            example: "CAT3"
+          type: string
+          enum:
+            - CAT1
+            - CAT2
+            - CAT3
+            - CAT4
+            - CAT5
+          example: "CAT3"
           description: "See issue #32 for resolution on type and content, https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351"
         venueCapacity:
           type: integer
