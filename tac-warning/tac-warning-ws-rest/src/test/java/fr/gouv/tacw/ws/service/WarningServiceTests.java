@@ -1,10 +1,6 @@
 package fr.gouv.tacw.ws.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -16,10 +12,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import fr.gouv.tacw.database.service.TokenService;
-import fr.gouv.tacw.model.ExposedTokenGenerator;
+import fr.gouv.tacw.database.service.TokenServiceImpl;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
+import fr.gouv.tacw.ws.vo.TokenTypeVo;
+import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
@@ -28,7 +26,7 @@ import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import fr.gouv.tacw.ws.vo.VenueTypeVo;
 
 
-@SpringBootTest(classes = { WarningService.class, TokenService.class, TokenMapper.class, ExposureStatusService.class })
+@SpringBootTest(classes = { WarningServiceImpl.class, TokenServiceImpl.class, TokenMapper.class, ExposureStatusServiceImpl.class })
 @MockBean(TokenService.class)
 public class WarningServiceTests {
 	@Autowired
