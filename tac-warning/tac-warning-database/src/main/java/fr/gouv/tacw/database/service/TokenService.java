@@ -38,10 +38,11 @@ public class TokenService {
 	}
 	
 	@Scheduled(cron="${tacw.database.visit_token_deletion_job_cron_expression}")
-	public void deleteExpiredTokens() {
+	public long deleteExpiredTokens() {
 		final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
 		final long retentionStart = currentNtpTime - (visitTokenRetentionPeriodDays * SECONDS_PER_DAY);
 		final long nbDeletedTokens = staticTokenRepository.deleteByTimestampLessThan(retentionStart);
 		log.info(String.format("Deleted %d static tokens from exposed tokens", nbDeletedTokens));
+		return nbDeletedTokens;
 	}
 }
