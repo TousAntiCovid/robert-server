@@ -2,11 +2,14 @@ package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
+import java.security.KeyPair;
 import java.util.ArrayList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,10 +20,12 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 
+import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.service.WarningService;
+import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -28,19 +33,35 @@ import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import fr.gouv.tacw.ws.vo.VenueTypeVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
+import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @MockBean(WarningService.class)
+@MockBean(PropertyLoader.class)
 class TacWarningWsRestReportTests {
+	@Value("${controller.path.prefix}" + UriConstants.API_V1)
+	private String pathPrefixV1;
+
 	@Autowired
 	private TestRestTemplate restTemplate;
 
 	@Autowired
 	private WarningService warningService;
+	
+	@Autowired
+	private PropertyLoader propertyLoader;
+	
+	private KeyPair keyPair;
+	
+	@BeforeEach
+	public void setUp() {
+		keyPair = Keys.keyPairFor(AuthorizationService.algo);
 
-	@Value("${controller.path.prefix}" + UriConstants.API_V1)
-	private String pathPrefixV1;
-
+		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
+		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+	}
+	
 	@Test
 	void testInfectedUserCanReportItselfAsInfected() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
@@ -50,10 +71,36 @@ class TacWarningWsRestReportTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
+	private Object getReportEntityWithBearer(ReportRequestVo reportRequest) {
+		return new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequest);
+	}
+
+	@Test
+	void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
+		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
+		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, reportRequest,
+				String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+	
+	@Test
+	void testWhenReportRequestWithNonValidAuthenticationThenGetUnauthorized() {
+		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
+		HttpHeaders headers = new HttpHeaders();
+		headers.setBearerAuth("invalid JWT token");
+		HttpEntity<ReportRequestVo> reportEntity = new HttpEntity<>(reportRequest, headers);
+		
+		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, reportEntity,
+				String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+	}
+
 	@Test
 	void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
 		HttpHeaders headers = new HttpHeaders();
-		this.addBearerAuthTo(headers);
+		new HttpJwtHeaderUtils(keyPair.getPrivate()).addBearerAuthTo(headers);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
@@ -75,6 +122,10 @@ class TacWarningWsRestReportTests {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		verifyNoMoreInteractions(warningService);
+	}
+
+	private MultiValueMap<String, String> newJsonHeaderWithBearer() {
+		return new HttpJwtHeaderUtils(keyPair.getPrivate()).newJsonHeaderWithBearer();
 	}
 
 	@Test
@@ -182,7 +233,7 @@ class TacWarningWsRestReportTests {
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-	}		
+	}
 	
 	@Test
 	void testWhenReportRequestWithValidVisitThenRequestSucceed() throws JSONException {
@@ -201,7 +252,7 @@ class TacWarningWsRestReportTests {
 				+ "   ]\n"
 				+ "}\n"
 				+ "";
-
+		
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
 				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
@@ -210,25 +261,4 @@ class TacWarningWsRestReportTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
-	protected HttpEntity<ReportRequestVo> getReportEntityWithBearer(ReportRequestVo entity) {
-		HttpHeaders headers = new HttpHeaders();
-		this.addBearerAuthTo(headers);
-		return new HttpEntity<>(entity, headers);
-	}
-	
-	protected HttpHeaders newJsonHeader() {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		return headers;
-	}
-	
-	protected HttpHeaders newJsonHeaderWithBearer() {
-		HttpHeaders headers = this.newJsonHeader();
-		this.addBearerAuthTo(headers);
-		return headers;
-	}
-
-	protected void addBearerAuthTo(HttpHeaders headers) {
-		headers.setBearerAuth("sample-bearer");
-	}	
 }

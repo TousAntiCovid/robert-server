@@ -1,38 +1,47 @@
 package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
+import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
+import fr.gouv.tacw.ws.service.AuthorizationService;
+import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
+import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import fr.gouv.tacw.ws.vo.VenueTypeVo;
+import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
 
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@MockBean(PropertyLoader.class)
 class TacWarningIntegrationTests {
 	@Autowired
 	private TestRestTemplate restTemplate;
@@ -40,6 +49,19 @@ class TacWarningIntegrationTests {
 	@Value("${controller.path.prefix}" + UriConstants.API_V1)
 	private String pathPrefixV1;
 
+	@Autowired
+	private PropertyLoader propertyLoader;
+	
+	private KeyPair keyPair;
+	
+	@BeforeEach
+	public void setUp() {
+		keyPair = Keys.keyPairFor(AuthorizationService.algo);
+
+		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
+		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+	}
+	
 	@Test
 	void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<VisitVo> tokens = Stream
@@ -82,10 +104,14 @@ class TacWarningIntegrationTests {
 	}
 
 	private void report(List<VisitVo> visits) {
+		HttpEntity<ReportRequestVo> entity;
+		try {
+			entity = new HttpJwtHeaderUtils(keyPair.getPrivate()).
+					getReportEntityWithBearer(new ReportRequestVo(visits));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} 
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setBearerAuth("foo");
-		HttpEntity<ReportRequestVo> entity = new HttpEntity<>(new ReportRequestVo(visits), headers);
 		ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT,
 				entity, ReportResponseDto.class);
 
