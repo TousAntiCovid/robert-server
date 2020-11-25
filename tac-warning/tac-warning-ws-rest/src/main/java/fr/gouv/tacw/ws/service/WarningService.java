@@ -15,7 +15,9 @@ import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class WarningService {
 	@Autowired
@@ -28,6 +30,7 @@ public class WarningService {
 	private ExposureStatusService exposureStatusService;
 	
 	public boolean getStatus(ExposureStatusRequestVo statusRequestVo) {
+		log.info(String.format("Exposure status request for %d visits", statusRequestVo.getVisitTokens().size()));
 		return statusRequestVo.getVisitTokens().stream().
 				map(tokenVo -> tokenMapper.getToken(tokenVo)).
 				anyMatch(token -> exposureStatusService.isExposed(token));
@@ -35,6 +38,7 @@ public class WarningService {
 
 	@Transactional
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
+		log.info(String.format("Reporting %d visits while infected", reportRequestVo.getVisits().size()));
 		reportRequestVo.getVisits().stream()
 				.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
 				.forEach(visit -> this.registerAllExposedStaticTokens(visit));

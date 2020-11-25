@@ -33,7 +33,6 @@ public class TACWarningController {
 	@PostMapping(value = UriConstants.STATUS)
 	protected ExposureStatusResponseDto getStatus(
 			@Valid @RequestBody(required = true) ExposureStatusRequestVo statusRequestVo) {
-		log.debug("getStatus called");
 		boolean atRisk = warningService.getStatus(statusRequestVo);
 		return new ExposureStatusResponseDto(atRisk);
 	}
@@ -43,7 +42,6 @@ public class TACWarningController {
 			@RequestHeader("Authorization") String jwtToken) {
 		authorizationService.checkAuthorization(jwtToken);
 
-		log.debug("reportVisits called");
 		warningService.reportVisitsWhenInfected(reportRequestVo);
 		return new ReportResponseDto(true, "Report successful");
 	}
