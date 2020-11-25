@@ -31,14 +31,14 @@ public interface ICaptchaController {
             @Valid @RequestBody(required=true) CaptchaCreationVo captchaCreationVo)
             throws RobertServerException;
 
-    @GetMapping(value = UriConstants.CAPTCHA + "/{captchaId}/image")
-    //@Produces(MediaType.IMAGE_PNG_VALUE)
+    @GetMapping(value = UriConstants.CAPTCHA + "/{captchaId}/image", produces = MediaType.IMAGE_PNG_VALUE)
+//    @Produces(MediaType.IMAGE_PNG_VALUE)
     ResponseEntity<byte[]> getCaptchaImage(
             @PathVariable("captchaId") String captchaId)
             throws RobertServerException;
 
-    @GetMapping(value = UriConstants.CAPTCHA + "/{captchaId}/audio")
-    //@Produces("audio/wav")
+    @GetMapping(value = UriConstants.CAPTCHA + "/{captchaId}/audio",produces = "audio/wav")
+//    @Produces("audio/wav")
     ResponseEntity<byte[]> getCaptchaAudio(
             @PathVariable("captchaId") String captchaId)
             throws RobertServerException;
