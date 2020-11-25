@@ -12,7 +12,8 @@ public class QRCodeVo {
 	@NotNull
 	@Valid
 	private TokenTypeVo type;
-	private String venueType;
+	@Valid
+	private VenueTypeVo venueType;
 	@Valid
 	private VenueCategoryVo venueCategory;
 	private int venueCapacity;

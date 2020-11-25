@@ -25,6 +25,7 @@ import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
+import fr.gouv.tacw.ws.vo.VenueTypeVo;
 
 
 @SpringBootTest(classes = { WarningService.class, TokenService.class, TokenMapper.class, ExposureStatusService.class })
@@ -62,7 +63,7 @@ public class WarningServiceTests {
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add(new VisitVo("12345", 
-				new QRCodeVo(TokenTypeVo.STATIC, "restaurant", VenueCategoryVo.CAT1, 60, "UUID")));
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
 		//TODO  Assertion to update

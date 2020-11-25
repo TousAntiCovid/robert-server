@@ -31,6 +31,7 @@ import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
+import fr.gouv.tacw.ws.vo.VenueTypeVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
@@ -142,7 +143,7 @@ class TacWarningWsRestReportTests {
 	void testWhenReportRequestWithNullTimestampTypeThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(new VisitVo(null, 
-				new QRCodeVo(TokenTypeVo.STATIC, "venueType",VenueCategoryVo.CAT1, 60, "uuid")));
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "uuid")));
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
@@ -199,7 +200,7 @@ class TacWarningWsRestReportTests {
 	void testWhenReportRequestWithNullUuidThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(
-				new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, "venueType", VenueCategoryVo.CAT1, 60, null)));
+				new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, null)));
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(

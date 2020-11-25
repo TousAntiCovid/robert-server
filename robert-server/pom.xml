@@ -49,6 +49,7 @@
 		<postgresql.version>42.2.12</postgresql.version>
 		<bountycastle.version>1.65</bountycastle.version>
 		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
+		<io.jsonwebtoken.version>0.11.2</io.jsonwebtoken.version>
 	</properties>
 
 	<dependencies>
