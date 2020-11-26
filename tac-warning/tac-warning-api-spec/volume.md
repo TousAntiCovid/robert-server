@@ -6,21 +6,21 @@
 
 Estimate the steady-state size of the TAC-warning database.
 
-It is expected that the database size will be dominated by the visit tokens table
+It is expected that the database size will be dominated by the visit tokens table.
 
 ## Estimate
 
 We want to estimate the number of new visit tokens stored on each day, and
-multiply it by a RETENTION_DAYS constant to estimate steady-state size.
+accumulate it to estimate steady-state size.
 
 Tokens older than RETENTION_DAYS are deleted by a periodic task.
 
-(RETENTION_DAYS is identical on the client and the server)
+(RETENTION_DAYS is identical on the client and the server -- each client reports its last RETENTION_DAYS worth of visits)
 
-On a given day, N_DAILY_COVID_REPORTS will report their visit through the app.
+On a given day, NB_DAILY_COVID_REPORTS users (who have been tested positive to Covid-19) will report their visits through the app.
 
-For each positive person, we estimate an average number of visited places of
-less than VISITS_PER_DAY.
+For each Covid-19-positive person, we estimate an average number of visited places of
+(less than) VISITS_PER_DAY.
 
 For each visit, a number of visit tokens are generated. This number can be expressed as
 
@@ -28,31 +28,28 @@ For each visit, a number of visit tokens are generated. This number can be expre
 TOKENS_PER_VISIT = SALT_RANGE * (VISIT_DURATION / TIME_ATOM)
 ```
 
-The client keeps the last RETENTION_DAYS history of visits, and therefore each report will generate
+(VISIT_DURATION is a fixed value for each venue type, it does not depend on the actual visit duration -- in this estimate we use a single value for VISIT_DURATION)
+
 
 ```
-TOKENS_PER_REPORT = TOKENS_PER_VISIT * VISITS_PER_DAY * RETENTION_DAYS
+TOKENS_PER_REPORT_PER_DAY = TOKENS_PER_VISIT * VISITS_PER_DAY
 ```
-
-The size of a single token is constant (TOKEN_SIZE, expected to be 32 bytes)
 
 Therefore, the number of new tokens per day is
 
 ```
-NEW_TOKENS_PER_DAY = N_DAILY_COVID_REPORTS * TOKENS_PER_REPORT
+NB_NEW_TOKENS_PER_DAY = NB_DAILY_COVID_REPORTS * TOKENS_PER_REPORT_PER_DAY
 ```
 
-and their total size is
-
-```
-NEW_TOKENS_PER_DAY * TOKEN_SIZE
-```
+The size of a single token is constant (TOKEN_SIZE, expected to be 32 bytes)
 
 The total steady-state size of the database table is given by
 
 ```
-STEADY_STATE_SIZE = NEW_TOKENS_PER_DAY * TOKEN_SIZE * RETENTION_DAYS
+STEADY_STATE_SIZE = [NB_NEW_TOKENS_PER_DAY + (NB_NEW_TOKENS_PER_DAY*RETENTION_DAYS)]/2 * RETENTION_DAYS * TOKEN_SIZE 
 ```
+
+(sum of an arithmetic series)
 
 (**Note that RETENTION_DAYS appears twice in the formula**)
 
@@ -75,14 +72,16 @@ Yields the following values:
 
 TOKENS_PER_VISIT = 1000 * (180 / 60) = 3000
 
-TOKENS_PER_REPORT = 3000 * 5 * 14 = 210000
+TOKENS_PER_REPORT_PER_DAY = 3000 * 5 = 15000
 
-NEW_TOKENS_PER_DAY=5000 * 210000 = 1050000000
+NB_NEW_TOKENS_PER_DAY = 5000 * 15000 = 75000000
 
-STEADY_STATE_SIZE = 1050000000 * 32 * 14 = 470400000000 (bytes -- or around 470 gigabytes)
+STEADY_STATE_TOKENS = [75000000 + (75000000*14)] / 2 * 14 = 7875000000 
+
+STEADY_STATE_SIZE = 7875000000 * 32 = 252000000000 (bytes -- or 252 gigabytes)
 
 ## Note
 
-This assumes a scheme where discrete tokens are used (with a TIME_ATOM resolution). If volumes are 
-impractical, another scheme could be used where tokens would be interval-based. This would result
+This assumes a scheme where discrete tokens are used (with a TIME_ATOM resolution). If this estimated 
+volume is impractical, another scheme could be used where tokens would be interval-based. This would result
 in a space savings factor of VISIT_DURATION/TIME_ATOM (e.g. a factor of 6 on the above example).

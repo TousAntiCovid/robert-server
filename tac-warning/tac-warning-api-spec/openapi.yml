@@ -201,6 +201,7 @@ components:
           example: 20
         uuid:
           type: string
+          description: UUIDv4 identifier
           example: "18ef4c39-9f15-4da1-8136-d482c51c74fe"
           pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
       required:
