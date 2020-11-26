@@ -17,9 +17,9 @@ Tokens older than RETENTION_DAYS are deleted by a periodic task.
 
 (RETENTION_DAYS is identical on the client and the server -- each client reports its last RETENTION_DAYS worth of visits)
 
-On a given day, N_DAILY_COVID_REPORTS users (who have been tested positive to COVID) will report their visits through the app.
+On a given day, NB_DAILY_COVID_REPORTS users (who have been tested positive to Covid-19) will report their visits through the app.
 
-For each COVID-positive person, we estimate an average number of visited places of
+For each Covid-19-positive person, we estimate an average number of visited places of
 (less than) VISITS_PER_DAY.
 
 For each visit, a number of visit tokens are generated. This number can be expressed as
@@ -38,7 +38,7 @@ TOKENS_PER_REPORT_PER_DAY = TOKENS_PER_VISIT * VISITS_PER_DAY
 Therefore, the number of new tokens per day is
 
 ```
-NEW_TOKENS_PER_DAY = N_DAILY_COVID_REPORTS * TOKENS_PER_REPORT_PER_DAY
+NB_NEW_TOKENS_PER_DAY = NB_DAILY_COVID_REPORTS * TOKENS_PER_REPORT_PER_DAY
 ```
 
 The size of a single token is constant (TOKEN_SIZE, expected to be 32 bytes)
@@ -46,7 +46,7 @@ The size of a single token is constant (TOKEN_SIZE, expected to be 32 bytes)
 The total steady-state size of the database table is given by
 
 ```
-STEADY_STATE_SIZE = [NEW_TOKENS_PER_DAY + (NEW_TOKENS_PER_DAY*RETENTION_DAYS)]/2 * RETENTION_DAYS * TOKEN_SIZE 
+STEADY_STATE_SIZE = [NB_NEW_TOKENS_PER_DAY + (NB_NEW_TOKENS_PER_DAY*RETENTION_DAYS)]/2 * RETENTION_DAYS * TOKEN_SIZE 
 ```
 
 (sum of an arithmetic series)
@@ -74,7 +74,7 @@ TOKENS_PER_VISIT = 1000 * (180 / 60) = 3000
 
 TOKENS_PER_REPORT_PER_DAY = 3000 * 5 = 15000
 
-NEW_TOKENS_PER_DAY = 5000 * 15000 = 75000000
+NB_NEW_TOKENS_PER_DAY = 5000 * 15000 = 75000000
 
 STEADY_STATE_TOKENS = [75000000 + (75000000*14)] / 2 * 14 = 7875000000 
 
