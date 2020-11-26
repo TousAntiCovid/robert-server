@@ -1,0 +1,209 @@
+openapi: 3.0.0
+info:
+  description: "#TOUSANTICOVID, Warning API"
+  version: 1.0.0
+  title: "#TOUSANTICOVID, Warning"
+  #  termsOfService: https://github.com/ROBERT-proximity-tracing/
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags: []
+paths:
+  /wstatus:
+    post:
+      tags: []
+      summary: Exposure Status Request
+      description: "App requests if its user has been exposed
+        The request is a POST even if no information is contributed to the server because parameters should not be passed as queryparams.
+        App should continue to send ESR requests even after having been notified of a risk, in case new risks are detected.
+        WARNING : DYNAMIC token are ignored for the moment"
+      operationId: ESR
+      requestBody:
+        $ref: "#/components/requestBodies/ExposureStatusRequest"
+      responses:
+        "200":
+          description: "Returns whether the app user was exposed to a risk. The app must
+            display associated hardcoded content accordingly and send local
+            notification."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExposureStatusResponse"
+        "400":
+          description: bad request
+  /wreport:
+    post:
+      tags: []
+      summary: Report visited enclosed area history
+      description: "Report visited venue from the last X days
+        stored by the app once user has been diagnosed as infected by a healthcare professional.
+        Requires a Bearer Token for authorization (provided by the Robert Server Report answer).
+        WARNING : DYNAMIC token are ignored for the moment"
+      operationId: Report
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportRequest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+        "400":
+          description: bad request
+        "401":
+          description: invalid authentication
+servers:
+  - url: https://yourtacwarningserver.org/v1
+components:
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  requestBodies:
+    ExposureStatusRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExposureStatusRequest"
+  schemas:
+    ExposureStatusRequest:
+      type: object
+      description: List of tokens corresponding to the visits
+      properties:
+        visitTokens:
+          type: array
+          description: "Send the list of tokens gathered during the last XXX days (see issue #37)"
+          items:
+            $ref: "#/components/schemas/VisitToken"
+          example:
+            - type: "STATIC"
+              payload: "88d84f0b72dd2ff8702a60365cf88672dff93329aeb3fb7c24951808a0fa7641"
+            - type: "DYNAMIC"
+              payload: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
+    ExposureStatusResponse:
+      type: object
+      properties:
+        atRisk:
+          type: boolean
+          description: "Optional. If the Exposure Status Request is done with a list of QR-codes, it answers
+            True if was exposed at risk. If already notified of a risk exposure,
+            means exposed to a new risk since."
+    ReportRequest:
+      type: object
+      properties:
+        visits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Visit"
+          description: "The list of visited venue stored in the LocalList"
+          minItems: 1
+          maxItems: 200
+    ReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+    VisitToken:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - STATIC
+            - DYNAMIC
+          example: DYNAMIC
+
+        payload:
+          description: "token computed from the venue static QR-code
+            using token=hash(salt|uuid). We use sha256 and is expressed in hexa."
+          type: string
+          minLength: 64
+          maxLength: 64
+          example: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
+          pattern: '^[a-fA-F0-9]{64}$'
+      required:
+        - type
+        - payload
+    Visit:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          minLength: 10
+          maxLength: 10
+          description: "timestamp is a NTP timestamp. It express the number of second relative to 0h on 1 january 1900.
+          The timestamp expresses the time rounded to the nearest time interval at with the QR-CODE is scanned.
+          If the rounding interval is 15 minutes, then timestamp is rounded to the nearest 15 minutes (15:32 -> 15:30 and 14:12 -> 14:15) "
+          example: "3814601613"
+        qrCode:
+          $ref: "#/components/schemas/QRCode"
+      required:
+        - timestamp
+        - payload
+    QRCode:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - STATIC
+            - DYNAMIC
+          example: STATIC
+        venueType:
+          type: string
+          enum:
+            - J
+            - L
+            - M
+            - N
+            - O
+            - P
+            - R
+            - S
+            - T
+            - U
+            - V
+            - W
+            - X
+            - Y
+            - PA
+            - SG
+            - PS
+            - GA
+            - OA
+            - REF
+          example: "J"
+        venueCategory:
+          type: string
+          enum:
+            - CAT1
+            - CAT2
+            - CAT3
+            - CAT4
+            - CAT5
+          example: "CAT3"
+          description: "See issue #32 for resolution on type and content, https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351"
+        venueCapacity:
+          type: integer
+          example: 20
+        uuid:
+          type: string
+          example: "18ef4c39-9f15-4da1-8136-d482c51c74fe"
+          description: UUIDv4 identifier
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      required:
+        - type
+        - uuid
