@@ -1,5 +1,11 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -19,24 +25,12 @@ import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
-import io.micrometer.core.instrument.util.StringUtils;
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.Date;
-import java.util.Objects;
-
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
-import java.security.Key;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
+import io.micrometer.core.instrument.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -69,35 +63,38 @@ public class ReportControllerImpl implements IReportController {
                 && StringUtils.isEmpty(reportBatchRequestVo.getContactsAsBinary());
     }
 
-    private String generateJWT(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
-      SignatureAlgorithm algo = SignatureAlgorithm.RS256; // TODO validate with ANSSI which algo to use, move to proper place
-      PrivateKey jwtPrivateKey;
-      try {
+	private String generateJWT(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
+		SignatureAlgorithm algo = SignatureAlgorithm.RS256; 
 
-	if (this.propertyLoader.getJwtUseTransientKey()) {
-			// In test mode, we generate a transient key
-			KeyPair keyPair = Keys.keyPairFor(algo);
-			jwtPrivateKey = keyPair.getPrivate();
-		} else {
-			// TODO Use Vault to store the key
-			byte[] encoded = Decoders.BASE64.decode(this.propertyLoader.getJwtPrivateKey());
-			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
-			jwtPrivateKey = keyFactory.generatePrivate(keySpec);
+		PrivateKey jwtPrivateKey;
+		try {
 
+			if (this.propertyLoader.getJwtUseTransientKey()) {
+				// In test mode, we generate a transient key
+				KeyPair keyPair = Keys.keyPairFor(algo);
+				jwtPrivateKey = keyPair.getPrivate();
+			} else {
+				byte[] encoded = Decoders.BASE64.decode(this.propertyLoader.getJwtPrivateKey());
+				KeyFactory keyFactory = KeyFactory.getInstance(algo.getFamilyName());
+				PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
+				jwtPrivateKey = keyFactory.generatePrivate(keySpec);
+			}
+
+			Date now = new Date();
+			Date expiration = new Date(now.getTime() + this.propertyLoader.getJwtLifeTime() * 60000);
+
+			String token = Jwts.builder()
+					.setHeaderParam("type", "JWT")
+					.setIssuedAt(now)
+					.setExpiration(expiration)
+					.signWith(jwtPrivateKey, algo)
+					.compact();
+
+			return token;
+		} catch (Exception e) {
+			throw new RobertServerException("Token generation failed!");
 		}
-
-		Date now = new Date();
-		Date expiration = new Date(now.getTime() + this.propertyLoader.getJwtLifeTime() * 60000);
-
-		String token = Jwts.builder().setHeaderParam("type", "JWT").setIssuedAt(now).setExpiration(expiration)
-				.signWith(jwtPrivateKey, algo).compact();
-
-		return token;
-      } catch (Exception e) {
-		  throw new RobertServerException(); // TODO more precise error
-      }
-    }
+	}
 
     @Override
     public ResponseEntity<ReportBatchResponseDto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
