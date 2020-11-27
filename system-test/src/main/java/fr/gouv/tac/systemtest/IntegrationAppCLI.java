@@ -1,22 +1,46 @@
 package fr.gouv.tac.systemtest;
 // Import classes:
+
 import org.openapitools.client.ApiClient;
 import org.openapitools.client.ApiException;
 import org.openapitools.client.Configuration;
 import org.openapitools.client.api.DefaultApi;
-import org.openapitools.client.model.*;
+import org.openapitools.client.model.ExposureStatusRequest;
+import org.openapitools.client.model.ExposureStatusResponse;
+
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 public class IntegrationAppCLI {
+    private static final int TIME_ROUNDING = 900;
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost/api/tac-warning/v1");
+        String tacServerPath = System.getenv("TACW_BASE_URL");
+        if (tacServerPath == null || tacServerPath.isEmpty()){
+            tacServerPath = "http://localhost";
+        }
+        tacServerPath = tacServerPath+ "/v1";
+
+        defaultClient.setBasePath(tacServerPath);
 
         DefaultApi apiInstance = new DefaultApi(defaultClient);
-        ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest(); // ExposureStatusRequest |
-        VisitToken visitToken = new VisitToken();
-        visitToken.setType(VisitToken.TypeEnum.STATIC);
-        visitToken.setPayload("7625d7d4a5b45f98f95ef25ed8951da566609a60");
-        exposureStatusRequest.addVisitTokensItem(visitToken);
+
+        LocalDateTime dateTime=LocalDateTime.of(1900,1,1,0,0,0);
+        LocalDateTime dateTime2=LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).minusDays(1);
+        Long timestamp=java.time.Duration.between(dateTime,dateTime2).getSeconds();
+        timestamp=timestamp-(timestamp % TIME_ROUNDING);
+
+        Visitor hugo = new Visitor();
+        Place restaurant = new Place();
+        Place cafe = new Place();
+        hugo.addVisit(restaurant.getQrCode(),timestamp);
+        final List<Long> list = TimeUtil.everyDayAt(12);
+        hugo.addMultipleVisit(cafe.getQrCode(), list);
+
+
+        ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
+        exposureStatusRequest.setVisitTokens(hugo.getTokens());
         try {
             ExposureStatusResponse result = apiInstance.eSR(exposureStatusRequest);
             System.out.println(result);
