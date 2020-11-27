@@ -1,4 +1,4 @@
-package fr.gouv.systemtest;
+package fr.gouv.tac.systemtest;
 
 import io.cucumber.junit.Cucumber;
 import io.cucumber.junit.CucumberOptions;

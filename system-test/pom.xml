@@ -37,7 +37,7 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/openapi.yml</inputSpec>
                             <output>${project.basedir}/src-gen</output>
-                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <generateSupportingFiles>true</generateSupportingFiles>
                             <generatorName>java</generatorName>
 
                         </configuration>

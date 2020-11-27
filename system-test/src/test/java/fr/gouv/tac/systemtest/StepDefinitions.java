@@ -1,4 +1,4 @@
-package fr.gouv.systemtest;
+package fr.gouv.tac.systemtest;
 
 public class StepDefinitions {
 
