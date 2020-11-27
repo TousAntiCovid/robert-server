@@ -1,10 +1,10 @@
 package fr.gouv.tac.systemtest;
 // Import classes:
-import org.openapitools.client.ApiClient;
-import org.openapitools.client.ApiException;
-import org.openapitools.client.Configuration;
-import org.openapitools.client.api.DefaultApi;
-import org.openapitools.client.model.*;
+import fr.gouv.tac.tacwarning.ApiClient;
+import fr.gouv.tac.tacwarning.ApiException;
+import fr.gouv.tac.tacwarning.Configuration;
+import fr.gouv.tac.tacwarning.api.DefaultApi;
+import fr.gouv.tac.tacwarning.model.*;
 
 public class IntegrationAppCLI {
     public static void main(String[] args) {
