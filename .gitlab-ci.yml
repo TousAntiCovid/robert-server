@@ -32,7 +32,7 @@ build_system_test:
   stage: build
   script:
     # build all (for other phase such as integration test) but skip tests
-    - cd system_test
+    - cd system-test
     - mvn $MAVEN_CLI_OPTS -DskipTests=true package
   artifacts:
     paths:
