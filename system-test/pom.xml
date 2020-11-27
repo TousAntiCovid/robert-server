@@ -14,7 +14,10 @@
         <jackson-databind-nullable-version>0.2.0</jackson-databind-nullable-version>
         <jodatime-version>2.7</jodatime-version>
         <maven-plugin-version>1.0.0</maven-plugin-version>
-        <junit-version>4.8.1</junit-version>
+        <cucumber.version>6.8.1</cucumber.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>4.13</junit.version>
+
         <http-signature-version>1.4</http-signature-version>
         <openapi.generator.maven.plugin.output>${project.basedir}</openapi.generator.maven.plugin.output>
         <openapi.generator.maven.plugin.generateSupportingFiles>false</openapi.generator.maven.plugin.generateSupportingFiles>
@@ -147,5 +150,21 @@
             <version>1.15</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-java</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-junit</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+
     </dependencies>
 </project>

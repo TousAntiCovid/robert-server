@@ -7,6 +7,7 @@ import org.openapitools.client.Configuration;
 import org.openapitools.client.api.DefaultApi;
 import org.openapitools.client.model.ExposureStatusRequest;
 import org.openapitools.client.model.ExposureStatusResponse;
+import org.openapitools.client.model.VisitToken;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -32,15 +33,25 @@ public class IntegrationAppCLI {
         timestamp=timestamp-(timestamp % TIME_ROUNDING);
 
         Visitor hugo = new Visitor();
+        Visitor stacy = new Visitor();
         Place restaurant = new Place();
         Place cafe = new Place();
-        hugo.addVisit(restaurant.getQrCode(),timestamp);
-        final List<Long> list = TimeUtil.everyDayAt(12);
+        hugo.addVisit(restaurant.getQrCode(),TimeUtil.yesterdayAt(12));
+        List<Long> list = TimeUtil.everyDayAt(13);
         hugo.addMultipleVisit(cafe.getQrCode(), list);
 
+        list = TimeUtil.everyDayAt(12);
+        stacy.addMultipleVisit(cafe.getQrCode(), list);
+
+        sendTacWarningStatus(hugo.getTokens(),apiInstance);
+        sendTacWarningStatus(stacy.getTokens(),apiInstance);
+
+    }
+
+    private static void sendTacWarningStatus(List<VisitToken> tokens,DefaultApi apiInstance) {
 
         ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
-        exposureStatusRequest.setVisitTokens(hugo.getTokens());
+        exposureStatusRequest.setVisitTokens(tokens);
         try {
             ExposureStatusResponse result = apiInstance.eSR(exposureStatusRequest);
             System.out.println(result);
@@ -52,4 +63,5 @@ public class IntegrationAppCLI {
             e.printStackTrace();
         }
     }
+
 }
