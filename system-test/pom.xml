@@ -41,6 +41,7 @@
 				<version>4.3.1</version>
 				<executions>
 					<execution>
+                        <id>generate-tacwarning-api</id>
 						<goals>
 							<goal>generate</goal>
 						</goals>
@@ -54,6 +55,21 @@
                             <modelPackage>fr.gouv.tac.tacwarning.model</modelPackage>
 						</configuration>
 					</execution>
+                    <execution>
+                        <id>generate-robert-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <inputSpec>${project.basedir}/../robert-server/robert-api-spec/openapi.yaml</inputSpec>
+                            <output>${project.basedir}/src-gen</output>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <generatorName>java</generatorName>
+                            <apiPackage>fr.gouv.tac.robert.api</apiPackage>
+                            <modelPackage>fr.gouv.tac.robert.model</modelPackage>
+                        </configuration>
+                    </execution>
 				</executions>
 			</plugin>
             <plugin>
