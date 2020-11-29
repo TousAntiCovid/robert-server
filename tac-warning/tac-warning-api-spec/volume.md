@@ -25,11 +25,8 @@ For each Covid-19-positive person, we estimate an average number of visited plac
 For each visit, a number of visit tokens are generated. This number can be expressed as
 
 ```
-TOKENS_PER_VISIT = SALT_RANGE * (VISIT_DURATION / TIME_ATOM)
+TOKENS_PER_VISIT = SALT_RANGE 
 ```
-
-(VISIT_DURATION is a fixed value for each venue type, it does not depend on the actual visit duration -- in this estimate we use a single value for VISIT_DURATION)
-
 
 ```
 TOKENS_PER_REPORT_PER_DAY = TOKENS_PER_VISIT * VISITS_PER_DAY
@@ -64,24 +61,14 @@ VISITS_PER_DAY = 5
 
 SALT_RANGE = 1000 (current proposal)
 
-VISIT_DURATION = 180 (minutes)
-
-TIME_ATOM = 60 (minutes)
-
 Yields the following values:
 
-TOKENS_PER_VISIT = 1000 * (180 / 60) = 3000
+TOKENS_PER_VISIT = 1000 
 
-TOKENS_PER_REPORT_PER_DAY = 3000 * 5 = 15000
+TOKENS_PER_REPORT_PER_DAY = 1000 * 5 = 5000
 
-NB_NEW_TOKENS_PER_DAY = 5000 * 15000 = 75000000
+NB_NEW_TOKENS_PER_DAY = 5000 * 5000 = 25000000
 
-STEADY_STATE_TOKENS = [75000000 + (75000000*14)] / 2 * 14 = 7875000000 
+STEADY_STATE_TOKENS = [25000000 + (25000000*14)] / 2 * 14 = 2625000000
 
-STEADY_STATE_SIZE = 7875000000 * 32 = 252000000000 (bytes -- or 252 gigabytes)
-
-## Note
-
-This assumes a scheme where discrete tokens are used (with a TIME_ATOM resolution). If this estimated 
-volume is impractical, another scheme could be used where tokens would be interval-based. This would result
-in a space savings factor of VISIT_DURATION/TIME_ATOM (e.g. a factor of 6 on the above example).
+STEADY_STATE_SIZE = 2625000000 * 32 =  (84000000000 bytes -- or 84 gigabytes)
