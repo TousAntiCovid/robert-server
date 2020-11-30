@@ -9,10 +9,17 @@ TACW_BASE_URL=${TACW_BASE_URL:-"http://localhost:8080/api/tac-warning"}
 
 TACW_VERSION=${TACW_VERSION:-"v1"}
 SALT_RANGE=1000
-TIME_ROUNDING=3600
-ERP1=`uuid`
-ERP2=`uuid`
-ERP3=`uuid`
+TIME_ROUNDING=900
+
+
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     date="date";;
+    Darwin*)    date="/usr/local/bin/gdate";;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
 
 # Register to the TAC server
 register () {
@@ -68,53 +75,53 @@ test_status_at_risk () {
 
 }
 
-getntptimestamp(){
-  now=`date +%s`
-#  (( ntpts = $now + (70*365+18)*86400 ))
-  (( ntpts = $now  ))
-  echo $ntpts
+
+# arg: unix timestamp in seconds
+unix_time_to_ntp_time(){
+  (( ntptime = $1 + (70*365+18)*86400 ))
+  echo "$ntptime"
 }
 
-# arg 1 = STATIC or DYNAMIC
-# arg 2 = token
+# arg 1: STATIC or DYNAMIC
+# arg 2: token
+# arg 3: absolute date **as a UNIX timestamp (seconds since 1970-01-01)**
+# For instance, the output of running `date +%s -d "2 days ago 2:30pm"`
 createVisitToken(){
-#  jq -n --arg type $1 --arg payload $2 '"visitTokens" \: [ {    "type" : $type,    "payload" : $payload}]}'
-  echo '{    "type" : "'$1'",    "payload" : "'$2'"}'
+  ntptime=$(unix_time_to_ntp_time "$3")
+  roundedntpts=$(roundedntptimestamp "$ntptime")
+  echo '{    "type" : "'$1'",    "payload" : "'$2'",   "timestamp" : "'$roundedntpts'"}'
 }
 
-#arg tokens
+# arg: tokens
 createVisitTokens(){
-#  jq -n --arg type $1 --arg payload $2 '"visitTokens" \: [ {    "type" : $type,    "payload" : $payload}]}'
   echo '{"visitTokens" : [ '$1' ]}' | jq .
 }
 
 # arg 1 = STATIC or DYNAMIC
 # arg 2 = erp
-# arg 3 = offset in day
+# arg 3 = absolute date **as a UNIX timestamp (seconds since 1970-01-01)**
+# For instance, the output of running `date +%s -d "2 days ago 2:30pm"`
 createVisit(){
-#  jq -n --arg type $1 --arg payload $2 '"visitTokens" \: [ {    "type" : $type,    "payload" : $payload}]}'
-  echo '{ "timestamp": "'$(roundedntptimestamp $3)'", "qrCode": { "type": "'$1'", "venueType": "N", "venueCapacity": 42, "uuid": "'$2'"  } }' | jq .
+  ntptime=$(unix_time_to_ntp_time "$3")
+  echo '{ "timestamp": "'$(roundedntptimestamp $ntptime)'", "qrCode": { "type": "'$1'", "venueType": "N", "venueCapacity": 42, "uuid": "'$2'"  } }' | jq .
 }
 
-#arg visits
+# arg: visits
 createVisits(){
-#  jq -n --arg type $1 --arg payload $2 '"visitTokens" \: [ {    "type" : $type,    "payload" : $payload}]}'
   echo '{"visits" : [ '$1' ]}' | jq .
 }
 
 # Creates a visit token
-# arg offset in day
-# arg ERP UUID
+# arg : venue UUID
 computeTokenPayload(){
-  string=$(( $RANDOM % SALT_RANGE ))$(roundedntptimestamp $1)$2
-  h=($(echo -n $string | shasum )) ;
+  string=$(( ($RANDOM % SALT_RANGE) + 1))$1
+  h=($(echo -n $string | shasum -a 256)) ;
   echo $h
 }
 
-# arg offsetInDays
+# arg NTP timestamp
 roundedntptimestamp(){
-  ntpts=`date +%s`
-  (( ntpts = ntpts - $1 *86400))
+  ntpts="$1"
   (( halfrange = TIME_ROUNDING / 2 ))
   # shellcheck disable=SC2004
   (( rest = $ntpts % TIME_ROUNDING ))
@@ -124,6 +131,5 @@ roundedntptimestamp(){
   else
     ((rntpts = ntpts - rest ))
   fi
-  ((rntpts = rntpts  + (70*365+18)*86400  ))
   echo $rntpts
 }
