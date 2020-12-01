@@ -28,6 +28,17 @@ RUN pip3 install python-pkcs11
 RUN ./reinstall_HSM_keys.sh
 RUN ./install_register_keys.sh 1234
 
+WORKDIR /
+RUN apt-get update
+RUN apt-get install wget
+RUN wget https://golang.org/dl/go1.15.5.linux-amd64.tar.gz
+RUN tar -xzf go1.15.5.linux-amd64.tar.gz
+RUN rm go1.15.5.linux-amd64.tar.gz
+RUN /go/bin/go get github.com/fullstorydev/grpcurl
+WORKDIR /root/go/src/github.com/fullstorydev/grpcurl
+RUN PATH=/go/bin/:$PATH make install
+
+
 # install grpc-crypto app
 WORKDIR /
 ADD ./target/robert-crypto-grpc-server-1.7.0-SNAPSHOT.jar /app.jar
