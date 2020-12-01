@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertFalse;
 
 public class StepDefinitions {
 
@@ -38,11 +39,11 @@ public class StepDefinitions {
 
 
         tacDefaultClient = fr.gouv.tac.robert.Configuration.getDefaultApiClient();
-        String tacServerPath = System.getenv("TACW_BASE_URL");
+        String tacServerPath = System.getenv("ROBERT_BASE_URL");
         if (tacServerPath == null || tacWarningServerPath.isEmpty()){
             tacServerPath = "http://localhost";
         }
-        tacServerPath = tacServerPath+ "/v1";
+        tacServerPath = tacServerPath+ "/v4";
 
         tacDefaultClient.setBasePath(tacServerPath);
 
@@ -77,6 +78,7 @@ public class StepDefinitions {
             currentVisitor.addVisit(
                     currentPlace.getQrCode(),
                     TimeUtil.naturalLanguageDateStringToTimestamp(step.getWhen()));
+            currentVisitor.tacRobertRegister(tacApiInstance);
         }
 
     }
@@ -89,7 +91,7 @@ public class StepDefinitions {
     @Then("Covid- person status from TAC-W is false")
     public void covid_person_status_from_tac_w_is_false() {
       for (Visitor visitor : visitors.getList()){
-          visitor.sendTacWarningStatus(tacWarningApiInstance);
+          assertFalse(visitor.sendTacWarningStatus(tacWarningApiInstance));
       }
     }
 
