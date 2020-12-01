@@ -31,11 +31,11 @@ public class TimeUtilTest {
 
     @Test
     public void testRoundTimestampDown() {
-        assertEquals(TimeUtil.TIME_ROUNDING , (long) TimeUtil.roundTimestamp(TimeUtil.TIME_ROUNDING + 2L ));
+        assertEquals(Long.parseLong(Config.getProperty("TIME_ROUNDING")) , (long) TimeUtil.roundTimestamp(Long.parseLong(Config.getProperty("TIME_ROUNDING"))+ 2L ));
     }
 
     @Test
     public void testRoundTimestampUp() {
-        assertEquals(0L , (long) TimeUtil.roundTimestamp(TimeUtil.TIME_ROUNDING - 2L ));
+        assertEquals(0L , (long) TimeUtil.roundTimestamp(Long.parseLong(Config.getProperty("TIME_ROUNDING"))- 2L ));
     }
 }

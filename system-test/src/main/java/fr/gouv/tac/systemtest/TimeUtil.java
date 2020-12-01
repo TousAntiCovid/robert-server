@@ -8,12 +8,13 @@ import java.time.ZoneOffset;
 import java.util.Date;
 
 public class TimeUtil {
-    static final int TIME_ROUNDING = 900;
     private static final int HOUR = 3600;
     private static final int DAY = 86400;
     private static final int HOURS_PER_DAY = 24;
     private static Long today = 0L;
 
+    public TimeUtil() {
+    }
 
     public static Long dateToTimestamp(Date date){
         LocalDateTime localDateOrigin = LocalDateTime.parse("1900-01-01T00:00:00");
@@ -23,7 +24,7 @@ public class TimeUtil {
     }
 
     public static Long roundTimestamp(Long timestamp) {
-        return timestamp - (timestamp % TIME_ROUNDING);
+        return timestamp - (timestamp % Long.parseLong(Config.getProperty("TIME_ROUNDING")));
     }
 
     public static Long naturalLanguageDateStringToTimestamp(String text){

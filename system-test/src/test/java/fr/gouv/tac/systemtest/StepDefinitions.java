@@ -27,11 +27,8 @@ public class StepDefinitions {
     void setUp(){
         
         tacWarningDefaultClient = fr.gouv.tac.tacwarning.Configuration.getDefaultApiClient();
-        String tacWarningServerPath = System.getenv("TACW_BASE_URL");
-        if (tacWarningServerPath == null || tacWarningServerPath.isEmpty()){
-            tacWarningServerPath = "http://localhost";
-        }
-        tacWarningServerPath = tacWarningServerPath+ "/v1";
+        String tacWarningServerPath = Config.getProperty("TACW_BASE_URL");
+        tacWarningServerPath = tacWarningServerPath+ "/"+Config.getProperty("TACW_VERSION");
 
         tacWarningDefaultClient.setBasePath(tacWarningServerPath);
 
@@ -39,11 +36,8 @@ public class StepDefinitions {
 
 
         tacDefaultClient = fr.gouv.tac.robert.Configuration.getDefaultApiClient();
-        String tacServerPath = System.getenv("ROBERT_BASE_URL");
-        if (tacServerPath == null || tacWarningServerPath.isEmpty()){
-            tacServerPath = "http://localhost";
-        }
-        tacServerPath = tacServerPath+ "/v4";
+        String tacServerPath = Config.getProperty("ROBERT_BASE_URL");
+        tacServerPath = tacServerPath+ "/"+Config.getProperty("ROBERT_VERSION");
 
         tacDefaultClient.setBasePath(tacServerPath);
 
