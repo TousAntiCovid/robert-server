@@ -53,7 +53,7 @@ public class StepDefinitions {
             currentVisitor.setCovidStatus(step.getCovidStatus());
             currentPlace = places.getPlaceByName(step.getWhere());
             currentVisitor.addVisit(
-                    currentPlace.getQrCode(),
+                    currentPlace.getDefaultStaticQrCode(),
                     TimeUtil.naturalLanguageDateStringToTimestamp(step.getWhen()));
             currentVisitor.tacRobertRegister(scenarioAppContext.getRobertApiInstance());
         }

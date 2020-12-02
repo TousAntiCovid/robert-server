@@ -45,7 +45,8 @@ public class VisitStepDefinitions {
 			scenarioAppContext.getRecordedUserVisitorMap().put(userName, userVisitor);
 		}
 		Place place = new Place(venueName);
-		userVisitor.addVisit(place.getQrCode(), timestamp);
+		place.generateNewStaticQRCode("newcode");
+		userVisitor.addVisit(place.getDefaultStaticQrCode(), timestamp);
 
 	}
 
