@@ -13,10 +13,12 @@ import fr.gouv.tac.tacwarning.ApiException;
 import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
 import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
 import fr.gouv.tac.tacwarning.model.VisitToken;
+import io.cucumber.guice.ScenarioScoped;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
+@ScenarioScoped
 public class VisitStepDefinitions {
 
 	private final ScenarioAppContext scenarioAppContext;
