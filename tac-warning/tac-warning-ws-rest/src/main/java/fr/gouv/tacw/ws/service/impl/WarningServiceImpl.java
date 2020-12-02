@@ -33,7 +33,9 @@ public class WarningServiceImpl implements WarningService {
 	}
 
 	public boolean getStatus(Stream<OpaqueVisit> opaqueVisits, long threshold) {
-		return opaqueVisits.anyMatch(opaqueVisit -> {
+		return opaqueVisits
+			.filter(opaqueVisit -> this.isValidTimestamp(opaqueVisit.getVisitTime()))
+			.anyMatch(opaqueVisit -> {
 				long score = this.exposedStaticVisitService.riskScore(opaqueVisit.getPayload(), opaqueVisit.getVisitTime());
 				return score >= threshold;
 			});
@@ -58,13 +60,17 @@ public class WarningServiceImpl implements WarningService {
 						.collect(Collectors.toList());
 	}
 	
-	public boolean isValidTimestamp(String timestampString) {
+	protected boolean isValidTimestamp(String timestampString) {
 		try {
 			long timestamp = Long.parseLong(timestampString);
-			return timestamp < TimeUtils.roundedCurrentTimeTimestamp();
+			return this.isValidTimestamp(timestamp);
 		} catch (NumberFormatException e) {
-			log.error(String.format("Wrong timestamp format: %s, ignored. %s", timestampString, e.getMessage()));
+			log.error(String.format("Wrong timestamp format: %s, visit ignored. %s", timestampString, e.getMessage()));
 			return false;
 		}
+	}
+
+	protected boolean isValidTimestamp(long timestamp) {
+		return timestamp < TimeUtils.roundedCurrentTimeTimestamp();
 	}
 }

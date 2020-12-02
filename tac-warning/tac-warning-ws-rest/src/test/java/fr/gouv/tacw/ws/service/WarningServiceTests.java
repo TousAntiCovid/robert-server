@@ -72,6 +72,20 @@ public class WarningServiceTests {
 		assertThat(warningService.getStatus(visits.stream(), 1L)).isTrue();
 	}
 
+	// TODO: test invalid timestamp in controller => reject whole request ? just the visit
+	
+	@Test
+	public void testWhenStatusRequestWithVisitsHavingATimeInTheFutureThenVisitsAreFilteredOut() {
+		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
+		long visitTime = this.futureTimestamp();
+		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
+
+		warningService.getStatus(visits.stream(), 1L);
+		
+		verifyNoInteractions(exposedStaticVisitService);
+	}
+	
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
@@ -89,7 +103,7 @@ public class WarningServiceTests {
 	@Test
 	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInTheFutureAreFilteredOut() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo(this.futureTimestamp(), 
+		visits.add(new VisitVo(this.futureTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 		visits.add(new VisitVo(this.validTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
@@ -123,7 +137,10 @@ public class WarningServiceTests {
 	/**
 	 * @return a timestamp 10 days in the future.
 	 */
-	protected String futureTimestamp() {
-		return Long.toString(TimeUtils.roundedCurrentTimeTimestamp() + TimeUtils.TIME_ROUNDING * 4 * 24 * 10);
+	protected long futureTimestamp() {
+		return TimeUtils.roundedCurrentTimeTimestamp() + TimeUtils.TIME_ROUNDING * 4 * 24 * 10;
+	}
+	protected String futureTimestampString() {
+		return Long.toString(this.futureTimestamp());
 	}
 }
