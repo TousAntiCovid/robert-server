@@ -1,54 +1,37 @@
 package fr.gouv.tac.systemtest;
 
-import fr.gouv.tac.tacwarning.ApiClient;
-import fr.gouv.tac.tacwarning.api.DefaultApi;
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import static org.junit.Assert.assertFalse;
+import javax.inject.Inject;
 
+import io.cucumber.datatable.DataTable;
+import io.cucumber.guice.ScenarioScoped;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
+
+@ScenarioScoped
 public class StepDefinitions {
 
     Visitors visitors = new Visitors();
     Places places = new Places();
-    DefaultApi tacWarningApiInstance;
-    ApiClient tacWarningDefaultClient;
-    fr.gouv.tac.robert.api.DefaultApi tacApiInstance;
-    fr.gouv.tac.robert.ApiClient tacDefaultClient;
     List<WhoWhereWhenHow> steps;
 
-
-    void setUp(){
-        
-        tacWarningDefaultClient = fr.gouv.tac.tacwarning.Configuration.getDefaultApiClient();
-        String tacWarningServerPath = Config.getProperty("TACW_BASE_URL");
-        tacWarningServerPath = tacWarningServerPath+ "/"+Config.getProperty("TACW_VERSION");
-
-        tacWarningDefaultClient.setBasePath(tacWarningServerPath);
-
-        tacWarningApiInstance = new DefaultApi(tacWarningDefaultClient);
-
-
-        tacDefaultClient = fr.gouv.tac.robert.Configuration.getDefaultApiClient();
-        String tacServerPath = Config.getProperty("ROBERT_BASE_URL");
-        tacServerPath = tacServerPath+ "/"+Config.getProperty("ROBERT_VERSION");
-
-        tacDefaultClient.setBasePath(tacServerPath);
-
-        tacApiInstance = new fr.gouv.tac.robert.api.DefaultApi(tacDefaultClient);
-    }
-
+	private final ScenarioAppContext scenarioAppContext;
+	
+	@Inject
+	public StepDefinitions(ScenarioAppContext scenarioAppContext) {
+		this.scenarioAppContext = Objects.requireNonNull( scenarioAppContext, "scenarioAppContext must not be null" );
+	}
 
     @Given("I have the following visits in the tac_warning")
     public void i_have_the_following_visits_in_the_tac_warning(DataTable dataTable) {
 
-        this.setUp();
 
         List<Map<String, String>> rows = dataTable.asMaps(String.class, String.class);
         steps = new ArrayList<WhoWhereWhenHow>();
@@ -72,7 +55,7 @@ public class StepDefinitions {
             currentVisitor.addVisit(
                     currentPlace.getQrCode(),
                     TimeUtil.naturalLanguageDateStringToTimestamp(step.getWhen()));
-            currentVisitor.tacRobertRegister(tacApiInstance);
+            currentVisitor.tacRobertRegister(scenarioAppContext.getRobertApiInstance());
         }
 
     }
@@ -85,7 +68,7 @@ public class StepDefinitions {
     @Then("Covid- person status from TAC-W is false")
     public void covid_person_status_from_tac_w_is_false() {
       for (Visitor visitor : visitors.getList()){
-          assertFalse(visitor.sendTacWarningStatus(tacWarningApiInstance));
+          assertFalse(visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
       }
     }
 

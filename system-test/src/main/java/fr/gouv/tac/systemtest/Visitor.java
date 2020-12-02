@@ -12,6 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * This class represents a view of a visitor device (phone)
+ * it modelizes its status  (scanned QRCodes, robert status, ...)   in order to capture steps state changes.
+ */
 public class Visitor {
     private static final int MAX_SALT = 1000;
     private static Random random = new Random();

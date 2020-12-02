@@ -36,7 +36,7 @@ public class VisitStepDefinitions {
 		dateTime2 = dateTime2.withHour(hour).withMinute(minutes).withSecond(0);
 		Long timestamp = java.time.Duration.between(dateTime, dateTime2).getSeconds();
 
-		timestamp = timestamp - (timestamp % ServerConfigUtil.TIME_ROUNDING);
+		timestamp = timestamp - (timestamp % ServerConfigUtil.getTimeRounding());
 
 		Visitor userVisitor = scenarioAppContext.getRecordedUserVisitorMap().get(userName);
 		if (userVisitor == null) {
