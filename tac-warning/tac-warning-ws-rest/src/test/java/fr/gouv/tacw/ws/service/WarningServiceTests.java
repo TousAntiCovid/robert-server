@@ -38,7 +38,7 @@ import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
 
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { WarningServiceImpl.class, TokenMapper.class, ExposedStaticVisitServiceImpl.class})
+@ContextConfiguration(classes = { WarningServiceImpl.class, TokenMapper.class, ExposedStaticVisitServiceImpl.class, TestTimestampService.class})
 @MockBean(ExposedStaticVisitRepository.class)
 @MockBean(ExposedStaticVisitService.class)
 @MockBean(ScoringProperties.class)
@@ -49,13 +49,16 @@ public class WarningServiceTests {
 	@Autowired
 	private WarningService warningService;
 
+	@Autowired
+	private TestTimestampService timestampService;
+	
 	@Captor
 	ArgumentCaptor<List<ExposedStaticVisitEntity>> staticTokensCaptor;
 	
 	@Test
 	public void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
-		visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", this.validTimestamp()));
+		visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", timestampService.validTimestamp()));
 
 		assertThat(warningService.getStatus(visits.stream(), 1L)).isFalse();
 	}
@@ -63,7 +66,7 @@ public class WarningServiceTests {
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
-		long visitTime = this.validTimestamp();
+		long visitTime = timestampService.validTimestamp();
 		
 		when(exposedStaticVisitService.riskScore(infectedToken, visitTime)).thenReturn(1L);
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
@@ -77,7 +80,7 @@ public class WarningServiceTests {
 	@Test
 	public void testWhenStatusRequestWithVisitsHavingATimeInTheFutureThenVisitsAreFilteredOut() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
-		long visitTime = this.futureTimestamp();
+		long visitTime = timestampService.futureTimestamp();
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
 		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
 
@@ -89,9 +92,9 @@ public class WarningServiceTests {
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo(this.validTimestampString(), 
+		visits.add(new VisitVo(timestampService.validTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
-		visits.add(new VisitVo(this.validTimestampString(), 
+		visits.add(new VisitVo(timestampService.validTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
@@ -103,9 +106,9 @@ public class WarningServiceTests {
 	@Test
 	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInTheFutureAreFilteredOut() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo(this.futureTimestampString(), 
+		visits.add(new VisitVo(timestampService.futureTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
-		visits.add(new VisitVo(this.validTimestampString(), 
+		visits.add(new VisitVo(timestampService.validTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
@@ -124,23 +127,4 @@ public class WarningServiceTests {
 		verifyNoInteractions(exposedStaticVisitService);
 	}
 	
-	/**
-	 * @return a valid timestamp five days ago.
-	 */
-	protected long validTimestamp() {
-		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.TIME_ROUNDING * 4 * 24 * 5;
-	}
-	protected String validTimestampString() {
-		return Long.toString(this.validTimestamp());
-	}
-
-	/**
-	 * @return a timestamp 10 days in the future.
-	 */
-	protected long futureTimestamp() {
-		return TimeUtils.roundedCurrentTimeTimestamp() + TimeUtils.TIME_ROUNDING * 4 * 24 * 10;
-	}
-	protected String futureTimestampString() {
-		return Long.toString(this.futureTimestamp());
-	}
 }
