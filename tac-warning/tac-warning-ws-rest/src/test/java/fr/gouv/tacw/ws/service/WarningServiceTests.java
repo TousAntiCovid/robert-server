@@ -1,6 +1,7 @@
 package fr.gouv.tacw.ws.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +21,7 @@ import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
 import fr.gouv.tacw.database.service.ExposedStaticVisitServiceImpl;
+import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.model.OpaqueStaticVisit;
 import fr.gouv.tacw.model.OpaqueVisit;
@@ -52,7 +54,7 @@ public class WarningServiceTests {
 	@Test
 	public void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
-		visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", 123456789L));
+		visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", this.validTimestamp()));
 
 		assertThat(warningService.getStatus(visits.stream(), 1L)).isFalse();
 	}
@@ -60,7 +62,7 @@ public class WarningServiceTests {
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
-		long visitTime = 12346789L;
+		long visitTime = this.validTimestamp();
 		
 		when(exposedStaticVisitService.riskScore(infectedToken, visitTime)).thenReturn(1L);
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
@@ -72,12 +74,44 @@ public class WarningServiceTests {
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", 
+		visits.add(new VisitVo(this.validTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+		visits.add(new VisitVo(this.validTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
+		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
+		verify(exposedStaticVisitService, times(2)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+	}
+	
+
+	@Test
+	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInTheFutureAreFilteredOut() {
+		List<VisitVo> visits = new ArrayList<VisitVo>();
+		visits.add(new VisitVo(this.futureTimestamp(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+		visits.add(new VisitVo(this.validTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
-		verify(exposedStaticVisitService).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+	}
+	
+	/**
+	 * @return a valid timestamp five days ago.
+	 */
+	protected long validTimestamp() {
+		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.TIME_ROUNDING * 4 * 24 * 5;
+	}
+	protected String validTimestampString() {
+		return Long.toString(this.validTimestamp());
+	}
+
+	/**
+	 * @return a timestamp 10 days in the future.
+	 */
+	protected String futureTimestamp() {
+		return Long.toString(TimeUtils.roundedCurrentTimeTimestamp() + TimeUtils.TIME_ROUNDING * 4 * 24 * 10);
 	}
 }

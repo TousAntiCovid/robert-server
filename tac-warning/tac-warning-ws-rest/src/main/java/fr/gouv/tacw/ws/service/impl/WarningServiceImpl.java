@@ -9,8 +9,8 @@ import javax.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
-import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
+import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.properties.ScoringProperties;
@@ -43,7 +43,8 @@ public class WarningServiceImpl implements WarningService {
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
 		log.info(String.format("Reporting %d visits while infected", reportRequestVo.getVisits().size()));
 		reportRequestVo.getVisits().stream()
-			.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
+			.filter(visit -> this.isValidTimestamp(visit.getTimestamp()))
+			.filter(visit -> visit.getQrCode().getType().isStatic())
 			.forEach(visit -> this.registerAllExposedStaticTokens(visit));
 	}
 
@@ -55,5 +56,10 @@ public class WarningServiceImpl implements WarningService {
 		return new ExposedTokenGenerator(visit, scoringProperties)
 						.generateAllExposedTokens()
 						.collect(Collectors.toList());
+	}
+	
+	public boolean isValidTimestamp(String timestampString) {
+		long timestamp = Long.parseLong(timestampString);
+		return timestamp < TimeUtils.roundedCurrentTimeTimestamp();
 	}
 }
