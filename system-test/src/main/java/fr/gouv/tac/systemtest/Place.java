@@ -4,6 +4,10 @@ import fr.gouv.tac.tacwarning.model.QRCode;
 
 import java.util.UUID;
 
+/**
+ * This class represents a view of a venue  (restaurant, cafe, etc)
+ * it modelizes its status  (name, generated QRCodes, ...)   in order to capture steps state changes.
+ */
 public class Place{
 
 

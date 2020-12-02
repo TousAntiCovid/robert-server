@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 public class IntegrationAppCLI {
-    private static final int TIME_ROUNDING = 900;
+    private static final long TIME_ROUNDING = ServerConfigUtil.getTimeRounding();
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         String tacServerPath = System.getenv("TACW_BASE_URL");

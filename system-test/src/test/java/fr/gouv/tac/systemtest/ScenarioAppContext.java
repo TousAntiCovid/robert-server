@@ -19,7 +19,9 @@ public class ScenarioAppContext {
 	// these maps corresponds to data recorded on user devices (one user per key)
 	protected HashMap<String, RegisterSuccessResponse> lastRegisterSuccessResponseMap = new HashMap<>();
 	protected HashMap<String, ExposureStatusResponse> lastExposureStatusResponseMap = new HashMap<>();
-	protected HashMap<String, Visitor> recordedUserVisitorMap = new HashMap<>();
+	protected HashMap<String, Visitor> visitorMap = new HashMap<>();
+	protected HashMap<String, Place> placeMap = new HashMap<>();
+
 
 	public void setTacwClient(fr.gouv.tac.tacwarning.ApiClient tacwClient) {
 		this.tacwClient = tacwClient;
@@ -62,6 +64,10 @@ public class ScenarioAppContext {
 	}
 
 	public HashMap<String, Visitor> getRecordedUserVisitorMap() {
-		return recordedUserVisitorMap;
+		return visitorMap;
+	}
+	
+	public HashMap<String, Place> getPlaceMap() {
+		return placeMap;
 	}
 }
