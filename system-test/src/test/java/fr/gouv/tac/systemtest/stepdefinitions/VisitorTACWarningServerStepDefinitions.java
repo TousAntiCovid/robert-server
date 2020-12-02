@@ -1,7 +1,7 @@
 package fr.gouv.tac.systemtest.stepdefinitions;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Objects;
 
@@ -33,7 +33,7 @@ public class VisitorTACWarningServerStepDefinitions {
 		}
 		try {
 			ExposureStatusResponse result = scenarioAppContext.getTacwApiInstance().eSR(exposureStatusRequest);
-			scenarioAppContext.getLastExposureStatusResponseMap().put(user, result);
+			scenarioAppContext.getOrCreateVisitor(user).setLastExposureStatusResponse(result);
 		} catch (ApiException e) {
 			System.err.println("Exception when calling TacWarningDefaultApi#eSR");
 			System.err.println("Status code: " + e.getCode());
@@ -46,8 +46,12 @@ public class VisitorTACWarningServerStepDefinitions {
 
 	@Then("Exposure status should reports {string} as not being at risk")
 	public void status_should_reports_as_not_being_at_risk(String user) {
-		assertEquals(1, scenarioAppContext.getLastExposureStatusResponseMap().size());
-		assertFalse(scenarioAppContext.getLastExposureStatusResponseMap().get(user).getAtRisk());
+		assertFalse(scenarioAppContext.getOrCreateVisitor(user).getLastExposureStatusResponse().getAtRisk());
+	}
+	
+	@Then("Exposure status should reports {string} as being at risk")
+	public void exposure_status_should_reports_as_being_at_risk(String user) {
+		assertTrue(scenarioAppContext.getOrCreateVisitor(user).getLastExposureStatusResponse().getAtRisk());
 	}
 
 }

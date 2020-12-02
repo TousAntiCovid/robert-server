@@ -1,6 +1,6 @@
-Feature: TAC Warning basic scenarii
-  If I visited a venue along with a number of covid19-negative people,
-  I would like my TAC app to not warn me that I am at risk of contracting covid19
+Feature: Several healthy visitors visit differents places (simultenaously or not)
+  The healthy visitors must not be warned being at risk
+  The venues use a single Static QRCode for the whole day
 
   Background:
     Given "Hugo" registered on TAC
@@ -12,7 +12,6 @@ Feature: TAC Warning basic scenarii
     
   Scenario:
     Given "Hugo" recorded a visit to "Chez Gusto" at 12:30, 2 days ago with static QRCode "LunchService"
-#    Given "Hugo" recorded a visit to the "restaurant" "Chez Gusto" at 12:30, 2 days ago
     When "Hugo" asks for exposure status
     Then Exposure status should reports "Hugo" as not being at risk
   
