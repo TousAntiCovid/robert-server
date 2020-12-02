@@ -1,4 +1,5 @@
-Feature: Several healthy visitors visit differents places (simultenaously or not)
+Feature: Several healthy visitors visit differents places
+  Visits are simultaneous or not
   The healthy visitors must not be warned being at risk
   The venues use a single Static QRCode for the whole day
 
@@ -19,3 +20,26 @@ Feature: Several healthy visitors visit differents places (simultenaously or not
     Given "Heather" recorded a visit to "La fontaine aux perles" at 12:30, 2 days ago with static QRCode "LunchService"
     When "Heather" asks for exposure status
     Then Exposure status should reports "Heather" as not being at risk    
+    
+  Scenario:
+    Given "Heather" recorded a visit to "La fontaine aux perles" at 12:30, 2 days ago with static QRCode "LunchService"
+    Given "Hugo" recorded a visit to "Chez Gusto" at 12:30, 2 days ago with static QRCode "LunchService"
+    When "Hugo" asks for exposure status
+    When "Heather" asks for exposure status
+    Then Exposure status should reports "Heather" as not being at risk  
+    Then Exposure status should reports "Hugo" as not being at risk
+
+  Scenario:
+    Given "Heather" recorded a visit to "La fontaine aux perles" at 12:30, 2 days ago with static QRCode "LunchService"
+    Given "Hugo" recorded a visit to "Chez Gusto" at 11:55, 2 days ago with static QRCode "LunchService"
+    When "Hugo" asks for exposure status
+    When "Heather" asks for exposure status
+    Then Exposure status should reports "Heather" as not being at risk  
+    Then Exposure status should reports "Hugo" as not being at risk
+  Scenario:
+    Given "Heather" recorded a visit to "La fontaine aux perles" at 12:30, 2 days ago with static QRCode "LunchService"
+    Given "Hugo" recorded a visit to "Chez Gusto" at 13:00, 2 days ago with static QRCode "LunchService"
+    When "Hugo" asks for exposure status
+    When "Heather" asks for exposure status
+    Then Exposure status should reports "Heather" as not being at risk  
+    Then Exposure status should reports "Hugo" as not being at risk    
