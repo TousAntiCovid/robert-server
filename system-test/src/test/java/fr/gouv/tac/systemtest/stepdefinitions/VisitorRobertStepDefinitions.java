@@ -1,25 +1,21 @@
-package fr.gouv.tac.systemtest;
+package fr.gouv.tac.systemtest.stepdefinitions;
 
 import java.util.Objects;
 
 import javax.inject.Inject;
 
-import fr.gouv.tac.robert.ApiClient;
-import fr.gouv.tac.robert.Configuration;
-import fr.gouv.tac.robert.api.DefaultApi;
+import fr.gouv.tac.robert.ApiException;
 import fr.gouv.tac.robert.model.PushInfo;
 import fr.gouv.tac.robert.model.RegisterRequest;
-import fr.gouv.tac.robert.ApiException;
+import fr.gouv.tac.systemtest.ScenarioAppContext;
 import io.cucumber.java.en.Given;
-import io.cucumber.guice.ScenarioScoped;
 
-@ScenarioScoped
-public class RegisterStepDefinitions {
+public class VisitorRobertStepDefinitions {
 
 	private final ScenarioAppContext scenarioAppContext;
 	
 	@Inject
-	public RegisterStepDefinitions(ScenarioAppContext scenarioAppContext) {
+	public VisitorRobertStepDefinitions(ScenarioAppContext scenarioAppContext) {
 		this.scenarioAppContext = Objects.requireNonNull( scenarioAppContext, "scenarioAppContext must not be null" );
 	}
 	
@@ -37,7 +33,8 @@ public class RegisterStepDefinitions {
         registerRequest.pushInfo(pushInfo);
         
         try {
-        	scenarioAppContext.getLastRegisterSuccessResponseMap().put(userName, scenarioAppContext.robertApiInstance.register(registerRequest));
+        	scenarioAppContext.getOrCreateVisitor(userName);
+        	scenarioAppContext.getLastRegisterSuccessResponseMap().put(userName, scenarioAppContext.getRobertApiInstance().register(registerRequest));
         } catch (ApiException e) {
             System.err.println("Exception when calling RobertDefaultApi#register");
             System.err.println("Status code: " + e.getCode());

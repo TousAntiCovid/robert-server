@@ -10,12 +10,10 @@ import java.util.Objects;
 import javax.inject.Inject;
 
 import io.cucumber.datatable.DataTable;
-import io.cucumber.guice.ScenarioScoped;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
-@ScenarioScoped
 public class StepDefinitions {
 
     Visitors visitors = new Visitors();
@@ -53,7 +51,7 @@ public class StepDefinitions {
             currentVisitor.setCovidStatus(step.getCovidStatus());
             currentPlace = places.getPlaceByName(step.getWhere());
             currentVisitor.addVisit(
-                    currentPlace.getQrCode(),
+                    currentPlace.getDefaultStaticQrCode(),
                     TimeUtil.naturalLanguageDateStringToTimestamp(step.getWhen()));
             currentVisitor.tacRobertRegister(scenarioAppContext.getRobertApiInstance());
         }
