@@ -38,7 +38,7 @@ public class Visitor {
     }
 
     public Visitor(String name, String place, String time, String status) {
-        name = name;
+        this.name = name;
 
         Visit visit = new MyVisit(place);
         Long time2 = new PrettyTimeParser().parse(time).get(0).getTime();

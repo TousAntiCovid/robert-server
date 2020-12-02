@@ -66,8 +66,25 @@ public class ScenarioAppContext {
 	public HashMap<String, Visitor> getRecordedUserVisitorMap() {
 		return visitorMap;
 	}
+	public Visitor getOrCreateVisitor(String name) {
+		Visitor result =visitorMap.get(name);
+		if ( result == null) {
+			result = new Visitor(name);
+			visitorMap.put(name, result);
+		}
+		return result;
+	}
 	
 	public HashMap<String, Place> getPlaceMap() {
 		return placeMap;
+	}
+	
+	public Place getOrCreatePlace(String name) {
+		Place result =placeMap.get(name);
+		if ( result == null) {
+			result = new Place(name);
+			placeMap.put(name, result);
+		}
+		return result;
 	}
 }

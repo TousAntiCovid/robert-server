@@ -32,11 +32,39 @@ public class Place {
 
 		QRCode qrCode = new QRCode();
 		qrCode.setUuid(UUID.randomUUID().toString());
-		qrCode.setVenueType(QRCode.VenueTypeEnum.R);
+		qrCode.setVenueType(QRCode.VenueTypeEnum.N);
 		qrCode.setVenueCapacity(20);
 		qrCode.setVenueCategory(QRCode.VenueCategoryEnum.CAT1);
 
 		staticQRCodeMap.put(qrcodeId, qrCode);
+	}
+
+	public void generateNewStaticQRCode(String qrCodeId, String venueType, Integer capacity, String category) {
+		QRCode qrCode = new QRCode();
+		qrCode.setUuid(UUID.randomUUID().toString());
+
+		switch (venueType.toLowerCase()) {
+		case "restaurant":
+			qrCode.setVenueType(QRCode.VenueTypeEnum.N);
+			break;
+		case "hotel":
+			qrCode.setVenueType(QRCode.VenueTypeEnum.O);
+			break;
+		case "cinema":
+			qrCode.setVenueType(QRCode.VenueTypeEnum.L);
+			break;
+		case "school":
+			qrCode.setVenueType(QRCode.VenueTypeEnum.R);
+			break;
+		// TODO code all other venue types in natural language
+		default:
+			qrCode.setVenueType(Enum.valueOf(QRCode.VenueTypeEnum.class, venueType.toUpperCase()));
+			break;
+		}
+		qrCode.setVenueCapacity(capacity);
+		qrCode.setVenueCategory(Enum.valueOf(QRCode.VenueCategoryEnum.class, category.toUpperCase()));
+
+		staticQRCodeMap.put(qrCodeId, qrCode);
 	}
 
 	public String getName() {

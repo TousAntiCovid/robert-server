@@ -1,53 +1,27 @@
-package fr.gouv.tac.systemtest;
+package fr.gouv.tac.systemtest.stepdefinitions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 import javax.inject.Inject;
 
+import fr.gouv.tac.systemtest.ScenarioAppContext;
 import fr.gouv.tac.tacwarning.ApiException;
 import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
 import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
 import fr.gouv.tac.tacwarning.model.VisitToken;
-import io.cucumber.guice.ScenarioScoped;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
-@ScenarioScoped
-public class VisitStepDefinitions {
+public class VisitorTACWarningServerStepDefinitions {
 
 	private final ScenarioAppContext scenarioAppContext;
 
 	@Inject
-	public VisitStepDefinitions(ScenarioAppContext scenarioAppContext) {
+	public VisitorTACWarningServerStepDefinitions(ScenarioAppContext scenarioAppContext) {
 		this.scenarioAppContext = Objects.requireNonNull(scenarioAppContext, "scenarioAppContext must not be null");
-	}
-
-	@Given("{string} recorded a visit to the {string} {string} at {int}:{int}, {int} days ago")
-	public void user_recorded_a_visit_to_venue_at(String userName, String venue, String venueName, int hour,
-			int minutes, int dayBeforeToday) {
-		LocalDateTime dateTime = LocalDateTime.of(1900, 1, 1, 0, 0, 0);
-		LocalDateTime dateTime2 = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).minusDays(2);
-		dateTime2 = dateTime2.withHour(hour).withMinute(minutes).withSecond(0);
-		Long timestamp = java.time.Duration.between(dateTime, dateTime2).getSeconds();
-
-		timestamp = timestamp - (timestamp % ServerConfigUtil.getTimeRounding());
-
-		Visitor userVisitor = scenarioAppContext.getRecordedUserVisitorMap().get(userName);
-		if (userVisitor == null) {
-			userVisitor = new Visitor();
-			userVisitor.setName(userName);
-			scenarioAppContext.getRecordedUserVisitorMap().put(userName, userVisitor);
-		}
-		Place place = new Place(venueName);
-		place.generateNewStaticQRCode("newcode");
-		userVisitor.addVisit(place.getDefaultStaticQrCode(), timestamp);
-
 	}
 
 	@When("{string} asks for exposure status")
@@ -58,7 +32,7 @@ public class VisitStepDefinitions {
 			exposureStatusRequest.addVisitTokensItem(token);
 		}
 		try {
-			ExposureStatusResponse result = scenarioAppContext.tacwApiInstance.eSR(exposureStatusRequest);
+			ExposureStatusResponse result = scenarioAppContext.getTacwApiInstance().eSR(exposureStatusRequest);
 			scenarioAppContext.getLastExposureStatusResponseMap().put(user, result);
 		} catch (ApiException e) {
 			System.err.println("Exception when calling TacWarningDefaultApi#eSR");
