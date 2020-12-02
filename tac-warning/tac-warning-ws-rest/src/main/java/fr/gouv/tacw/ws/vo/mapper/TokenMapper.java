@@ -4,18 +4,20 @@ import javax.validation.UnexpectedTypeException;
 
 import org.springframework.stereotype.Component;
 
-import fr.gouv.tacw.model.DynamicToken;
-import fr.gouv.tacw.model.StaticToken;
-import fr.gouv.tacw.model.Token;
+import fr.gouv.tacw.model.OpaqueDynamicVisit;
+import fr.gouv.tacw.model.OpaqueStaticVisit;
+import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.vo.VisitTokenVo;
 
 @Component
 public class TokenMapper {
-	public Token getToken(VisitTokenVo visitTokenVo) {
+	public OpaqueVisit getToken(VisitTokenVo visitTokenVo) {
+		final long visitTime = Long.parseLong(visitTokenVo.getTimestamp());
+		
 		if (visitTokenVo.getType().isStatic()) {
-			return new StaticToken(visitTokenVo.getPayload());
+			return new OpaqueStaticVisit(visitTokenVo.getPayload(), visitTime);
 		} else if (visitTokenVo.getType().isDynamic()) {
-			return new DynamicToken(visitTokenVo.getPayload());
+			return new OpaqueDynamicVisit(visitTokenVo.getPayload(), visitTime);
 		}
 		throw new UnexpectedTypeException();
 	}

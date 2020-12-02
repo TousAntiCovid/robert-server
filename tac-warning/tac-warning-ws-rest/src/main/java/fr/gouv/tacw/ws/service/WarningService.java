@@ -1,9 +1,11 @@
 package fr.gouv.tacw.ws.service;
 
-import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
+import java.util.stream.Stream;
+
+import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 
 public interface WarningService {
-	public boolean getStatus(ExposureStatusRequestVo statusRequestVo);
+	public boolean getStatus(Stream<OpaqueVisit> tokens, long threshold);
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo);
 }

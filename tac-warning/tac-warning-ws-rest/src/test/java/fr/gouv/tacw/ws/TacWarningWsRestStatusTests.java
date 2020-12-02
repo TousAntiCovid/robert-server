@@ -2,6 +2,7 @@ package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +45,7 @@ class TacWarningWsRestStatusTests {
 	@Test
 	void testCanGetStatus() {
 		ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
-		when(warningService.getStatus(any(ExposureStatusRequestVo.class))).thenReturn(true);
+		when(warningService.getStatus(any(), anyLong())).thenReturn(true);
 
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate
 				.postForEntity(pathPrefixV1 + UriConstants.STATUS, request, ExposureStatusResponseDto.class);
@@ -66,7 +67,7 @@ class TacWarningWsRestStatusTests {
 	@Test
 	void testWhenExposureStatusRequestWithNullTokenTypeThenGetBadRequest() {
 		ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(null, "payload"));
+		visitTokens.add(new VisitTokenVo(null, "payload", "123456789"));
 		ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.STATUS, 
@@ -97,7 +98,21 @@ class TacWarningWsRestStatusTests {
 	@Test
 	void testWhenExposureStatusRequestWithNullPayloadThenGetBadRequest() {
 		ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, null));
+		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, null, "123456789"));
+		ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, 
+				entity, 
+				ExposureStatusResponseDto.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+		verifyNoMoreInteractions(warningService);
+	}
+
+	@Test
+	void testWhenExposureStatusRequestWithNullTiemstampThenGetBadRequest() {
+		ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
+		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, "payload", null));
 		ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.STATUS, 

@@ -87,8 +87,10 @@ components:
           example:
             - type: "STATIC"
               payload: "88d84f0b72dd2ff8702a60365cf88672dff93329aeb3fb7c24951808a0fa7641"
+              timestamp: "3814601613"
             - type: "DYNAMIC"
               payload: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
+              timestamp: "3814608492"
     ExposureStatusResponse:
       type: object
       properties:
@@ -134,9 +136,18 @@ components:
           maxLength: 64
           example: "34a8feb62998495fb078734f8bca0be6e021575f516b2297be59e8472e48b1d0"
           pattern: '^[a-fA-F0-9]{64}$'
+        timestamp:
+            type: string
+            minLength: 10
+            maxLength: 10
+            description: "timestamp is a NTP timestamp. It express the number of second relative to 0h on 1 january 1900.
+              The timestamp expresses the time rounded to the nearest time interval at with the QR-CODE is scanned.
+              If the rounding interval is 15 minutes, then timestamp is rounded to the nearest 15 minutes (15:32 -> 15:30 and 14:12 -> 14:15) "
+            example: "3814601613"
       required:
         - type
         - payload
+        - timestamp
     Visit:
       type: object
       properties:

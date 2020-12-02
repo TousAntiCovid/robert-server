@@ -17,4 +17,11 @@ public class VisitTokenVo {
 	@NotNull
     @Size(max = 500) // TODO compute the maximum size of a payload
 	private String payload;
+	
+	/**
+	 * ntp timestamp in seconds
+	 * String type due to the limited capacity of json long
+	 */
+	@NotNull
+	private String timestamp;
 }

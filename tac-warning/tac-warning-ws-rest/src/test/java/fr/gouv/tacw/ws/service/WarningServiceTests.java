@@ -1,7 +1,6 @@
 package fr.gouv.tacw.ws.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -9,59 +8,65 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import fr.gouv.tacw.database.model.ExposedStaticVisitTokenEntity;
-import fr.gouv.tacw.database.service.TokenService;
-import fr.gouv.tacw.database.service.TokenServiceImpl;
+import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
+import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
+import fr.gouv.tacw.database.service.ExposedStaticVisitService;
+import fr.gouv.tacw.database.service.ExposedStaticVisitServiceImpl;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
-import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
+import fr.gouv.tacw.model.OpaqueStaticVisit;
+import fr.gouv.tacw.model.OpaqueVisit;
+import fr.gouv.tacw.ws.properties.ScoringProperties;
+import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import fr.gouv.tacw.ws.vo.VenueTypeVo;
-import fr.gouv.tacw.ws.vo.VisitTokenVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
 
 
-@SpringBootTest(classes = { WarningServiceImpl.class, TokenServiceImpl.class, TokenMapper.class, ExposureStatusServiceImpl.class })
-@MockBean(TokenService.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = { WarningServiceImpl.class, TokenMapper.class, ExposedStaticVisitServiceImpl.class})
+@MockBean(ExposedStaticVisitRepository.class)
+@MockBean(ExposedStaticVisitService.class)
+@MockBean(ScoringProperties.class)
 public class WarningServiceTests {
 	@Autowired
-	private TokenService tokenService;
+	private ExposedStaticVisitService exposedStaticVisitService;
 
 	@Autowired
 	private WarningService warningService;
 
 	@Captor
-	ArgumentCaptor<List<ExposedStaticVisitTokenEntity>> staticTokensCaptor;
+	ArgumentCaptor<List<ExposedStaticVisitEntity>> staticTokensCaptor;
 	
 	@Test
 	public void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
-		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"));
+		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+		visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", 123456789L));
 
-		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(visitTokens);
-
-		assertThat(warningService.getStatus(statusRequestVo)).isFalse();
+		assertThat(warningService.getStatus(visits.stream(), 1L)).isFalse();
 	}
 
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
-		when(tokenService.exposedStaticTokensIncludes(infectedToken)).thenReturn(true);
-		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, infectedToken));
+		long visitTime = 12346789L;
+		
+		when(exposedStaticVisitService.riskScore(infectedToken, visitTime)).thenReturn(1L);
+		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
 
-		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(visitTokens);
-
-		assertThat(warningService.getStatus(statusRequestVo)).isTrue();
+		assertThat(warningService.getStatus(visits.stream(), 1L)).isTrue();
 	}
 
 	@Test
@@ -72,7 +77,7 @@ public class WarningServiceTests {
 
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
-		verify(tokenService).registerExposedStaticTokens(staticTokensCaptor.capture());
+		verify(exposedStaticVisitService).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
 	}
 }

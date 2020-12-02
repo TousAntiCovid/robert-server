@@ -7,6 +7,7 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -31,11 +32,10 @@ import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
-import fr.gouv.tacw.ws.vo.VisitTokenVo;
-import fr.gouv.tacw.ws.vo.VisitVo;
-import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import fr.gouv.tacw.ws.vo.VenueTypeVo;
+import fr.gouv.tacw.ws.vo.VisitTokenVo;
+import fr.gouv.tacw.ws.vo.VisitVo;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 
@@ -53,10 +53,13 @@ class TacWarningIntegrationTests {
 	private PropertyLoader propertyLoader;
 	
 	private KeyPair keyPair;
+
+	private long referenceTime;
 	
 	@BeforeEach
 	public void setUp() {
 		keyPair = Keys.keyPairFor(AuthorizationService.algo);
+		referenceTime = System.currentTimeMillis();
 
 		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
 		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
@@ -79,10 +82,7 @@ class TacWarningIntegrationTests {
 
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
-		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", 
-				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
-				"4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd")));
+		List<VisitVo> visits = this.buildExposedVisits("4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd", 3);
 		List<VisitTokenVo> tokensVo = this.staticVisitTokenVoFrom(visits);
 		this.report(visits);
 
@@ -93,7 +93,7 @@ class TacWarningIntegrationTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody().isAtRisk()).isTrue();
 	}
-
+	
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
@@ -101,6 +101,28 @@ class TacWarningIntegrationTests {
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		this.report(visits);
+	}
+
+	/**
+	 * For privacy purposes, tokens area anonymized with token =
+	 * hash(salt|uuid|time). When a user reports itself as infected, we compute all
+	 * the possible token combinations and they are seen as exposed. This test
+	 * checks that the generation of the tokens has been done!
+	 */
+	@Test
+	public void testGivenAVisitTokenInfectedNotIdenticalToReportedTokenWhenCheckingStatusThenIsAtRisk() {
+		List<VisitVo> visits = this.buildExposedVisits("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", 3);
+		String exposedToken = "f9738b0006199fcf7d8a1f7b3523cd225b6620ced2588af7a410eeab16380c87";
+		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
+		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, exposedToken, visits.get(1).getTimestamp()));
+		this.report(visits);
+		
+		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+				pathPrefixV1 + UriConstants.STATUS, new ExposureStatusRequestVo(visitTokens),
+				ExposureStatusResponseDto.class);
+	
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody().isAtRisk()).isTrue();
 	}
 
 	private void report(List<VisitVo> visits) {
@@ -119,39 +141,26 @@ class TacWarningIntegrationTests {
 		assertThat(response.getBody().isSuccess()).isEqualTo(true);
 	}
 
+	protected List<VisitVo>	buildExposedVisits(String venueToken, int nbVisits) {
+		return 
+			IntStream.rangeClosed(1, nbVisits)
+				.mapToObj( i -> this.buildExposedVisit(venueToken) )
+				.collect(Collectors.toList());
+	}
+
+	protected VisitVo buildExposedVisit(String venueToken) {
+		return new VisitVo(
+			String.valueOf(referenceTime), 
+			new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
+					venueToken) );
+	}
+
 	protected List<VisitTokenVo> staticVisitTokenVoFrom(List<VisitVo> visits) {
 		return visits.stream().map(visit -> this.staticVisitTokenVoFrom(visit)).collect(Collectors.toList());
 	}
 
 	protected VisitTokenVo staticVisitTokenVoFrom(VisitVo visit) {
-		String exposedToken = new ExposedTokenGenerator(visit).hash(1, visit.getQrCode().getUuid(),
-				Long.parseLong(visit.getTimestamp()));
-		return new VisitTokenVo(TokenTypeVo.STATIC, exposedToken);
-	}
-
-	/**
-	 * For privacy purposes, tokens area anonymized with token =
-	 * hash(salt|uuid|time). When a user reports itself as infected, we compute all
-	 * the possible token combinations and they are seen as exposed. This test
-	 * checks that the generation of the tokens has been done!
-	 */
-	@Test
-	public void testGivenAVisitTokenInfectedNotIdenticalToReportedTokenWhenCheckingStatusThenIsAtRisk() {
-		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("24356657", 
-				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
-						"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc")));
-
-		this.report(visits);
-		String exposedToken = "f4870249da823379ba646f4ead4fcf703416e3ef45e22a7c6fe8890665ccd733";
-		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, exposedToken));
-
-		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.STATUS, new ExposureStatusRequestVo(visitTokens),
-				ExposureStatusResponseDto.class);
-
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody().isAtRisk()).isTrue();
+		String exposedToken = new ExposedTokenGenerator(visit, null).hash(1);
+		return new VisitTokenVo(TokenTypeVo.STATIC, exposedToken, visit.getTimestamp());
 	}
 }

@@ -1,66 +1,73 @@
 package fr.gouv.tacw.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import fr.gouv.tacw.ws.vo.VisitTokenVo;
+import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
+import fr.gouv.tacw.ws.properties.ScoringProperties;
+import fr.gouv.tacw.ws.vo.QRCodeVo;
+import fr.gouv.tacw.ws.vo.VenueTypeVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
-import fr.gouv.tacw.ws.vo.TokenTypeVo;
 
 public class ExposedTokenGenerator {
-	/* Salt is used to randomize the tuple token, timestamp */
+
+	private ScoringProperties scoringProperties;
+	/* Salt is used to randomize the UUID */
 	public final static int MAX_SALT = 1000;
-	private String uuid;
-	private long timestamp;
-	private TokenTypeVo tokenTypeVo;
-	private ArrayList<VisitTokenVo> exposedTokens;
+	private final QRCodeVo qrCode;
+	private final long timestamp;
 
 	/**
 	 * Used by tests
 	 */
 	public static int numberOfGeneratedTokens() {
-		return MAX_SALT * 3; // H-1, H, H+1
+		return MAX_SALT;
 	}
-	
-	public ExposedTokenGenerator(VisitVo visit) {
-		this.uuid = visit.getQrCode().getUuid();
+
+	public ExposedTokenGenerator(VisitVo visit, ScoringProperties scoringProperties) {
+		this.qrCode = visit.getQrCode();
 		this.timestamp = Long.parseLong(visit.getTimestamp());
-		this.tokenTypeVo = visit.getQrCode().getType();
-		this.exposedTokens = new ArrayList<VisitTokenVo>();
-	}
-	
-	/**
-	 * Generate the list of all tokens combination (salt * timestamp range)
-	 */
-	public List<VisitTokenVo> generateAllExposedTokens() {
-		IntStream.rangeClosed(1, MAX_SALT).forEach(salt -> this.generateAllExposedTokens(salt));
-		return exposedTokens;
+		this.scoringProperties = scoringProperties;
 	}
 
 	/**
-	 * Generate tokens for H-1, H, H+1
+	 * Generate the list of all tokens combination
 	 */
-	private void generateAllExposedTokens(int salt) {
-		this.addExposedToken( this.hash(salt, this.uuid, this.timestamp - 1) );
-		this.addExposedToken( this.hash(salt, this.uuid, this.timestamp) );
-		this.addExposedToken( this.hash(salt, this.uuid, this.timestamp + 1) );
+	public Stream<ExposedStaticVisitEntity> generateAllExposedTokens() {
+		return IntStream
+				.rangeClosed(1, MAX_SALT)
+				.mapToObj(salt -> this.exposedStaticVisitEntityForSalt(salt));
 	}
 	
-	private void addExposedToken(String hash) {
-		VisitTokenVo token = new VisitTokenVo(this.tokenTypeVo, hash);
-		exposedTokens.add(token);
+	protected ExposedStaticVisitEntity exposedStaticVisitEntityForSalt(int salt) {
+		return new ExposedStaticVisitEntity(
+				this.hash(salt),
+				this.startOfInterval(timestamp),
+				this.endOfInterval(timestamp), 
+				this.scoringProperties.getStartOfInterval(),
+				this.scoringProperties.getEndOfInterval(),
+				this.getRiskIncrementFromVenueType(qrCode.getVenueType()));		
 	}
 
-	public String hash(int salt, String uuid, long timestamp) {
-		String data = new StringBuilder().
-				append(salt).
-				append(uuid).
-				append(timestamp).
-				toString();
+	public String hash(int salt) {
+		String data = new StringBuilder()
+				.append(salt)
+				.append(qrCode.getUuid())
+				.toString();
 		return DigestUtils.sha256Hex(data);
 	}
 
+	private long getRiskIncrementFromVenueType(VenueTypeVo venueTypeVo) {
+		return scoringProperties.getExposureCountIncrements().getOrDefault(venueTypeVo.toString(), 5);
+	}
+
+	private long startOfInterval(long timestamp) {
+		return timestamp - this.scoringProperties.getStartOfInterval();
+	}
+
+	private long endOfInterval(long timestamp) {
+		return timestamp + this.scoringProperties.getEndOfInterval();
+	}
 }
