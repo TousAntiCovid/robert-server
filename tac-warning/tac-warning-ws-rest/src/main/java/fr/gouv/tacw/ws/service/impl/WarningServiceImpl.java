@@ -59,7 +59,12 @@ public class WarningServiceImpl implements WarningService {
 	}
 	
 	public boolean isValidTimestamp(String timestampString) {
-		long timestamp = Long.parseLong(timestampString);
-		return timestamp < TimeUtils.roundedCurrentTimeTimestamp();
+		try {
+			long timestamp = Long.parseLong(timestampString);
+			return timestamp < TimeUtils.roundedCurrentTimeTimestamp();
+		} catch (NumberFormatException e) {
+			log.error(String.format("Wrong timestamp format: %s, ignored. %s", timestampString, e.getMessage()));
+			return false;
+		}
 	}
 }

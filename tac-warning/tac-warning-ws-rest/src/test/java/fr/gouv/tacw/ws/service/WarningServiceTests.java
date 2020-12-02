@@ -3,6 +3,7 @@ package fr.gouv.tacw.ws.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -96,6 +97,17 @@ public class WarningServiceTests {
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
 		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+	}
+	
+	@Test
+	public void testWhenReportingExposedVisitsThenVisitsHavingInvalidTimestampAreFilteredOut() {
+		List<VisitVo> visits = new ArrayList<VisitVo>();
+		visits.add(new VisitVo("foo", 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+
+		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
+		
+		verifyNoInteractions(exposedStaticVisitService);
 	}
 	
 	/**
