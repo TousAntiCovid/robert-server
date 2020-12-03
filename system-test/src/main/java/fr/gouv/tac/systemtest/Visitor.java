@@ -1,9 +1,9 @@
 package fr.gouv.tac.systemtest;
 
-import fr.gouv.tac.robert.model.PushInfo;
-import fr.gouv.tac.robert.model.RegisterRequest;
-import fr.gouv.tac.robert.model.RegisterSuccessResponse;
+import fr.gouv.tac.robert.model.*;
 import fr.gouv.tac.tacwarning.ApiException;
+import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
+import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
 import fr.gouv.tac.tacwarning.model.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
@@ -118,14 +118,47 @@ public class Visitor {
             ExposureStatusResponse result = apiInstance.eSR(exposureStatusRequest);
             outcome = result.getAtRisk();
         } catch (ApiException e) {
-            System.err.println("Exception when calling DefaultApi#eSR");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
             e.printStackTrace();
         }
         return outcome;
     }
+
+    public Boolean sendTacReport(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
+        Boolean outcome = null;
+        fr.gouv.tac.robert.model.
+        ReportBatchRequest reportBatchRequest = new fr.gouv.tac.robert.model.ReportBatchRequest();
+        for (Visit visit : visitList) {
+            reportBatchRequest.token("string");
+            Contact contact = new Contact();
+            HelloMessageDetail helloMessageDetail = new HelloMessageDetail();
+            List<Contact> contacts = new ArrayList<Contact>();
+            reportBatchRequest.setContacts(contacts);
+        }
+        try {
+            ReportBatchResponse reportBatchResponse = apiInstance.reportBatch(reportBatchRequest);
+            String message = reportBatchResponse.getMessage();
+            outcome = reportBatchResponse.getSuccess();
+        } catch (fr.gouv.tac.robert.ApiException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    public Boolean sendTacWarningReport(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
+        Boolean outcome = null;
+        ReportRequest reportRequest = new fr.gouv.tac.tacwarning.model.ReportRequest();
+        for (Visit visit : visitList) {
+            reportRequest.addVisitsItem(visit);
+        }
+        try {
+            ReportResponse response = apiInstance.report(reportRequest);
+            outcome = response.getSuccess();
+        } catch (ApiException e) {
+            e.printStackTrace();
+        }
+        return outcome;
+    }
+
 
     public RegisterRequest getRegisterRequest() {
         if (registerRequest == null){

@@ -2,9 +2,13 @@ package fr.gouv.tac.systemtest;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class VisitorTest {
+
+    @BeforeClass
+
     @Test
     public void getName() {
     }
@@ -36,5 +40,17 @@ public class VisitorTest {
 
     @After
     public void tearDown() throws Exception {
+    }
+
+    @Test
+    public void sendTacWarningStatus() {
+    }
+
+    @Test
+    public void sendTacReport() {
+    }
+
+    @Test
+    public void sendTacWarningReport() {
     }
 }

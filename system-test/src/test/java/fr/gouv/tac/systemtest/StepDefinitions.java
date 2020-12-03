@@ -1,18 +1,18 @@
 package fr.gouv.tac.systemtest;
 
-import static org.junit.Assert.assertFalse;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.inject.Inject;
-
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class StepDefinitions {
 
@@ -52,7 +52,7 @@ public class StepDefinitions {
             currentPlace = places.getPlaceByName(step.getWhere());
             currentVisitor.addVisit(
                     currentPlace.getDefaultStaticQrCode(),
-                    TimeUtil.naturalLanguageDateStringToTimestamp(step.getWhen()));
+                    TimeUtil.naturalLanguageDateStringToNTPTimestamp(step.getWhen()));
             currentVisitor.tacRobertRegister(scenarioAppContext.getRobertApiInstance());
         }
 
@@ -72,8 +72,10 @@ public class StepDefinitions {
 
     @When("Covid+ person report to TAC and TAC-W")
     public void covid_person_report_to_tac_and_tac_w() {
-        // Write code here that turns the phrase above into concrete actions
-        throw new io.cucumber.java.PendingException();
+        for (Visitor visitor : visitors.getList()){
+            assertTrue(visitor.sendTacReport(scenarioAppContext.getRobertApiInstance()));
+            assertFalse(visitor.sendTacWarningReport(scenarioAppContext.getTacwApiInstance()));
+        }
     }
     @Then("Covid- person status from TAC-W is true")
     public void covid_person_status_from_tac_w_is_true() {
