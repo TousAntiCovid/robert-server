@@ -7,6 +7,9 @@ public final class TimeUtils {
     // TAC-Warning does not keep real visit time but is rounded to the quarter of hour
     public final static long TIME_ROUNDING = 900;
     
+    // The number of TIME UNIT in a day given the TIME_ROUNDING
+    public final static long DAY_UNIT = (60 * 60 * 24) / TIME_ROUNDING;
+    
     /**
      * Convert UNIX timestamp in milliseconds to NTP seconds
      * @param unixTimeInMillis UNIX time in millis

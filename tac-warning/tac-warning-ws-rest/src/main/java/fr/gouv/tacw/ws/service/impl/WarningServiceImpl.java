@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 public class WarningServiceImpl implements WarningService {
 	private ExposedStaticVisitService exposedStaticVisitService;
 	private ScoringProperties scoringProperties;
+	@Value("${tacw.database.visit_token_retention_period_days}")
+	private long visitTokenRetentionPeriodDays;
 	
 	public WarningServiceImpl(ExposedStaticVisitService tokenService, TokenMapper tokenMapper, ScoringProperties scoringProperties) {
 		super();
@@ -71,6 +74,8 @@ public class WarningServiceImpl implements WarningService {
 	}
 
 	protected boolean isValidTimestamp(long timestamp) {
-		return timestamp < TimeUtils.roundedCurrentTimeTimestamp();
+		long delta = TimeUtils.roundedCurrentTimeTimestamp() - timestamp;
+		return delta > 0
+				&& delta < TimeUtils.DAY_UNIT * visitTokenRetentionPeriodDays;
 	}
 }

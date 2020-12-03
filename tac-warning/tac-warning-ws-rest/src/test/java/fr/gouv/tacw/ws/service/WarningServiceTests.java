@@ -22,7 +22,6 @@ import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
 import fr.gouv.tacw.database.service.ExposedStaticVisitServiceImpl;
-import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.model.OpaqueStaticVisit;
 import fr.gouv.tacw.model.OpaqueVisit;
@@ -90,6 +89,18 @@ public class WarningServiceTests {
 	}
 	
 	@Test
+	public void testWhenStatusRequestWithVisitsHavingATimeInThePastGreaterThanRetentionTimeThenVisitsAreFilteredOut() {
+		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
+		long visitTime = timestampService.preRetentionTimeTimestamp();
+		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
+
+		warningService.getStatus(visits.stream(), 1L);
+		
+		verifyNoInteractions(exposedStaticVisitService);
+	}
+	
+	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add(new VisitVo(timestampService.validTimestampString(), 
@@ -101,12 +112,24 @@ public class WarningServiceTests {
 		verify(exposedStaticVisitService, times(2)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
 	}
-	
 
 	@Test
 	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInTheFutureAreFilteredOut() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add(new VisitVo(timestampService.futureTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+		visits.add(new VisitVo(timestampService.validTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+
+		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
+		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+	}
+
+	@Test
+	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInThePastGreaterThanRetentionTimeAreFilteredOut() {
+		List<VisitVo> visits = new ArrayList<VisitVo>();
+		visits.add(new VisitVo(timestampService.preRetentionTimeTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 		visits.add(new VisitVo(timestampService.validTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
