@@ -7,7 +7,7 @@ spring:
 
   cloud:
     consul:
-      enabled: ${CONSUL_ENABLED:true}
+      enabled: ${CONSUL_ENABLED:false}
       host: ${CONSUL_HOST:localhost}
       port: ${CONSUL_PORT:8500}
       scheme: ${CONSUL_SCHEME:http}
@@ -17,16 +17,16 @@ spring:
         format: yaml
         profile-separator: "-"       
     vault:
-      enabled: ${VAULT_ENABLED:true}
+      enabled: ${VAULT_ENABLED:false}
 #      kv:
 #        enabled: true
       host: ${VAULT_HOST:localhost}
       port: ${VAULT_PORT:8200}
       token: ${VAULT_TOKEN:s.IFXuqVSDU9ICgDXNu40gpbrX}
       scheme: ${VAULT_SCHEME:http}
-      generic:
-          enabled: true
-          backend: kv
-          profile-separator: '/'
-          default-context: application
-          application-name: my-app
+#      generic:
+#          enabled: true
+#          backend: kv
+#          profile-separator: '/'
+#          default-context: application
+#          application-name: my-app
