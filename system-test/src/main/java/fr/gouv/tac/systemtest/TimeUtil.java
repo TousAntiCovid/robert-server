@@ -2,6 +2,7 @@ package fr.gouv.tac.systemtest;
 
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -17,10 +18,21 @@ public class TimeUtil {
     }
 
     public static Long dateToTimestamp(Date date){
-        LocalDateTime localDateOrigin = LocalDateTime.parse("1900-01-01T00:00:00");
-        Instant instant =  localDateOrigin.toInstant(ZoneOffset.UTC);
-        Date dateOrigin =  Date.from(instant);
-        return new Long(Math.abs(date.getTime()-dateOrigin.getTime())/1000);
+        LocalDateTime ntpTimeOrigin = LocalDateTime.parse("1900-01-01T00:00:00");
+        Instant ntpInstant =  ntpTimeOrigin.toInstant(ZoneOffset.UTC);
+        Date ntpDateOrigin =  Date.from(ntpInstant);
+
+        return new Long(Math.abs(date.getTime()-ntpDateOrigin.getTime())/1000);
+    }
+
+    public static String ntpTimestampToString(Long ntpTimestamp){
+        LocalDateTime ntpTimeOrigin = LocalDateTime.parse("1900-01-01T00:00:00");
+        Instant ntpInstant =  ntpTimeOrigin.toInstant(ZoneOffset.UTC);
+        Date ntpDateOrigin =  Date.from(ntpInstant);
+
+        Long timestamp = ntpTimestamp*1000 + ntpDateOrigin.getTime();
+        Timestamp ts = new Timestamp(timestamp);
+        return new Date(ts.getTime()).toString();
     }
 
     public static Long roundTimestamp(Long timestamp) {

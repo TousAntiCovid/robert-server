@@ -54,4 +54,17 @@ public class TimeUtilTest {
         assertEquals(new Long(24*3600), new Long(today - yesterday) );
 
     }
+
+    @Test
+    public void naturalLanguageDateStringToNTPTimestampTest2() {
+        Long yesterday = TimeUtil.naturalLanguageDateStringToNTPTimestamp("12:30, 2 day ago") ;
+        Long today = TimeUtil.naturalLanguageDateStringToNTPTimestamp("Yesterday at 12:30");
+        assertEquals(new Long(24*3600), new Long(today - yesterday) );
+
+    }
+
+    @Test
+    public void ntpTimestampToStringTest() {
+        assertEquals(TimeUtil.ntpTimestampToString(3815897460L), "Wed Dec 02 12:31:00 CET 2020");
+    }
 }
