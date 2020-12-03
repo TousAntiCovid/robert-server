@@ -44,8 +44,8 @@ contient comme information :
 et TAC-W rajoute un time stamp (plage horaire avec une précision à fixer)
 
 TAC-W envoie régulièrement des requêtes qui contiennent les QR-codes
-collectés avec leur timesampleur plage horaire des x derniers jours (dans le
-config.json, paramétrable : par défaut 14 jours). Le backend vérifie alors si
+collectés lors des x derniers jours (dans le
+config.json, paramétrable : par défaut 14 jours) avec leur timestamp. Le backend vérifie alors si
 un de ces QR-codes fait partie des QR-codes exposés (même UUID et même plage
 horaire recouvrante. Dans ce cas, l’utilisateur reçoit un warning. Ces
 requêtes sont anonymes et « state-less » (i.e. si l’app part en timeout et
@@ -75,8 +75,7 @@ encodées dans le QR-CODE sont codées en json :
 }
 ```
 
-Tous les champs sont obligatoires sauf le champ ``venueCategory`` qui n’est
-obligatoire que lorsque le `venueType` n’est pas de type Lieu clos privé
+Tous les champs sont facultatifs sauf le champ `venueType` (et l'UUID, mais ce dernier est systématiquement fourni par le générateur)
 
 Il est recommandé de lui demander les dates où il souhaite mettre à
 dispositions les QR-CODE et de donner cette date lisible sous le QR-CODE.
@@ -112,7 +111,7 @@ Il est recommandé de générer d'autres QR-code. Soit de façon automatique en 
 
 #### QR code scanning
 
-Quand le client rentre dans un restaurant, il scanne avec TAC-W le code QR courant, QR qui lui est présenté par le restaurateur, et le stocke avec un timestamp arrondi à S seoondes (timestamp=NOW - NOW % S) l'heure dans une liste locale localList pendant x (x=12?) jours (x étant défini dans le config.json, et par défaut à 14 jours).
+Quand le client rentre dans un restaurant, il scanne avec TAC-W le code QR courant, QR qui lui est présenté par le restaurateur, et le stocke avec un timestamp (secondes NTP) arrondi à S secondes (timestamp=NOW - NOW % S) l'heure dans une liste locale localList pendant x (x=12?) jours (x étant défini dans le config.json, et par défaut à 14 jours).
 
 #### Déclaration d'utilisateur infecté
 
@@ -124,20 +123,22 @@ ensuite pour remonter ses visites à TAC-W.
 
 pour chaque élément {timestamp, QRcode} de cette liste localList, le backend:
 1. Regarde si le type du QRcode est dynamique, il le passe au module TAC-W-DYNAMIQUE
-2. Récupère le type / catégorie d’établissement pour obtenir la durée de la plage horaire [-h1, +h2]
-3. Calcule alors les 3*max tokens possibles et les stocke dans sa liste exposedList
-  - (hash(i|uuid|time-1), 
-  - hash(i|uuid|time),
-  - hash(i|uuid|time+1)) pour i=1 à max 
+3. Calcule alors les tokens possibles et stocke dans sa liste exposedList
+  - SHA256(i|uuid) pour i=1 à max (notez les bornes : 1 à max_salt inclus)
+  - `visitStartTime` et `visitEndTime` correspondant au début et à la fin de la visite de l'utilisateur infecté (estimation / valeur forfaitaire qui dépend notamment du type d'établissement)
+  - `startDelta` et `endDelta` (secondes à retrancher et à ajouter à un timestamp remonté lors d'une requête status pour trouver l'intervalle de visite correspondant -- également une estimation dépendant notamment du type d'établissement)
+  - un compteur dont la valeur est notamment fonction du nombre de personnes positives dans l'intervalle considéré et du type d'établissement.
+
 
 #### Status Request
 
 Régulièrement le client envoie une requête au backend TAC-W qui contient les tokens de sa liste localList qu'il a collecté les x derniers jours. Ces requêtes sont stateless et anonymes.
-Le token est définit par token=hash(salt|uuid|time), ou uuid est récupéré du QR code, salt est un valeur aléatoire de 0 à max (max=1000?) choisie par l'app. du client et time est le temps NTP arrondi à l'heure.
+Le token est défini par token=SHA256(salt|uuid), ou uuid est récupéré du QR code, salt est un valeur aléatoire de 1 à max (max=1000?) choisie par l'app. du client et time est le temps NTP arrondi à S secondes.
 
 Pour chaque token de cette requête, le backend:
 1. Regarde si le type du QRcode est dynamique, il le passe au module TAC-W-DYNAMIQUE
-2. Regarde si un uuid, uuid_c, apparait dans ExposedList, l'utilisateur est averti...
+2. Pour chaque token dans la base dont la valeur est identique au token soumis, on sélectionne ceux qui ont une intersection non vide avec l'intevalle de visite correspondant à la requête (dérivé du timestamp, de de `startDelta` et `endDelta`) et on somme leurs compteurs d'exposition
+3. Si la somme dépasse un seuil défini, l'utilisateur est alerté
 
 ## Fonctionnement du serveur
 
@@ -149,17 +150,9 @@ Peu d'écriture. Il n'est remonté que quelques centaines à quelques milliers d
 ### Service web
 
 Les tâches réalisées par le webservice =
-A la réception d’une requête status V1/tacw/status:
-Le timestamp arrondi à l'heure. (ou la demie heure
-Récupère h1 et h2 en fonction du type et de la catégorie. Valeur par défaut h1=h2=1h.
-Récupère le seuil (valeur par défaut 2)
-Récupère la précision du timestamps (120, 60 ou 30 min) 
-génère la clef k=<UUID | timestamp > 
-vérifie si k, | timestamp1 | timestamp2 intersect d'autres plages
-res = SELECT k  FROM InfectedLISTist where (timestamp1, timestamp1) OVERLAPS (InfectedListIST.Begin , InfectedLISTist.End) and InfectedLISTist.compteur >= seuil;
-Si |res| > 0 return (code, TRUE)
-return (code, FALSE)
+A la réception d’une requête status `/status`:
 
+voir la partie "status request" ci-dessus
 
 A la réception d’une requête TACW_REPORT upload V1/tacw/report:
 1. Extraire de la réponse du POST au serveur Robert le JWT.
@@ -167,44 +160,20 @@ A la réception d’une requête TACW_REPORT upload V1/tacw/report:
   - Si KO exit avec ERROR CODE correspondant à l’erreur rencontrée:
     - ERROR_JWT_EXPIRED
     - ERROR_JWT_SIGNATURE_INVALID
-3. Traiter les tokens en mode non prioritaire
+3. Traiter les tokens en mode non prioritaire (voir partie "déclaration d'un utilisateur infecté" ci-dessus)
 Définir la liste des codes d’erreur possibles
 
 
 Purge de la table :
 Exécuter une tâche asynchrone (cron) pour purger les entrées dans Infected-List dont la date d'expiration a expirée. 
-purger tous les OTP qui sont expirés.   (date d’émission + 1h) > NOW
 
 
-QUESTION : avoir 2 tables ? Infected-List pour les QR remontés, Exposure-List pour les contacts exposés (ie dont le score est > seuil). 
 
 ## Module d'initialisation des données des ERP
 On doit pouvoir changer à la volée les heures avant / après d'un ERP: https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351
 
-Fichier JSON par exemple erp_config.json :
+(Pour l'instant, une modification affectera uniquement les visites postérieures)
 
-```
-{
-{
- “Version” : 
- "categorie" : INT, / 1 à 5
- "type" : STRING, / J, L, M, N, O, P, R, S? T, U, V, PA, SG, PS, GA, OA, REF, DEFAULT
- "jauge" : INT
- "Timestamp1" : NB OF SECONDS,
-"Timestamp2" : NB OF SECONDS,
-“Seuil” : INT
-},
-...
-{
- "categorie" : 0,
- "type" : DEFAULT,
- "jauge" : 0
- "Timestamp1" : 60,
-"Timestamp2" : 60,
-“Seuil” : 1
-}
-}
-```
 ## Analyse
 
 (https://github.com/CrowdNotifier/documents/blob/main/CrowdNotifier%20-%20White%20Paper.pdf)
@@ -294,16 +263,7 @@ TAC-W-server-ws, accessible par l'application mobile TAC
 Expose l'API /status et /report
 On modifie /report
 
-Une base de données postgreSQL pour la gestion des QR-CODES-ERP de type statique remontés qui sont stockés avec k=<UUID | timestamp > comme clef non unique. Les données stockées sont :
-Type = STATIC
-Begin : timestamp1
-End : timestamp2
-Catégorie ERP : 
-Type ERP : string 
-la valeur prend une des valeurs de la colonne Type du tableau référencé ici : https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351 
-Jauge ERP : Integer 
-Date d'expiration :== timestamp2 + X jours
-Compteur visiteurs : Integer
+Une base de données postgreSQL pour la gestion des QR-CODES-ERP de type statique remontés (voir partie "déclaration d'un utilisateur infecté" pour des précisions sur le format)
 
 Architecture Vault pour y stocker les credentials d’accès à la base de données
 
@@ -312,6 +272,8 @@ N : nombre d'applications TAC (20 Millions)
 R : nombre d'ERP visités par jour (10 à 100)
 
 ## Volumétrie
+
+Voir [le document correspondant](https://gitlab.inria.fr/stemcovid19/tac-server/backend-server/-/blob/develop/tac-warning/tac-warning-api-spec/volume.md)
 
 ## API Robert
 
