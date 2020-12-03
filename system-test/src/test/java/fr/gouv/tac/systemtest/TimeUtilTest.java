@@ -38,4 +38,20 @@ public class TimeUtilTest {
     public void testRoundTimestampUp() {
         assertEquals(0L , (long) TimeUtil.roundTimestamp(Long.parseLong(Config.getProperty("TIME_ROUNDING"))- 2L ));
     }
+
+    @Test
+    public void dateToTimestamp() {
+    }
+
+    @Test
+    public void roundTimestamp() {
+    }
+
+    @Test
+    public void naturalLanguageDateStringToNTPTimestampTest() {
+        Long today = TimeUtil.naturalLanguageDateStringToNTPTimestamp("Today at noon") ;
+                Long yesterday = TimeUtil.naturalLanguageDateStringToNTPTimestamp("Yesterday at noon");
+        assertEquals(new Long(24*3600), new Long(today - yesterday) );
+
+    }
 }

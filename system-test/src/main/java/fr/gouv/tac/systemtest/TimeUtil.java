@@ -20,16 +20,17 @@ public class TimeUtil {
         LocalDateTime localDateOrigin = LocalDateTime.parse("1900-01-01T00:00:00");
         Instant instant =  localDateOrigin.toInstant(ZoneOffset.UTC);
         Date dateOrigin =  Date.from(instant);
-        return Math.abs(date.getTime()-dateOrigin.getTime())/1000;
+        return new Long(Math.abs(date.getTime()-dateOrigin.getTime())/1000);
     }
 
     public static Long roundTimestamp(Long timestamp) {
         return timestamp - (timestamp % Long.parseLong(Config.getProperty("TIME_ROUNDING")));
     }
 
-    public static Long naturalLanguageDateStringToTimestamp(String text){
-        PrettyTimeParser ptp = new PrettyTimeParser();
-        return 0L;
+    public static Date naturalLanguageDateStringToTimestamp(String text){
+        return new PrettyTimeParser().parse(text).get(0);
     }
-
+    public static Long naturalLanguageDateStringToNTPTimestamp(String text){
+        return dateToTimestamp(naturalLanguageDateStringToTimestamp(text));
+    }
 }
