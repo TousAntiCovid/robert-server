@@ -7,16 +7,26 @@ spring:
 
   cloud:
     consul:
-      enabled: ${CONSUL_ENABLED:false}
+      enabled: ${CONSUL_ENABLED:true}
       host: ${CONSUL_HOST:localhost}
       port: ${CONSUL_PORT:8500}
       scheme: ${CONSUL_SCHEME:http}
-      token: ${TAC_WARNING_SERVER_CONSUL_ACL_TOKEN:token}
+      token: ${TAC_WARNING_SERVER_CONSUL_ACL_TOKEN:}
       config:
-        enabled: ${CONSUL_CONFIG_ENABLED:false}
+#        enabled: ${CONSUL_CONFIG_ENABLED:false}
+        format: yaml
+        profile-separator: "-"       
     vault:
-      enabled: ${VAULT_ENABLED:false}
+      enabled: ${VAULT_ENABLED:true}
+#      kv:
+#        enabled: true
       host: ${VAULT_HOST:localhost}
       port: ${VAULT_PORT:8200}
-      token: ${VAULT_TOKEN:token}
+      token: ${VAULT_TOKEN:s.IFXuqVSDU9ICgDXNu40gpbrX}
       scheme: ${VAULT_SCHEME:http}
+      generic:
+          enabled: true
+          backend: kv
+          profile-separator: '/'
+          default-context: application
+          application-name: my-app
