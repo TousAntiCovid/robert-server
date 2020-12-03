@@ -11,8 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class StepDefinitions {
 
@@ -39,7 +38,8 @@ public class StepDefinitions {
                             columns.get("who"),
                             columns.get("where"),
                             columns.get("when"),
-                            columns.get("covidStatus")
+                            columns.get("covidStatus"),
+                            columns.get("outcome")
                     )
             );
         }
@@ -49,6 +49,7 @@ public class StepDefinitions {
         for (WhoWhereWhenHow step : steps){
             currentVisitor = visitors.getVisitorByName(step.getWho());
             currentVisitor.setCovidStatus(step.getCovidStatus());
+            currentVisitor.setOutcome(step.getOutcome());
             currentPlace = places.getPlaceByName(step.getWhere());
             currentVisitor.addVisit(
                     currentPlace.getDefaultStaticQrCode(),
@@ -74,13 +75,15 @@ public class StepDefinitions {
     public void covid_person_report_to_tac_and_tac_w() {
         for (Visitor visitor : visitors.getList()){
             assertTrue(visitor.sendTacReport(scenarioAppContext.getRobertApiInstance()));
-            assertFalse(visitor.sendTacWarningReport(scenarioAppContext.getTacwApiInstance()));
+            assertTrue(visitor.sendTacWarningReport(scenarioAppContext.getTacwApiInstance()));
         }
     }
     @Then("Covid- person status from TAC-W is true")
     public void covid_person_status_from_tac_w_is_true() {
-        // Write code here that turns the phrase above into concrete actions
-        throw new io.cucumber.java.PendingException();
+        for (Visitor visitor : visitors.getList()){
+
+            assertEquals(visitor.getOutcome(),visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
+        }
     }
 
 }

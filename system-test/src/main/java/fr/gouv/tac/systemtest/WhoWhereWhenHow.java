@@ -8,13 +8,14 @@ public class WhoWhereWhenHow {
     String where;
     String when;
     String covidStatus;
+    String outcome;
 
-    public WhoWhereWhenHow( String who, String where, String when, String covidStatus) {
+    public WhoWhereWhenHow( String who, String where, String when, String covidStatus, String outcome) {
         this.who = who;
         this.when = when;
         this.where = where;
         this.covidStatus = covidStatus;
-
+        this.outcome = outcome;
     }
 
     public String getWho() {
@@ -49,5 +50,6 @@ public class WhoWhereWhenHow {
         this.covidStatus = covidStatus;
     }
 
-
+    public String getOutcome() { return this.outcome;
+    }
 }

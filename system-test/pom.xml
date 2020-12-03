@@ -63,7 +63,7 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <inputSpec>${project.basedir}/../robert-server/robert-api-spec/openapi.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/robert-openapi.yaml</inputSpec>
                             <output>${project.basedir}/src-gen</output>
                             <generateSupportingFiles>true</generateSupportingFiles>
                             <generatorName>java</generatorName>
