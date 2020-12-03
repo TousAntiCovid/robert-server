@@ -81,8 +81,7 @@ public class StepDefinitions {
     @Then("Covid- person status from TAC-W is true")
     public void covid_person_status_from_tac_w_is_true() {
         for (Visitor visitor : visitors.getList()){
-
-            assertEquals(visitor.getOutcome(),visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
+                assertEquals(visitor.getOutcome(),visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
         }
     }
 

@@ -152,8 +152,6 @@ public class Visitor {
         ReportBatchRequest reportBatchRequest = new fr.gouv.tac.robert.model.ReportBatchRequest();
         for (Visit visit : visitList) {
             reportBatchRequest.token("string");
-            Contact contact = new Contact();
-            HelloMessageDetail helloMessageDetail = new HelloMessageDetail();
             List<Contact> contacts = new ArrayList<Contact>();
             reportBatchRequest.setContacts(contacts);
         }

@@ -9,7 +9,8 @@ Feature: One healthy visitor visits a single place simultaneously to single sick
     
   Scenario:
     Given "Hugo" recorded a visit to "Chez Gusto" at 12:30, 2 days ago with static QRCode "LunchService"
-    Given "Stephanie" recorded a visit to "Chez Gusto" at 12:30, 2 days ago with static QRCode "LunchService"
+    Given "Stephanie" recorded a visit to "Chez Gusto" at 12:40, 2 days ago with static QRCode "LunchService"
+    Given "Stephanie" scanned covid positive QRCode
     Given "Stephanie" reported to TACWarning a valid covid19 positive QRCode
     When "Hugo" asks for exposure status
     Then Exposure status should reports "Hugo" as being at risk

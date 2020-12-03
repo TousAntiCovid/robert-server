@@ -54,6 +54,7 @@ public class ScenarioAppContext {
 	public HashMap<String, Visitor> getRecordedUserVisitorMap() {
 		return visitorMap;
 	}
+
 	public Visitor getOrCreateVisitor(String name) {
 		Visitor result =visitorMap.get(name);
 		if ( result == null) {

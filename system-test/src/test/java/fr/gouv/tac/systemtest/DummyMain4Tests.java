@@ -41,10 +41,10 @@ public class DummyMain4Tests {
 		visitorRobertSD.user_scanned_covid_positive_QRCode("Steffen");
 		
 		System.out.println("user_recorded_a_visit_to_venue_at");
-		visitorTACWarningAppSD.user_recorded_a_visit_to_venue_at("Steffen", "Restaurant", 12, 30, 1, "LunchServiceQRCode");
+		visitorTACWarningAppSD.user_recorded_a_visit_to_venue_at("Steffen", "Restaurant", "Yesterday at 12:30", "LunchServiceQRCode");
 		
 		System.out.println("user_recorded_a_visit_to_venue_at");
-		visitorTACWarningAppSD.user_recorded_a_visit_to_venue_at("Steffen", "Restaurant", 17, 30, 1, "LunchServiceQRCode");
+		visitorTACWarningAppSD.user_recorded_a_visit_to_venue_at("Steffen", "Restaurant","Yesterday at 5:30pm", "LunchServiceQRCode");
 		
 		System.out.println("reported_to_tac_warning_a_valid_covid19_positive_qr_code");
 		visitorTACWarningSD.reported_to_tac_warning_a_valid_covid19_positive_qr_code("Steffen");

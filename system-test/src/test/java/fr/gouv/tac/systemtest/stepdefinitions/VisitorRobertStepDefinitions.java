@@ -1,18 +1,16 @@
 package fr.gouv.tac.systemtest.stepdefinitions;
 
-import java.util.Objects;
-
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import fr.gouv.tac.robert.ApiException;
 import fr.gouv.tac.robert.model.PushInfo;
 import fr.gouv.tac.robert.model.RegisterRequest;
 import fr.gouv.tac.robert.model.RegisterSuccessResponse;
 import fr.gouv.tac.systemtest.ScenarioAppContext;
 import io.cucumber.java.en.Given;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.util.Objects;
 
 public class VisitorRobertStepDefinitions {
 
@@ -52,9 +50,8 @@ public class VisitorRobertStepDefinitions {
 	    
 	    
 	}
-
-	@Given("{string} scanned_covid_positive_QRCode")
-	public void user_scanned_covid_positive_QRCode(String user) {
+    @Given("{string} scanned covid positive QRCode")
+    public void user_scanned_covid_positive_QRCode(String user) {
 		scenarioAppContext.getOrCreateVisitor(user).sendTacReport(scenarioAppContext.getRobertApiInstance());
 	}
 	
