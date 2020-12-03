@@ -32,6 +32,13 @@ public class TestTimestampService {
 	}
 	
 	/**
+	 * @return a timestamp of retention time
+	 */
+	public long retentionTimeTimestamp() {
+		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.DAY_UNIT * visitTokenRetentionPeriodDays;
+	}
+	
+	/**
 	 * @return a timestamp 10 days in the future.
 	 */
 	public long futureTimestamp() {

@@ -101,6 +101,18 @@ public class WarningServiceTests {
 	}
 	
 	@Test
+	public void testWhenStatusRequestWithVisitsHavingATimeInThePastEqualsToRetentionTimeThenVisitIsNotFilteredOut() {
+		String token = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
+		long visitTime = timestampService.retentionTimeTimestamp();
+		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+		visits.add(new OpaqueStaticVisit(token, visitTime));
+
+		warningService.getStatus(visits.stream(), 1L);
+		
+		verify(exposedStaticVisitService).riskScore(token, visitTime);
+	}
+	
+	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
 		visits.add(new VisitVo(timestampService.validTimestampString(), 

@@ -27,7 +27,6 @@ import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
 import fr.gouv.tacw.ws.service.AuthorizationService;
-import fr.gouv.tacw.ws.service.TestTimestampService;
 import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
@@ -61,7 +60,7 @@ class TacWarningIntegrationTests {
 	@BeforeEach
 	public void setUp() {
 		keyPair = Keys.keyPairFor(AuthorizationService.algo);
-		referenceTime = TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.TIME_ROUNDING * 4 * 24 * 6;
+		referenceTime = TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.DAY_UNIT * 3;
 
 		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
 		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));

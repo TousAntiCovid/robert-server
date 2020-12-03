@@ -76,6 +76,6 @@ public class WarningServiceImpl implements WarningService {
 	protected boolean isValidTimestamp(long timestamp) {
 		long delta = TimeUtils.roundedCurrentTimeTimestamp() - timestamp;
 		return delta > 0
-				&& delta < TimeUtils.DAY_UNIT * visitTokenRetentionPeriodDays;
+				&& delta <= TimeUtils.DAY_UNIT * visitTokenRetentionPeriodDays;
 	}
 }
