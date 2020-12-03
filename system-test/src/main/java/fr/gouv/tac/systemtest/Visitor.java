@@ -1,22 +1,37 @@
 package fr.gouv.tac.systemtest;
 
-import fr.gouv.tac.robert.model.*;
-import fr.gouv.tac.tacwarning.ApiException;
-import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
-import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
-import fr.gouv.tac.tacwarning.model.*;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import fr.gouv.tac.robert.model.Contact;
+import fr.gouv.tac.robert.model.HelloMessageDetail;
+import fr.gouv.tac.robert.model.PushInfo;
+import fr.gouv.tac.robert.model.RegisterRequest;
+import fr.gouv.tac.robert.model.RegisterSuccessResponse;
+import fr.gouv.tac.robert.model.ReportBatchResponse;
+import fr.gouv.tac.tacwarning.ApiException;
+import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
+import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
+import fr.gouv.tac.tacwarning.model.QRCode;
+import fr.gouv.tac.tacwarning.model.ReportRequest;
+import fr.gouv.tac.tacwarning.model.ReportResponse;
+import fr.gouv.tac.tacwarning.model.Visit;
+import fr.gouv.tac.tacwarning.model.VisitToken;
 
 /**
  * This class represents a view of a visitor device (phone)
  * it modelizes its status  (scanned QRCodes, robert status, ...)   in order to capture steps state changes.
  */
 public class Visitor {
+
+	private static Logger logger = LoggerFactory.getLogger(Visitor.class);
+	
     private static final int MAX_SALT = 1000;
     private static Random random = new Random();
     private String name = "";
@@ -134,23 +149,6 @@ public class Visitor {
         return outcome;
     }
 	
-	public Boolean sendTacWarningReport(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
-        Boolean outcome = null;
-        ReportRequest reportRequest = new ReportRequest();
-        reportRequest.setVisits(this.visitList);
-        
-        try {
-            ReportResponse result = apiInstance.report(reportRequest);;
-            this.setLastTACWarningReportResponse(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling TACWarningDefaultApi#report");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-        return outcome;
-    }
 
     public Boolean sendTacReport(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
         Boolean outcome = null;
@@ -168,7 +166,10 @@ public class Visitor {
             String message = reportBatchResponse.getMessage();
             outcome = reportBatchResponse.getSuccess();
         } catch (fr.gouv.tac.robert.ApiException e) {
-            e.printStackTrace();
+        	logger.error("Exception when calling RobertDefaultApi#reportBatch", e);
+        	logger.error("Status code: " + e.getCode());
+        	logger.error("Reason: " + e.getResponseBody());
+        	logger.error("Response headers: " + e.getResponseHeaders());
         }
         return true;
     }
@@ -181,9 +182,13 @@ public class Visitor {
         }
         try {
             ReportResponse response = apiInstance.report(reportRequest);
+            this.setLastTACWarningReportResponse(response);
             outcome = response.getSuccess();
         } catch (ApiException e) {
-            e.printStackTrace();
+        	logger.error("Exception when calling TACWarningDefaultApi#report", e);
+        	logger.error("Status code: " + e.getCode());
+        	logger.error("Reason: " + e.getResponseBody());
+        	logger.error("Response headers: " + e.getResponseHeaders());
         }
         return outcome;
     }

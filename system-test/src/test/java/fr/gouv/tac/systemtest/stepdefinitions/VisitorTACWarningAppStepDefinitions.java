@@ -6,6 +6,9 @@ import java.util.Objects;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.gouv.tac.systemtest.Place;
 import fr.gouv.tac.systemtest.ScenarioAppContext;
 import fr.gouv.tac.systemtest.ServerConfigUtil;
@@ -13,6 +16,8 @@ import fr.gouv.tac.systemtest.Visitor;
 import io.cucumber.java.en.Given;
 
 public class VisitorTACWarningAppStepDefinitions {
+
+	private static Logger logger = LoggerFactory.getLogger(VisitorTACWarningAppStepDefinitions.class);
 
 	private final ScenarioAppContext scenarioAppContext;
 

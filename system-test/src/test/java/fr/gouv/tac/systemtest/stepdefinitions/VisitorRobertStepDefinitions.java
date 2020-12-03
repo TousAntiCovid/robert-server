@@ -4,6 +4,9 @@ import java.util.Objects;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.gouv.tac.robert.ApiException;
 import fr.gouv.tac.robert.model.PushInfo;
 import fr.gouv.tac.robert.model.RegisterRequest;
@@ -13,6 +16,8 @@ import io.cucumber.java.en.Given;
 
 public class VisitorRobertStepDefinitions {
 
+	private static Logger logger = LoggerFactory.getLogger(VisitorRobertStepDefinitions.class);
+	
 	private final ScenarioAppContext scenarioAppContext;
 	
 	@Inject
@@ -50,8 +55,7 @@ public class VisitorRobertStepDefinitions {
 
 	@Given("{string} scanned_covid_positive_QRCode")
 	public void user_scanned_covid_positive_QRCode(String user) {
-		// TODO Auto-generated method stub
-		
+		scenarioAppContext.getOrCreateVisitor(user).sendTacReport(scenarioAppContext.getRobertApiInstance());
 	}
 	
 

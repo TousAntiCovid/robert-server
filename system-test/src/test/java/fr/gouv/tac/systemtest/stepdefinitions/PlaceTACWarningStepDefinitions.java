@@ -4,11 +4,17 @@ import java.util.Objects;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import fr.gouv.tac.systemtest.DummyMain4Tests;
 import fr.gouv.tac.systemtest.ScenarioAppContext;
 import io.cucumber.java.en.Given;
 
 public class PlaceTACWarningStepDefinitions {
 
+	private static Logger logger = LoggerFactory.getLogger(PlaceTACWarningStepDefinitions.class);
+	
 	private final ScenarioAppContext scenarioAppContext;
 
 	@Inject

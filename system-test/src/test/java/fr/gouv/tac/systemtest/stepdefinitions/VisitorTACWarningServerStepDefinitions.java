@@ -7,6 +7,9 @@ import java.util.Objects;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.gouv.tac.systemtest.ScenarioAppContext;
 import fr.gouv.tac.tacwarning.ApiException;
 import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
@@ -18,6 +21,8 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 public class VisitorTACWarningServerStepDefinitions {
+
+	private static Logger logger = LoggerFactory.getLogger(VisitorTACWarningServerStepDefinitions.class);
 
 	private final ScenarioAppContext scenarioAppContext;
 

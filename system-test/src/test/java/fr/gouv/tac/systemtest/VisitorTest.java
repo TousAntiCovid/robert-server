@@ -9,21 +9,21 @@ public class VisitorTest {
 
     @BeforeClass
 
-    @Test
-    public void getName() {
-    }
+//    @Test
+//    public void getName() {
+//    }
+//
+//    @Test
+//    public void setName() {
+//    }
 
-    @Test
-    public void setName() {
-    }
-
-    @Test
-    public void getTokens() {
-    }
-
-    @Test
-    public void setTokens() {
-    }
+//    @Test
+//    public void getTokens() {
+//    }
+//
+//    @Test
+//    public void setTokens() {
+//    }
 
     @Test
     public void addVisit() {
