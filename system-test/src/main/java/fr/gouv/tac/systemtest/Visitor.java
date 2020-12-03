@@ -23,6 +23,9 @@ public class Visitor {
     private List<Visit> visitList = new ArrayList<Visit>();
     private List<VisitToken> tokens = new ArrayList<VisitToken>();
     private fr.gouv.tac.robert.model.RegisterRequest registerRequest = null;
+    
+    private RegisterSuccessResponse lastRegisterSuccessResponse = null;
+    private ExposureStatusResponse lastExposureStatusResponse = null;
 
     private Boolean covidStatus = false;
 
@@ -89,7 +92,23 @@ public class Visitor {
         this.covidStatus = covidStatus;
     }
 
-    public Boolean sendTacWarningStatus(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
+    public RegisterSuccessResponse getLastRegisterSuccessResponse() {
+		return lastRegisterSuccessResponse;
+	}
+
+	public void setLastRegisterSuccessResponse(RegisterSuccessResponse lastRegisterSuccessResponse) {
+		this.lastRegisterSuccessResponse = lastRegisterSuccessResponse;
+	}
+
+	public ExposureStatusResponse getLastExposureStatusResponse() {
+		return lastExposureStatusResponse;
+	}
+
+	public void setLastExposureStatusResponse(ExposureStatusResponse lastExposureStatusResponse) {
+		this.lastExposureStatusResponse = lastExposureStatusResponse;
+	}
+
+	public Boolean sendTacWarningStatus(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
         Boolean outcome = null;
         ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
         for (VisitToken token : tokens) {

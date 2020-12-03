@@ -7,6 +7,7 @@ import javax.inject.Inject;
 import fr.gouv.tac.robert.ApiException;
 import fr.gouv.tac.robert.model.PushInfo;
 import fr.gouv.tac.robert.model.RegisterRequest;
+import fr.gouv.tac.robert.model.RegisterSuccessResponse;
 import fr.gouv.tac.systemtest.ScenarioAppContext;
 import io.cucumber.java.en.Given;
 
@@ -33,8 +34,8 @@ public class VisitorRobertStepDefinitions {
         registerRequest.pushInfo(pushInfo);
         
         try {
-        	scenarioAppContext.getOrCreateVisitor(userName);
-        	scenarioAppContext.getLastRegisterSuccessResponseMap().put(userName, scenarioAppContext.getRobertApiInstance().register(registerRequest));
+        	RegisterSuccessResponse lastRegisterSuccessResponse = scenarioAppContext.getRobertApiInstance().register(registerRequest);
+        	scenarioAppContext.getOrCreateVisitor(userName).setLastRegisterSuccessResponse(lastRegisterSuccessResponse);
         } catch (ApiException e) {
             System.err.println("Exception when calling RobertDefaultApi#register");
             System.err.println("Status code: " + e.getCode());
@@ -45,6 +46,12 @@ public class VisitorRobertStepDefinitions {
         }
 	    
 	    
+	}
+	
+	@Given("{string} reported to TACWarning a valid covid19 positive QRCode")
+	public void reported_to_tac_warning_a_valid_covid19_positive_qr_code(String userName) {
+		scenarioAppContext.getOrCreateVisitor(userName).setCovidStatus(true);
+		// TODO send new staus to TACWarning
 	}
 	
 

@@ -2,9 +2,6 @@ package fr.gouv.tac.systemtest;
 
 import java.util.HashMap;
 
-import fr.gouv.tac.robert.model.RegisterSuccessResponse;
-import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
-
 /**
  * Context for a scenario store the status of a set of user devices
  */
@@ -16,10 +13,9 @@ public class ScenarioAppContext {
 	protected fr.gouv.tac.tacwarning.ApiClient tacwClient;
 	protected fr.gouv.tac.tacwarning.api.DefaultApi tacwApiInstance;
 
-	// these maps corresponds to data recorded on user devices (one user per key)
-	protected HashMap<String, RegisterSuccessResponse> lastRegisterSuccessResponseMap = new HashMap<>();
-	protected HashMap<String, ExposureStatusResponse> lastExposureStatusResponseMap = new HashMap<>();
+	// these map corresponds to data recorded on user devices (one user per key)
 	protected HashMap<String, Visitor> visitorMap = new HashMap<>();
+	// these map corresponds to data recorded on venue (one venue per key)
 	protected HashMap<String, Place> placeMap = new HashMap<>();
 
 
@@ -53,14 +49,6 @@ public class ScenarioAppContext {
 
 	public fr.gouv.tac.tacwarning.api.DefaultApi getTacwApiInstance() {
 		return tacwApiInstance;
-	}
-
-	public HashMap<String, RegisterSuccessResponse> getLastRegisterSuccessResponseMap() {
-		return lastRegisterSuccessResponseMap;
-	}
-
-	public HashMap<String, ExposureStatusResponse> getLastExposureStatusResponseMap() {
-		return lastExposureStatusResponseMap;
 	}
 
 	public HashMap<String, Visitor> getRecordedUserVisitorMap() {
