@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import fr.gouv.tac.tacwarning.model.QRCode;
+import fr.gouv.tac.tacwarning.model.QRCode.TypeEnum;
 
 /**
  * This class represents a view of a venue (restaurant, cafe, etc) it modelizes
@@ -32,6 +33,7 @@ public class Place {
 
 		QRCode qrCode = new QRCode();
 		qrCode.setUuid(UUID.randomUUID().toString());
+		qrCode.setType(TypeEnum.STATIC);
 		qrCode.setVenueType(QRCode.VenueTypeEnum.N);
 		qrCode.setVenueCapacity(20);
 		qrCode.setVenueCategory(QRCode.VenueCategoryEnum.CAT1);
@@ -42,7 +44,7 @@ public class Place {
 	public void generateNewStaticQRCode(String qrCodeId, String venueType, Integer capacity, String category) {
 		QRCode qrCode = new QRCode();
 		qrCode.setUuid(UUID.randomUUID().toString());
-
+		qrCode.setType(TypeEnum.STATIC);
 		switch (venueType.toLowerCase()) {
 		case "restaurant":
 			qrCode.setVenueType(QRCode.VenueTypeEnum.N);
