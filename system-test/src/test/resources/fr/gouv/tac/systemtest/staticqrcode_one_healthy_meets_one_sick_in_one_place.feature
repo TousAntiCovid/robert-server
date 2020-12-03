@@ -1,4 +1,4 @@
-Feature: One healthy visitor visits a single place simultaneously to a sick visitor
+Feature: One healthy visitor visits a single place simultaneously to single sick visitor
   The healthy visitor must be warned being at risk
 
   Background:

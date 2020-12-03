@@ -11,7 +11,9 @@ import fr.gouv.tac.systemtest.ScenarioAppContext;
 import fr.gouv.tac.tacwarning.ApiException;
 import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
 import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
+import fr.gouv.tac.tacwarning.model.ReportRequest;
 import fr.gouv.tac.tacwarning.model.VisitToken;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
@@ -23,25 +25,16 @@ public class VisitorTACWarningServerStepDefinitions {
 	public VisitorTACWarningServerStepDefinitions(ScenarioAppContext scenarioAppContext) {
 		this.scenarioAppContext = Objects.requireNonNull(scenarioAppContext, "scenarioAppContext must not be null");
 	}
+	
+	
+	@Given("{string} reported to TACWarning a valid covid19 positive QRCode")
+	public void reported_to_tac_warning_a_valid_covid19_positive_qr_code(String userName) {
+		scenarioAppContext.getOrCreateVisitor(userName).sendTacWarningReport(scenarioAppContext.getTacwApiInstance());
+	}
 
 	@When("{string} asks for exposure status")
 	public void asks_for_exposure_status(String user) {
-
-		ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
-		for (VisitToken token : scenarioAppContext.getRecordedUserVisitorMap().get(user).getTokens()) {
-			exposureStatusRequest.addVisitTokensItem(token);
-		}
-		try {
-			ExposureStatusResponse result = scenarioAppContext.getTacwApiInstance().eSR(exposureStatusRequest);
-			scenarioAppContext.getOrCreateVisitor(user).setLastExposureStatusResponse(result);
-		} catch (ApiException e) {
-			System.err.println("Exception when calling TacWarningDefaultApi#eSR");
-			System.err.println("Status code: " + e.getCode());
-			System.err.println("Reason: " + e.getResponseBody());
-			System.err.println("Response headers: " + e.getResponseHeaders());
-			e.printStackTrace();
-		}
-
+		scenarioAppContext.getRecordedUserVisitorMap().get(user).sendTacWarningStatus(scenarioAppContext.getTacwApiInstance());
 	}
 
 	@Then("Exposure status should reports {string} as not being at risk")

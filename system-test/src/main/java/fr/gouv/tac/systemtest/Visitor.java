@@ -26,6 +26,7 @@ public class Visitor {
     
     private RegisterSuccessResponse lastRegisterSuccessResponse = null;
     private ExposureStatusResponse lastExposureStatusResponse = null;
+    private ReportResponse lastTACWarningReportResponse = null;
 
     private Boolean covidStatus = false;
 
@@ -37,7 +38,8 @@ public class Visitor {
         this.tokens = tokens;
     }
 
-    public Visitor() {
+
+	public Visitor() {
     }
 
     public Visitor(String name, String place, String time, String status) {
@@ -108,6 +110,14 @@ public class Visitor {
 		this.lastExposureStatusResponse = lastExposureStatusResponse;
 	}
 
+	public ReportResponse getLastTACWarningReportResponse() {
+		return lastTACWarningReportResponse;
+	}
+
+	public void setLastTACWarningReportResponse(ReportResponse lastTACWarningReportResponse) {
+		this.lastTACWarningReportResponse = lastTACWarningReportResponse;
+	}
+
 	public Boolean sendTacWarningStatus(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
         Boolean outcome = null;
         ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
@@ -116,9 +126,28 @@ public class Visitor {
         }
         try {
             ExposureStatusResponse result = apiInstance.eSR(exposureStatusRequest);
+            this.setLastExposureStatusResponse(result);
             outcome = result.getAtRisk();
         } catch (ApiException e) {
             System.err.println("Exception when calling DefaultApi#eSR");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+        return outcome;
+    }
+	
+	public Boolean sendTacWarningReport(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
+        Boolean outcome = null;
+        ReportRequest reportRequest = new ReportRequest();
+        reportRequest.setVisits(this.visitList);
+        
+        try {
+            ReportResponse result = apiInstance.report(reportRequest);;
+            this.setLastTACWarningReportResponse(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TACWarningDefaultApi#report");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

@@ -47,12 +47,14 @@ public class VisitorRobertStepDefinitions {
 	    
 	    
 	}
-	
-	@Given("{string} reported to TACWarning a valid covid19 positive QRCode")
-	public void reported_to_tac_warning_a_valid_covid19_positive_qr_code(String userName) {
-		scenarioAppContext.getOrCreateVisitor(userName).setCovidStatus(true);
-		// TODO send new staus to TACWarning
+
+	@Given("{string} scanned_covid_positive_QRCode")
+	public void user_scanned_covid_positive_QRCode(String user) {
+		// TODO Auto-generated method stub
+		
 	}
+	
+
 	
 
 }
