@@ -111,7 +111,7 @@ Il est recommandé de générer d'autres QR-code. Soit de façon automatique en 
 
 #### QR code scanning
 
-Quand le client rentre dans un restaurant, il scanne avec TAC-W le code QR courant, QR qui lui est présenté par le restaurateur, et le stocke avec un timestamp (secondes NTP) arrondi à S secondes (timestamp=NOW - NOW % S) l'heure dans une liste locale localList pendant x (x=12?) jours (x étant défini dans le config.json, et par défaut à 14 jours).
+Quand le client rentre dans un restaurant, il scanne avec TAC-W le code QR courant, QR qui lui est présenté par le restaurateur, et le stocke avec un timestamp (secondes NTP) arrondi à S secondes (timestamp=NOW - (NOW % S)) l'heure dans une liste locale localList pendant x (x=12?) jours (x étant défini dans le config.json, et par défaut à 14 jours).
 
 #### Déclaration d'utilisateur infecté
 
@@ -273,7 +273,7 @@ R : nombre d'ERP visités par jour (10 à 100)
 
 ## Volumétrie
 
-Voir [le document correspondant](https://gitlab.inria.fr/stemcovid19/tac-server/backend-server/-/blob/develop/tac-warning/tac-warning-api-spec/volume.md)
+Voir [le document correspondant](volume.md)
 
 ## API Robert
 
