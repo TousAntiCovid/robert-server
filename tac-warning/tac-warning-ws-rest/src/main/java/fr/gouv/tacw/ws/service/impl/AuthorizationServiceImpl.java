@@ -34,7 +34,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
 	private void verifyJWT(String token) throws TacWarningUnauthorizedException {
 		PublicKey jwtPublicKey;
-		// TODO use Vault to store this key
 		try {
 			byte[] encoded = Decoders.BASE64.decode(this.propertyLoader.getJwtPublicKey());
 			KeyFactory keyFactory = KeyFactory.getInstance(algo.getFamilyName());
