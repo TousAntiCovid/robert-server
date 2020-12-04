@@ -36,8 +36,9 @@ public class WarningServiceImpl implements WarningService {
 	}
 
 	public boolean getStatus(Stream<OpaqueVisit> opaqueVisits, long threshold) {
+		long currentTimestamp = TimeUtils.roundedCurrentTimeTimestamp();
 		return opaqueVisits
-			.filter(opaqueVisit -> this.isValidTimestamp(opaqueVisit.getVisitTime()))
+			.filter(opaqueVisit -> this.isValidDelta(currentTimestamp - opaqueVisit.getVisitTime()))
 			.anyMatch(opaqueVisit -> {
 				long score = this.exposedStaticVisitService.riskScore(opaqueVisit.getPayload(), opaqueVisit.getVisitTime());
 				return score >= threshold;
@@ -46,9 +47,10 @@ public class WarningServiceImpl implements WarningService {
 
 	@Transactional
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
+		long currentTimestamp = TimeUtils.roundedCurrentTimeTimestamp();
 		log.info(String.format("Reporting %d visits while infected", reportRequestVo.getVisits().size()));
 		reportRequestVo.getVisits().stream()
-			.filter(visit -> this.isValidTimestamp(visit.getTimestamp()))
+			.filter(visit -> this.isValidTimestamp(visit.getTimestamp(), currentTimestamp))
 			.filter(visit -> visit.getQrCode().getType().isStatic())
 			.forEach(visit -> this.registerAllExposedStaticTokens(visit));
 	}
@@ -63,18 +65,17 @@ public class WarningServiceImpl implements WarningService {
 						.collect(Collectors.toList());
 	}
 	
-	protected boolean isValidTimestamp(String timestampString) {
+	protected boolean isValidTimestamp(String timestampString, long currentTimestamp) {
 		try {
-			long timestamp = Long.parseLong(timestampString);
-			return this.isValidTimestamp(timestamp);
+			long delta = currentTimestamp - Long.parseLong(timestampString);
+			return this.isValidDelta(delta);
 		} catch (NumberFormatException e) {
 			log.error(String.format("Wrong timestamp format: %s, visit ignored. %s", timestampString, e.getMessage()));
 			return false;
 		}
 	}
 
-	protected boolean isValidTimestamp(long timestamp) {
-		long delta = TimeUtils.roundedCurrentTimeTimestamp() - timestamp;
+	protected boolean isValidDelta(long delta) {
 		return delta > 0
 				&& delta <= TimeUtils.DAY_UNIT * visitTokenRetentionPeriodDays;
 	}
