@@ -162,7 +162,6 @@ public class Visitor {
             String message = reportBatchResponse.getMessage();
             outcome = reportBatchResponse.getSuccess();
             this.setJwt(reportBatchResponse.getToken());
-            logger.info(reportBatchResponse.getSuccess().toString());
         } catch (fr.gouv.tac.robert.ApiException e) {
         	logger.error("Exception when calling RobertDefaultApi#reportBatch", e);
         	logger.error("Status code: " + e.getCode());
