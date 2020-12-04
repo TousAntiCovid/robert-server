@@ -146,20 +146,20 @@ public class Visitor {
     }
 	
 
-    public Boolean sendTacReport(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
+    public Boolean sendRobertReportBatch(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
         Boolean outcome = null;
         fr.gouv.tac.robert.model.
         ReportBatchRequest reportBatchRequest = new fr.gouv.tac.robert.model.ReportBatchRequest();
-        for (Visit visit : visitList) {
-            reportBatchRequest.token("string");
-            List<Contact> contacts = new ArrayList<Contact>();
-            reportBatchRequest.setContacts(contacts);
-        }
+        reportBatchRequest.token("string");
+        List<Contact> contacts = new ArrayList<Contact>();
+        reportBatchRequest.setContacts(contacts);
+        // TODO add natural language cucumber API to define Bluetooth contacts
         try {
             ReportBatchResponse reportBatchResponse = apiInstance.reportBatch(reportBatchRequest);
             String message = reportBatchResponse.getMessage();
             outcome = reportBatchResponse.getSuccess();
             this.setJwt(reportBatchResponse.getToken());
+            logger.info(reportBatchResponse.getSuccess().toString());
         } catch (fr.gouv.tac.robert.ApiException e) {
         	logger.error("Exception when calling RobertDefaultApi#reportBatch", e);
         	logger.error("Status code: " + e.getCode());
