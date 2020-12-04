@@ -463,6 +463,9 @@ components:
           type: boolean
         message:
           type: string
+        token:
+          description: A JWT token representing the claim that the user has been tested positive
+          type: string
       description: Upon success, app should unregister.
       required:
         - success
