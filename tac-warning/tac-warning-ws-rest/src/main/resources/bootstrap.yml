@@ -22,7 +22,7 @@ spring:
 #        enabled: true
       host: ${VAULT_HOST:localhost}
       port: ${VAULT_PORT:8200}
-      token: ${VAULT_TOKEN:s.IFXuqVSDU9ICgDXNu40gpbrX}
+      token: ${VAULT_TOKEN}
       scheme: ${VAULT_SCHEME:http}
 #      generic:
 #          enabled: true
