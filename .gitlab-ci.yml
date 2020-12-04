@@ -50,7 +50,33 @@ build_submission-code-server:
       - submission-code-server/submission-code-server-ws-rest/target/*.jar
   rules:
     - when: always
-    
+
+
+test_with_report:
+  stage: test
+  script:
+    - mvn $MAVEN_CLI_OPTS -P report org.jacoco:jacoco-maven-plugin:prepare-agent org.jacoco:jacoco-maven-plugin:prepare-agent-integration verify  jacoco:report-integration jacoco:report site
+  artifacts:
+    when: always
+    paths:
+      - target/site/**
+      - robert-server/target/site/**
+      - tac-warning/target/site/**
+      - robert-server/*/target/site/**
+      - tac-warning/*/target/site/**
+    reports:
+      junit:
+        - "robert-server/*/target/surefire-reports/TEST-*.xml"
+        - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
+        - "tac-warning/*/target/surefire-reports/TEST-*.xml"
+        - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
+      when: always
+    - when: never
+        
 test:
   stage: test
   script:
@@ -65,6 +91,10 @@ test:
         - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /.*skip_ut.*/'
+      when: never
+    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "develop"'
       when: never
     - when: on_success
  
@@ -230,4 +260,22 @@ docker-captcha-orange-server:
       else
           echo not in a branch, do not push to registry
       fi 
+      
+pages:
+  image: busybox
+  stage: deploy
+  artifacts:
+    paths:
+      - public
+  script:
+    - mkdir public
+    - cp -r target/site/* public
+    - source .gitlab-ci/copy_site.sh
+  rules :
+    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: always
+    - when: never
+  
       
