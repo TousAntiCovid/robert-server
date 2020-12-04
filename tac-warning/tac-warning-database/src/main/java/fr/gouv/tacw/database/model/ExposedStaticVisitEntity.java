@@ -3,6 +3,7 @@ package fr.gouv.tacw.database.model;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
@@ -16,7 +17,8 @@ import lombok.ToString;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "EXPOSED_STATIC_VISIT")
+@Table(name = "EXPOSED_STATIC_VISIT",
+       indexes = {@Index(columnList="token")})
 @DynamicUpdate(true)
 public class ExposedStaticVisitEntity {
 	@Id
