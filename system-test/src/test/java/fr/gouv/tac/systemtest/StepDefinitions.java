@@ -74,14 +74,16 @@ public class StepDefinitions {
     @When("Covid+ person report to TAC and TAC-W")
     public void covid_person_report_to_tac_and_tac_w() {
         for (Visitor visitor : visitors.getList()){
-            assertTrue(visitor.sendTacReport(scenarioAppContext.getRobertApiInstance()));
-            assertTrue(visitor.sendTacWarningReport(scenarioAppContext.getTacwApiInstance()));
+        	if(visitor.getCovidStatus()) {
+        		assertTrue(visitor.sendRobertReportBatch(scenarioAppContext.getRobertApiInstance()));
+            	assertTrue(visitor.sendTacWarningReport(scenarioAppContext.getTacwApiInstance()));
+        	}
         }
     }
     @Then("Covid- person status from TAC-W is true")
     public void covid_person_status_from_tac_w_is_true() {
         for (Visitor visitor : visitors.getList()){
-                assertEquals(visitor.getOutcome(),visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
+                assertTrue(visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
         }
     }
 

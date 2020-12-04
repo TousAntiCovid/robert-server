@@ -130,6 +130,7 @@ public class Visitor {
 	}
 
 	public Boolean sendTacWarningStatus(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
+		logger.debug(this.name+".sendTacWarningStatus");
         Boolean outcome = null;
         ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
         for (VisitToken token : tokens) {
@@ -139,6 +140,7 @@ public class Visitor {
             ExposureStatusResponse result = apiInstance.eSR(exposureStatusRequest);
             this.setLastExposureStatusResponse(result);
             outcome = result.getAtRisk();
+            logger.debug("#### sendTacWarningStatus atRisk="+result.getAtRisk().toString());
         } catch (ApiException e) {
             e.printStackTrace();
         }
@@ -147,6 +149,7 @@ public class Visitor {
 	
 
     public Boolean sendRobertReportBatch(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
+		logger.debug(this.name+".sendRobertReportBatch");
         Boolean outcome = null;
         fr.gouv.tac.robert.model.
         ReportBatchRequest reportBatchRequest = new fr.gouv.tac.robert.model.ReportBatchRequest();
@@ -182,11 +185,12 @@ public class Visitor {
     }
 
     public Boolean sendTacWarningReport(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
+    	logger.debug(this.name + ".sendTacWarningReport");
         Boolean outcome = null;
         ReportRequest reportRequest = new fr.gouv.tac.tacwarning.model.ReportRequest();
+        ((HttpBearerAuth)(apiInstance.getApiClient().getAuthentication("bearerAuth"))).setBearerToken(this.jwt);
         for (Visit visit : visitList) {
             reportRequest.addVisitsItem(visit);
-            ((HttpBearerAuth)(apiInstance.getApiClient().getAuthentication("bearerAuth"))).setBearerToken(this.jwt);
         }
         try {
             ReportResponse response = apiInstance.report(reportRequest);
