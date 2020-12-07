@@ -20,8 +20,9 @@ public class VisitorTACWarningAppStepDefinitions {
 	}
 
 	@Given("{string} recorded a visit to {string} at {string}")
-	public void user_recorded_a_visit_to_venue_at(String userName, String venue, String venueName, String time) {
+	public void user_recorded_a_visit_to_venue_at(String userName, String venueName, String time) {
 
+		logger.debug(userName+".user_recorded_a_visit_to_venue_(\"+venueName+\")_at_(\"+time+\")");
 		Long timestamp = TimeUtil.naturalLanguageDateStringToNTPTimestamp(time);
 
 		timestamp = timestamp - (timestamp % ServerConfigUtil.getTimeRounding());
@@ -36,12 +37,12 @@ public class VisitorTACWarningAppStepDefinitions {
 	@Given("{string} recorded a visit to {string} at {string} with static QRCode {string}")
 	public void user_recorded_a_visit_to_venue_at_with_static_qrcode(String userName, String venueName, String time, String qrCodeId) {
 
+		logger.debug(userName+".user_recorded_a_visit_to_venue_("+venueName+")_at_("+time+")_with_static_qrcode("+qrCodeId+")");
 		Long timestamp = TimeUtil.naturalLanguageDateStringToNTPTimestamp(time);
 		timestamp = timestamp - (timestamp % ServerConfigUtil.getTimeRounding());
 
 		Visitor userVisitor = scenarioAppContext.getOrCreateVisitor(userName);
 		Place place = scenarioAppContext.getOrCreatePlace(venueName);
-		place.generateNewStaticQRCode("newcode");
 		userVisitor.addVisit(place.getStaticQRCodeMap().get(qrCodeId), timestamp);
 
 	}
