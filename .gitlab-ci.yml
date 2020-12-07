@@ -24,6 +24,19 @@ build_robert-server:
       - robert-server/robert-server-ws-rest/target/*.jar
       - robert-server/robert-crypto-grpc-server/target/*.jar
       - tac-warning/tac-warning-ws-rest/target/*.jar
+      - tac-warning/tac-warning-ws-rest/target/*.jar
+  rules:
+    - when: always
+
+build_system_test:
+  stage: build
+  script:
+    # build all (for other phase such as integration test) but skip tests
+    - cd system-test
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true package
+  artifacts:
+    paths:
+      - system_test/target/*.jar
   rules:
     - when: always
     
