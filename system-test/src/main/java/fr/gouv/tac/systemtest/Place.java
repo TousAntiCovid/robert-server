@@ -1,10 +1,12 @@
 package fr.gouv.tac.systemtest;
 
-import java.util.HashMap;
-import java.util.UUID;
-
 import fr.gouv.tac.tacwarning.model.QRCode;
 import fr.gouv.tac.tacwarning.model.QRCode.TypeEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * This class represents a view of a venue (restaurant, cafe, etc) it modelizes
@@ -16,6 +18,7 @@ public class Place {
 	private String name;
 
 	private HashMap<String, QRCode> staticQRCodeMap = new HashMap<>();
+	private static Logger logger = LoggerFactory.getLogger(Place.class);
 
 	public Place(String name) {
 		this.name = name;
@@ -67,6 +70,7 @@ public class Place {
 		qrCode.setVenueCategory(Enum.valueOf(QRCode.VenueCategoryEnum.class, category.toUpperCase()));
 
 		staticQRCodeMap.put(qrCodeId, qrCode);
+		logger.info("Created QRcode "+ qrCodeId);
 	}
 
 	public String getName() {

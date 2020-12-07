@@ -52,7 +52,6 @@ public class VisitorRobertStepDefinitions {
 	}
     @Given("{string} scanned covid positive QRCode")
     public void user_scanned_covid_positive_QRCode(String user) {
-    	//scenarioAppContext.getOrCreateVisitor(user).
 		scenarioAppContext.getOrCreateVisitor(user).sendRobertReportBatch(scenarioAppContext.getRobertApiInstance());
 	}
 	
