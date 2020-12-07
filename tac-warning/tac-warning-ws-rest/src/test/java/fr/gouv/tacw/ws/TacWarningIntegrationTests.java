@@ -22,6 +22,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
@@ -59,7 +60,7 @@ class TacWarningIntegrationTests {
 	@BeforeEach
 	public void setUp() {
 		keyPair = Keys.keyPairFor(AuthorizationService.algo);
-		referenceTime = System.currentTimeMillis();
+		referenceTime = TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.DAY_UNIT * 3;
 
 		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
 		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));

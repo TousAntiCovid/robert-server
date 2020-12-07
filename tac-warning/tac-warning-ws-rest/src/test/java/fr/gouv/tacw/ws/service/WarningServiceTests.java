@@ -1,7 +1,9 @@
 package fr.gouv.tacw.ws.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
 
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { WarningServiceImpl.class, TokenMapper.class, ExposedStaticVisitServiceImpl.class})
+@ContextConfiguration(classes = { WarningServiceImpl.class, TokenMapper.class, ExposedStaticVisitServiceImpl.class, TestTimestampService.class})
 @MockBean(ExposedStaticVisitRepository.class)
 @MockBean(ExposedStaticVisitService.class)
 @MockBean(ScoringProperties.class)
@@ -46,13 +48,16 @@ public class WarningServiceTests {
 	@Autowired
 	private WarningService warningService;
 
+	@Autowired
+	private TestTimestampService timestampService;
+	
 	@Captor
 	ArgumentCaptor<List<ExposedStaticVisitEntity>> staticTokensCaptor;
 	
 	@Test
 	public void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
-		visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", 123456789L));
+		visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", timestampService.validTimestamp()));
 
 		assertThat(warningService.getStatus(visits.stream(), 1L)).isFalse();
 	}
@@ -60,7 +65,7 @@ public class WarningServiceTests {
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
-		long visitTime = 12346789L;
+		long visitTime = timestampService.validTimestamp();
 		
 		when(exposedStaticVisitService.riskScore(infectedToken, visitTime)).thenReturn(1L);
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
@@ -69,15 +74,92 @@ public class WarningServiceTests {
 		assertThat(warningService.getStatus(visits.stream(), 1L)).isTrue();
 	}
 
+	// TODO: test invalid timestamp in controller => reject whole request ? just the visit
+	
+	@Test
+	public void testWhenStatusRequestWithVisitsHavingATimeInTheFutureThenVisitsAreFilteredOut() {
+		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
+		long visitTime = timestampService.futureTimestamp();
+		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
+
+		warningService.getStatus(visits.stream(), 1L);
+		
+		verifyNoInteractions(exposedStaticVisitService);
+	}
+	
+	@Test
+	public void testWhenStatusRequestWithVisitsHavingATimeInThePastGreaterThanRetentionTimeThenVisitsAreFilteredOut() {
+		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
+		long visitTime = timestampService.preRetentionTimeTimestamp();
+		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
+
+		warningService.getStatus(visits.stream(), 1L);
+		
+		verifyNoInteractions(exposedStaticVisitService);
+	}
+	
+	@Test
+	public void testWhenStatusRequestWithVisitsHavingATimeInThePastEqualsToRetentionTimeThenVisitIsNotFilteredOut() {
+		String token = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
+		long visitTime = timestampService.retentionTimeTimestamp();
+		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+		visits.add(new OpaqueStaticVisit(token, visitTime));
+
+		warningService.getStatus(visits.stream(), 1L);
+		
+		verify(exposedStaticVisitService).riskScore(token, visitTime);
+	}
+	
 	@Test
 	public void testCanReportVisitsWhenInfected() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", 
+		visits.add(new VisitVo(timestampService.validTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+		visits.add(new VisitVo(timestampService.validTimestampString(), 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
-
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
-		verify(exposedStaticVisitService).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		verify(exposedStaticVisitService, times(2)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
 	}
+
+	@Test
+	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInTheFutureAreFilteredOut() {
+		List<VisitVo> visits = new ArrayList<VisitVo>();
+		visits.add(new VisitVo(timestampService.futureTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+		visits.add(new VisitVo(timestampService.validTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+
+		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
+		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+	}
+
+	@Test
+	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInThePastGreaterThanRetentionTimeAreFilteredOut() {
+		List<VisitVo> visits = new ArrayList<VisitVo>();
+		visits.add(new VisitVo(timestampService.preRetentionTimeTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+		visits.add(new VisitVo(timestampService.validTimestampString(), 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+
+		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
+		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+	}
+	
+	@Test
+	public void testWhenReportingExposedVisitsThenVisitsHavingInvalidTimestampAreFilteredOut() {
+		List<VisitVo> visits = new ArrayList<VisitVo>();
+		visits.add(new VisitVo("foo", 
+				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+
+		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
+		
+		verifyNoInteractions(exposedStaticVisitService);
+	}
+	
 }

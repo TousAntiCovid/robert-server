@@ -6,11 +6,12 @@ import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
-import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
+import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.properties.ScoringProperties;
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 public class WarningServiceImpl implements WarningService {
 	private ExposedStaticVisitService exposedStaticVisitService;
 	private ScoringProperties scoringProperties;
+	@Value("${tacw.database.visit_token_retention_period_days}")
+	private long visitTokenRetentionPeriodDays;
 	
 	public WarningServiceImpl(ExposedStaticVisitService tokenService, TokenMapper tokenMapper, ScoringProperties scoringProperties) {
 		super();
@@ -33,7 +36,10 @@ public class WarningServiceImpl implements WarningService {
 	}
 
 	public boolean getStatus(Stream<OpaqueVisit> opaqueVisits, long threshold) {
-		return opaqueVisits.anyMatch(opaqueVisit -> {
+		long currentTimestamp = TimeUtils.roundedCurrentTimeTimestamp();
+		return opaqueVisits
+			.filter(opaqueVisit -> this.isValidDelta(currentTimestamp - opaqueVisit.getVisitTime()))
+			.anyMatch(opaqueVisit -> {
 				long score = this.exposedStaticVisitService.riskScore(opaqueVisit.getPayload(), opaqueVisit.getVisitTime());
 				return score >= threshold;
 			});
@@ -41,9 +47,11 @@ public class WarningServiceImpl implements WarningService {
 
 	@Transactional
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
+		long currentTimestamp = TimeUtils.roundedCurrentTimeTimestamp();
 		log.info(String.format("Reporting %d visits while infected", reportRequestVo.getVisits().size()));
 		reportRequestVo.getVisits().stream()
-			.filter(reportRequest -> reportRequest.getQrCode().getType().isStatic())
+			.filter(visit -> this.isValidTimestamp(visit.getTimestamp(), currentTimestamp))
+			.filter(visit -> visit.getQrCode().getType().isStatic())
 			.forEach(visit -> this.registerAllExposedStaticTokens(visit));
 	}
 
@@ -55,5 +63,20 @@ public class WarningServiceImpl implements WarningService {
 		return new ExposedTokenGenerator(visit, scoringProperties)
 						.generateAllExposedTokens()
 						.collect(Collectors.toList());
+	}
+	
+	protected boolean isValidTimestamp(String timestampString, long currentTimestamp) {
+		try {
+			long delta = currentTimestamp - Long.parseLong(timestampString);
+			return this.isValidDelta(delta);
+		} catch (NumberFormatException e) {
+			log.error(String.format("Wrong timestamp format: %s, visit ignored. %s", timestampString, e.getMessage()));
+			return false;
+		}
+	}
+
+	protected boolean isValidDelta(long delta) {
+		return delta > 0
+				&& delta <= TimeUtils.DAY_UNIT * visitTokenRetentionPeriodDays;
 	}
 }
