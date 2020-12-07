@@ -29,6 +29,6 @@ public interface ExposedStaticVisitRepository extends JpaRepository<ExposedStati
 					+ "OR (visitEndTime > :visitTime - startDelta AND visitEndTime < :visitTime + endDelta))"
 				+ "THEN exposureCount "
 				+ "ELSE 0 "
-			+ "END), 0) FROM ExposedStaticVisitEntity" )
+			+ "END), 0) FROM ExposedStaticVisitEntity WHERE token = :tokenValue" )
 	long riskScore(@Param("tokenValue") String token, @Param("visitTime") long visitTime);
 }
