@@ -21,14 +21,10 @@ public interface ExposedStaticVisitRepository extends JpaRepository<ExposedStati
 
 	long deleteByVisitEndTimeLessThan(long timestamp);
 
-	@Query("SELECT COALESCE(SUM( "
-			+ "CASE "
-				+ "WHEN token = :tokenValue "
-				+ "AND ((visitStartTime > :visitTime - startDelta AND visitStartTime < :visitTime + endDelta) "
-				+ " OR (visitStartTime = :visitTime - startDelta AND visitEndTime = :visitTime + endDelta) "
-					+ "OR (visitEndTime > :visitTime - startDelta AND visitEndTime < :visitTime + endDelta))"
-				+ "THEN exposureCount "
-				+ "ELSE 0 "
-			+ "END), 0) FROM ExposedStaticVisitEntity WHERE token = :tokenValue" )
+	@Query("SELECT COALESCE(SUM(exposureCount), 0)"
+			+ " FROM ExposedStaticVisitEntity WHERE token = :tokenValue" 
+		    + " AND ((visitStartTime > :visitTime - startDelta AND visitStartTime < :visitTime + endDelta) "
+			+ " OR (visitStartTime = :visitTime - startDelta AND visitEndTime = :visitTime + endDelta) "
+			+ " OR (visitEndTime > :visitTime - startDelta AND visitEndTime < :visitTime + endDelta))")
 	long riskScore(@Param("tokenValue") String token, @Param("visitTime") long visitTime);
 }
