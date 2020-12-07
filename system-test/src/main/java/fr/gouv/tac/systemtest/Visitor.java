@@ -142,7 +142,7 @@ public class Visitor {
             outcome = result.getAtRisk();
             logger.debug("#### sendTacWarningStatus atRisk="+result.getAtRisk().toString());
         } catch (ApiException e) {
-            e.printStackTrace();
+        	logger.error(e.getMessage(), e);
         }
         return outcome;
     }
@@ -228,7 +228,7 @@ public class Visitor {
             RegisterSuccessResponse registerSuccessResponse =  apiInstance.register(getRegisterRequest());
             message = registerSuccessResponse.getMessage();
         } catch (fr.gouv.tac.robert.ApiException e) {
-            e.printStackTrace();
+        	logger.error(e.getMessage(), e);
         }
         return message;
     }
