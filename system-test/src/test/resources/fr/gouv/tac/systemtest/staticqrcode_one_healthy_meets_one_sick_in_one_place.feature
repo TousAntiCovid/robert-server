@@ -4,9 +4,10 @@ Feature: One healthy visitor visits a single place simultaneously to single sick
   Background:
     Given "Hugo" registered on TAC
     Given "Stephanie" registered on TAC
-    Given "Chez Gusto" created a static QRCode "LunchService" as a "restaurant" with a capacity of 20 and category "CAT1"
+    Given "Robert" registered on TAC
     Given "Chez Gusto" created a static QRCode "DinerService" as a "restaurant" with a capacity of 20 and category "CAT1"
-    
+    Given "Chez Gusto" created a static QRCode "LunchService" as a "restaurant" with a capacity of 20 and category "CAT1"
+
   Scenario: hugo meets stephanie
     Given "Hugo" recorded a visit to "Chez Gusto" at "12:30, 2 days ago" with static QRCode "LunchService"
     Given "Stephanie" recorded a visit to "Chez Gusto" at "12:30, 2 days ago" with static QRCode "LunchService"
