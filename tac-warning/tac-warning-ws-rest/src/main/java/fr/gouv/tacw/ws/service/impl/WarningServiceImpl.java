@@ -29,6 +29,8 @@ public class WarningServiceImpl implements WarningService {
 	private ScoringProperties scoringProperties;
 	@Value("${tacw.database.visit_token_retention_period_days}")
 	private long visitTokenRetentionPeriodDays;
+	@Value("${tacw.rest.max_visits}")
+	private int maxVisits;
 	
 	public WarningServiceImpl(ExposedStaticVisitService tokenService, TokenMapper tokenMapper, ScoringProperties scoringProperties) {
 		super();
@@ -49,8 +51,13 @@ public class WarningServiceImpl implements WarningService {
 	@Transactional
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo) {
 		long currentTimestamp = TimeUtils.roundedCurrentTimeTimestamp();
-		log.info(String.format("Reporting %d visits while infected", reportRequestVo.getVisits().size()));
+		int nbVisits = reportRequestVo.getVisits().size();
+		log.info(String.format("Reporting %d visits while infected", nbVisits));
+		int nbRejectedVisits = nbVisits - maxVisits;
+		if (nbRejectedVisits > 0)
+			log.info(String.format("Filtered %d visits out of %d while reporting", nbRejectedVisits, nbVisits));
 		reportRequestVo.getVisits().stream()
+			.limit(maxVisits)
 			.filter(visit -> this.isValidTimestamp(visit.getTimestamp(), currentTimestamp))
 			.filter(visit -> visit.getQrCode().getType().isStatic())
 			.forEach(visit -> this.registerAllExposedStaticTokens(visit));

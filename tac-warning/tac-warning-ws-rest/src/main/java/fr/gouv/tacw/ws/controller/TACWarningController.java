@@ -37,13 +37,22 @@ public class TACWarningController {
 	TokenMapper tokenMapper;
 
 	@Value("${tacw.rest.score_threshold}")
-	private long threshold = 20;
+	private long threshold;
+	
+	@Value("${tacw.rest.max_visits}")
+	private int maxVisits;
 		
 	@PostMapping(value = UriConstants.STATUS)
 	protected ExposureStatusResponseDto getStatus(
 			@Valid @RequestBody(required = true) ExposureStatusRequestVo statusRequestVo) {
-		log.info(String.format("Exposure status request for %d visits", statusRequestVo.getVisitTokens().size()));
-		Stream<OpaqueVisit> tokens = statusRequestVo.getVisitTokens().stream().map(tokenVo -> tokenMapper.getToken(tokenVo));		 
+		int nbVisitTokens = statusRequestVo.getVisitTokens().size();
+		log.info(String.format("Exposure status request for %d visits", nbVisitTokens));
+		int nbRejectedVisitTokens = nbVisitTokens - maxVisits;
+		if (nbRejectedVisitTokens > 0)
+			log.info(String.format("Filtered out %d visits of %d while Exposure Status Request", nbRejectedVisitTokens, nbVisitTokens));
+		Stream<OpaqueVisit> tokens = statusRequestVo.getVisitTokens().stream()
+				.limit(maxVisits)
+				.map(tokenVo -> tokenMapper.getToken(tokenVo));		 
 		boolean atRisk = warningService.getStatus(tokens, threshold);
 		return new ExposureStatusResponseDto(atRisk);
 	}
