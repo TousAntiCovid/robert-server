@@ -1,6 +1,7 @@
 package fr.gouv.tacw.ws.service.impl;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,6 +78,6 @@ public class WarningServiceImpl implements WarningService {
 
 	protected boolean isValidDelta(long delta) {
 		return delta > 0
-				&& delta <= TimeUtils.DAY_UNIT * visitTokenRetentionPeriodDays;
+				&& delta <= TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays);
 	}
 }
