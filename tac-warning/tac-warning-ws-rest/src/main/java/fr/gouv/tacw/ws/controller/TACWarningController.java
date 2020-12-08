@@ -48,8 +48,9 @@ public class TACWarningController {
 		int nbVisitTokens = statusRequestVo.getVisitTokens().size();
 		log.info(String.format("Exposure status request for %d visits", nbVisitTokens));
 		int nbRejectedVisitTokens = nbVisitTokens - maxVisits;
-		if (nbRejectedVisitTokens > 0)
+		if (nbRejectedVisitTokens > 0) {
 			log.info(String.format("Filtered out %d visits of %d while Exposure Status Request", nbRejectedVisitTokens, nbVisitTokens));
+		}
 		Stream<OpaqueVisit> tokens = statusRequestVo.getVisitTokens().stream()
 				.limit(maxVisits)
 				.map(tokenVo -> tokenMapper.getToken(tokenVo));		 

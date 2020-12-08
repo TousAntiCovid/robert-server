@@ -54,8 +54,9 @@ public class WarningServiceImpl implements WarningService {
 		int nbVisits = reportRequestVo.getVisits().size();
 		log.info(String.format("Reporting %d visits while infected", nbVisits));
 		int nbRejectedVisits = nbVisits - maxVisits;
-		if (nbRejectedVisits > 0)
+		if (nbRejectedVisits > 0) {
 			log.info(String.format("Filtered %d visits out of %d while reporting", nbRejectedVisits, nbVisits));
+		}
 		reportRequestVo.getVisits().stream()
 			.limit(maxVisits)
 			.filter(visit -> this.isValidTimestamp(visit.getTimestamp(), currentTimestamp))
