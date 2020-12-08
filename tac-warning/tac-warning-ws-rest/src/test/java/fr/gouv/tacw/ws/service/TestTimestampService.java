@@ -1,5 +1,7 @@
 package fr.gouv.tacw.ws.service;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +16,7 @@ public class TestTimestampService {
 	 * @return a valid timestamp five days ago.
 	 */
 	public long validTimestamp() {
-		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.DAY_UNIT * 5;
+		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUnit.DAYS.toSeconds(5);
 	}
 	public String validTimestampString() {
 		return Long.toString(this.validTimestamp());
@@ -25,7 +27,7 @@ public class TestTimestampService {
 	 * are already purged.
 	 */
 	public long preRetentionTimeTimestamp() {
-		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.DAY_UNIT * (visitTokenRetentionPeriodDays + 5);
+		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays + 5);
 	}
 	public String preRetentionTimeTimestampString() {
 		return Long.toString(this.preRetentionTimeTimestamp());
@@ -35,14 +37,14 @@ public class TestTimestampService {
 	 * @return a timestamp of retention time
 	 */
 	public long retentionTimeTimestamp() {
-		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.DAY_UNIT * visitTokenRetentionPeriodDays;
+		return TimeUtils.roundedCurrentTimeTimestamp() - TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays);
 	}
 	
 	/**
 	 * @return a timestamp 10 days in the future.
 	 */
 	public long futureTimestamp() {
-		return TimeUtils.roundedCurrentTimeTimestamp() + TimeUtils.DAY_UNIT * 10;
+		return TimeUtils.roundedCurrentTimeTimestamp() + TimeUnit.DAYS.toSeconds(10);
 	}
 	public String futureTimestampString() {
 		return Long.toString(this.futureTimestamp());

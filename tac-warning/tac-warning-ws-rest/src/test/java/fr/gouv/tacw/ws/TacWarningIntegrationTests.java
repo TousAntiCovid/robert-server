@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -60,7 +61,7 @@ class TacWarningIntegrationTests {
 	@BeforeEach
 	public void setUp() {
 		keyPair = Keys.keyPairFor(AuthorizationService.algo);
-		referenceTime = TimeUtils.roundedCurrentTimeTimestamp() - TimeUtils.DAY_UNIT * 3;
+		referenceTime = TimeUtils.roundedCurrentTimeTimestamp() - TimeUnit.DAYS.toSeconds(3);
 
 		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
 		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));

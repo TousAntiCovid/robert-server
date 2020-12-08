@@ -2,6 +2,7 @@ package fr.gouv.tacw.database.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -23,8 +24,6 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
 	@Value("${tacw.database.visit_token_retention_period_days}")
 	private long visitTokenRetentionPeriodDays;
 
-	private static final long SECONDS_PER_DAY = 86400;
-
 	public ExposedStaticVisitServiceImpl(ExposedStaticVisitRepository exposedStaticVisitRepository) {
 		super();
 		this.exposedStaticVisitRepository = exposedStaticVisitRepository;
@@ -38,7 +37,7 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
 	@Scheduled(cron = "${tacw.database.visit_token_deletion_job_cron_expression}")
 	public long deleteExpiredTokens() {
 		final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
-		final long retentionStart = currentNtpTime - (visitTokenRetentionPeriodDays * SECONDS_PER_DAY);
+		final long retentionStart = currentNtpTime - TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays);
 		log.debug(String.format("Purge expired tokens before %d", retentionStart));
 		final long nbDeletedTokens = exposedStaticVisitRepository.deleteByVisitEndTimeLessThan(retentionStart);
 		log.info(String.format("Deleted %d static tokens from exposed tokens", nbDeletedTokens));
