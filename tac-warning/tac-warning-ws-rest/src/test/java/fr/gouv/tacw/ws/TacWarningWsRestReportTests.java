@@ -24,7 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 
 import fr.gouv.tacw.ws.service.AuthorizationService;
-import fr.gouv.tacw.ws.service.WarningService;
+import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
 import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
@@ -37,8 +37,6 @@ import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@MockBean(WarningService.class)
-@MockBean(PropertyLoader.class)
 class TacWarningWsRestReportTests {
 	@Value("${controller.path.prefix}" + UriConstants.API_V1)
 	private String pathPrefixV1;
@@ -46,10 +44,10 @@ class TacWarningWsRestReportTests {
 	@Autowired
 	private TestRestTemplate restTemplate;
 
-	@Autowired
-	private WarningService warningService;
+	@MockBean
+	private WarningServiceImpl warningService;
 	
-	@Autowired
+	@MockBean
 	private PropertyLoader propertyLoader;
 	
 	private KeyPair keyPair;
@@ -63,7 +61,7 @@ class TacWarningWsRestReportTests {
 	}
 	
 	@Test
-	void testInfectedUserCanReportItselfAsInfected() {
+	public void testInfectedUserCanReportItselfAsInfected() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
 		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, this.getReportEntityWithBearer(reportRequest),
 				String.class);
@@ -71,12 +69,8 @@ class TacWarningWsRestReportTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
-	private Object getReportEntityWithBearer(ReportRequestVo reportRequest) {
-		return new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequest);
-	}
-
 	@Test
-	void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
+	public void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
 		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, reportRequest,
 				String.class);
@@ -85,7 +79,7 @@ class TacWarningWsRestReportTests {
 	}
 	
 	@Test
-	void testWhenReportRequestWithNonValidAuthenticationThenGetUnauthorized() {
+	public void testWhenReportRequestWithNonValidAuthenticationThenGetUnauthorized() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
 		HttpHeaders headers = new HttpHeaders();
 		headers.setBearerAuth("invalid JWT token");
@@ -98,7 +92,7 @@ class TacWarningWsRestReportTests {
 	}
 
 	@Test
-	void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
+	public void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
 		HttpHeaders headers = new HttpHeaders();
 		new HttpJwtHeaderUtils(keyPair.getPrivate()).addBearerAuthTo(headers);
 		
@@ -112,7 +106,7 @@ class TacWarningWsRestReportTests {
 	}
 
 	@Test
-	void testWhenReportRequestWithInvalidJsonDataThenGetBadRequest() throws JSONException {
+	public void testWhenReportRequestWithInvalidJsonDataThenGetBadRequest() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("id", 1);
 		ResponseEntity<String> response = restTemplate.postForEntity(
@@ -124,12 +118,8 @@ class TacWarningWsRestReportTests {
 		verifyNoMoreInteractions(warningService);
 	}
 
-	private MultiValueMap<String, String> newJsonHeaderWithBearer() {
-		return new HttpJwtHeaderUtils(keyPair.getPrivate()).newJsonHeaderWithBearer();
-	}
-
 	@Test
-	void testWhenReportRequestWithNullVisitTokensThenGetBadRequest() {
+	public void testWhenReportRequestWithNullVisitTokensThenGetBadRequest() {
 		ResponseEntity<String> response = restTemplate.postForEntity(
 				pathPrefixV1 + UriConstants.REPORT, 
 				this.getReportEntityWithBearer(new ReportRequestVo(null)), 
@@ -140,7 +130,7 @@ class TacWarningWsRestReportTests {
 	}
 
 	@Test
-	void testWhenReportRequestWithNullTimestampTypeThenGetBadRequest() {
+	public void testWhenReportRequestWithNullTimestampTypeThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(new VisitVo(null, 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "uuid")));
@@ -156,7 +146,7 @@ class TacWarningWsRestReportTests {
 	}
 
 	@Test
-	void testWhenReportRequestWithNullQRCodeTypeThenGetBadRequest() {
+	public void testWhenReportRequestWithNullQRCodeTypeThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(new VisitVo("12345", null));
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
@@ -171,7 +161,7 @@ class TacWarningWsRestReportTests {
 	}
 
 	@Test
-	void testWhenReportRequestWithInvalidQRCodeTypeThenGetBadRequest() throws JSONException {
+	public void testWhenReportRequestWithInvalidQRCodeTypeThenGetBadRequest() throws JSONException {
 		String json = "{\n"
 				+ "   \"visits\": [\n"
 				+ "     {\n"
@@ -197,7 +187,7 @@ class TacWarningWsRestReportTests {
 	}
 	
 	@Test
-	void testWhenReportRequestWithNullUuidThenGetBadRequest() {
+	public void testWhenReportRequestWithNullUuidThenGetBadRequest() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(
 				new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, null)));
@@ -213,7 +203,7 @@ class TacWarningWsRestReportTests {
 	}
 	
 	@Test
-	void testWhenReportRequestWithNullVenueCategoryOrVenueTypeOrVenueCapacityThenRequestSucceeds() {
+	public void testWhenReportRequestWithNullVenueCategoryOrVenueTypeOrVenueCapacityThenRequestSucceeds() {
 		String json = "{\n"
 				+ "   \"visits\": [\n"
 				+ "     {\n"
@@ -236,7 +226,7 @@ class TacWarningWsRestReportTests {
 	}
 	
 	@Test
-	void testWhenReportRequestWithValidVisitThenRequestSucceed() throws JSONException {
+	public void testWhenReportRequestWithValidVisitThenRequestSucceed() throws JSONException {
 		String json = "{\n"
 				+ "   \"visits\": [\n"
 				+ "     {\n"
@@ -261,4 +251,11 @@ class TacWarningWsRestReportTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
+	private MultiValueMap<String, String> newJsonHeaderWithBearer() {
+		return new HttpJwtHeaderUtils(keyPair.getPrivate()).newJsonHeaderWithBearer();
+	}
+
+	private Object getReportEntityWithBearer(ReportRequestVo reportRequest) {
+		return new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequest);
+	}
 }

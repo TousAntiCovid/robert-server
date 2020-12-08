@@ -61,7 +61,7 @@ public class WarningServiceTests {
 
 		assertThat(warningService.getStatus(visits.stream(), 1L)).isFalse();
 	}
-
+	
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
