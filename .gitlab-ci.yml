@@ -331,7 +331,7 @@ pages:
       - public
   script:
     - mkdir public
-    - cp -r target/site/* public
+    - cp -r site/* public
     - source .gitlab-ci/copy_site.sh
   rules :
     - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
