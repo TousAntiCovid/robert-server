@@ -18,11 +18,23 @@ build_robert-server:
   stage: build
   script:
     # build all (for other phase such as docker) but skip tests
+    - cd robert-server
     - mvn $MAVEN_CLI_OPTS -DskipTests=true -P swagger,logstash  package
   artifacts:
     paths:
       - robert-server/robert-server-ws-rest/target/*.jar
       - robert-server/robert-crypto-grpc-server/target/*.jar
+  rules:
+    - when: always
+    
+build_tac-warning:
+  stage: build
+  script:
+    # build all (for other phase such as docker) but skip tests
+    - cd tac-warning
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true -P swagger,logstash  package
+  artifacts:
+    paths:
       - tac-warning/tac-warning-ws-rest/target/*.jar
       - tac-warning/tac-warning-ws-rest/target/*.jar
   rules:
@@ -65,22 +77,18 @@ build_submission-code-server:
     - when: always
 
 
-test_with_report:
+test_report_tac-warning:
   stage: test
   script:
+    - cd tac-warning
     - mvn $MAVEN_CLI_OPTS -P report org.jacoco:jacoco-maven-plugin:prepare-agent org.jacoco:jacoco-maven-plugin:prepare-agent-integration verify  jacoco:report-integration jacoco:report site
   artifacts:
     when: always
     paths:
-      - target/site/**
-      - robert-server/target/site/**
       - tac-warning/target/site/**
-      - robert-server/*/target/site/**
       - tac-warning/*/target/site/**
     reports:
       junit:
-        - "robert-server/*/target/surefire-reports/TEST-*.xml"
-        - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
         - "tac-warning/*/target/surefire-reports/TEST-*.xml"
         - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
   rules:
@@ -89,10 +97,53 @@ test_with_report:
     - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
       when: always
     - when: never
-        
-test:
+    
+test_report_robert-server:
   stage: test
   script:
+    - cd robert-server
+    - mvn $MAVEN_CLI_OPTS -P report org.jacoco:jacoco-maven-plugin:prepare-agent org.jacoco:jacoco-maven-plugin:prepare-agent-integration verify  jacoco:report-integration jacoco:report site
+  artifacts:
+    when: always
+    paths:
+      - robert-server/target/site/**
+      - robert-server/*/target/site/**
+    reports:
+      junit:
+        - "robert-server/*/target/surefire-reports/TEST-*.xml"
+        - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
+      when: always
+    - when: never
+
+
+test_tac-warning:
+  stage: test
+  script:
+    - cd tac-warning
+    - mvn $MAVEN_CLI_OPTS verify
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - "tac-warning/*/target/surefire-reports/TEST-*.xml"
+        - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /.*skip_ut.*/'
+      when: never
+    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: never
+    - when: on_success
+            
+test_robert-server:
+  stage: test
+  script:
+    - cd robert-server
     - mvn $MAVEN_CLI_OPTS verify
   artifacts:
     when: always
@@ -100,8 +151,6 @@ test:
       junit:
         - "robert-server/*/target/surefire-reports/TEST-*.xml"
         - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
-        - "tac-warning/*/target/surefire-reports/TEST-*.xml"
-        - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /.*skip_ut.*/'
       when: never
@@ -173,7 +222,7 @@ docker-tac-warning:
     - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
   stage: docker
   dependencies:
-    - build_robert-server
+    - build_tac-warning
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
     - if: '$CI_COMMIT_BRANCH'
