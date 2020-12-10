@@ -77,7 +77,10 @@ public class WarningServiceImpl implements WarningService {
 	protected boolean isValidTimestamp(String timestampString, long currentTimestamp) {
 		try {
 			long delta = currentTimestamp - Long.parseLong(timestampString);
-			return this.isValidDelta(delta);
+			boolean isValid = this.isValidDelta(delta);
+	        if (!isValid)
+	            log.info("Ignoring invalid timestamp: %d, currentTimestamp: %d" + timestampString, currentTimestamp);
+	        return isValid;
 		} catch (NumberFormatException e) {
 			log.error(String.format("Wrong timestamp format: %s, visit ignored. %s", timestampString, e.getMessage()));
 			return false;
@@ -85,7 +88,7 @@ public class WarningServiceImpl implements WarningService {
 	}
 
 	protected boolean isValidDelta(long delta) {
-		return delta > 0
-				&& delta <= TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays);
+	    return delta > 0
+	            && delta <= TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays);
 	}
 }
