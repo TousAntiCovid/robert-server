@@ -11,9 +11,7 @@ import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.utils.PropertyLoader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 public class AuthorizationServiceImpl implements AuthorizationService {
 	private PropertyLoader propertyLoader;
@@ -24,7 +22,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
 	public boolean checkAuthorization(String jwtToken) throws TacWarningUnauthorizedException {
 		jwtToken = jwtToken.replace("Bearer ", ""); // TODO validate properly
-		log.info("Authorization header: " + jwtToken);
 
 		if (!this.propertyLoader.getJwtReportAuthorizationDisabled()) {
 			this.verifyJWT(jwtToken);
