@@ -5,6 +5,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.Table;
+import javax.persistence.GenerationType;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.DynamicUpdate;
@@ -22,8 +23,7 @@ import lombok.ToString;
 @DynamicUpdate(true)
 public class ExposedStaticVisitEntity {
 	@Id
-	@GeneratedValue(generator = "generator")
-	@GenericGenerator(name = "generator", strategy = "increment")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@ToString.Exclude
 	private Long id;
 
