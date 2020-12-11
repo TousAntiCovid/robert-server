@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>fr.gouv.tacw</groupId>
 		<artifactId>tac-warning-server</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>tac-warning-database</artifactId>
@@ -58,16 +58,16 @@
 		</plugins>
 	</build>
 
-    <profiles>
-        <profile>
-            <id>logstash</id>
-            <dependencies>
-                <dependency>
-                    <groupId>net.logstash.logback</groupId>
-                    <artifactId>logstash-logback-encoder</artifactId>
-                    <version>6.4</version>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
+	<profiles>
+		<profile>
+			<id>logstash</id>
+			<dependencies>
+				<dependency>
+					<groupId>net.logstash.logback</groupId>
+					<artifactId>logstash-logback-encoder</artifactId>
+					<version>6.4</version>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
 </project>

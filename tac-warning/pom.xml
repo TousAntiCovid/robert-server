@@ -20,7 +20,7 @@
 
 	<groupId>fr.gouv.tacw</groupId>
 	<artifactId>tac-warning-server</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>tac-warning-server</name>
 	<packaging>pom</packaging>
 	<description>Tous Anti-Covid Warning server project</description>
