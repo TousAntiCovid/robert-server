@@ -56,7 +56,7 @@
 
     <!-- at TRACE level -->
     <logger name="error" level="error" additivity="false">
-        <appender-ref ref="RollingErrorFile" />
+        <appender-ref ref="RollingFile" />
     </logger>
  
 </configuration>
