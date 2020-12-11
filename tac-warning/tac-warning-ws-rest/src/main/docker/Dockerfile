@@ -2,7 +2,7 @@
 # docker build -f src/main/docker/Dockerfile -t registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:otac .
 
 FROM store/oracle/serverjre:8
-ADD ./target/tac-warning-ws-rest-0.0.1-SNAPSHOT-exec.jar /app.jar
+ADD ./target/tac-warning-ws-rest-1.1.0-SNAPSHOT-exec.jar /app.jar
 #ADD ./src/main/resources/application.properties /work/config/application.properties
 ENV ROBERT_JWT_PUBLIC_KEY changeit
 
