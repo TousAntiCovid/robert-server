@@ -23,7 +23,8 @@ public enum VenueTypeVo {
 	PS("PS"),
 	GA("GA"),
 	OA("OA"),
-	REF("REF");
+	REF("REF"),
+	PEV("PEV");
 	
 	private final String value;
 
