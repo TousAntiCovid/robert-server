@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Disabled;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +77,7 @@ public class WarningServiceTests {
 
 	// TODO: test invalid timestamp in controller => reject whole request ? just the visit
 	
+	@Disabled("Temporary removed timestamp present/future checking")
 	@Test
 	public void testWhenStatusRequestWithVisitsHavingATimeInTheFutureThenVisitsAreFilteredOut() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
@@ -88,6 +90,7 @@ public class WarningServiceTests {
 		verifyNoInteractions(exposedStaticVisitService);
 	}
 	
+	@Disabled("Temporary removed timestamp present/future checking")
 	@Test
 	public void testWhenStatusRequestWithVisitsHavingATimeInThePastGreaterThanRetentionTimeThenVisitsAreFilteredOut() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
@@ -125,6 +128,7 @@ public class WarningServiceTests {
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
 	}
 
+	@Disabled("Temporary removed timestamp present/future checking")
 	@Test
 	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInTheFutureAreFilteredOut() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
@@ -138,6 +142,7 @@ public class WarningServiceTests {
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
 	}
 
+	@Disabled("Temporary removed timestamp present/future checking")
 	@Test
 	public void testWhenReportingExposedVisitsThenVisitsHavingATimeInThePastGreaterThanRetentionTimeAreFilteredOut() {
 		List<VisitVo> visits = new ArrayList<VisitVo>();
