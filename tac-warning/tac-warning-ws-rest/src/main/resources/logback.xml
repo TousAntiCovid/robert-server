@@ -40,23 +40,23 @@
     </appender>
      
     <!-- LOG everything at INFO level -->
-    <root level="info">
+    <root level="debug">
         <appender-ref ref="RollingFile" />
     </root>
  
     <!-- at TRACE level -->
-    <logger name="trace" level="trace" additivity="false">
-        <appender-ref ref="RollingFile" />
-    </logger>
+<!--     <logger name="trace" level="trace" additivity="false"> -->
+<!--         <appender-ref ref="RollingFile" /> -->
+<!--     </logger> -->
 
-    <!-- at WARN level -->
-    <logger name="warn" level="warn" additivity="false">
-        <appender-ref ref="RollingFile" />
-    </logger>
+<!--     at WARN level -->
+<!--     <logger name="warn" level="warn" additivity="false"> -->
+<!--         <appender-ref ref="RollingFile" /> -->
+<!--     </logger> -->
 
-    <!-- at TRACE level -->
-    <logger name="error" level="error" additivity="false">
-        <appender-ref ref="RollingErrorFile" />
-    </logger>
+<!--     at TRACE level -->
+<!--     <logger name="error" level="error" additivity="false"> -->
+<!--         <appender-ref ref="RollingFile" /> -->
+<!--     </logger> -->
  
 </configuration>
