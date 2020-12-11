@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
  
- <property  name="LOG_DIR" value="${TACW_SERVER_LOG_FILE_PATH:-/logs}" />
+ <property  name="LOG_DIR" value="${TACW_SERVER_LOG_FILE_PATH:-./logs}" />
  <property  name="LOG_FILENAME" value="${TACW_SERVER_LOG_FILE_NAME:-tacw-server-ws-rest}" />
  <property  name="ERROR_LOG_FILENAME" value="${TACW_SERVER_ERROR_LOG_FILE_NAME:-tacw-server-ws-rest}.error" />
  
@@ -40,23 +40,8 @@
     </appender>
      
     <!-- LOG everything at INFO level -->
-    <root level="info">
+    <root level="${LOG_ROOT_LEVEL:-INFO}">
         <appender-ref ref="RollingFile" />
     </root>
- 
-    <!-- at TRACE level -->
-<!--     <logger name="trace" level="trace" additivity="false"> -->
-<!--         <appender-ref ref="RollingFile" /> -->
-<!--     </logger> -->
-
-<!--     at WARN level -->
-<!--     <logger name="warn" level="warn" additivity="false"> -->
-<!--         <appender-ref ref="RollingFile" /> -->
-<!--     </logger> -->
-
-<!--     at TRACE level -->
-<!--     <logger name="error" level="error" additivity="false"> -->
-<!--         <appender-ref ref="RollingFile" /> -->
-<!--     </logger> -->
  
 </configuration>
