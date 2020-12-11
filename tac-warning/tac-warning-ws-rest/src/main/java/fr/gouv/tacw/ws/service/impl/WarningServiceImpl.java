@@ -88,7 +88,8 @@ public class WarningServiceImpl implements WarningService {
 	}
 
 	protected boolean isValidDelta(long delta) {
-	    return delta > 0
-	            && delta <= TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays);
+	    return true; // TODO choose if we filter by timestamps
+//	    return delta > 0
+//	            && delta <= TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays);
 	}
 }
