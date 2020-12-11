@@ -3,6 +3,7 @@ package fr.gouv.tacw.ws.exception;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -57,4 +58,14 @@ public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
 		log.error(String.format(INVALID_INPUT_TEMPLATE, message, path), exception.getCause());
 		return handleExceptionInternal(exception, null, headers, status, webRequest);
 	}
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+            HttpHeaders headers, HttpStatus status, WebRequest request) {
+        log.info("Bad Request: {}", ex.getMessage());
+        log.debug("Bad Request: ", ex);
+
+        return handleExceptionInternal(ex, null, headers, HttpStatus.BAD_REQUEST, request);
+    }
+
 }
