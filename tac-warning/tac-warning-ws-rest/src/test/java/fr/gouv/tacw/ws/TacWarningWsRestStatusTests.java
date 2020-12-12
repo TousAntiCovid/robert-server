@@ -2,7 +2,6 @@ package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -74,7 +73,7 @@ class TacWarningWsRestStatusTests {
 	@Test
 	public void testCanGetStatus() {
 		ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
-		when(warningService.getStatus(any(), anyLong())).thenReturn(true);
+		when(warningService.getStatus(any())).thenReturn(true);
 
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate
 				.postForEntity(pathPrefixV1 + UriConstants.STATUS, request, ExposureStatusResponseDto.class);
@@ -95,7 +94,7 @@ class TacWarningWsRestStatusTests {
 				new ExposureStatusRequestVo(visits), 
 				ExposureStatusResponseDto.class);
 		
-		verify(warningService).getStatus(opaqueVisitsCaptor.capture(), anyLong());
+		verify(warningService).getStatus(opaqueVisitsCaptor.capture());
 		assertThat(opaqueVisitsCaptor.getValue().count()).isEqualTo(maxVisits);
 		assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(1); // no second log with filter
 		ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(0);
@@ -117,7 +116,7 @@ class TacWarningWsRestStatusTests {
 				new ExposureStatusRequestVo(visits), 
 				ExposureStatusResponseDto.class);
 	
-		verify(warningService).getStatus(opaqueVisitsCaptor.capture(), anyLong());
+		verify(warningService).getStatus(opaqueVisitsCaptor.capture());
 		assertThat(opaqueVisitsCaptor.getValue().count()).isEqualTo(maxVisits);
 		ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(1); // first log is nb visits for ESR
 		assertThat(log.getMessage()).contains(

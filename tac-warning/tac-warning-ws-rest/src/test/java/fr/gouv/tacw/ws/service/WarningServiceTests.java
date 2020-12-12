@@ -9,14 +9,17 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.Disabled;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
@@ -26,7 +29,7 @@ import fr.gouv.tacw.database.service.ExposedStaticVisitServiceImpl;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.model.OpaqueStaticVisit;
 import fr.gouv.tacw.model.OpaqueVisit;
-import fr.gouv.tacw.ws.properties.ScoringProperties;
+import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -41,7 +44,8 @@ import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
 @ContextConfiguration(classes = { WarningServiceImpl.class, TokenMapper.class, ExposedStaticVisitServiceImpl.class, TestTimestampService.class})
 @MockBean(ExposedStaticVisitRepository.class)
 @MockBean(ExposedStaticVisitService.class)
-@MockBean(ScoringProperties.class)
+@EnableConfigurationProperties(value = TacWarningWsRestConfiguration.class)
+@TestPropertySource("classpath:application.properties")
 public class WarningServiceTests {
 	@Autowired
 	private ExposedStaticVisitService exposedStaticVisitService;
@@ -52,27 +56,38 @@ public class WarningServiceTests {
 	@Autowired
 	private TestTimestampService timestampService;
 	
+	@Autowired
+	private TacWarningWsRestConfiguration configuration;
+
 	@Captor
 	ArgumentCaptor<List<ExposedStaticVisitEntity>> staticTokensCaptor;
+
+    private int numberOfGeneratedTokens;
+	
+	@BeforeEach
+	public void setUp() {
+	    numberOfGeneratedTokens = new ExposedTokenGenerator(configuration).numberOfGeneratedTokens();
+	}
 	
 	@Test
 	public void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
 		visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", timestampService.validTimestamp()));
 
-		assertThat(warningService.getStatus(visits.stream(), 1L)).isFalse();
+		assertThat(warningService.getStatus(visits.stream())).isFalse();
 	}
 	
 	@Test
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
 		long visitTime = timestampService.validTimestamp();
+		long increment = configuration.getExposureCountIncrements().get(VenueTypeVo.M.toString());
 		
-		when(exposedStaticVisitService.riskScore(infectedToken, visitTime)).thenReturn(1L);
+		when(exposedStaticVisitService.riskScore(infectedToken, visitTime)).thenReturn(increment);
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
 		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
 
-		assertThat(warningService.getStatus(visits.stream(), 1L)).isTrue();
+		assertThat(warningService.getStatus(visits.stream())).isTrue();
 	}
 
 	// TODO: test invalid timestamp in controller => reject whole request ? just the visit
@@ -85,7 +100,7 @@ public class WarningServiceTests {
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
 		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
 
-		warningService.getStatus(visits.stream(), 1L);
+		warningService.getStatus(visits.stream());
 		
 		verifyNoInteractions(exposedStaticVisitService);
 	}
@@ -98,7 +113,7 @@ public class WarningServiceTests {
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
 		visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
 
-		warningService.getStatus(visits.stream(), 1L);
+		warningService.getStatus(visits.stream());
 		
 		verifyNoInteractions(exposedStaticVisitService);
 	}
@@ -110,7 +125,7 @@ public class WarningServiceTests {
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
 		visits.add(new OpaqueStaticVisit(token, visitTime));
 
-		warningService.getStatus(visits.stream(), 1L);
+		warningService.getStatus(visits.stream());
 		
 		verify(exposedStaticVisitService).riskScore(token, visitTime);
 	}
@@ -125,7 +140,7 @@ public class WarningServiceTests {
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
 		verify(exposedStaticVisitService, times(2)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
-		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
 	}
 
 	@Disabled("Temporary removed timestamp present/future checking")
@@ -139,7 +154,7 @@ public class WarningServiceTests {
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
 		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
-		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
 	}
 
 	@Disabled("Temporary removed timestamp present/future checking")
@@ -153,7 +168,7 @@ public class WarningServiceTests {
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
 		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
-		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(ExposedTokenGenerator.numberOfGeneratedTokens());
+		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
 	}
 	
 	@Test

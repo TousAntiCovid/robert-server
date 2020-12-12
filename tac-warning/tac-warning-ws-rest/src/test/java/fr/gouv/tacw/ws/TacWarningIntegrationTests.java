@@ -25,10 +25,10 @@ import org.springframework.http.ResponseEntity;
 
 import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
+import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
 import fr.gouv.tacw.ws.service.AuthorizationService;
-import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
@@ -43,7 +43,6 @@ import io.jsonwebtoken.security.Keys;
 
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@MockBean(PropertyLoader.class)
 class TacWarningIntegrationTests {
 	@Autowired
 	private TestRestTemplate restTemplate;
@@ -52,7 +51,7 @@ class TacWarningIntegrationTests {
 	private String pathPrefixV1;
 
 	@Autowired
-	private PropertyLoader propertyLoader;
+	private TacWarningWsRestConfiguration configuration;
 	
 	private KeyPair keyPair;
 
@@ -63,8 +62,8 @@ class TacWarningIntegrationTests {
 		keyPair = Keys.keyPairFor(AuthorizationService.algo);
 		referenceTime = TimeUtils.roundedCurrentTimeTimestamp() - TimeUnit.DAYS.toSeconds(3);
 
-		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
-		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+		this.configuration.setJwtReportAuthorizationDisabled(false);
+		this.configuration.setRobertJwtPublicKey(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
 	}
 	
 	@Test

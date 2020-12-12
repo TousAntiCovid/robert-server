@@ -6,24 +6,25 @@ import java.security.spec.X509EncodedKeySpec;
 
 import org.springframework.stereotype.Service;
 
+import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.exception.TacWarningUnauthorizedException;
 import fr.gouv.tacw.ws.service.AuthorizationService;
-import fr.gouv.tacw.ws.utils.PropertyLoader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 
 @Service
 public class AuthorizationServiceImpl implements AuthorizationService {
-	private PropertyLoader propertyLoader;
+	private TacWarningWsRestConfiguration configuration;
 	
-	public AuthorizationServiceImpl(PropertyLoader propertyLoader) {
-		this.propertyLoader = propertyLoader;
+	public AuthorizationServiceImpl(TacWarningWsRestConfiguration configuration) {
+	    super();
+		this.configuration = configuration;
 	}
 
 	public boolean checkAuthorization(String jwtToken) throws TacWarningUnauthorizedException {
 		jwtToken = jwtToken.replace("Bearer ", ""); // TODO validate properly
 
-		if (!this.propertyLoader.getJwtReportAuthorizationDisabled()) {
+		if (!this.configuration.isJwtReportAuthorizationDisabled()) {
 			this.verifyJWT(jwtToken);
 		}
 		return true;
@@ -32,7 +33,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 	private void verifyJWT(String token) throws TacWarningUnauthorizedException {
 		PublicKey jwtPublicKey;
 		try {
-			byte[] encoded = Decoders.BASE64.decode(this.propertyLoader.getJwtPublicKey());
+			byte[] encoded = Decoders.BASE64.decode(this.configuration.getRobertJwtPublicKey());
 			KeyFactory keyFactory = KeyFactory.getInstance(algo.getFamilyName());
 			X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
 			jwtPublicKey = keyFactory.generatePublic(keySpec);

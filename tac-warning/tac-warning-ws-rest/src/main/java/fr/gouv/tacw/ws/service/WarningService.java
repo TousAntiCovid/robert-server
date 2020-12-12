@@ -6,6 +6,6 @@ import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 
 public interface WarningService {
-	public boolean getStatus(Stream<OpaqueVisit> tokens, long threshold);
+	public boolean getStatus(Stream<OpaqueVisit> tokens);
 	public void reportVisitsWhenInfected(ReportRequestVo reportRequestVo);
 }
