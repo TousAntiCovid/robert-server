@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +15,6 @@ import fr.gouv.tacw.database.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@PropertySource("classpath:application.properties")
 @Service
 public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService {
 	private ExposedStaticVisitRepository exposedStaticVisitRepository;
