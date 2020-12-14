@@ -3,6 +3,8 @@ package fr.gouv.tacw.model;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.apache.commons.codec.digest.DigestUtils;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
@@ -37,7 +39,7 @@ public class ExposedTokenGenerator {
 
     protected ExposedStaticVisitEntity exposedStaticVisitEntityForSalt(int salt) {
         return new ExposedStaticVisitEntity(
-                this.hash(salt),
+				DatatypeConverter.parseHexBinary(this.hash(salt)),
                 this.startOfInterval(timestamp),
                 this.endOfInterval(timestamp), 
                 this.configuration.getStartDelta(),

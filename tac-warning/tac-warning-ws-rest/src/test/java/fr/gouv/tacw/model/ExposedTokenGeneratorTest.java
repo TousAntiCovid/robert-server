@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +59,7 @@ public class ExposedTokenGeneratorTest {
 		Stream<ExposedStaticVisitEntity> exposedVisits = tokenGeneratorService.generateAllExposedTokens(visit);
 
 		assertThat(exposedVisits.map(token -> token.getToken()))
-				.contains("f9738b0006199fcf7d8a1f7b3523cd225b6620ced2588af7a410eeab16380c87");
+				.contains(DatatypeConverter.parseHexBinary("f9738b0006199fcf7d8a1f7b3523cd225b6620ced2588af7a410eeab16380c87"));
 	}
 
 	protected VisitVo visitVoExample() {

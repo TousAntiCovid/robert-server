@@ -3,6 +3,8 @@ package fr.gouv.tacw.database.service;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +30,7 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
 
     @Override
     public long riskScore(String token, long visitTime) {
-        return exposedStaticVisitRepository.riskScore(token, visitTime);
+        return exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(token), visitTime);
     }
 
     @Scheduled(cron = "${tacw.database.visit_token_deletion_job_cron_expression}")

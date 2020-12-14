@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -160,14 +162,14 @@ class ExposedStaticVisitRepositoryTests {
 		exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
 		exposedStaticVisitRepository.save(exposedStaticVisit);
 		
-		long score = exposedStaticVisitRepository.riskScore(this.nextVisitId(), referenceTime);
+		long score = exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(this.nextVisitId()), referenceTime);
 		
 		assertThat(0).isEqualTo(score);
 	}
 
 	@Test
 	void testRiskScoreWhenNoExposedTokenThenRiskIsZero() {	
-		long score = exposedStaticVisitRepository.riskScore(this.nextVisitId(), referenceTime);
+		long score = exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(this.nextVisitId()), referenceTime);
 		
 		assertThat(0).isEqualTo(score);
 	}
@@ -198,10 +200,10 @@ class ExposedStaticVisitRepositoryTests {
 	}
 	
 	private ExposedStaticVisitEntity newExposedStaticVisitEntity(long startTime, long endTime) {
-		return this.newExposedStaticVisitEntity(this.nextVisitId(), startTime, endTime);
+		return this.newExposedStaticVisitEntity(DatatypeConverter.parseHexBinary(this.nextVisitId()), startTime, endTime);
 	}
 	
-	private ExposedStaticVisitEntity newExposedStaticVisitEntity(String visit, long startTime, long endTime) {
+	private ExposedStaticVisitEntity newExposedStaticVisitEntity(byte[] visit, long startTime, long endTime) {
 		return new ExposedStaticVisitEntity(
 				visit,
 				startTime, 

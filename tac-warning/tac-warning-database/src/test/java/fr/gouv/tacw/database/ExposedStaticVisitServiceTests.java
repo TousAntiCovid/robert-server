@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,10 +72,10 @@ class ExposedStaticVisitServiceTests {
 		
 		assertThat(nbDeletedTokens).isEqualTo(expired_tokens.size());
 		for(String token: expired_tokens) {
-			assertThat(exposedStaticVisitRepository.findByToken(token).isPresent()).isFalse();
+			assertThat(exposedStaticVisitRepository.findByToken(DatatypeConverter.parseHexBinary(token)).isPresent()).isFalse();
 		}
 		for(String token: valid_tokens) {
-			assertThat(exposedStaticVisitRepository.findByToken(token)).isPresent();
+			assertThat(exposedStaticVisitRepository.findByToken(DatatypeConverter.parseHexBinary(token))).isPresent();
 		}
 	}
 	
@@ -89,6 +91,6 @@ class ExposedStaticVisitServiceTests {
 		long visitStartTime = visitTime - startDelta;
 		long visitEndTime = visitTime + endDelta;
 		long exposureCount = 1;
-		return new ExposedStaticVisitEntity(token, visitStartTime, visitEndTime, startDelta, endDelta, exposureCount);
+		return new ExposedStaticVisitEntity(DatatypeConverter.parseHexBinary(token), visitStartTime, visitEndTime, startDelta, endDelta, exposureCount);
 	}
 }
