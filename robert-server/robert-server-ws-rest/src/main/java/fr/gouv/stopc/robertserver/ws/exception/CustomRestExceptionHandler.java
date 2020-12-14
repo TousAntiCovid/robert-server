@@ -30,6 +30,7 @@ public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpHeaders headers, HttpStatus status, WebRequest request) {
 
 		String message = MessageConstants.INVALID_DATA.getValue();
+		log.error(e.getMessage());
 		log.error(message, e.getCause());
 
 		return new ResponseEntity<>(buildApiError(message), status);
@@ -42,6 +43,7 @@ public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
 		if (e instanceof RobertServerException) {
 			message = e.getMessage();
 		}
+		log.error(e.getMessage());
 		log.error(message, e.getCause());
 
 		return new ResponseEntity<>(buildApiError(message), retrieveHttpStatus(e));
