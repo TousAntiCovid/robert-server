@@ -26,10 +26,10 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
+import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.service.TestTimestampService;
 import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
-import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -55,11 +55,8 @@ public class TacWarningWsRestReportMaxVisitsTest {
 	private ExposedStaticVisitService exposedStaticVisitService;
 	
 	@MockBean
-	private PropertyLoader propertyLoader;
+	private TacWarningWsRestConfiguration configuration;
 	
-	@Value("${tacw.rest.max_visits}")
-	private int maxVisits;
-
 	private ListAppender<ILoggingEvent> warningServiceLoggerAppender;
 	
 	private KeyPair keyPair;
@@ -68,15 +65,15 @@ public class TacWarningWsRestReportMaxVisitsTest {
 	public void setUp() {
 		keyPair = Keys.keyPairFor(AuthorizationService.algo);
 
-		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
-		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+		when(this.configuration.isJwtReportAuthorizationDisabled()).thenReturn(false);
+		when(this.configuration.getRobertJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
 	}
 	
 	@Test
 	public void testCanReportWithMaxVisits() {
 		this.setUpLogHandler();
-		List<VisitVo> visitQrCodes = new ArrayList<VisitVo>(maxVisits);
-		IntStream.rangeClosed(1, maxVisits)
+		List<VisitVo> visitQrCodes = new ArrayList<VisitVo>(this.configuration.getMaxVisits());
+		IntStream.rangeClosed(1, this.configuration.getMaxVisits())
 				.forEach(i -> visitQrCodes.add(new VisitVo(timestampService.validTimestampString(),
 						new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
 								"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"))));
@@ -87,19 +84,19 @@ public class TacWarningWsRestReportMaxVisitsTest {
 				new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 		
-		verify(exposedStaticVisitService, times(maxVisits)).registerOrIncrementExposedStaticVisits(anyList());
+		verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerOrIncrementExposedStaticVisits(anyList());
 		assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(1); // no second log with filter
 		ILoggingEvent log = warningServiceLoggerAppender.list.get(0);
 		assertThat(log.getMessage()).contains(
-				String.format("Reporting %d visits", maxVisits));
+				String.format("Reporting %d visits", this.configuration.getMaxVisits()));
 		assertThat(log.getLevel()).isEqualTo(Level.INFO);
 	}
 	
 	@Test
 	public void testCannotReportWithMoreThanMaxVisits() {
 		this.setUpLogHandler();
-		List<VisitVo> visitQrCodes = new ArrayList<VisitVo>(maxVisits);
-		IntStream.rangeClosed(1, maxVisits + 1)
+		List<VisitVo> visitQrCodes = new ArrayList<VisitVo>(this.configuration.getMaxVisits());
+		IntStream.rangeClosed(1, this.configuration.getMaxVisits() + 1)
 				.forEach(i -> visitQrCodes.add(new VisitVo(timestampService.validTimestampString(),
 						new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
 								"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"))));
@@ -110,11 +107,11 @@ public class TacWarningWsRestReportMaxVisitsTest {
 				new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 	
-		verify(exposedStaticVisitService, times(maxVisits)).registerOrIncrementExposedStaticVisits(anyList());
+		verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerOrIncrementExposedStaticVisits(anyList());
 		assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(2); 
 		ILoggingEvent log = warningServiceLoggerAppender.list.get(1);  // first log is nb visits for ESR
 		assertThat(log.getMessage()).contains(
-				String.format("Filtered %d visits out of %d", 1, maxVisits + 1));
+				String.format("Filtered %d visits out of %d", 1, this.configuration.getMaxVisits() + 1));
 		assertThat(log.getLevel()).isEqualTo(Level.INFO);
 	}
 

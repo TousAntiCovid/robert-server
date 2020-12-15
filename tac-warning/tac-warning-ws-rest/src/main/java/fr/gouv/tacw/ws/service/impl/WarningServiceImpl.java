@@ -1,13 +1,11 @@
 package fr.gouv.tacw.ws.service.impl;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
@@ -15,36 +13,31 @@ import fr.gouv.tacw.database.service.ExposedStaticVisitService;
 import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.model.OpaqueVisit;
-import fr.gouv.tacw.ws.properties.ScoringProperties;
+import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.service.WarningService;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
-import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class WarningServiceImpl implements WarningService {
 	private ExposedStaticVisitService exposedStaticVisitService;
-	private ScoringProperties scoringProperties;
-	@Value("${tacw.database.visit_token_retention_period_days}")
-	private long visitTokenRetentionPeriodDays;
-	@Value("${tacw.rest.max_visits}")
-	private int maxVisits;
+	private TacWarningWsRestConfiguration configuration;
 	
-	public WarningServiceImpl(ExposedStaticVisitService tokenService, TokenMapper tokenMapper, ScoringProperties scoringProperties) {
+	public WarningServiceImpl(ExposedStaticVisitService tokenService, TacWarningWsRestConfiguration configuration) {
 		super();
 		this.exposedStaticVisitService = tokenService;
-		this.scoringProperties = scoringProperties;
+		this.configuration = configuration;
 	}
 
-	public boolean getStatus(Stream<OpaqueVisit> opaqueVisits, long threshold) {
+	public boolean getStatus(Stream<OpaqueVisit> opaqueVisits) {
 		long currentTimestamp = TimeUtils.roundedCurrentTimeTimestamp();
 		return opaqueVisits
 			.filter(opaqueVisit -> this.isValidDelta(currentTimestamp - opaqueVisit.getVisitTime()))
 			.anyMatch(opaqueVisit -> {
 				long score = this.exposedStaticVisitService.riskScore(opaqueVisit.getPayload(), opaqueVisit.getVisitTime());
-				return score >= threshold;
+				return score >= this.configuration.getScoreThreshold();
 			});
 	}
 
@@ -53,12 +46,12 @@ public class WarningServiceImpl implements WarningService {
 		long currentTimestamp = TimeUtils.roundedCurrentTimeTimestamp();
 		int nbVisits = reportRequestVo.getVisits().size();
 		log.info(String.format("Reporting %d visits while infected", nbVisits));
-		int nbRejectedVisits = nbVisits - maxVisits;
+		int nbRejectedVisits = nbVisits - this.configuration.getMaxVisits();
 		if (nbRejectedVisits > 0) {
 			log.info(String.format("Filtered %d visits out of %d while reporting", nbRejectedVisits, nbVisits));
 		}
 		reportRequestVo.getVisits().stream()
-			.limit(maxVisits)
+			.limit(this.configuration.getMaxVisits())
 			.filter(visit -> this.isValidTimestamp(visit.getTimestamp(), currentTimestamp))
 			.filter(visit -> visit.getQrCode().getType().isStatic())
 			.forEach(visit -> this.registerAllExposedStaticTokens(visit));
@@ -69,7 +62,7 @@ public class WarningServiceImpl implements WarningService {
 	}
 
 	protected List<ExposedStaticVisitEntity> allExposedStaticVisitsFromVisit(VisitVo visit) {
-		return new ExposedTokenGenerator(visit, scoringProperties)
+		return new ExposedTokenGenerator(visit, this.configuration)
 						.generateAllExposedTokens()
 						.collect(Collectors.toList());
 	}

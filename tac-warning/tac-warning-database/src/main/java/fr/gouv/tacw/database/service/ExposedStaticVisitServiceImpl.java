@@ -5,28 +5,26 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import fr.gouv.tacw.database.TacWarningDatabaseConfiguration;
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@PropertySource("classpath:application.properties")
 @Service
 public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService {
 	private ExposedStaticVisitRepository exposedStaticVisitRepository;
 
-	@Value("${tacw.database.visit_token_retention_period_days}")
-	private long visitTokenRetentionPeriodDays;
+	private final TacWarningDatabaseConfiguration configuration;
 
-	public ExposedStaticVisitServiceImpl(ExposedStaticVisitRepository exposedStaticVisitRepository) {
+	public ExposedStaticVisitServiceImpl(TacWarningDatabaseConfiguration configuration, ExposedStaticVisitRepository exposedStaticVisitRepository) {
 		super();
 		this.exposedStaticVisitRepository = exposedStaticVisitRepository;
+		this.configuration = configuration;
 	}
 
 	@Override
@@ -37,7 +35,7 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
 	@Scheduled(cron = "${tacw.database.visit_token_deletion_job_cron_expression}")
 	public long deleteExpiredTokens() {
 		final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
-		final long retentionStart = currentNtpTime - TimeUnit.DAYS.toSeconds(visitTokenRetentionPeriodDays);
+		final long retentionStart = currentNtpTime - TimeUnit.DAYS.toSeconds(configuration.getVisitTokenRetentionPeriodDays());
 		log.debug(String.format("Purge expired tokens before %d", retentionStart));
 		final long nbDeletedTokens = exposedStaticVisitRepository.deleteByVisitEndTimeLessThan(retentionStart);
 		log.info(String.format("Deleted %d static tokens from exposed tokens", nbDeletedTokens));

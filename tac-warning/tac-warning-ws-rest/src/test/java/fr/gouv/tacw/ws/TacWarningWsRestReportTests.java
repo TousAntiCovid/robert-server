@@ -23,9 +23,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 
+import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
-import fr.gouv.tacw.ws.utils.PropertyLoader;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -48,7 +48,7 @@ class TacWarningWsRestReportTests {
 	private WarningServiceImpl warningService;
 	
 	@MockBean
-	private PropertyLoader propertyLoader;
+	private TacWarningWsRestConfiguration configuration;
 	
 	private KeyPair keyPair;
 	
@@ -56,8 +56,8 @@ class TacWarningWsRestReportTests {
 	public void setUp() {
 		keyPair = Keys.keyPairFor(AuthorizationService.algo);
 
-		when(propertyLoader.getJwtReportAuthorizationDisabled()).thenReturn(false);
-		when(propertyLoader.getJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+		when(this.configuration.isJwtReportAuthorizationDisabled()).thenReturn(false);
+		when(this.configuration.getRobertJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
 	}
 	
 	@Test

@@ -2,7 +2,6 @@ package fr.gouv.tacw.ws.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -66,7 +65,7 @@ public class TacWarningWsExceptionHandlingTests {
 	public void testApiLogsErrorMessageWhenExceptionRaised() {
 		ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
 		String message = "Forced error";
-		when(warningService.getStatus(any(), anyLong())).thenThrow(new RuntimeException(message));
+		when(warningService.getStatus(any())).thenThrow(new RuntimeException(message));
 
 		ResponseEntity<String> response = restTemplate.postForEntity(statusUrl, request, String.class);
 
