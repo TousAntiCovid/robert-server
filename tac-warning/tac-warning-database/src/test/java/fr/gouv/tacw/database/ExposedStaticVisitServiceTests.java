@@ -41,24 +41,9 @@ class ExposedStaticVisitServiceTests {
 				.collect(Collectors.toList());
 		assertThat(exposedStaticVisitRepository.count()).isEqualTo(0);
 		
-		exposedStaticVisitService.registerOrIncrementExposedStaticVisits( this.entitiesFrom(tokens, 2000) );
+		exposedStaticVisitService.registerExposedStaticVisitEntities( this.entitiesFrom(tokens, 2000) );
 
 		assertThat(exposedStaticVisitRepository.count()).isEqualTo(2);
-	}
-
-	@Test
-	void testCanUpdateExistingExposedVisit() {
-		String token = "ac831a7dd6cbe40751ac8d434bfa65cf8ae804133691283bdf2b3b113aea0001";
-		List<ExposedStaticVisitEntity> existingExposedVisits = Collections.singletonList(this.entityFrom(token, 2000));
-		exposedStaticVisitService.registerOrIncrementExposedStaticVisits(existingExposedVisits);
-		assertThat(exposedStaticVisitRepository.count()).isEqualTo(1);
-		ExposedStaticVisitEntity exposedVisitToUpdate = this.entityFrom(token, 2000);
-
-		exposedStaticVisitService.registerOrIncrementExposedStaticVisits( Collections.singletonList(exposedVisitToUpdate) );		
-		assertThat(exposedStaticVisitRepository.count()).isEqualTo(1);
-		Optional<ExposedStaticVisitEntity> updatedToken = exposedStaticVisitRepository.findByToken(token);
-		assertThat(updatedToken.isPresent()).isTrue();
-		assertThat(updatedToken.get().getExposureCount()).isEqualTo(2);
 	}
 
 	@Test
@@ -78,8 +63,8 @@ class ExposedStaticVisitServiceTests {
 		final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
 		final long windowStart = currentNtpTime - (retentionDays*86400);
 		
-		exposedStaticVisitService.registerOrIncrementExposedStaticVisits(this.entitiesFrom(expired_tokens, windowStart - 2150));
-		exposedStaticVisitService.registerOrIncrementExposedStaticVisits(this.entitiesFrom(valid_tokens, windowStart + 500));
+		exposedStaticVisitService.registerExposedStaticVisitEntities(this.entitiesFrom(expired_tokens, windowStart - 2150));
+		exposedStaticVisitService.registerExposedStaticVisitEntities(this.entitiesFrom(valid_tokens, windowStart + 500));
 		
 		final long nbDeletedTokens = exposedStaticVisitService.deleteExpiredTokens();
 		

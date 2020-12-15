@@ -139,7 +139,7 @@ public class WarningServiceTests {
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
-		verify(exposedStaticVisitService, times(2)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		verify(exposedStaticVisitService, times(2)).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
 	}
 
@@ -153,7 +153,7 @@ public class WarningServiceTests {
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
-		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		verify(exposedStaticVisitService, times(1)).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
 	}
 
@@ -167,7 +167,7 @@ public class WarningServiceTests {
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
 		warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
-		verify(exposedStaticVisitService, times(1)).registerOrIncrementExposedStaticVisits(staticTokensCaptor.capture());
+		verify(exposedStaticVisitService, times(1)).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
 		assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
 	}
 	
