@@ -24,11 +24,11 @@ public class TacWarningWsRestConfiguration {
     
     /* Time to substract to the visit time to get the start of the visit */
     @Min(value = 0)
-    private int startOfInterval;
+    private int startDelta;
     
     /* Time to add to the visit time to get the end of the visit */
     @Min(value = 0)
-    private int endOfInterval;
+    private int endDelta;
     
     /* If true, authorization for wreport is disabled */
     private boolean jwtReportAuthorizationDisabled;
