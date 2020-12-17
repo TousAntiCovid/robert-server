@@ -22,7 +22,8 @@ public final class TimeUtils {
      * @return the rounded timestamp
      */
     public static Long roundedTimestamp(long timestamp) {
-        return timestamp - (timestamp % TIME_ROUNDING);
+        long timestampPlusHalfTimeRounding = timestamp + TIME_ROUNDING/2;
+        return timestampPlusHalfTimeRounding - (timestampPlusHalfTimeRounding % TIME_ROUNDING);
     }
     
     public static long roundedCurrentTimeTimestamp() {
