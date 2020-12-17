@@ -1,7 +1,6 @@
 package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 import java.security.KeyPair;
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -135,8 +133,8 @@ class TacWarningIntegrationTests {
 			throw new RuntimeException(e);
 		} 
 
-		ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT,
-				entity, ReportResponseDto.class);
+        ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT,
+                entity, ReportResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody().isSuccess()).isEqualTo(true);
@@ -161,7 +159,7 @@ class TacWarningIntegrationTests {
 	}
 
 	protected VisitTokenVo staticVisitTokenVoFrom(VisitVo visit) {
-		String exposedToken = new ExposedTokenGenerator(visit, null).hash(1);
+	    String exposedToken = new ExposedTokenGenerator(visit, null, null).hash(1);
 		return new VisitTokenVo(TokenTypeVo.STATIC, exposedToken, visit.getTimestamp());
 	}
 }

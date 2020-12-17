@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -45,5 +46,6 @@ public class TacWarningWsRestConfiguration {
     private int scoreThreshold;
     
     /* The increment for a new Covid+ for a given venue category */
-    private Map<String,Integer> exposureCountIncrements = new HashMap<String, Integer>();
+    @NotEmpty
+    private Map<String,Integer> venueTypePeopleThreshold = new HashMap<String, Integer>();
 }
