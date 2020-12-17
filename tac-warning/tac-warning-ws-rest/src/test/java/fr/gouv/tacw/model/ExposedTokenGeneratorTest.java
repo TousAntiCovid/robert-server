@@ -10,11 +10,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
+import fr.gouv.tacw.ws.service.ExposedTokenGeneratorService;
+import fr.gouv.tacw.ws.service.impl.ExposedTokenGeneratorServiceImpl;
+import fr.gouv.tacw.ws.service.impl.ScoringServiceImpl;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
@@ -27,22 +31,22 @@ import fr.gouv.tacw.ws.vo.VisitVo;
 * and they are seen as exposed.
 */
 @ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {ExposedTokenGeneratorServiceImpl.class, ScoringServiceImpl.class})
 @EnableConfigurationProperties(value = TacWarningWsRestConfiguration.class)
 @TestPropertySource("classpath:application.properties")
 public class ExposedTokenGeneratorTest {
 	@Autowired
-	private TacWarningWsRestConfiguration configuration;
+	private ExposedTokenGeneratorService tokenGeneratorService;
 
 	@Test
 	public void testNumberOfGeneratedTokenIsOk() {
 		VisitVo visit = visitVoExample();
 
-		ExposedTokenGenerator tokenGenerator = new ExposedTokenGenerator(visit, this.configuration);
-		List<ExposedStaticVisitEntity> tokens = tokenGenerator.generateAllExposedTokens().collect(Collectors.toList());
+		List<ExposedStaticVisitEntity> tokens = tokenGeneratorService.generateAllExposedTokens(visit).collect(Collectors.toList());
 
 		assertThat(tokens).isNotNull();
 		assertThat(tokens).isNotEmpty();
-		assertThat(tokens.size()).isEqualTo(tokenGenerator.numberOfGeneratedTokens());
+		assertThat(tokens.size()).isEqualTo(tokenGeneratorService.numberOfGeneratedTokens());
 	}
 
 	// TODO: more tests with invalid data, limit values
@@ -50,8 +54,7 @@ public class ExposedTokenGeneratorTest {
 	@Test
 	public void testGeneratedTokensIncludesDerivedToken() {
 		VisitVo visit = visitVoExample();
-
-		Stream<ExposedStaticVisitEntity> exposedVisits = new ExposedTokenGenerator(visit, this.configuration).generateAllExposedTokens();
+		Stream<ExposedStaticVisitEntity> exposedVisits = tokenGeneratorService.generateAllExposedTokens(visit);
 
 		assertThat(exposedVisits.map(token -> token.getToken()))
 				.contains("f9738b0006199fcf7d8a1f7b3523cd225b6620ced2588af7a410eeab16380c87");

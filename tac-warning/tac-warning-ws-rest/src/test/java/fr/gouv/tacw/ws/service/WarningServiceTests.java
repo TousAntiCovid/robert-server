@@ -26,10 +26,12 @@ import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
 import fr.gouv.tacw.database.service.ExposedStaticVisitServiceImpl;
-import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.model.OpaqueStaticVisit;
 import fr.gouv.tacw.model.OpaqueVisit;
+import fr.gouv.tacw.service.ScoringService;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
+import fr.gouv.tacw.ws.service.impl.ExposedTokenGeneratorServiceImpl;
+import fr.gouv.tacw.ws.service.impl.ScoringServiceImpl;
 import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -41,13 +43,12 @@ import fr.gouv.tacw.ws.vo.mapper.TokenMapper;
 
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { WarningServiceImpl.class, TokenMapper.class, ExposedStaticVisitServiceImpl.class, TestTimestampService.class})
+@ContextConfiguration(classes = { WarningServiceImpl.class, TokenMapper.class, ExposedStaticVisitServiceImpl.class, TestTimestampService.class, ExposedTokenGeneratorServiceImpl.class, ScoringServiceImpl.class})
 @MockBean(ExposedStaticVisitRepository.class)
-@MockBean(ExposedStaticVisitService.class)
 @EnableConfigurationProperties(value = TacWarningWsRestConfiguration.class)
 @TestPropertySource("classpath:application.properties")
 public class WarningServiceTests {
-	@Autowired
+    @MockBean
 	private ExposedStaticVisitService exposedStaticVisitService;
 
 	@Autowired
@@ -57,7 +58,10 @@ public class WarningServiceTests {
 	private TestTimestampService timestampService;
 	
 	@Autowired
-	private TacWarningWsRestConfiguration configuration;
+	private ScoringService scoringService;
+	
+	@Autowired
+	private ExposedTokenGeneratorServiceImpl tokenGeneratorService;
 
 	@Captor
 	ArgumentCaptor<List<ExposedStaticVisitEntity>> staticTokensCaptor;
@@ -66,7 +70,7 @@ public class WarningServiceTests {
 	
 	@BeforeEach
 	public void setUp() {
-	    numberOfGeneratedTokens = new ExposedTokenGenerator(configuration).numberOfGeneratedTokens();
+	    numberOfGeneratedTokens = tokenGeneratorService.numberOfGeneratedTokens();
 	}
 	
 	@Test
@@ -81,7 +85,7 @@ public class WarningServiceTests {
 	public void testStatusOfVisitTokenInfectedIsAtRisk() {
 		String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
 		long visitTime = timestampService.validTimestamp();
-		long increment = configuration.getExposureCountIncrements().get(VenueTypeVo.M.toString());
+		long increment = scoringService.getScoreIncrement(VenueTypeVo.N);
 		
 		when(exposedStaticVisitService.riskScore(infectedToken, visitTime)).thenReturn(increment);
 		List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
@@ -181,5 +185,5 @@ public class WarningServiceTests {
 		
 		verifyNoInteractions(exposedStaticVisitService);
 	}
-	
+
 }
