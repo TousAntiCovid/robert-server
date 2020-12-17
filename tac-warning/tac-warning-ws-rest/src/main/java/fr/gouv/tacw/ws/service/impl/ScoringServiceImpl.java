@@ -21,7 +21,7 @@ public class ScoringServiceImpl implements ScoringService {
     public long getScoreIncrement(VenueTypeVo venueType) {
         Map<String, Integer> venueTypePeopleThresholds = this.configuration.getVenueTypePositiveCasesThreshold();
         int peopleThreshold = venueTypePeopleThresholds.getOrDefault(venueType.toString(), venueTypePeopleThresholds.get("default"));
-        return (long) Math.ceil(configuration.getScoreThreshold() / (float) peopleThreshold);
+        return (long) Math.ceil(configuration.getScoreThreshold() / (double) peopleThreshold);
     }
 
 }
