@@ -18,20 +18,20 @@ public class TacWarningWsRestConfigurationTest {
 
     @Autowired
     TacWarningWsRestConfiguration configuration;
-    
+
     @Test
     public void testCanReadVenueTypePeopleThreshold() {
-        assertThat(configuration.getVenueTypePeopleThreshold().size()).isEqualTo(3);
+        assertThat(configuration.getVenueTypePositiveCasesThreshold().size()).isEqualTo(3);
     }
 
     @Test
     public void testCanReadDefaultVenueTypePeopleThreshold() {
-        assertThat(configuration.getVenueTypePeopleThreshold().get("default")).isEqualTo(2);
+        assertThat(configuration.getVenueTypePositiveCasesThreshold().get("default")).isEqualTo(2);
     }
 
     @Test
     public void testCanReadSpecificVenueTypePeopleThreshold() {
-        assertThat(configuration.getVenueTypePeopleThreshold().get(VenueTypeVo.N.toString())).isEqualTo(1);
+        assertThat(configuration.getVenueTypePositiveCasesThreshold().get(VenueTypeVo.N.toString())).isEqualTo(1);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class TacWarningWsRestConfigurationTest {
 
     @Test
     public void testCanReadDefaultScoreThreshold() {
-        assertThat(configuration.getScoreThreshold()).isEqualTo(100);
+        assertThat(configuration.getScoreThreshold()).isEqualTo(1000);
     }
 
     @Test

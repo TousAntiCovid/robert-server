@@ -25,16 +25,16 @@ public class ScoringServiceTest {
 
     @Test
     public void testGetDefaultScoreWhenVenuTypeNotSpecified() {
-        assertThat(scoringService.getScoreIncrement(VenueTypeVo.M)).isEqualTo(50);
+        assertThat(scoringService.getScoreIncrement(VenueTypeVo.M)).isEqualTo(500);
     }
-    
+
     @Test
     public void testCanGetScoreOfAGivenVenueTypeWhenSpecified() {
-        assertThat(scoringService.getScoreIncrement(VenueTypeVo.N)).isEqualTo(100);
+        assertThat(scoringService.getScoreIncrement(VenueTypeVo.N)).isEqualTo(1000);
     }
 
     @Test
     public void testCanScoreIsRoundedUpToTheNextInteger() {
-        assertThat(scoringService.getScoreIncrement(VenueTypeVo.L)).isEqualTo(34);
+        assertThat(scoringService.getScoreIncrement(VenueTypeVo.L)).isEqualTo(334);
     }
 }
