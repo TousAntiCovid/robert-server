@@ -32,4 +32,9 @@ public class ScoringServiceTest {
     public void testCanGetScoreOfAGivenVenueTypeWhenSpecified() {
         assertThat(scoringService.getScoreIncrement(VenueTypeVo.N)).isEqualTo(100);
     }
+
+    @Test
+    public void testCanScoreIsRoundedUpToTheNextInteger() {
+        assertThat(scoringService.getScoreIncrement(VenueTypeVo.L)).isEqualTo(34);
+    }
 }

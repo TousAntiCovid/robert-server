@@ -21,7 +21,7 @@ public class TacWarningWsRestConfigurationTest {
     
     @Test
     public void testCanReadVenueTypePeopleThreshold() {
-        assertThat(configuration.getVenueTypePeopleThreshold().size()).isEqualTo(2);
+        assertThat(configuration.getVenueTypePeopleThreshold().size()).isEqualTo(3);
     }
 
     @Test
