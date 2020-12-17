@@ -23,7 +23,7 @@ public class TacWarningWsRestConfiguration {
     @Min(value = 1)
     private int maxSalt;
     
-    /* Time to substract to the visit time to get the start of the visit */
+    /* Time to subtract to the visit time to get the start of the visit */
     @Min(value = 0)
     private int startDelta;
     
