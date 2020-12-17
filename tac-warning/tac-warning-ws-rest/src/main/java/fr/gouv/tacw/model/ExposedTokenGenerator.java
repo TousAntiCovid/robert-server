@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
+import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.VenueTypeVo;
@@ -36,7 +37,7 @@ public class ExposedTokenGenerator {
     public ExposedTokenGenerator(VisitVo visit, TacWarningWsRestConfiguration configuration) {
         super();
 		this.qrCode = visit.getQrCode();
-		this.timestamp = Long.parseLong(visit.getTimestamp());
+		this.timestamp = TimeUtils.roundedTimestamp(Long.parseLong(visit.getTimestamp()));
 		this.configuration = configuration;
 	}
 

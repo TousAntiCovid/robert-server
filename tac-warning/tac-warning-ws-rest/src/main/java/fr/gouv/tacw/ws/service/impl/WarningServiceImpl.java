@@ -69,7 +69,7 @@ public class WarningServiceImpl implements WarningService {
 	
 	protected boolean isValidTimestamp(String timestampString, long currentTimestamp) {
 		try {
-			long delta = currentTimestamp - Long.parseLong(timestampString);
+			long delta = currentTimestamp - TimeUtils.roundedTimestamp(Long.parseLong(timestampString));
 			boolean isValid = this.isValidDelta(delta);
 	        if (!isValid)
 	            log.info(String.format("Ignoring invalid timestamp: %d, currentTimestamp: %d", timestampString, currentTimestamp));
