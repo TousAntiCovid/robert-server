@@ -27,7 +27,7 @@ public class ExposedStaticVisitEntity {
     private UUID id;
 
     @NotNull
-    private String token;
+    private byte[] token;
 
     @NotNull
     private long visitStartTime;
@@ -52,7 +52,7 @@ public class ExposedStaticVisitEntity {
     @NotNull
     private long exposureCount;
 
-    public ExposedStaticVisitEntity(@NotNull String token, @NotNull long visitStartTime, @NotNull long visitEndTime,
+    public ExposedStaticVisitEntity(@NotNull byte[] token, @NotNull long visitStartTime, @NotNull long visitEndTime,
             @NotNull int startDelta, @NotNull int endDelta, @NotNull long exposureCount) {
         super();
         this.token = token;

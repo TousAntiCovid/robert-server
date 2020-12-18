@@ -12,12 +12,12 @@ import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 
 @Repository
 public interface ExposedStaticVisitRepository extends JpaRepository<ExposedStaticVisitEntity, UUID> {
-	Optional<ExposedStaticVisitEntity> findByToken(String token);
+	Optional<ExposedStaticVisitEntity> findByToken(byte[] token);
 
 	@Query("select exposedVisit from ExposedStaticVisitEntity as exposedVisit "
 			+ "where exposedVisit.token = :tokenValue "
 			+ "and exposedVisit.visitStartTime = :visitStartTime and exposedVisit.visitEndTime = :visitEndTime ")
-	Optional<ExposedStaticVisitEntity> findByTokenAndStartEnd(@Param("tokenValue") String token,
+	Optional<ExposedStaticVisitEntity> findByTokenAndStartEnd(@Param("tokenValue") byte[] token,
 			@Param("visitStartTime") long visitStartTime, @Param("visitEndTime") long visitEndTime);
 
 	long deleteByVisitEndTimeLessThan(long timestamp);
@@ -27,5 +27,5 @@ public interface ExposedStaticVisitRepository extends JpaRepository<ExposedStati
 		    + " AND ((visitStartTime > :visitTime - startDelta AND visitStartTime < :visitTime + endDelta) "
 			+ " OR (visitStartTime = :visitTime - startDelta AND visitEndTime = :visitTime + endDelta) "
 			+ " OR (visitEndTime > :visitTime - startDelta AND visitEndTime < :visitTime + endDelta))")
-	long riskScore(@Param("tokenValue") String token, @Param("visitTime") long visitTime);
+	long riskScore(@Param("tokenValue") byte[] token, @Param("visitTime") long visitTime);
 }
