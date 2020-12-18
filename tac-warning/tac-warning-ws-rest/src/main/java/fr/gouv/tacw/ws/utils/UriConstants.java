@@ -6,4 +6,5 @@ public interface UriConstants {
 	public static final String STATUS = "/wstatus";
 
 	public static final String API_V1 = "/v1";
+    public static final String API_V2 = "/v2";
 }

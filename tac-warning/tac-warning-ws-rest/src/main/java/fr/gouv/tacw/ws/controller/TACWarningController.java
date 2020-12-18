@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping(value = { "${controller.path.prefix}" + UriConstants.API_V1 })
+@RequestMapping(value = { "${controller.path.prefix}" + UriConstants.API_V2 })
 public class TACWarningController {
 	private AuthorizationService authorizationService;
 

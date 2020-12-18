@@ -45,8 +45,8 @@ class TacWarningIntegrationTests {
 	@Autowired
 	private TestRestTemplate restTemplate;
 
-	@Value("${controller.path.prefix}" + UriConstants.API_V1)
-	private String pathPrefixV1;
+	@Value("${controller.path.prefix}" + UriConstants.API_V2)
+	private String pathPrefixV2;
 
 	@Autowired
 	private TacWarningWsRestConfiguration configuration;
@@ -73,7 +73,7 @@ class TacWarningIntegrationTests {
 		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(this.staticVisitTokenVoFrom(tokens));
 
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate
-				.postForEntity(pathPrefixV1 + UriConstants.STATUS, statusRequestVo, ExposureStatusResponseDto.class);
+				.postForEntity(pathPrefixV2 + UriConstants.STATUS, statusRequestVo, ExposureStatusResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody().isAtRisk()).isFalse();
@@ -86,7 +86,7 @@ class TacWarningIntegrationTests {
 		this.report(visits);
 
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.STATUS, new ExposureStatusRequestVo(tokensVo),
+				pathPrefixV2 + UriConstants.STATUS, new ExposureStatusRequestVo(tokensVo),
 				ExposureStatusResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -117,7 +117,7 @@ class TacWarningIntegrationTests {
 		this.report(visits);
 		
 		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.STATUS, new ExposureStatusRequestVo(visitTokens),
+				pathPrefixV2 + UriConstants.STATUS, new ExposureStatusRequestVo(visitTokens),
 				ExposureStatusResponseDto.class);
 	
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -133,7 +133,7 @@ class TacWarningIntegrationTests {
 			throw new RuntimeException(e);
 		} 
 
-        ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT,
+        ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV2 + UriConstants.REPORT,
                 entity, ReportResponseDto.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
