@@ -4,12 +4,16 @@
 # Most/all of these functions require TACW_BASE_URL to be set
 ROBERT_BASE_URL=${ROBERT_BASE_URL:-"http://localhost:8086/api/"}
 
-ROBERT_VERSION=${ROBERT_VERSION:-"v3"}
+ROBERT_VERSION=${ROBERT_VERSION:-"v4"}
 TACW_BASE_URL=${TACW_BASE_URL:-"http://localhost:8080/api/tac-warning"}
 
 TACW_VERSION=${TACW_VERSION:-"v1"}
-SALT_RANGE=1000
+SALT_RANGE=2
 TIME_ROUNDING=900
+NUMBER_OF_VISITS_TO_REPORT=5
+USE_CAPTCHA=1
+NB_OF_RETENTION_DAY=12
+READ_REPORT_QR_CODE_FROM_USER=1
 
 
 unameOut="$(uname -s)"
@@ -24,7 +28,7 @@ esac
 # Register to the TAC server
 register () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
-    curl --fail \
+    curl -k --fail \
          --no-progress-meter \
          --header "Content-Type: application/json" \
          --request POST \
@@ -32,12 +36,32 @@ register () {
          "${ROBERT_BASE_URL}/${ROBERT_VERSION}"/register
 }
 
+# Status to the TAC server
+status () {
+    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
+    curl -k --fail \
+         --no-progress-meter \
+         --header "Content-Type: application/json" \
+         --request POST \
+         --data "$1" \
+         "${ROBERT_BASE_URL}/${ROBERT_VERSION}"/status
+}
+
+captcha () {
+    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
+    curl -k --fail \
+         --no-progress-meter \
+         --header "Content-Type: application/json" \
+         --request POST \
+         "${ROBERT_BASE_URL}/${ROBERT_VERSION}"/captcha
+}
+
 # Send a report to ROBERT
 # This will return a token that can be used
 # to authenticate TAC-W report requests
 report () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
-    curl --fail \
+    curl -k --fail \
          --no-progress-meter \
          --header "Content-Type: application/json" \
          --request POST \
@@ -45,10 +69,12 @@ report () {
          "${ROBERT_BASE_URL}/${ROBERT_VERSION}"/report
 }
 
+
+
 # Perform a TAC-warning status query
 wstatus () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
-    curl --fail \
+    curl -k --fail \
          --no-progress-meter \
          --header "Content-Type: application/json" \
          --request POST \
@@ -59,7 +85,7 @@ wstatus () {
 # Perform a TAC-warning visit report
 wreport () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
-    curl --fail \
+    curl -k --fail \
          --no-progress-meter \
          --header "Content-Type: application/json" \
          --header "Authorization: Bearer $1" \
@@ -97,13 +123,24 @@ createVisitTokens(){
   echo '{"visitTokens" : [ '$1' ]}' | jq .
 }
 
+# arg 1 = token
+builtRoberReport(){
+ echo  '{  "token": "'$1'",  "contacts": []}' | jq .
+}
+
+# arg 1 = captcha id
+# arg 2 : captcha text
+createRegister(){
+  echo  ' {"captcha": "'$2'",  "captchaId": "'$1'",  "clientPublicECDHKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtLhNO6Ez2Gc6H+xHCKUgVAOYk5PzQbcoNPxVvsE8IIHLQIoMlj9sj3A4oEHv8Ke/9xm9h6phSDkmficc24gJ+Q==",
+  "pushInfo": {    "locale": "fr",    "timezone": "Europe/Paris",  "token": "string" }}'| jq .
+}
 # arg 1 = STATIC or DYNAMIC
 # arg 2 = erp
 # arg 3 = absolute date **as a UNIX timestamp (seconds since 1970-01-01)**
 # For instance, the output of running `date +%s -d "2 days ago 2:30pm"`
 createVisit(){
   ntptime=$(unix_time_to_ntp_time "$3")
-  echo '{ "timestamp": "'$(roundedntptimestamp $ntptime)'", "qrCode": { "type": "'$1'", "venueType": "N", "venueCapacity": 42, "uuid": "'$2'"  } }' | jq .
+  echo '{ "timestamp": "'$(roundedntptimestamp $ntptime)'", "qrCode": { "type": "'$1'","venueCategory": 3, "venueType": "T", "venueCapacity": 42, "uuid": "'$2'"  } }' | jq .
 }
 
 # arg: visits
@@ -132,4 +169,27 @@ roundedntptimestamp(){
     ((rntpts = ntpts - rest ))
   fi
   echo $rntpts
+}
+
+get_captcha(){
+  echo "--Get captcha"
+  if [ "1" = "$USE_CAPTCHA" ]; then
+    captchaId=$(captcha  | jq -e ".id" -r)
+    echo "${ROBERT_BASE_URL}/${ROBERT_VERSION}/captcha/${captchaId}/image"
+    open "${ROBERT_BASE_URL}/${ROBERT_VERSION}/captcha/${captchaId}/image"
+    echo "Text of the captcha :"
+    read captchaContent
+  else
+    captchaContent="string"
+    captchaId="600d6f41ef7e4048a04ca6baa2405270"
+  fi
+}
+
+get_qrcode_from_user(){
+    if [ "1" = "$READ_REPORT_QR_CODE_FROM_USER" ]; then
+    read qrcode
+  else
+    qrcode=$(uuid)
+  fi
+  echo $qrcode
 }
