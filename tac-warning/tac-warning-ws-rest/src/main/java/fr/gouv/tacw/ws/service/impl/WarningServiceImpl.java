@@ -60,7 +60,7 @@ public class WarningServiceImpl implements WarningService {
 	}
 
 	protected void registerAllExposedStaticTokens(VisitVo visit) {
-		exposedStaticVisitService.registerOrIncrementExposedStaticVisits(this.allExposedStaticVisitsFromVisit(visit));
+		exposedStaticVisitService.registerExposedStaticVisitEntities(this.allExposedStaticVisitsFromVisit(visit));
 	}
 
 	protected List<ExposedStaticVisitEntity> allExposedStaticVisitsFromVisit(VisitVo visit) {

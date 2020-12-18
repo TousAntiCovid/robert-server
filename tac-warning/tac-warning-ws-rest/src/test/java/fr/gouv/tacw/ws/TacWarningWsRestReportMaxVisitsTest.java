@@ -84,7 +84,7 @@ public class TacWarningWsRestReportMaxVisitsTest {
 				new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 		
-		verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerOrIncrementExposedStaticVisits(anyList());
+		verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerExposedStaticVisitEntities(anyList());
 		assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(1); // no second log with filter
 		ILoggingEvent log = warningServiceLoggerAppender.list.get(0);
 		assertThat(log.getMessage()).contains(
@@ -107,7 +107,7 @@ public class TacWarningWsRestReportMaxVisitsTest {
 				new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 	
-		verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerOrIncrementExposedStaticVisits(anyList());
+		verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerExposedStaticVisitEntities(anyList());
 		assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(2); 
 		ILoggingEvent log = warningServiceLoggerAppender.list.get(1);  // first log is nb visits for ESR
 		assertThat(log.getMessage()).contains(
