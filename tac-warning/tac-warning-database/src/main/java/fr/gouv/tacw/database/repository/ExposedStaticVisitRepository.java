@@ -1,6 +1,7 @@
 package fr.gouv.tacw.database.repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 
 @Repository
-public interface ExposedStaticVisitRepository extends JpaRepository<ExposedStaticVisitEntity, Long> {
+public interface ExposedStaticVisitRepository extends JpaRepository<ExposedStaticVisitEntity, UUID> {
 	Optional<ExposedStaticVisitEntity> findByToken(String token);
 
 	@Query("select exposedVisit from ExposedStaticVisitEntity as exposedVisit "
