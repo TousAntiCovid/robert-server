@@ -8,8 +8,11 @@ source ./common.sh
 ERP1=$(uuid)
 
 echo "----Stacy registers"
-register "@01-register-stacy.json"
 
+get_captcha
+
+echo "captcha is ${captchaContent}"
+register "$(createRegister $captchaId $captchaContent)"
 # Heather [healthy] visits a restaurant yesterday at 12:30 and logs this visit on his phone
 heather_visit_date=$($date +%s -d "1 day ago 12:30")
 heather_tk1=$(createVisitToken "STATIC" "$(computeTokenPayload "$ERP1")" "$heather_visit_date")
@@ -38,7 +41,11 @@ test_status_at_risk "$heather_first_check" "false"
 # She uploads her visit history to the server which hashes it
 # for better privacy
 echo "----Stephen performs a COVID test that comes back positive."
-jwt=$(report "@empty-robert-report.json" | jq -e ".token" -r)
+read qrcodeForReport
+reportJson=$(builtRoberReport "$qrcodeForReport")
+echo $reportJson
+jwt=$(report "$(builtRoberReport "$qrcodeForReport")" | jq -e ".reportValidationToken" -r)
+
 echo "Got JWT from stephen, now reporting to TACW"
 wreport "$jwt" "$(createVisits "$stephen_visit1")"
 
@@ -47,7 +54,11 @@ wreport "$jwt" "$(createVisits "$stephen_visit1")"
 # She uploads her visit history to the server which hashes it
 # for better privacy
 echo "----Serena performs a COVID test that comes back positive."
-jwt=$(report "@empty-robert-report.json" | jq -e ".token" -r)
+read qrcodeForReport
+reportJson=$(builtRoberReport "$qrcodeForReport")
+echo $reportJson
+jwt=$(report "$(builtRoberReport "$qrcodeForReport")" | jq -e ".reportValidationToken" -r)
+
 echo "Got JWT from serena, now reporting to TACW"
 wreport "$jwt" "$(createVisits "$serena_visit1")"
 
