@@ -60,7 +60,20 @@ public class TacWarningWsExceptionHandlingTests {
 
 		customRestExceptionHandlerLogger.addAppender(listAppender);
 	}
+	
+    @Test
+    public void testHttpResponseHasJsonContenTypeWhenReturnedByCustomExceptionHandler() {
+        ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
+        String message = "Forced error";
+        when(warningService.getStatus(any())).thenThrow(new RuntimeException(message));
 
+        ResponseEntity<String> response = restTemplate.postForEntity(statusUrl, request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        System.out.println(response.getBody());
+        assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
+    }
+    
 	@Test
 	public void testApiLogsErrorMessageWhenExceptionRaised() {
 		ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
