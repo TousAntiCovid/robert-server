@@ -1,5 +1,6 @@
 package fr.gouv.tacw.ws.dto;
 
+import fr.gouv.tacw.model.RiskLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,5 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ExposureStatusResponseDto {
-	private boolean atRisk;
+	private RiskLevel riskLevel;
+	private String lastContactDate;
 }
