@@ -9,8 +9,6 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.annotations.DynamicUpdate;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -19,7 +17,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @Entity
 @Table(name = "EXPOSED_STATIC_VISIT", indexes = { @Index(columnList = "token") })
-@DynamicUpdate(true)
 public class ExposedStaticVisitEntity {
     @Id
     @GeneratedValue
