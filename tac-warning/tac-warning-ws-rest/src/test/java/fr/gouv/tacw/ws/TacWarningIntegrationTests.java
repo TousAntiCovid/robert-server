@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 
 import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
+import fr.gouv.tacw.model.RiskLevel;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
@@ -42,124 +43,124 @@ import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class TacWarningIntegrationTests {
-	@Autowired
-	private TestRestTemplate restTemplate;
+    @Autowired
+    private TestRestTemplate restTemplate;
 
-	@Value("${controller.path.prefix}" + UriConstants.API_V1)
-	private String pathPrefixV1;
+    @Value("${controller.path.prefix}" + UriConstants.API_V2)
+    private String pathPrefixV2;
 
-	@Autowired
-	private TacWarningWsRestConfiguration configuration;
-	
-	private KeyPair keyPair;
+    @Autowired
+    private TacWarningWsRestConfiguration configuration;
 
-	private long referenceTime;
-	
-	@BeforeEach
-	public void setUp() {
-		keyPair = Keys.keyPairFor(AuthorizationService.algo);
-		referenceTime = TimeUtils.roundedCurrentTimeTimestamp() - TimeUnit.DAYS.toSeconds(3);
+    private KeyPair keyPair;
 
-		this.configuration.setJwtReportAuthorizationDisabled(false);
-		this.configuration.setRobertJwtPublicKey(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
-	}
-	
-	@Test
-	void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
-		List<VisitVo> tokens = Stream
-				.of(new VisitVo("12345", 
-						new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "TokenNotInExposedList")))
-				.collect(Collectors.toList());
-		ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(this.staticVisitTokenVoFrom(tokens));
+    private long referenceTime;
 
-		ResponseEntity<ExposureStatusResponseDto> response = restTemplate
-				.postForEntity(pathPrefixV1 + UriConstants.STATUS, statusRequestVo, ExposureStatusResponseDto.class);
+    @BeforeEach
+    public void setUp() {
+        keyPair = Keys.keyPairFor(AuthorizationService.algo);
+        referenceTime = TimeUtils.roundedCurrentTimeTimestamp() - TimeUnit.DAYS.toSeconds(3);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody().isAtRisk()).isFalse();
-	}
+        this.configuration.setJwtReportAuthorizationDisabled(false);
+        this.configuration.setRobertJwtPublicKey(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+    }
 
-	@Test
-	public void testStatusOfVisitTokenInfectedIsAtRisk() {
-		List<VisitVo> visits = this.buildExposedVisits("4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd", 3);
-		List<VisitTokenVo> tokensVo = this.staticVisitTokenVoFrom(visits);
-		this.report(visits);
+    @Test
+    void testStatusOfVisitTokenNotInfectedIsNotAtRisk() {
+        List<VisitVo> tokens = Stream
+                .of(new VisitVo("12345", 
+                        new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "TokenNotInExposedList")))
+                .collect(Collectors.toList());
+        ExposureStatusRequestVo statusRequestVo = new ExposureStatusRequestVo(this.staticVisitTokenVoFrom(tokens));
 
-		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.STATUS, new ExposureStatusRequestVo(tokensVo),
-				ExposureStatusResponseDto.class);
+        ResponseEntity<ExposureStatusResponseDto> response = restTemplate
+                .postForEntity(pathPrefixV2 + UriConstants.STATUS, statusRequestVo, ExposureStatusResponseDto.class);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody().isAtRisk()).isTrue();
-	}
-	
-	@Test
-	public void testCanReportVisitsWhenInfected() {
-		List<VisitVo> visits = new ArrayList<VisitVo>();
-		visits.add(new VisitVo("12345", 
-				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.NONE);
+    }
 
-		this.report(visits);
-	}
+    @Test
+    public void testStatusOfVisitTokenInfectedIsAtRisk() {
+        List<VisitVo> visits = this.buildExposedVisits("4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd", 3);
+        List<VisitTokenVo> tokensVo = this.staticVisitTokenVoFrom(visits);
+        this.report(visits);
 
-	/**
-	 * For privacy purposes, tokens area anonymized with token =
-	 * hash(salt|uuid|time). When a user reports itself as infected, we compute all
-	 * the possible token combinations and they are seen as exposed. This test
-	 * checks that the generation of the tokens has been done!
-	 */
-	@Test
-	public void testGivenAVisitTokenInfectedNotIdenticalToReportedTokenWhenCheckingStatusThenIsAtRisk() {
-		List<VisitVo> visits = this.buildExposedVisits("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", 3);
-		String exposedToken = "f9738b0006199fcf7d8a1f7b3523cd225b6620ced2588af7a410eeab16380c87";
-		List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
-		visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, exposedToken, visits.get(1).getTimestamp()));
-		this.report(visits);
-		
-		ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.STATUS, new ExposureStatusRequestVo(visitTokens),
-				ExposureStatusResponseDto.class);
-	
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody().isAtRisk()).isTrue();
-	}
+        ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+                pathPrefixV2 + UriConstants.STATUS, new ExposureStatusRequestVo(tokensVo),
+                ExposureStatusResponseDto.class);
 
-	private void report(List<VisitVo> visits) {
-		HttpEntity<ReportRequestVo> entity;
-		try {
-			entity = new HttpJwtHeaderUtils(keyPair.getPrivate()).
-					getReportEntityWithBearer(new ReportRequestVo(visits));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		} 
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
+    }
 
-        ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT,
+    @Test
+    public void testCanReportVisitsWhenInfected() {
+        List<VisitVo> visits = new ArrayList<VisitVo>();
+        visits.add(new VisitVo("12345", 
+                new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+
+        this.report(visits);
+    }
+
+    /**
+     * For privacy purposes, tokens area anonymized with token =
+     * hash(salt|uuid|time). When a user reports itself as infected, we compute all
+     * the possible token combinations and they are seen as exposed. This test
+     * checks that the generation of the tokens has been done!
+     */
+    @Test
+    public void testGivenAVisitTokenInfectedNotIdenticalToReportedTokenWhenCheckingStatusThenIsAtRisk() {
+        List<VisitVo> visits = this.buildExposedVisits("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", 3);
+        String exposedToken = "f9738b0006199fcf7d8a1f7b3523cd225b6620ced2588af7a410eeab16380c87";
+        List<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
+        visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, exposedToken, visits.get(1).getTimestamp()));
+        this.report(visits);
+
+        ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+                pathPrefixV2 + UriConstants.STATUS, new ExposureStatusRequestVo(visitTokens),
+                ExposureStatusResponseDto.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
+    }
+
+    private void report(List<VisitVo> visits) {
+        HttpEntity<ReportRequestVo> entity;
+        try {
+            entity = new HttpJwtHeaderUtils(keyPair.getPrivate()).
+                    getReportEntityWithBearer(new ReportRequestVo(visits));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } 
+
+        ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV2 + UriConstants.REPORT,
                 entity, ReportResponseDto.class);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody().isSuccess()).isEqualTo(true);
-	}
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().isSuccess()).isEqualTo(true);
+    }
 
-	protected List<VisitVo>	buildExposedVisits(String venueToken, int nbVisits) {
-		return 
-			IntStream.rangeClosed(1, nbVisits)
-				.mapToObj( i -> this.buildExposedVisit(venueToken) )
-				.collect(Collectors.toList());
-	}
+    protected List<VisitVo>	buildExposedVisits(String venueToken, int nbVisits) {
+        return 
+                IntStream.rangeClosed(1, nbVisits)
+                .mapToObj( i -> this.buildExposedVisit(venueToken) )
+                .collect(Collectors.toList());
+    }
 
-	protected VisitVo buildExposedVisit(String venueToken) {
-		return new VisitVo(
-			String.valueOf(referenceTime), 
-			new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
-					venueToken) );
-	}
+    protected VisitVo buildExposedVisit(String venueToken) {
+        return new VisitVo(
+                String.valueOf(referenceTime), 
+                new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
+                        venueToken) );
+    }
 
-	protected List<VisitTokenVo> staticVisitTokenVoFrom(List<VisitVo> visits) {
-		return visits.stream().map(visit -> this.staticVisitTokenVoFrom(visit)).collect(Collectors.toList());
-	}
+    protected List<VisitTokenVo> staticVisitTokenVoFrom(List<VisitVo> visits) {
+        return visits.stream().map(visit -> this.staticVisitTokenVoFrom(visit)).collect(Collectors.toList());
+    }
 
-	protected VisitTokenVo staticVisitTokenVoFrom(VisitVo visit) {
-	    String exposedToken = new ExposedTokenGenerator(visit, null, null).hash(1);
-		return new VisitTokenVo(TokenTypeVo.STATIC, exposedToken, visit.getTimestamp());
-	}
+    protected VisitTokenVo staticVisitTokenVoFrom(VisitVo visit) {
+        String exposedToken = new ExposedTokenGenerator(visit, null, null).hash(1);
+        return new VisitTokenVo(TokenTypeVo.STATIC, exposedToken, visit.getTimestamp());
+    }
 }

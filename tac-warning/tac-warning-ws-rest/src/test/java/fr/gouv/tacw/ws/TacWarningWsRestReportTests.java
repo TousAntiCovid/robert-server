@@ -38,8 +38,8 @@ import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class TacWarningWsRestReportTests {
-	@Value("${controller.path.prefix}" + UriConstants.API_V1)
-	private String pathPrefixV1;
+	@Value("${controller.path.prefix}" + UriConstants.API_V2)
+	private String pathPrefixV2;
 
 	@Autowired
 	private TestRestTemplate restTemplate;
@@ -63,7 +63,7 @@ class TacWarningWsRestReportTests {
 	@Test
 	public void testInfectedUserCanReportItselfAsInfected() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
-		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, this.getReportEntityWithBearer(reportRequest),
+		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV2 + UriConstants.REPORT, this.getReportEntityWithBearer(reportRequest),
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -72,7 +72,7 @@ class TacWarningWsRestReportTests {
 	@Test
 	public void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
-		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, reportRequest,
+		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV2 + UriConstants.REPORT, reportRequest,
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -85,7 +85,7 @@ class TacWarningWsRestReportTests {
 		headers.setBearerAuth("invalid JWT token");
 		HttpEntity<ReportRequestVo> reportEntity = new HttpEntity<>(reportRequest, headers);
 		
-		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, reportEntity,
+		ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV2 + UriConstants.REPORT, reportEntity,
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
@@ -97,7 +97,7 @@ class TacWarningWsRestReportTests {
 		new HttpJwtHeaderUtils(keyPair.getPrivate()).addBearerAuthTo(headers);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				new HttpEntity<String>("foo", headers),
 				String.class);
 
@@ -110,7 +110,7 @@ class TacWarningWsRestReportTests {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("id", 1);
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				new HttpEntity<String>(jsonObject.toString(), this.newJsonHeaderWithBearer()),
 				String.class);
 
@@ -121,7 +121,7 @@ class TacWarningWsRestReportTests {
 	@Test
 	public void testWhenReportRequestWithNullVisitTokensThenGetBadRequest() {
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				this.getReportEntityWithBearer(new ReportRequestVo(null)), 
 				String.class);
 		
@@ -137,7 +137,7 @@ class TacWarningWsRestReportTests {
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
@@ -152,7 +152,7 @@ class TacWarningWsRestReportTests {
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
@@ -178,7 +178,7 @@ class TacWarningWsRestReportTests {
 				+ "";
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
 				String.class);
 
@@ -194,7 +194,7 @@ class TacWarningWsRestReportTests {
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
@@ -218,7 +218,7 @@ class TacWarningWsRestReportTests {
 				+ "";
 
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()), 
 				String.class);
 
@@ -244,7 +244,7 @@ class TacWarningWsRestReportTests {
 				+ "";
 		
 		ResponseEntity<String> response = restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
 				String.class);
 

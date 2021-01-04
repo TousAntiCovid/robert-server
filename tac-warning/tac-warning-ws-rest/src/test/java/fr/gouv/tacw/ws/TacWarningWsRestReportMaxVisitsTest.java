@@ -42,8 +42,8 @@ import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class TacWarningWsRestReportMaxVisitsTest {
-	@Value("${controller.path.prefix}" + UriConstants.API_V1)
-	private String pathPrefixV1;
+	@Value("${controller.path.prefix}" + UriConstants.API_V2)
+	private String pathPrefixV2;
 
 	@Autowired
 	private TestRestTemplate restTemplate;
@@ -80,7 +80,7 @@ public class TacWarningWsRestReportMaxVisitsTest {
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 		
@@ -103,7 +103,7 @@ public class TacWarningWsRestReportMaxVisitsTest {
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
 		
 		restTemplate.postForEntity(
-				pathPrefixV1 + UriConstants.REPORT, 
+				pathPrefixV2 + UriConstants.REPORT, 
 				new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 	

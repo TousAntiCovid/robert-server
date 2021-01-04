@@ -38,8 +38,8 @@ public class TacWarningWsExceptionHandlingTests {
 	@Autowired
 	private TestRestTemplate restTemplate;
 
-	@Value("${controller.path.prefix}" + UriConstants.API_V1)
-	private String pathPrefixV1;
+	@Value("${controller.path.prefix}" + UriConstants.API_V2)
+	private String pathPrefixV2;
 
 	@MockBean
 	WarningService warningService;
@@ -52,7 +52,7 @@ public class TacWarningWsExceptionHandlingTests {
 
 	@BeforeEach
 	private void setUp() {
-		statusUrl = pathPrefixV1 + UriConstants.STATUS;
+		statusUrl = pathPrefixV2 + UriConstants.STATUS;
 		customRestExceptionHandlerLogger = (Logger) LoggerFactory.getLogger(CustomRestExceptionHandler.class);
 
 		listAppender = new ListAppender<>();
@@ -100,7 +100,7 @@ public class TacWarningWsExceptionHandlingTests {
 		ReportRequestVo request = new ReportRequestVo(new ArrayList<VisitVo>());
 		HttpEntity<ReportRequestVo> reportEntity = new HttpEntity<>(request, headers);
 
-		String reportUrl = pathPrefixV1 + UriConstants.REPORT;
+		String reportUrl = pathPrefixV2 + UriConstants.REPORT;
 		ResponseEntity<String> response = restTemplate.postForEntity(reportUrl, reportEntity,
 				String.class);
 
