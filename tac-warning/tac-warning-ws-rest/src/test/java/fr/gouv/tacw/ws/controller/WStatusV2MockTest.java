@@ -12,7 +12,7 @@ import fr.gouv.tacw.database.utils.TimeUtils;
 
 public class WStatusV2MockTest {
     
-    private TACWarningController controller = new TACWarningController(null, null, null, null);
+    private TACWarningController controller = new TACWarningController(null, null, null, null, null, null, null);
 
     @Test
     public void testRandomDateFromLastFiveDaysIsBetweenNowAndFiveDaysLater() {
