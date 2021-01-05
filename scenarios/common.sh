@@ -94,10 +94,10 @@ wreport () {
          "${TACW_BASE_URL}/${TACW_VERSION}"/wreport
 }
 
-test_status_at_risk () {
+test_status_risk_level () {
     # jq -e exits with a nonzero error when the last boolean
     # comparison is false
-   echo "$1" |  jq  -e ".atRisk==$2"
+   echo "$1" |  jq  -e ".riskLevel==$2"
 
 }
 
