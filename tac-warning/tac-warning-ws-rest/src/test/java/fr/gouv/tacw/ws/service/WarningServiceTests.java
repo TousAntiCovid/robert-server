@@ -95,8 +95,6 @@ public class WarningServiceTests {
         assertThat(warningService.getStatus(visits.stream())).isEqualTo(RiskLevel.TACW_HIGH);
     }
 
-    // TODO: test invalid timestamp in controller => reject whole request ? just the visit
-
     @Disabled("Temporary removed timestamp present/future checking")
     @Test
     public void testWhenStatusRequestWithVisitsHavingATimeInTheFutureThenVisitsAreFilteredOut() {
@@ -107,7 +105,8 @@ public class WarningServiceTests {
 
         warningService.getStatus(visits.stream());
 
-        verifyNoInteractions(exposedStaticVisitService);
+        verify(exposedStaticVisitService, times(1)).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
+        assertThat(staticTokensCaptor.getValue()).isEmpty();
     }
 
     @Disabled("Temporary removed timestamp present/future checking")
@@ -120,7 +119,8 @@ public class WarningServiceTests {
 
         warningService.getStatus(visits.stream());
 
-        verifyNoInteractions(exposedStaticVisitService);
+        verify(exposedStaticVisitService, times(1)).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
+        assertThat(staticTokensCaptor.getValue()).isEmpty();
     }
 
     @Test
@@ -143,7 +143,7 @@ public class WarningServiceTests {
         visits.add(new VisitVo(timestampService.validTimestampString(), 
                 new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
-        warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
+        warningService.reportVisitsWhenInfected(visits);
         verify(exposedStaticVisitService, times(2)).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
         assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
     }
@@ -157,8 +157,8 @@ public class WarningServiceTests {
         visits.add(new VisitVo(timestampService.validTimestampString(), 
                 new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
-        warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
-        verify(exposedStaticVisitService, times(1)).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
+        warningService.reportVisitsWhenInfected(visits);
+        verify(exposedStaticVisitService).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
         assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
     }
 
@@ -171,8 +171,8 @@ public class WarningServiceTests {
         visits.add(new VisitVo(timestampService.validTimestampString(), 
                 new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
-        warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
-        verify(exposedStaticVisitService, times(1)).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
+        warningService.reportVisitsWhenInfected(visits);
+        verify(exposedStaticVisitService).registerExposedStaticVisitEntities(staticTokensCaptor.capture());
         assertThat(staticTokensCaptor.getValue().size()).isEqualTo(this.numberOfGeneratedTokens);
     }
 
@@ -182,7 +182,7 @@ public class WarningServiceTests {
         visits.add(new VisitVo("foo", 
                 new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
 
-        warningService.reportVisitsWhenInfected(new ReportRequestVo(visits));
+        warningService.reportVisitsWhenInfected(visits);
 
         verifyNoInteractions(exposedStaticVisitService);
     }

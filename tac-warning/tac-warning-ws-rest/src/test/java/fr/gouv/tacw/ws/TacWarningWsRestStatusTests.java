@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -36,6 +37,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.Level;
@@ -50,6 +53,7 @@ import fr.gouv.tacw.ws.controller.TACWarningController;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.service.TestTimestampService;
 import fr.gouv.tacw.ws.service.WarningService;
+import fr.gouv.tacw.ws.utils.BadArgumentsLoggerService;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
@@ -58,20 +62,23 @@ import fr.gouv.tacw.ws.vo.VisitTokenVo;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class TacWarningWsRestStatusTests {
+
+    private static final String NULL = "nul";
+
     @Autowired
     private TestRestTemplate restTemplate;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @MockBean
     private WarningService warningService;
 
     @Autowired
-    private MockMvc mockMvc;
+    private TestTimestampService timestampService;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private TestTimestampService timestampService;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
     private String pathPrefixV2;
@@ -86,9 +93,11 @@ class TacWarningWsRestStatusTests {
     private ArgumentCaptor<Stream<OpaqueVisit>> opaqueVisitsCaptor;
 
     private ListAppender<ILoggingEvent> tacWarningControllerLoggerAppender;
+    private ListAppender<ILoggingEvent> badArgumentLoggerAppender;
+
 
     @Test
-    public void testCanGetStatus() throws Exception {
+    public void testCanGetStatus() {
         ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
         when(warningService.getStatus(any())).thenReturn(RiskLevel.TACW_HIGH);
 
@@ -96,7 +105,6 @@ class TacWarningWsRestStatusTests {
                 .postForEntity(pathPrefixV2 + UriConstants.STATUS, request, ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
         assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
         Instant instant = Instant.ofEpochSecond( Long.parseLong(response.getBody().getLastContactDate())
                 - TimeUtils.SECONDS_FROM_01_01_1900 );
@@ -104,15 +112,56 @@ class TacWarningWsRestStatusTests {
     }
 
     @Test
-    public void testWhenStatusExposureResponseReceivedThenRiskLevelIsAnInt() throws Exception {
+    public void testWhenStatusExposureResponseReceivedThenRiskLevelIsAnInt() throws JsonProcessingException, Exception {
         ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
         when(warningService.getStatus(any())).thenReturn(RiskLevel.TACW_HIGH);
 
-        mockMvc.perform(post(pathPrefixV2 + UriConstants.STATUS)
+        mockMvc
+            .perform(post(pathPrefixV2 + UriConstants.STATUS)
                 .content(objectMapper.writeValueAsString(request))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.riskLevel", is(RiskLevel.TACW_HIGH.getValue())));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.riskLevel", is(RiskLevel.TACW_HIGH.getValue())));
+    }
+
+    @Test
+    public void testCanGetStatusWhenOneVisitHasBadFormat() throws JsonMappingException, JsonProcessingException {
+        final String VISITS_WITH_ERROR_JSON = "{\"visitTokens\":[{\"type\":\"STATIC\",\"payload\":\"payload\",\"timestamp\":\"timestamp\"},{\"type\":\"FOO\",\"payload\":\"payload\",\"timestamp\":\"timestamp\"}]}";
+        ExposureStatusRequestVo esr = objectMapper.readValue(VISITS_WITH_ERROR_JSON, ExposureStatusRequestVo.class);
+        when(warningService.getStatus(any())).thenReturn(RiskLevel.TACW_HIGH);
+
+        ResponseEntity<ExposureStatusResponseDto> response = restTemplate
+                .postForEntity(pathPrefixV2 + UriConstants.STATUS, esr, ExposureStatusResponseDto.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
+        assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(2); // common log + filter
+        ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(1);
+        assertThat(log.getMessage()).contains(
+                String.format(TACWarningController.MALFORMED_VISIT_LOG_MESSAGE, 1, 2));
+        assertThat(log.getLevel()).isEqualTo(Level.INFO);
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("type", NULL);
+    }
+
+    @Test
+    public void testCanGetStatusWhenVisitHasExtraField() throws JsonMappingException, JsonProcessingException {
+        when(warningService.getStatus(any())).thenReturn(RiskLevel.TACW_HIGH);
+
+        String json = "{\n"
+                + "  \"visitTokens\" : [ {\n"
+                + "    \"type\" : \"STATIC\",\n"
+                + "    \"extrafield\" : \"foo\",\n"
+                + "    \"payload\" : \"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc\"\n"
+                + "  } ]\n"
+                + "}";
+        ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
+                pathPrefixV2 + UriConstants.STATUS, 
+                new HttpEntity<String>(json, this.newJsonHeader()),
+                ExposureStatusResponseDto.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
     }
 
     @Test
@@ -133,7 +182,7 @@ class TacWarningWsRestStatusTests {
         assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(1); // no second log with filter
         ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(0);
         assertThat(log.getMessage()).contains(
-                String.format("Exposure status request for %d visits", maxVisits));
+                String.format(TACWarningController.STATUS_LOG_MESSAGE, maxVisits));
         assertThat(log.getLevel()).isEqualTo(Level.INFO);
     }
 
@@ -154,7 +203,7 @@ class TacWarningWsRestStatusTests {
         assertThat(opaqueVisitsCaptor.getValue().count()).isEqualTo(maxVisits);
         ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(1); // first log is nb visits for ESR
         assertThat(log.getMessage()).contains(
-                String.format("Filtered out %d visits of %d", 1, maxVisits+1));
+                String.format(TACWarningController.MAX_VISITS_FILTER_LOG_MESSAGE, 1, maxVisits+1));
         assertThat(log.getLevel()).isEqualTo(Level.INFO);	
     }
 
@@ -167,10 +216,12 @@ class TacWarningWsRestStatusTests {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(warningService);
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("visitTokens", NULL);
     }
 
     @Test
-    public void testWhenExposureStatusRequestWithNullTokenTypeThenGetBadRequest() {
+    public void testWhenExposureStatusRequestWithNullTokenTypeThenVisitIsIgnored() {
         ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
         visitTokens.add(new VisitTokenVo(null, "payload", "123456789"));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
@@ -179,12 +230,16 @@ class TacWarningWsRestStatusTests {
                 entity, 
                 ExposureStatusResponseDto.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verifyNoMoreInteractions(warningService);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(warningService).getStatus(opaqueVisitsCaptor.capture());
+        assertThat(opaqueVisitsCaptor.getValue()).isEmpty();
+        assertThatControllerLogContainsOneMalformedVisit();
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("type", NULL);
     }
 
     @Test
-    public void testWhenExposureStatusRequestWithInvalidTokenTypeThenGetBadRequest() throws JSONException {
+    public void testWhenExposureStatusRequestWithInvalidTokenTypeThenVisitIsIgnored() throws JSONException {
         String json = "{\n"
                 + "  \"visitTokens\" : [ {\n"
                 + "    \"type\" : \"UNKNOWN\",\n"
@@ -196,12 +251,14 @@ class TacWarningWsRestStatusTests {
                 new HttpEntity<String>(json, this.newJsonHeader()),
                 ExposureStatusResponseDto.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verifyNoMoreInteractions(warningService);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThatControllerLogContainsOneMalformedVisit();
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("type", NULL);
     }
 
     @Test
-    public void testWhenExposureStatusRequestWithNullPayloadThenGetBadRequest() {
+    public void testWhenExposureStatusRequestWithNullPayloadThenVisitIsIgnored() {
         ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
         visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, null, "123456789"));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
@@ -210,12 +267,16 @@ class TacWarningWsRestStatusTests {
                 entity, 
                 ExposureStatusResponseDto.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verifyNoMoreInteractions(warningService);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(warningService).getStatus(opaqueVisitsCaptor.capture());
+        assertThat(opaqueVisitsCaptor.getValue()).isEmpty();
+        assertThatControllerLogContainsOneMalformedVisit();
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("payload", NULL);
     }
 
     @Test
-    public void testWhenExposureStatusRequestWithNullTiemstampThenGetBadRequest() {
+    public void testWhenExposureStatusRequestWithNullTimestampThenVisitIsIgnored() {
         ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
         visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, "payload", null));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
@@ -224,8 +285,12 @@ class TacWarningWsRestStatusTests {
                 entity, 
                 ExposureStatusResponseDto.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verifyNoMoreInteractions(warningService);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(warningService).getStatus(opaqueVisitsCaptor.capture());
+        assertThat(opaqueVisitsCaptor.getValue()).isEmpty();
+        assertThatControllerLogContainsOneMalformedVisit();
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("timestamp", NULL);
     }
 
     @Test
@@ -241,6 +306,7 @@ class TacWarningWsRestStatusTests {
 
     @Test
     public void testWhenExposureStatusRequestsWithInvalidJsonDataThenGetBadRequest() throws JSONException {
+        this.setUpLogHandler();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", 1);
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
@@ -250,21 +316,33 @@ class TacWarningWsRestStatusTests {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(warningService);
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+
+    }
+
+    @BeforeEach
+    private void setUpLogHandler() {
+        this.tacWarningControllerLoggerAppender = new ListAppender<>();
+        this.tacWarningControllerLoggerAppender.start();
+        ((Logger) LoggerFactory.getLogger(TACWarningController.class)).addAppender(this.tacWarningControllerLoggerAppender);
+
+        this.badArgumentLoggerAppender = new ListAppender<>();
+        this.badArgumentLoggerAppender.start();
+        ((Logger) LoggerFactory.getLogger(BadArgumentsLoggerService.class)).addAppender(this.badArgumentLoggerAppender);
+    }
+
+    protected void assertThatControllerLogContainsOneMalformedVisit() {
+        assertThat(this.tacWarningControllerLoggerAppender.list.size()).isEqualTo(2); // common log + filter
+        ILoggingEvent log = this.tacWarningControllerLoggerAppender.list.get(1); // first log is nb visits for ESR
+        assertThat(log.getMessage()).contains(
+                String.format(TACWarningController.MALFORMED_VISIT_LOG_MESSAGE, 1, 1));
+        assertThat(log.getLevel()).isEqualTo(Level.INFO);
     }
 
     protected HttpHeaders newJsonHeader() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
-    }
-
-    private void setUpLogHandler() {
-        Logger tacWarningControllerLogger = (Logger) LoggerFactory.getLogger(TACWarningController.class);
-
-        tacWarningControllerLoggerAppender = new ListAppender<>();
-        tacWarningControllerLoggerAppender.start();
-
-        tacWarningControllerLogger.addAppender(tacWarningControllerLoggerAppender);
     }
 
 }

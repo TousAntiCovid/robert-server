@@ -27,6 +27,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.tacw.ws.service.WarningService;
+import fr.gouv.tacw.ws.utils.BadArgumentsLoggerService;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.ExposureStatusRequestVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -44,21 +45,23 @@ public class TacWarningWsExceptionHandlingTests {
 	@MockBean
 	WarningService warningService;
 
-	private Logger customRestExceptionHandlerLogger;
+	private ListAppender<ILoggingEvent> exceptionLoggerAppender;
 
-	private ListAppender<ILoggingEvent> listAppender;
+    private ListAppender<ILoggingEvent> badArgumentLoggerAppender;
 
-	private String statusUrl;
+    private String statusUrl;
 
 	@BeforeEach
 	private void setUp() {
 		statusUrl = pathPrefixV2 + UriConstants.STATUS;
-		customRestExceptionHandlerLogger = (Logger) LoggerFactory.getLogger(CustomRestExceptionHandler.class);
+		
+		this.exceptionLoggerAppender = new ListAppender<>();
+		this.exceptionLoggerAppender.start();
+		((Logger) LoggerFactory.getLogger(CustomRestExceptionHandler.class)).addAppender(exceptionLoggerAppender);
 
-		listAppender = new ListAppender<>();
-		listAppender.start();
-
-		customRestExceptionHandlerLogger.addAppender(listAppender);
+		this.badArgumentLoggerAppender = new ListAppender<>();
+        this.badArgumentLoggerAppender.start();
+        ((Logger) LoggerFactory.getLogger(BadArgumentsLoggerService.class)).addAppender(badArgumentLoggerAppender);
 	}
 	
     @Test
@@ -83,7 +86,7 @@ public class TacWarningWsExceptionHandlingTests {
 		ResponseEntity<String> response = restTemplate.postForEntity(statusUrl, request, String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-		List<ILoggingEvent> logsList = listAppender.list;
+		List<ILoggingEvent> logsList = exceptionLoggerAppender.list;
 		assertThat(logsList.get(0).getMessage()).isEqualTo(message + ", requested uri: uri=" + statusUrl);
 		assertThat(logsList.get(0).getLevel()).isEqualTo(Level.ERROR);
 	}
@@ -95,7 +98,7 @@ public class TacWarningWsExceptionHandlingTests {
 		ResponseEntity<String> response = restTemplate.postForEntity(statusUrl, request, String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-		List<ILoggingEvent> logsList = listAppender.list;
+		List<ILoggingEvent> logsList = badArgumentLoggerAppender.list;
 		assertThat(logsList.get(0).getMessage()).contains(
 				"Invalid input data",
 				"visitTokens",
@@ -118,7 +121,7 @@ public class TacWarningWsExceptionHandlingTests {
 				String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-		List<ILoggingEvent> logsList = listAppender.list;
+		List<ILoggingEvent> logsList = exceptionLoggerAppender.list;
 		assertThat(logsList.get(0).getMessage())
 			.contains("TacWarningUnauthorizedException")
 			.contains("requested uri: uri=" + reportUrl);

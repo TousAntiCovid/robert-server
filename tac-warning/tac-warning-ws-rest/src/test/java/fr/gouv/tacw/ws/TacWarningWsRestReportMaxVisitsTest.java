@@ -27,9 +27,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
+import fr.gouv.tacw.ws.controller.TACWarningController;
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.service.TestTimestampService;
 import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
+import fr.gouv.tacw.ws.utils.BadArgumentsLoggerService;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -42,86 +44,105 @@ import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class TacWarningWsRestReportMaxVisitsTest {
-	@Value("${controller.path.prefix}" + UriConstants.API_V2)
-	private String pathPrefixV2;
+    @Value("${controller.path.prefix}" + UriConstants.API_V2)
+    private String pathPrefixV2;
 
-	@Autowired
-	private TestRestTemplate restTemplate;
-	
-	@Autowired
-	private TestTimestampService timestampService;
-	
-	@MockBean
-	private ExposedStaticVisitService exposedStaticVisitService;
-	
-	@MockBean
-	private TacWarningWsRestConfiguration configuration;
-	
-	private ListAppender<ILoggingEvent> warningServiceLoggerAppender;
-	
-	private KeyPair keyPair;
-	
-	@BeforeEach
-	public void setUp() {
-		keyPair = Keys.keyPairFor(AuthorizationService.algo);
+    @Autowired
+    private TestRestTemplate restTemplate;
 
-		when(this.configuration.isJwtReportAuthorizationDisabled()).thenReturn(false);
-		when(this.configuration.getRobertJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
-	}
-	
-	@Test
-	public void testCanReportWithMaxVisits() {
-		this.setUpLogHandler();
-		List<VisitVo> visitQrCodes = new ArrayList<VisitVo>(this.configuration.getMaxVisits());
-		IntStream.rangeClosed(1, this.configuration.getMaxVisits())
-				.forEach(i -> visitQrCodes.add(new VisitVo(timestampService.validTimestampString(),
-						new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
-								"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"))));
-		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
-		
-		restTemplate.postForEntity(
-				pathPrefixV2 + UriConstants.REPORT, 
-				new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
-				String.class);
-		
-		verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerExposedStaticVisitEntities(anyList());
-		assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(1); // no second log with filter
-		ILoggingEvent log = warningServiceLoggerAppender.list.get(0);
-		assertThat(log.getMessage()).contains(
-				String.format("Reporting %d visits", this.configuration.getMaxVisits()));
-		assertThat(log.getLevel()).isEqualTo(Level.INFO);
-	}
-	
-	@Test
-	public void testCannotReportWithMoreThanMaxVisits() {
-		this.setUpLogHandler();
-		List<VisitVo> visitQrCodes = new ArrayList<VisitVo>(this.configuration.getMaxVisits());
-		IntStream.rangeClosed(1, this.configuration.getMaxVisits() + 1)
-				.forEach(i -> visitQrCodes.add(new VisitVo(timestampService.validTimestampString(),
-						new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
-								"0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"))));
-		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
-		
-		restTemplate.postForEntity(
-				pathPrefixV2 + UriConstants.REPORT, 
-				new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
-				String.class);
-	
-		verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerExposedStaticVisitEntities(anyList());
-		assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(2); 
-		ILoggingEvent log = warningServiceLoggerAppender.list.get(1);  // first log is nb visits for ESR
-		assertThat(log.getMessage()).contains(
-				String.format("Filtered %d visits out of %d", 1, this.configuration.getMaxVisits() + 1));
-		assertThat(log.getLevel()).isEqualTo(Level.INFO);
-	}
+    @Autowired
+    private TestTimestampService timestampService;
 
-	private void setUpLogHandler() {
-		Logger warningServiceLogger = (Logger) LoggerFactory.getLogger(WarningServiceImpl.class);
-	
-		warningServiceLoggerAppender = new ListAppender<>();
-		warningServiceLoggerAppender.start();
-		
-		warningServiceLogger.addAppender(warningServiceLoggerAppender);
-	}
-	
+    @MockBean
+    private ExposedStaticVisitService exposedStaticVisitService;
+
+    @MockBean
+    private TacWarningWsRestConfiguration configuration;
+
+    private ListAppender<ILoggingEvent> warningServiceLoggerAppender;
+
+    private ListAppender<ILoggingEvent> badArgumentLoggerAppender;
+
+    private ListAppender<ILoggingEvent> tacWarningControllerLoggerAppender;
+
+    private KeyPair keyPair;
+
+    @Test
+    public void testCanReportWithMaxVisits() {
+        List<VisitVo> visitQrCodes = new ArrayList<VisitVo>(this.configuration.getMaxVisits());
+        IntStream.rangeClosed(1, this.configuration.getMaxVisits())
+        .forEach(i -> visitQrCodes.add(new VisitVo(timestampService.validTimestampString(),
+                new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
+                        "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"))));
+        ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
+
+        restTemplate.postForEntity(
+                pathPrefixV2 + UriConstants.REPORT, 
+                new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
+                String.class);
+
+        verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerExposedStaticVisitEntities(anyList());
+        assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(1);
+        ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(0);
+        assertThat(log.getMessage()).contains(
+                String.format(TACWarningController.REPORT_LOG_MESSAGE, this.configuration.getMaxVisits()));
+        assertThat(log.getLevel()).isEqualTo(Level.INFO);
+        assertThat(warningServiceLoggerAppender.list).isEmpty(); // no log with filter
+        assertThat(badArgumentLoggerAppender.list).isEmpty();
+    }
+
+    @Test
+    public void testCannotReportWithMoreThanMaxVisits() {
+        List<VisitVo> visitQrCodes = new ArrayList<VisitVo>(this.configuration.getMaxVisits());
+        int nbVisits = this.configuration.getMaxVisits() + 1;
+        IntStream.rangeClosed(1, nbVisits)
+            .forEach(i -> visitQrCodes.add(new VisitVo(timestampService.validTimestampString(),
+                new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60,
+                        "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc"))));
+        ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
+
+        restTemplate.postForEntity(
+                pathPrefixV2 + UriConstants.REPORT, 
+                new HttpJwtHeaderUtils(keyPair.getPrivate()).getReportEntityWithBearer(reportRequestVo), 
+                String.class);
+
+        verify(exposedStaticVisitService, times(this.configuration.getMaxVisits())).registerExposedStaticVisitEntities(anyList());
+        assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(1);
+        ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(0);
+        assertThat(log.getMessage()).contains(
+                String.format(TACWarningController.REPORT_LOG_MESSAGE, nbVisits));
+        assertThat(log.getLevel()).isEqualTo(Level.INFO);
+        assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(1); 
+        ILoggingEvent wlog = warningServiceLoggerAppender.list.get(0);  // filter log
+        assertThat(wlog.getMessage()).contains(
+                String.format(WarningServiceImpl.REPORT_MAX_VISITS_FILTER_LOG_MESSAGE, 1, nbVisits));
+        assertThat(wlog.getLevel()).isEqualTo(Level.INFO);
+        assertThat(badArgumentLoggerAppender.list).isEmpty();
+    }
+
+    @BeforeEach
+    public void setUp() {
+        keyPair = Keys.keyPairFor(AuthorizationService.algo);
+
+        when(this.configuration.isJwtReportAuthorizationDisabled()).thenReturn(false);
+        when(this.configuration.getRobertJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+        when(this.configuration.getMaxVisits()).thenReturn(30);
+
+        this.setUpLogHandler();
+    }
+
+    private void setUpLogHandler() {
+        this.warningServiceLoggerAppender = new ListAppender<>();
+        this.warningServiceLoggerAppender.start();
+        ((Logger) LoggerFactory.getLogger(WarningServiceImpl.class)).addAppender(this.warningServiceLoggerAppender);
+
+        this.tacWarningControllerLoggerAppender = new ListAppender<>();
+        this.tacWarningControllerLoggerAppender.start();
+        ((Logger) LoggerFactory.getLogger(TACWarningController.class)).addAppender(this.tacWarningControllerLoggerAppender);
+
+        this.badArgumentLoggerAppender = new ListAppender<>();
+        this.badArgumentLoggerAppender.start();
+        ((Logger) LoggerFactory.getLogger(BadArgumentsLoggerService.class)).addAppender(this.badArgumentLoggerAppender);
+    }
+
 }

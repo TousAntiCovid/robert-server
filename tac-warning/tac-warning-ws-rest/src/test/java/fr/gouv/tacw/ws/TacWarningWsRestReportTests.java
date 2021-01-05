@@ -1,16 +1,21 @@
 package fr.gouv.tacw.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.security.KeyPair;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,9 +28,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
+import fr.gouv.tacw.ws.controller.TACWarningController;
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
+import fr.gouv.tacw.ws.utils.BadArgumentsLoggerService;
 import fr.gouv.tacw.ws.utils.UriConstants;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.ReportRequestVo;
@@ -38,6 +52,8 @@ import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class TacWarningWsRestReportTests {
+	private static final String NULL = "nul";
+
 	@Value("${controller.path.prefix}" + UriConstants.API_V2)
 	private String pathPrefixV2;
 
@@ -50,7 +66,14 @@ class TacWarningWsRestReportTests {
 	@MockBean
 	private TacWarningWsRestConfiguration configuration;
 	
+	@Captor
+	private ArgumentCaptor<List<VisitVo>> visitsCaptor;
+	
 	private KeyPair keyPair;
+
+    private ListAppender<ILoggingEvent> tacWarningControllerLoggerAppender;
+
+    private ListAppender<ILoggingEvent> badArgumentLoggerAppender;
 	
 	@BeforeEach
 	public void setUp() {
@@ -58,6 +81,14 @@ class TacWarningWsRestReportTests {
 
 		when(this.configuration.isJwtReportAuthorizationDisabled()).thenReturn(false);
 		when(this.configuration.getRobertJwtPublicKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()));
+		
+		this.tacWarningControllerLoggerAppender = new ListAppender<>();
+		this.tacWarningControllerLoggerAppender.start();
+		((Logger) LoggerFactory.getLogger(TACWarningController.class)).addAppender(this.tacWarningControllerLoggerAppender);
+
+		this.badArgumentLoggerAppender = new ListAppender<>();
+		this.badArgumentLoggerAppender.start();
+		((Logger) LoggerFactory.getLogger(BadArgumentsLoggerService.class)).addAppender(this.badArgumentLoggerAppender);
 	}
 	
 	@Test
@@ -69,6 +100,33 @@ class TacWarningWsRestReportTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
+    @Test
+    public void testInfectedUserCanReportItselfAsInfectedWhenOneVisitHasBadFormat() throws JsonMappingException, JsonProcessingException {
+        ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
+        visitQrCodes.add(new VisitVo("6789", 
+                new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.L, VenueCategoryVo.CAT2, 100, "uuid2")));
+        visitQrCodes.add(new VisitVo(null, 
+                new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "uuid"))); // null timestamp
+        visitQrCodes.add(new VisitVo("12345", 
+                new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "uuid")));
+        ReportRequestVo reportRequest = new ReportRequestVo(visitQrCodes);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV2 + UriConstants.REPORT, this.getReportEntityWithBearer(reportRequest),
+            String.class);
+                
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(warningService).reportVisitsWhenInfected(visitsCaptor.capture());
+        assertThat(visitsCaptor.getValue().size()).isEqualTo(2);
+        assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(2); // common log + filter
+        ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(1);
+        assertThat(log.getMessage()).contains(
+                String.format(TACWarningController.MALFORMED_VISIT_LOG_MESSAGE, 1, 3));
+        assertThat(log.getLevel()).isEqualTo(Level.INFO);
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("timestamp", NULL);
+        
+    }
+        
 	@Test
 	public void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
@@ -130,7 +188,7 @@ class TacWarningWsRestReportTests {
 	}
 
 	@Test
-	public void testWhenReportRequestWithNullTimestampTypeThenGetBadRequest() {
+	public void testWhenReportRequestWithNullTimestampTypeThenVisitIsFiltered() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(new VisitVo(null, 
 				new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "uuid")));
@@ -141,12 +199,16 @@ class TacWarningWsRestReportTests {
 				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-		verifyNoMoreInteractions(warningService);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(warningService).reportVisitsWhenInfected(visitsCaptor.capture());
+        assertThat(visitsCaptor.getValue().size()).isEqualTo(0);
+        assertThatControllerLogContainsOneMalformedVisit();
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("timestamp", NULL);
 	}
 
 	@Test
-	public void testWhenReportRequestWithNullQRCodeTypeThenGetBadRequest() {
+	public void testWhenReportRequestWithNullQRCodeTypeThenVisitIsFiltered() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(new VisitVo("12345", null));
 		ReportRequestVo reportRequestVo = new ReportRequestVo(visitQrCodes);
@@ -156,12 +218,16 @@ class TacWarningWsRestReportTests {
 				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-		verifyNoMoreInteractions(warningService);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(warningService).reportVisitsWhenInfected(visitsCaptor.capture());
+        assertThat(visitsCaptor.getValue().size()).isEqualTo(0);
+        assertThatControllerLogContainsOneMalformedVisit();
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("qrCode", NULL);
 	}
 
 	@Test
-	public void testWhenReportRequestWithInvalidQRCodeTypeThenGetBadRequest() throws JSONException {
+	public void testWhenReportRequestWithInvalidQRCodeTypeThenGetVisitIsFiltered() throws JSONException {
 		String json = "{\n"
 				+ "   \"visits\": [\n"
 				+ "     {\n"
@@ -182,12 +248,16 @@ class TacWarningWsRestReportTests {
 				new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
 				String.class);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-		verifyNoMoreInteractions(warningService);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(warningService).reportVisitsWhenInfected(visitsCaptor.capture());
+        assertThat(visitsCaptor.getValue().size()).isEqualTo(0);
+        assertThatControllerLogContainsOneMalformedVisit();
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("qrCode", NULL);
 	}
 	
 	@Test
-	public void testWhenReportRequestWithNullUuidThenGetBadRequest() {
+	public void testWhenReportRequestWithNullUuidThenVisitIsFiltered() {
 		ArrayList<VisitVo> visitQrCodes = new ArrayList<VisitVo>();
 		visitQrCodes.add(
 				new VisitVo("12345", new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, null)));
@@ -198,8 +268,12 @@ class TacWarningWsRestReportTests {
 				this.getReportEntityWithBearer(reportRequestVo), 
 				String.class);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-		verifyNoMoreInteractions(warningService);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		verify(warningService).reportVisitsWhenInfected(visitsCaptor.capture());
+		assertThat(visitsCaptor.getValue().size()).isEqualTo(0);
+        assertThatControllerLogContainsOneMalformedVisit();
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(badArgumentLoggerAppender.list.get(0).getMessage()).contains("uuid", NULL);
 	}
 	
 	@Test
@@ -251,6 +325,15 @@ class TacWarningWsRestReportTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
+
+    protected void assertThatControllerLogContainsOneMalformedVisit() {
+        assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(2); // common log + filter
+        ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(1); // first log is nb visits for report
+        assertThat(log.getMessage()).contains(
+                String.format(TACWarningController.MALFORMED_VISIT_LOG_MESSAGE, 1, 1));
+        assertThat(log.getLevel()).isEqualTo(Level.INFO);
+    }
+    
 	private MultiValueMap<String, String> newJsonHeaderWithBearer() {
 		return new HttpJwtHeaderUtils(keyPair.getPrivate()).newJsonHeaderWithBearer();
 	}
