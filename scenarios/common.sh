@@ -7,7 +7,7 @@ ROBERT_BASE_URL=${ROBERT_BASE_URL:-"http://localhost:8086/api/"}
 ROBERT_VERSION=${ROBERT_VERSION:-"v4"}
 TACW_BASE_URL=${TACW_BASE_URL:-"http://localhost:8080/api/tac-warning"}
 
-TACW_VERSION=${TACW_VERSION:-"v1"}
+TACW_VERSION=${TACW_VERSION:-"v2"}
 SALT_RANGE=2
 TIME_ROUNDING=900
 NUMBER_OF_VISITS_TO_REPORT=5
@@ -15,21 +15,28 @@ USE_CAPTCHA=1
 NB_OF_RETENTION_DAY=12
 READ_REPORT_QR_CODE_FROM_USER=1
 
+CURL_NO_PROGRESS_OPTION=--no-progress-meter
 
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    Linux*)     date="date";;
-    Darwin*)    date="/usr/local/bin/gdate";;
-    CYGWIN*)    machine=Cygwin;;
-    MINGW*)     machine=MinGw;;
-    *)          machine="UNKNOWN:${unameOut}"
+    Linux*)
+        date="date";;
+    Darwin*)
+        date="/usr/local/bin/gdate"
+        CURL_NO_PROGRESS_OPTION="--show-error --silent";;
+    CYGWIN*)
+        machine=Cygwin;;
+    MINGW*)
+        machine=MinGw;;
+    *)
+        machine="UNKNOWN:${unameOut}"
 esac
 
 # Register to the TAC server
 register () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
-         --no-progress-meter \
+         $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
          --request POST \
          --data "$1" \
@@ -40,7 +47,7 @@ register () {
 status () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
-         --no-progress-meter \
+         $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
          --request POST \
          --data "$1" \
@@ -50,7 +57,7 @@ status () {
 captcha () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
-         --no-progress-meter \
+         $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
          --request POST \
          "${ROBERT_BASE_URL}/${ROBERT_VERSION}"/captcha
@@ -62,20 +69,18 @@ captcha () {
 report () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
-         --no-progress-meter \
+         $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
          --request POST \
          --data "$1" \
          "${ROBERT_BASE_URL}/${ROBERT_VERSION}"/report
 }
 
-
-
 # Perform a TAC-warning status query
 wstatus () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
-         --no-progress-meter \
+         $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
          --request POST \
          --data "$1" \
@@ -86,7 +91,7 @@ wstatus () {
 wreport () {
     # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
-         --no-progress-meter \
+         $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
          --header "Authorization: Bearer $1" \
          --request POST \
