@@ -67,6 +67,6 @@ wreport "$jwt" "$(createVisits "$serena_visit1")"
 # Later, Heather performs another status check. It comes back positive because the risk threshold has been crossed.
 echo "----Later, heather performs another status check. It comes back positive because the risk threshold has been crossed."
 heather_second_check=$(wstatus "$heather_visitTokens")
-test_status_risk_level "$heather_second_check" "4"
+test_status_risk_level "$heather_second_check" "3"
 
 echo '----done!'
