@@ -5,6 +5,7 @@
 ROBERT_BASE_URL=${ROBERT_BASE_URL:-"http://localhost:8086/api/"}
 
 ROBERT_VERSION=${ROBERT_VERSION:-"v4"}
+CAPTCHA_ROBERT_VERSION=${CAPTCHA_ROBERT_VERSION:-"v2"}
 TACW_BASE_URL=${TACW_BASE_URL:-"http://localhost:8080/api/tac-warning"}
 
 TACW_VERSION=${TACW_VERSION:-"v2"}
@@ -34,7 +35,6 @@ esac
 
 # Register to the TAC server
 register () {
-    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
          $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
@@ -45,7 +45,6 @@ register () {
 
 # Status to the TAC server
 status () {
-    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
          $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
@@ -55,19 +54,17 @@ status () {
 }
 
 captcha () {
-    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
          $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
          --request POST \
-         "${ROBERT_BASE_URL}/${ROBERT_VERSION}"/captcha
+         "${ROBERT_BASE_URL}/${CAPTCHA_ROBERT_VERSION}"/captcha
 }
 
 # Send a report to ROBERT
 # This will return a token that can be used
 # to authenticate TAC-W report requests
 report () {
-    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
          $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
@@ -78,7 +75,6 @@ report () {
 
 # Perform a TAC-warning status query
 wstatus () {
-    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
          $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
@@ -89,7 +85,6 @@ wstatus () {
 
 # Perform a TAC-warning visit report
 wreport () {
-    # TODO --no-progress-meter is not a valid option on OS X => use --silent instead
     curl -k --fail \
          $CURL_NO_PROGRESS_OPTION \
          --header "Content-Type: application/json" \
@@ -180,8 +175,8 @@ get_captcha(){
   echo "--Get captcha"
   if [ "1" = "$USE_CAPTCHA" ]; then
     captchaId=$(captcha  | jq -e ".id" -r)
-    echo "${ROBERT_BASE_URL}/${ROBERT_VERSION}/captcha/${captchaId}/image"
-    open "${ROBERT_BASE_URL}/${ROBERT_VERSION}/captcha/${captchaId}/image"
+    echo "${ROBERT_BASE_URL}/${CAPTCHA_ROBERT_VERSION}/captcha/${captchaId}/image"
+    open "${ROBERT_BASE_URL}/${CAPTCHA_ROBERT_VERSION}/captcha/${captchaId}/image"
     echo "Text of the captcha :"
     read captchaContent
   else
