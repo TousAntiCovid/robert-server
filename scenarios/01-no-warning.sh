@@ -34,7 +34,7 @@ stacy_visit1=$(createVisit "STATIC"  "$ERP1" "$stacy_visit_date")
 echo "----Hugo checks his status"
 hugo_visitTokens=$(createVisitTokens "$hugo_tk_list")
 hugo_first_check=$(wstatus "$hugo_visitTokens")
-test_status_at_risk "$hugo_first_check" "false"
+test_status_risk_level "$hugo_first_check" "0"
 
 # Stacy performs a COVID test that comes back positive.
 # The apps report to robert. Robert return a JWT used in the report to tac-warning
@@ -58,6 +58,6 @@ wreport "$jwt" "$(createVisits "$stacy_visit1")"
 # because the risk threshold has not been crossed.
 echo "----Later, Hugo performs another status check. It still comes back negative because the risk threshold has not been crossed."
 hugo_second_check=$(wstatus "$hugo_visitTokens")
-test_status_at_risk "$hugo_second_check" "false"
+test_status_risk_level "$hugo_second_check" "0"
 
 echo '----done!'
