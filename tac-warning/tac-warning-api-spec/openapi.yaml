@@ -58,8 +58,8 @@ paths:
                 $ref: "#/components/schemas/ReportResponse"
         "400":
           description: bad request
-        "401":
-          description: invalid authentication
+        "403":
+          description: forbidden
 servers:
   - url: https://yourtacwarningserver.org/v2
 components:
@@ -206,14 +206,20 @@ components:
             - REF
           example: "J"
         venueCategory:
-          type: string
+          type: integer
           enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+          enumNames:
             - CAT1
             - CAT2
             - CAT3
             - CAT4
             - CAT5
-          example: "CAT3"
+          example: CAT3
           description: "See issue #32 for resolution on type and content, https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351"
         venueCapacity:
           type: integer
