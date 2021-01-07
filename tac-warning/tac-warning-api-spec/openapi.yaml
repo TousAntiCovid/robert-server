@@ -204,6 +204,7 @@ components:
             - GA
             - OA
             - REF
+            - PEV
           example: "J"
         venueCategory:
           type: integer
