@@ -41,7 +41,6 @@ test_status_risk_level "$heather_first_check" "0"
 # She uploads her visit history to the server which hashes it
 # for better privacy
 echo "----Stephen performs a COVID test that comes back positive."
-#read qrcodeForReport
 qrcodeForReport=$(get_qrcode_from_user)
 reportJson=$(builtRoberReport "$qrcodeForReport")
 echo $reportJson
@@ -55,7 +54,6 @@ wreport "$jwt" "$(createVisits "$stephen_visit1")"
 # She uploads her visit history to the server which hashes it
 # for better privacy
 echo "----Serena performs a COVID test that comes back positive."
-#read qrcodeForReport
 qrcodeForReport=$(get_qrcode_from_user)
 reportJson=$(builtRoberReport "$qrcodeForReport")
 echo $reportJson
