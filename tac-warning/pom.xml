@@ -132,18 +132,23 @@
 		</profile>
 	</profiles>
 
-	<distributionManagement>
-		<repository>
-			<id>robert-repository</id>
-			<name>Releases</name>
-			<url>${nexusReleasesUrl}</url>
-		</repository>
-		<snapshotRepository>
-			<id>robert-repository</id>
-			<name>Snapshots</name>
-			<url>${nexusSnapshotsUrl}</url>
-		</snapshotRepository>
-	</distributionManagement>
+    <repositories>
+        <repository>
+            <id>gitlab-maven</id>
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>gitlab-maven</id>
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </repository>
+        <snapshotRepository>
+            <id>gitlab-maven</id>
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 
 	<scm>
 		<connection>scm:git:${gitRepositoryUrl}</connection>

@@ -14,330 +14,175 @@ stages:
   - docker
   - deploy
 
+.build_template:
+  stage: build
+  script:
+    # build all (for other phase such as docker) but skip tests
+    - cd $COMPONENT
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true -P swagger,logstash  package
+  artifacts:
+    paths:
+      - $COMPONENT/*/target/*.jar
+
+.test_template:
+  stage: test
+  script:
+    - cd $COMPONENT
+    - mvn $MAVEN_CLI_OPTS verify
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - "$COMPONENT/*/target/surefire-reports/TEST-*.xml"
+        - "$COMPONENT/*/target/failsafe-reports/TEST-*.xml"
+
+.docker_template:
+  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
+  stage: docker
+  tags:    
+    - docker_build 
+  script:
+    - cd $COMPONENT/$SUBCOMPONENT
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE/$SUBCOMPONENT:$CI_COMMIT_REF_SLUG -f src/main/docker/Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE/$SUBCOMPONENT:$CI_COMMIT_REF_SLUG
+
+.deploy_template:
+  stage: deploy
+  script:
+    - cd $COMPONENT
+    - VERSION=$(mvn --non-recursive help:evaluate -Dexpression=project.version -q -DforceStdout)
+    - mvn versions:set -DnewVersion=$VERSION-$CI_PIPELINE_IID -DprocessAllModules=true
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true  -DnexusReleasesUrl=$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven -DnexusSnapshotsUrl=$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven -s ../.gitlab-ci/ci_settings.xml deploy
+  only:
+    - develop
+    - master
+
 build_robert-server:
-  stage: build
-  script:
-    # build all (for other phase such as docker) but skip tests
-    - cd robert-server
-    - mvn $MAVEN_CLI_OPTS -DskipTests=true -P swagger,logstash  package
-  artifacts:
-    paths:
-      - robert-server/robert-server-ws-rest/target/*.jar
-      - robert-server/robert-crypto-grpc-server/target/*.jar
-  rules:
-    - when: always
-    
+  extends: .build_template
+  variables:
+    COMPONENT: "robert-server"
+
 build_tac-warning:
-  stage: build
-  script:
-    # build all (for other phase such as docker) but skip tests
-    - cd tac-warning
-    - mvn $MAVEN_CLI_OPTS -DskipTests=true -P swagger,logstash  package
-  artifacts:
-    paths:
-      - tac-warning/tac-warning-ws-rest/target/*.jar
-      - tac-warning/tac-warning-ws-rest/target/*.jar
-  rules:
-    - when: always
+  extends: .build_template
+  variables:
+    COMPONENT: "tac-warning"
 
 build_system_test:
-  stage: build
-  script:
-    # build all (for other phase such as integration test) but skip tests
-    - cd system-test
-    - mvn $MAVEN_CLI_OPTS -DskipTests=true package
-  artifacts:
-    paths:
-      - system_test/target/*.jar
-  rules:
-    - when: always
-    
+  extends: .build_template
+  variables:
+    COMPONENT: "system-test"
+
 build_robert-push-notif-server:
-  stage: build
-  script:
-    - cd robert-push-notif-server
-    # build all (for other phase such as docker) but skip tests
-    - mvn $MAVEN_CLI_OPTS -DskipTests=true package
-  artifacts:
-    paths:
-      - robert-push-notif-server/robert-push-notif-server-ws-rest/target/*.jar
-  rules:
-    - when: always
-    
+  extends: .build_template
+  variables:
+    COMPONENT: "robert-push-notif-server"
+
 build_submission-code-server:
-  stage: build
-  script:
-    - cd submission-code-server
-    # build all (for other phase such as docker) but skip tests
-    - mvn $MAVEN_CLI_OPTS -DskipTests=true package
-  artifacts:
-    paths:
-      - submission-code-server/submission-code-server-ws-rest/target/*.jar
-  rules:
-    - when: always
-
-
-test_report_tac-warning:
-  stage: test
-  script:
-    - cd tac-warning
-    - mvn $MAVEN_CLI_OPTS -P report org.jacoco:jacoco-maven-plugin:prepare-agent org.jacoco:jacoco-maven-plugin:prepare-agent-integration verify  jacoco:report-integration jacoco:report site
-  artifacts:
-    when: always
-    paths:
-      - tac-warning/target/site/**
-      - tac-warning/*/target/site/**
-    reports:
-      junit:
-        - "tac-warning/*/target/surefire-reports/TEST-*.xml"
-        - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
-      when: always
-    - when: never
-    
-test_report_robert-server:
-  stage: test
-  script:
-    - cd robert-server
-    - mvn $MAVEN_CLI_OPTS -P report org.jacoco:jacoco-maven-plugin:prepare-agent org.jacoco:jacoco-maven-plugin:prepare-agent-integration verify  jacoco:report-integration jacoco:report site
-  artifacts:
-    when: always
-    paths:
-      - robert-server/target/site/**
-      - robert-server/*/target/site/**
-    reports:
-      junit:
-        - "robert-server/*/target/surefire-reports/TEST-*.xml"
-        - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
-      when: always
-    - when: never
-
+  extends: .build_template
+  variables:
+    COMPONENT: "submission-code-server"
 
 test_tac-warning:
-  stage: test
-  script:
-    - cd tac-warning
-    - mvn $MAVEN_CLI_OPTS verify
-  artifacts:
-    when: always
-    reports:
-      junit:
-        - "tac-warning/*/target/surefire-reports/TEST-*.xml"
-        - "tac-warning/*/target/failsafe-reports/TEST-*.xml" 
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ /.*skip_ut.*/'
-      when: never
-    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
-      when: never
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      when: never
-    - when: on_success
-            
+  extends: .test_template
+  needs: ["build_tac-warning"]
+  variables:
+    COMPONENT: "tac-warning"
+
 test_robert-server:
-  stage: test
-  script:
-    - cd robert-server
-    - mvn $MAVEN_CLI_OPTS verify
-  artifacts:
-    when: always
-    reports:
-      junit:
-        - "robert-server/*/target/surefire-reports/TEST-*.xml"
-        - "robert-server/*/target/failsafe-reports/TEST-*.xml" 
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ /.*skip_ut.*/'
-      when: never
-    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
-      when: never
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      when: never
-    - when: on_success
- 
+  extends: .test_template
+  needs: ["build_robert-server"]
+  variables:
+    COMPONENT: "robert-server"
+  allow_failure: true
+
+test_robert-push-notif-server:
+  extends: .test_template
+  needs: ["build_robert-push-notif-server"]
+  variables:
+    COMPONENT: "robert-push-notif-server"
+
+test_submission-code-server:
+  extends: .test_template
+  needs: ["build_submission-code-server"]
+  variables:
+    COMPONENT: "submission-code-server"
+  allow_failure: true
+
 docker-robert-crypto-grpc-server:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
-  tags:    
-    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
   stage: docker
-  dependencies:
-    - build_robert-server
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH'
-      when: manual
-    - if: $CI_MERGE_REQUEST_ID
-      when: manual
+  tags:    
+    - docker_build 
+  needs: ["build_robert-server"]
   script:
-    - source .gitlab-ci/compute_extra_env.sh
     - cd robert-server/robert-crypto-grpc-server
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/hsm-tools 
-    - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:$DOCKER_TAG -f src/main/docker/Dockerfile .
-    - | 
-      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
-      then         
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:$DOCKER_TAG
-      else
-         echo not in a branch, do not push to registry
-      fi
-    
+    - docker build -t $CI_REGISTRY_IMAGE/robert-crypto-grpc-server:$CI_COMMIT_REF_SLUG -f src/main/docker/Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE/robert-crypto-grpc-server:$CI_COMMIT_REF_SLUG
+
 docker-robert-server-ws-rest:
-  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
-  tags:    
-    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
-  stage: docker
-  dependencies:
-    - build_robert-server
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH'
-      when: manual 
-    - if: $CI_MERGE_REQUEST_ID
-      when: manual
-  script:
-    - source .gitlab-ci/compute_extra_env.sh
-    - cd robert-server/robert-server-ws-rest
-    - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-server-ws-rest:$DOCKER_TAG -f src/main/docker/Dockerfile .
-    - echo $CI_COMMIT_BRANCH
-    - | 
-      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
-      then
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-server-ws-rest:$DOCKER_TAG
-      else
-         echo not in a branch, do not push to registry
-      fi  
-      
+  extends: .docker_template
+  needs: ["build_robert-server"]
+  variables:
+    COMPONENT: "robert-server"
+    SUBCOMPONENT: "robert-server-ws-rest"
+
 docker-tac-warning:
-  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
-  tags:    
-    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
-  stage: docker
-  dependencies:
-    - build_tac-warning
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH'
-      when: manual 
-    - if: $CI_MERGE_REQUEST_ID
-      when: manual
-  script:
-    - source .gitlab-ci/compute_extra_env.sh
-    - cd tac-warning/tac-warning-ws-rest
-    - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:$DOCKER_TAG -f src/main/docker/Dockerfile .
-    - | 
-      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
-      then 
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:$DOCKER_TAG
-      else
-         echo not in a branch, do not push to registry
-      fi
-      
+  extends: .docker_template
+  needs: ["build_tac-warning"]
+  variables:
+    COMPONENT: "tac-warning"
+    SUBCOMPONENT: "tac-warning-ws-rest"
+
 docker-robert-push-notif-server:
-  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
-  tags:    
-    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
-  stage: docker
-  dependencies:
-    - build_robert-push-notif-server 
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH'
-      when: manual 
-    - if: $CI_MERGE_REQUEST_ID
-      when: manual
-  script:
-    - source .gitlab-ci/compute_extra_env.sh
-    - cd robert-push-notif-server/robert-push-notif-server-ws-rest
-    - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-push-notif-server-ws-rest:$DOCKER_TAG -f src/main/docker/Dockerfile .
-    - | 
-      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
-      then 
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/robert-push-notif-server-ws-rest:$DOCKER_TAG
-      else
-         echo not in a branch, do not push to registry
-      fi 
-      
+  extends: .docker_template
+  needs: ["build_robert-push-notif-server"] 
+  variables:
+    COMPONENT: "robert-push-notif-server"
+    SUBCOMPONENT: "robert-push-notif-server-ws-rest"
+
 docker-submission-code-server:
-  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
-  tags:    
-    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
-  stage: docker
-  dependencies:
-    - build_submission-code-server
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH'
-      when: manual 
-    - if: $CI_MERGE_REQUEST_ID
-      when: manual
-  script:
-    - source .gitlab-ci/compute_extra_env.sh
-    - cd submission-code-server/submission-code-server-ws-rest
-    - docker login -u $DOCKER_IO_USER -p $DOCKER_IO_TOKEN
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:$DOCKER_TAG -f src/main/docker/Dockerfile .
-    - | 
-      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
-      then 
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:$DOCKER_TAG
-      else
-         echo not in a branch, do not push to registry
-      fi 
-      
-      
+  extends: .docker_template
+  needs: ["build_submission-code-server"]
+  variables:
+    COMPONENT: "submission-code-server"
+    SUBCOMPONENT: "submission-code-server-ws-rest"
+
 docker-captcha-orange-server:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
-  tags:    
-    - qlf-ci.inria.fr # required to to ensure https://gitlab.inria.fr/inria-ci/qlf-ci-gitlab-runner#building-and-pushing-docker-images
   stage: docker
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH'
-      when: manual 
-    - if: $CI_MERGE_REQUEST_ID
-      when: manual
+  needs: []
+  tags:    
+    - docker_build 
   script:
-    - source .gitlab-ci/compute_extra_env.sh
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/cicd/deploy_captcha-orange.git
     - cd deploy_captcha-orange
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:$DOCKER_TAG -f docker/Dockerfile .
-    - | 
-      if [[ ! $DOCKER_TAG = "ci-transient" ]] 
-      then 
-         docker push $CI_REGISTRY/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:$DOCKER_TAG
-      else
-          echo not in a branch, do not push to registry
-      fi 
-      
-pages:
-  image: busybox
-  stage: deploy
-  artifacts:
-    paths:
-      - public
-  script:
-    - mkdir public
-    - cp -r site/* public
-    - source .gitlab-ci/copy_site.sh
-  rules :
-    - if: '$CI_COMMIT_BRANCH =~ /.*_reporting/'
-      when: always
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      when: always
-    - when: never
-  
-      
+    - docker build -t $CI_REGISTRY_IMAGE/deploy-captcha-orange-rest:$CI_COMMIT_REF_SLUG -f docker/Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE/deploy-captcha-orange-rest:$CI_COMMIT_REF_SLUG
+
+deploy-robert-server:
+  extends: .deploy_template
+  needs: ["test_robert-server"]
+  variables:
+    COMPONENT: "robert-server"
+
+deploy-robert-push-notif-server:
+  extends: .deploy_template
+  needs: ["test_robert-push-notif-server"]
+  variables:
+    COMPONENT: "robert-push-notif-server"
+
+deploy-submission-code-server:
+  extends: .deploy_template
+  needs: ["test_submission-code-server"]
+  variables:
+    COMPONENT: "submission-code-server"
+
+deploy-tac-warning:
+  extends: .deploy_template
+  needs: ["test_tac-warning"]
+  variables:
+    COMPONENT: "tac-warning"
