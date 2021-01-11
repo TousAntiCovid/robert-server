@@ -9,10 +9,11 @@ import javax.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
+import fr.gouv.tacw.database.model.ScoreResult;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
 import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.OpaqueVisit;
-import fr.gouv.tacw.model.RiskLevel;
+import fr.gouv.tacw.model.ScoreResults;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.service.ExposedTokenGeneratorService;
 import fr.gouv.tacw.ws.service.WarningService;
@@ -36,20 +37,13 @@ public class WarningServiceImpl implements WarningService {
         this.exposedTokenGeneratorService = exposedTokenGeneratorService;
     }
 
-    public RiskLevel getStatus(Stream<OpaqueVisit> opaqueVisits) {
+    public ScoreResult getStatus(Stream<OpaqueVisit> opaqueVisits) {
         long currentTimestamp = TimeUtils.roundedCurrentTimeTimestamp();
-        boolean atRisk = opaqueVisits
+        ScoreResults scores = opaqueVisits
                 .filter(opaqueVisit -> this.isValidDelta(currentTimestamp - opaqueVisit.getVisitTime()))
-                .anyMatch(opaqueVisit -> {
-                    long score = this.exposedStaticVisitService.riskScore(opaqueVisit.getPayload(), opaqueVisit.getVisitTime());
-                    return score >= this.configuration.getScoreThreshold();
-                });
-        if (atRisk) {
-            // TODO refine the risk algo
-            return RiskLevel.TACW_HIGH;
-        } else {
-            return RiskLevel.NONE;
-        }
+                .map(opaqueVisit -> new ScoreResults(this.exposedStaticVisitService.riskScore(opaqueVisit.getPayload(), opaqueVisit.getVisitTime())))
+                .reduce(new ScoreResults(), (scores1, scores2) -> scores1.merge(scores2));
+        return scores.getScoreWithMaxRiskLevelReached(this.configuration.getScoreThreshold());
     }
 
 	@Transactional

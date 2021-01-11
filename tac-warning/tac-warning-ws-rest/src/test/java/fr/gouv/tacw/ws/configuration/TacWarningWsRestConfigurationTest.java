@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import fr.gouv.tacw.database.model.RiskLevel;
 import fr.gouv.tacw.ws.vo.VenueTypeVo;
 
 @ExtendWith(SpringExtension.class)
@@ -20,18 +21,28 @@ public class TacWarningWsRestConfigurationTest {
     TacWarningWsRestConfiguration configuration;
 
     @Test
-    public void testCanReadVenueTypePeopleThreshold() {
-        assertThat(configuration.getVenueTypePositiveCasesThreshold().size()).isEqualTo(3);
+    public void testCanReadVenues() {
+        assertThat(configuration.getVenues().size()).isEqualTo(4);
+    }
+
+    @Test
+    public void testCanReadDefaultVenueTypeRiskLevel() {
+        assertThat(configuration.getVenues().get("default").getRiskLevel()).isEqualTo(RiskLevel.LOW);
+    }
+
+    @Test
+    public void testCanReadSpecificVenueTypeRiskLevel() {
+        assertThat(configuration.getVenues().get(VenueTypeVo.L.toString()).getRiskLevel()).isEqualTo(RiskLevel.HIGH);
     }
 
     @Test
     public void testCanReadDefaultVenueTypePeopleThreshold() {
-        assertThat(configuration.getVenueTypePositiveCasesThreshold().get("default")).isEqualTo(2);
+        assertThat(configuration.getVenues().get("default").getPositiveCasesThreshold()).isEqualTo(2);
     }
 
     @Test
     public void testCanReadSpecificVenueTypePeopleThreshold() {
-        assertThat(configuration.getVenueTypePositiveCasesThreshold().get(VenueTypeVo.N.toString())).isEqualTo(1);
+        assertThat(configuration.getVenues().get(VenueTypeVo.N.toString()).getPositiveCasesThreshold()).isEqualTo(1);
     }
 
     @Test

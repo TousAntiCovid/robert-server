@@ -21,9 +21,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import fr.gouv.tacw.database.model.RiskLevel;
 import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
-import fr.gouv.tacw.model.RiskLevel;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
@@ -91,7 +91,7 @@ class TacWarningIntegrationTests {
                 ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.LOW);
     }
 
     @Test
@@ -122,7 +122,7 @@ class TacWarningIntegrationTests {
                 ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.LOW);
     }
 
     private void report(List<VisitVo> visits) {
@@ -142,8 +142,7 @@ class TacWarningIntegrationTests {
     }
 
     protected List<VisitVo>	buildExposedVisits(String venueToken, int nbVisits) {
-        return 
-                IntStream.rangeClosed(1, nbVisits)
+        return IntStream.rangeClosed(1, nbVisits)
                 .mapToObj( i -> this.buildExposedVisit(venueToken) )
                 .collect(Collectors.toList());
     }

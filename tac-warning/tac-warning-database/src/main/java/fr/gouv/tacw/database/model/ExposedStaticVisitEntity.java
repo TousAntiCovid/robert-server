@@ -2,7 +2,9 @@ package fr.gouv.tacw.database.model;
 
 import java.util.UUID;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
@@ -25,6 +27,10 @@ public class ExposedStaticVisitEntity {
 
     @NotNull
     private byte[] token;
+    
+    @Enumerated
+    @Column(columnDefinition = "smallint")
+    private RiskLevel venueRiskLevel;
 
     @NotNull
     private long visitStartTime;
@@ -49,10 +55,12 @@ public class ExposedStaticVisitEntity {
     @NotNull
     private long exposureCount;
 
-    public ExposedStaticVisitEntity(@NotNull byte[] token, @NotNull long visitStartTime, @NotNull long visitEndTime,
+    public ExposedStaticVisitEntity(@NotNull byte[] token, @NotNull RiskLevel venueRiskLevel, 
+            @NotNull long visitStartTime, @NotNull long visitEndTime,
             @NotNull int startDelta, @NotNull int endDelta, @NotNull long exposureCount) {
         super();
         this.token = token;
+        this.venueRiskLevel = venueRiskLevel;
         this.visitStartTime = visitStartTime;
         this.visitEndTime = visitEndTime;
         this.startDelta = startDelta;

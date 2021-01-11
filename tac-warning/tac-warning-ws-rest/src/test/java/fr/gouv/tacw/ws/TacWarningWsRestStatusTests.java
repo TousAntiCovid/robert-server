@@ -46,9 +46,10 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
+import fr.gouv.tacw.database.model.RiskLevel;
+import fr.gouv.tacw.database.model.ScoreResult;
 import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.OpaqueVisit;
-import fr.gouv.tacw.model.RiskLevel;
 import fr.gouv.tacw.ws.controller.TACWarningController;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
 import fr.gouv.tacw.ws.service.TestTimestampService;
@@ -95,17 +96,16 @@ class TacWarningWsRestStatusTests {
     private ListAppender<ILoggingEvent> tacWarningControllerLoggerAppender;
     private ListAppender<ILoggingEvent> badArgumentLoggerAppender;
 
-
     @Test
     public void testCanGetStatus() {
         ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
-        when(warningService.getStatus(any())).thenReturn(RiskLevel.TACW_HIGH);
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
 
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate
                 .postForEntity(pathPrefixV2 + UriConstants.STATUS, request, ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.HIGH);
         Instant instant = Instant.ofEpochSecond( Long.parseLong(response.getBody().getLastContactDate())
                 - TimeUtils.SECONDS_FROM_01_01_1900 );
         assertThat(instant).isBefore(Instant.now());
@@ -114,27 +114,27 @@ class TacWarningWsRestStatusTests {
     @Test
     public void testWhenStatusExposureResponseReceivedThenRiskLevelIsAnInt() throws JsonProcessingException, Exception {
         ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
-        when(warningService.getStatus(any())).thenReturn(RiskLevel.TACW_HIGH);
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
 
         mockMvc
-            .perform(post(pathPrefixV2 + UriConstants.STATUS)
+        .perform(post(pathPrefixV2 + UriConstants.STATUS)
                 .content(objectMapper.writeValueAsString(request))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.riskLevel", is(RiskLevel.TACW_HIGH.getValue())));
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.riskLevel", is(RiskLevel.HIGH.getValue())));
     }
 
     @Test
     public void testCanGetStatusWhenOneVisitHasBadFormat() throws JsonMappingException, JsonProcessingException {
         final String VISITS_WITH_ERROR_JSON = "{\"visitTokens\":[{\"type\":\"STATIC\",\"payload\":\"payload\",\"timestamp\":\"timestamp\"},{\"type\":\"FOO\",\"payload\":\"payload\",\"timestamp\":\"timestamp\"}]}";
         ExposureStatusRequestVo esr = objectMapper.readValue(VISITS_WITH_ERROR_JSON, ExposureStatusRequestVo.class);
-        when(warningService.getStatus(any())).thenReturn(RiskLevel.TACW_HIGH);
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
 
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate
                 .postForEntity(pathPrefixV2 + UriConstants.STATUS, esr, ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.HIGH);
         assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(2); // common log + filter
         ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(1);
         assertThat(log.getMessage()).contains(
@@ -146,7 +146,7 @@ class TacWarningWsRestStatusTests {
 
     @Test
     public void testCanGetStatusWhenVisitHasExtraField() throws JsonMappingException, JsonProcessingException {
-        when(warningService.getStatus(any())).thenReturn(RiskLevel.TACW_HIGH);
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
 
         String json = "{\n"
                 + "  \"visitTokens\" : [ {\n"
@@ -161,7 +161,7 @@ class TacWarningWsRestStatusTests {
                 ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.TACW_HIGH);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.HIGH);
     }
 
     @Test
@@ -222,6 +222,7 @@ class TacWarningWsRestStatusTests {
 
     @Test
     public void testWhenExposureStatusRequestWithNullTokenTypeThenVisitIsIgnored() {
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
         ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
         visitTokens.add(new VisitTokenVo(null, "payload", "123456789"));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
@@ -240,6 +241,7 @@ class TacWarningWsRestStatusTests {
 
     @Test
     public void testWhenExposureStatusRequestWithInvalidTokenTypeThenVisitIsIgnored() throws JSONException {
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
         String json = "{\n"
                 + "  \"visitTokens\" : [ {\n"
                 + "    \"type\" : \"UNKNOWN\",\n"
@@ -259,6 +261,7 @@ class TacWarningWsRestStatusTests {
 
     @Test
     public void testWhenExposureStatusRequestWithNullPayloadThenVisitIsIgnored() {
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
         ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
         visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, null, "123456789"));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
@@ -277,6 +280,7 @@ class TacWarningWsRestStatusTests {
 
     @Test
     public void testWhenExposureStatusRequestWithNullTimestampThenVisitIsIgnored() {
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
         ArrayList<VisitTokenVo> visitTokens = new ArrayList<VisitTokenVo>();
         visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, "payload", null));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);

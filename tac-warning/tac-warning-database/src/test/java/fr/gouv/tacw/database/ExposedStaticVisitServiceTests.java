@@ -2,9 +2,7 @@ package fr.gouv.tacw.database;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
+import fr.gouv.tacw.database.model.RiskLevel;
 import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
 import fr.gouv.tacw.database.utils.TimeUtils;
@@ -91,6 +90,6 @@ class ExposedStaticVisitServiceTests {
 		long visitStartTime = visitTime - startDelta;
 		long visitEndTime = visitTime + endDelta;
 		long exposureCount = 1;
-		return new ExposedStaticVisitEntity(DatatypeConverter.parseHexBinary(token), visitStartTime, visitEndTime, startDelta, endDelta, exposureCount);
+		return new ExposedStaticVisitEntity(DatatypeConverter.parseHexBinary(token), RiskLevel.HIGH, visitStartTime, visitEndTime, startDelta, endDelta, exposureCount);
 	}
 }

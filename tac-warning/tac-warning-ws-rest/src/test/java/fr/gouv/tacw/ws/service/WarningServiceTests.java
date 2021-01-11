@@ -7,7 +7,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -23,19 +26,19 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
+import fr.gouv.tacw.database.model.RiskLevel;
+import fr.gouv.tacw.database.model.ScoreResult;
 import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.service.ExposedStaticVisitService;
 import fr.gouv.tacw.database.service.ExposedStaticVisitServiceImpl;
+import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.OpaqueStaticVisit;
 import fr.gouv.tacw.model.OpaqueVisit;
-import fr.gouv.tacw.model.RiskLevel;
-import fr.gouv.tacw.service.ScoringService;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.service.impl.ExposedTokenGeneratorServiceImpl;
 import fr.gouv.tacw.ws.service.impl.ScoringServiceImpl;
 import fr.gouv.tacw.ws.service.impl.WarningServiceImpl;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
-import fr.gouv.tacw.ws.vo.ReportRequestVo;
 import fr.gouv.tacw.ws.vo.TokenTypeVo;
 import fr.gouv.tacw.ws.vo.VenueCategoryVo;
 import fr.gouv.tacw.ws.vo.VenueTypeVo;
@@ -79,7 +82,7 @@ public class WarningServiceTests {
         List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
         visits.add(new OpaqueStaticVisit("0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", timestampService.validTimestamp()));
 
-        assertThat(warningService.getStatus(visits.stream())).isEqualTo(RiskLevel.NONE);
+        assertThat(warningService.getStatus(visits.stream()).getRiskLevel()).isEqualTo(RiskLevel.NONE);
     }
 
     @Test
@@ -87,14 +90,58 @@ public class WarningServiceTests {
         String infectedToken = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
         long visitTime = timestampService.validTimestamp();
         long increment = scoringService.getScoreIncrement(VenueTypeVo.N);
-
-        when(exposedStaticVisitService.riskScore(infectedToken, visitTime)).thenReturn(increment);
         List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+
+        when(exposedStaticVisitService.riskScore(infectedToken, visitTime))
+            .thenReturn( Arrays.asList(new ScoreResult(RiskLevel.HIGH, increment, visitTime)) );
         visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
 
-        assertThat(warningService.getStatus(visits.stream())).isEqualTo(RiskLevel.TACW_HIGH);
+        assertThat(warningService.getStatus(visits.stream()).getRiskLevel()).isEqualTo(RiskLevel.HIGH);
+        assertThat(warningService.getStatus(visits.stream()).getLastContactDate()).isEqualTo(visitTime);
     }
 
+    @Test
+    public void testStatusWhenManyInfectedVisitsWithVariousRiskLevelsThenRiskLevelIsTheHighestRiskOverThreshold() {
+        String infectedTokenN = "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc";
+        String infectedTokenPEV = "FDJHFJDZTR7847UT5DU4DEJ8D38HSK99FLNDKHGFJDFIIUGQVNVUYRc";
+        long visitTime = timestampService.validTimestamp();
+        long incrementN = scoringService.getScoreIncrement(VenueTypeVo.N);
+        long incrementPEV = scoringService.getScoreIncrement(VenueTypeVo.PEV);
+        List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+
+        when(exposedStaticVisitService.riskScore(infectedTokenN, visitTime))
+            .thenReturn( Arrays.asList(new ScoreResult(RiskLevel.LOW, incrementN, visitTime)) );
+        when(exposedStaticVisitService.riskScore(infectedTokenPEV, visitTime))
+        .thenReturn( Arrays.asList(new ScoreResult(RiskLevel.HIGH, incrementPEV, visitTime)) );
+        IntStream.range(1, 200).forEach(i -> visits.add(new OpaqueStaticVisit(infectedTokenN, visitTime)));
+        visits.add(new OpaqueStaticVisit(infectedTokenPEV, visitTime));
+        
+        assertThat(warningService.getStatus(visits.stream()).getRiskLevel()).isEqualTo(RiskLevel.LOW);
+        assertThat(warningService.getStatus(visits.stream()).getLastContactDate()).isEqualTo(visitTime);
+    }
+    
+    @Test
+    public void testStatusWhenManyVisitsThenRiskLevelIsTheLastInfectedVisit() {
+        String infectedToken = "infected";
+        String healthyToken = "healthy";
+        long visitTimeInfected = timestampService.validTimestamp();
+        long visitTime = visitTimeInfected + TimeUtils.TIME_ROUNDING * 20;
+        long increment = scoringService.getScoreIncrement(VenueTypeVo.N);
+        List<OpaqueVisit> visits = new ArrayList<OpaqueVisit>();
+        
+        when(exposedStaticVisitService.riskScore(infectedToken, visitTimeInfected))
+            .thenReturn( Arrays.asList(new ScoreResult(RiskLevel.LOW, increment, visitTimeInfected)) );
+        when(exposedStaticVisitService.riskScore(healthyToken, visitTime))
+            .thenReturn( Collections.emptyList() );
+        visits.add(new OpaqueStaticVisit(infectedToken, visitTimeInfected - TimeUtils.TIME_ROUNDING * 96));
+        visits.add(new OpaqueStaticVisit(infectedToken, visitTimeInfected));
+        visits.add(new OpaqueStaticVisit(infectedToken, visitTimeInfected - TimeUtils.TIME_ROUNDING * 192 ));
+        visits.add(new OpaqueStaticVisit(healthyToken, visitTime));
+        
+        assertThat(warningService.getStatus(visits.stream()).getRiskLevel()).isEqualTo(RiskLevel.LOW);
+        assertThat(warningService.getStatus(visits.stream()).getLastContactDate()).isEqualTo(visitTimeInfected);
+    }
+    
     @Disabled("Temporary removed timestamp present/future checking")
     @Test
     public void testWhenStatusRequestWithVisitsHavingATimeInTheFutureThenVisitsAreFilteredOut() {
