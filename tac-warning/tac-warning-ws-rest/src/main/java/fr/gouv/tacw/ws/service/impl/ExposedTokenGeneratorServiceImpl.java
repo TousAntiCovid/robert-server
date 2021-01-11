@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
-import fr.gouv.tacw.service.ScoringService;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.service.ExposedTokenGeneratorService;
+import fr.gouv.tacw.ws.service.ScoringService;
 import fr.gouv.tacw.ws.vo.VisitVo;
 
 @Service

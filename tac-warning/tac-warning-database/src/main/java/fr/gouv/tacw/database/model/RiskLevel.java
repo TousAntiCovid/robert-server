@@ -1,13 +1,13 @@
-package fr.gouv.tacw.model;
+package fr.gouv.tacw.database.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum RiskLevel {
     NONE(0),
-    TACW_LOW(1),
-    ROBERT_LOW(2),
-    TACW_HIGH(3),
-    ROBERT_HIGH(4);
+    LOW(1),
+    MODERATE_LOW(2),
+    MODERATE_HIGH(3),
+    HIGH(4);
     
     private final int value;
 

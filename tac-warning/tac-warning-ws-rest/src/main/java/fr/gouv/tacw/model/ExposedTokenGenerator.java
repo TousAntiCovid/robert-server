@@ -8,9 +8,9 @@ import javax.xml.bind.DatatypeConverter;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
-import fr.gouv.tacw.service.ScoringService;
 import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
+import fr.gouv.tacw.ws.service.ScoringService;
 import fr.gouv.tacw.ws.vo.QRCodeVo;
 import fr.gouv.tacw.ws.vo.VisitVo;
 
@@ -40,6 +40,7 @@ public class ExposedTokenGenerator {
     protected ExposedStaticVisitEntity exposedStaticVisitEntityForSalt(int salt) {
         return new ExposedStaticVisitEntity(
 				DatatypeConverter.parseHexBinary(this.hash(salt)),
+				scoringService.getVenueRiskLevel(qrCode.getVenueType()),
                 this.startOfInterval(timestamp),
                 this.endOfInterval(timestamp), 
                 this.configuration.getStartDelta(),

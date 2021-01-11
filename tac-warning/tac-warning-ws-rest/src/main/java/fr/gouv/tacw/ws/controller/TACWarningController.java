@@ -2,7 +2,6 @@ package fr.gouv.tacw.ws.controller;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,7 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 
-import fr.gouv.tacw.database.utils.TimeUtils;
+import fr.gouv.tacw.database.model.ScoreResult;
 import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
@@ -91,8 +90,9 @@ public class TACWarningController {
 		}
 		Stream<OpaqueVisit> tokens = visits.stream()
 				.limit(this.configuration.getMaxVisits())
-				.map(tokenVo -> this.tokenMapper.getToken(tokenVo));		 
-        return new ExposureStatusResponseDto(this.warningService.getStatus(tokens), this.randomDateFromLastFiveDays());
+				.map(tokenVo -> this.tokenMapper.getToken(tokenVo));
+		ScoreResult score = this.warningService.getStatus(tokens);
+        return new ExposureStatusResponseDto(score.getRiskLevel(), Long.toString(score.getLastContactDate()));
     }
 
     @PostMapping(value = UriConstants.REPORT)
@@ -140,9 +140,4 @@ public class TACWarningController {
 	        }
 	    });
 	}
-
-    protected String randomDateFromLastFiveDays() {
-        int randomInt = new Random().ints(1,6).findFirst().getAsInt();
-        return String.valueOf(TimeUtils.roundedCurrentTimeTimestamp() - 86400 * randomInt);
-    }
 }

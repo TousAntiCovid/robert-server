@@ -1,6 +1,6 @@
 package fr.gouv.tacw.ws.dto;
 
-import fr.gouv.tacw.model.RiskLevel;
+import fr.gouv.tacw.database.model.RiskLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

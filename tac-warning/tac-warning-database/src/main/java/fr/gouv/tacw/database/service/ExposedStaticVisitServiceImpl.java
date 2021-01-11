@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import fr.gouv.tacw.database.TacWarningDatabaseConfiguration;
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
+import fr.gouv.tacw.database.model.ScoreResult;
 import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 import fr.gouv.tacw.database.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
     }
 
     @Override
-    public long riskScore(String token, long visitTime) {
+    public List<ScoreResult> riskScore(String token, long visitTime) {
         return exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(token), visitTime);
     }
 

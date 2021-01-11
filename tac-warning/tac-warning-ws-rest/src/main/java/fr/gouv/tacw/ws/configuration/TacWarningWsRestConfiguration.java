@@ -41,9 +41,9 @@ public class TacWarningWsRestConfiguration {
     @Min(value = 1)
     private int maxVisits;
 
-    /* The increment for a new Covid+ for a given venue category */
+    /* The configuration for a given venue category */
     @NotEmpty
-    private Map<String,Integer> venueTypePositiveCasesThreshold = new HashMap<String, Integer>();
+    private Map<String,VenueConfiguration> venues = new HashMap<String, VenueConfiguration>();
 
     /** 
      * If score is greater than threshold, reporter becomes at risk.
