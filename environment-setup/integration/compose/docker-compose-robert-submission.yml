@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  postgressubmission:
+    image: postgres:latest
+    networks:
+      - tac
+    environment:
+      - POSTGRES_PASSWORD=1234 
+      - POSTGRES_DB=dev-submission-code-server-schema
+      - POSTGRES_USER=postgres
+    deploy:
+      restart_policy:
+        condition: on-failure
+  submission-code-server-ws-rest:
+    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:${ROBERT_SUBMISSION_TAG}
+    container_name: submission-code-server-ws-rest
+    ports:
+      - "8087:8087"
+    volumes:
+      - ${PWD}/submission-code-server-ws-rest-config:/work/config
+      - ${PWD}/logs:/logs
+    deploy:
+      restart_policy:
+        condition: on-failure   
+    entrypoint: ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
+    networks:
+      - tac
+networks:
+  tac:
+    driver: bridge

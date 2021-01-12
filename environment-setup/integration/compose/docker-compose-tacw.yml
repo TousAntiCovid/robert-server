@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  postgreswarning:
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=robert
+      - POSTGRES_DB=warning
+      - POSTGRES_USER=robert-warning
+    networks:
+      - tac
+    deploy:
+      restart_policy:
+        condition: on-failure
+  robert-warning-ws-rest:
+    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:${TACW_TAG}
+    container_name: robert-warning-ws-rest
+    ports:
+      - "8088:8088"
+    volumes:
+      - ${PWD}/robert-warning-ws-rest-config:/work/config
+      - ${PWD}/logs:/logs
+    deploy:
+      restart_policy:
+        condition: on-failure
+    environment:
+     - ROBERT_JWT_PUBLIC_KEY=${ROBERT_JWT_PUBLIC_KEY}
+    entrypoint: ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
+    networks:
+      - tac
+networks:
+  tac:
+    driver: bridge

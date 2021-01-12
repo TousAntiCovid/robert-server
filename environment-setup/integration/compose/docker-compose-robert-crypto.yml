@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=robert 
+      - POSTGRES_DB=robert
+      - POSTGRES_USER=robert
+    networks:
+      - tac
+    deploy:
+      restart_policy:
+        condition: on-failure
+  robert-crypto-grpc-server:
+    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:${ROBERT_CRYPTO_TAG}
+    container_name: robert-crypto-grpc-server
+    ports:
+      - "9090:9090"
+    volumes:
+      - ${PWD}/robert-crypto-grpc-server-config:/work/config
+      - ${PWD}/logs:/logs
+    deploy:
+      restart_policy:
+        condition: on-failure
+    entrypoint: ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
+    networks:
+      - tac
+networks:
+  tac:
+    driver: bridge
