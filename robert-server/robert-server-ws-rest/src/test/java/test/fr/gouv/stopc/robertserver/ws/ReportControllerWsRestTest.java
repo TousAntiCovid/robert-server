@@ -67,6 +67,9 @@ public class ReportControllerWsRestTest {
     private String pathPrefixV3;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V4)
+    private String pathPrefixV4;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V5)
     private String pathPrefix;
 
 	@Value("${robert.server.disable-check-token}")
@@ -239,22 +242,28 @@ public class ReportControllerWsRestTest {
     /** Test the access for API V2, should not be used since API V3 */
     @Test
     public void testAccessV2() {
-        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REPORT).build().encode().toUri());
+        reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REPORT).build().encode().toUri());
     }
 
     /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
-        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REPORT).build().encode().toUri());
+        reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REPORT).build().encode().toUri());
     }
 
-    /** {@link #reportContactHistorySucceeds(URI)} and shortcut to test for API V4 exposure */
+    /** Test the access for API V4 with old DTO, should not be used since API V5. */
     @Test
-    public void testReportContactHistorySucceeds() {
-    	reportContactHistorySucceeds(this.targetUrl);
+    public void testAccessV4WithV3Dto() {
+        reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REPORT).build().encode().toUri());
+    }
+    
+    /** {@link #reportContactHistoryV2OrV3Succeeds(URI)} Test the access for API V5 with old DTO */
+    @Test
+    public void testReportContactHistorySucceedsWithV3Dto() {
+    	reportContactHistoryV2OrV3Succeeds(this.targetUrl);
     }
 
-    private void reportContactHistorySucceeds(URI targetUrl) {
+    private void reportContactHistoryV2OrV3Succeeds(URI targetUrl) {
         try {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
@@ -279,8 +288,19 @@ public class ReportControllerWsRestTest {
         }
     }
 
+    /** Test the access for API V4 with old DTO, should not be used since API V5. */
     @Test
-    public void testReportContactHistorySucceedsV4() {
+    public void testAccessV4() {
+        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REPORT).build().encode().toUri());
+    }
+    
+    /** {@link #reportContactHistorySucceeds(URI)} Test the access for API V5 */
+    @Test
+    public void testReportContactHistorySucceeds() {
+        reportContactHistorySucceeds(this.targetUrl);
+    }
+
+    public void reportContactHistorySucceeds(URI targetUrl) {
         try {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
