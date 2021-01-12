@@ -67,6 +67,9 @@ public class StatusControllerWsRestTest {
     private String pathPrefixV3;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V4)
+    private String pathPrefixV4;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V5)
     private String pathPrefix;
 
     @Value("${robert.server.status-request-minimum-epoch-gap}")
@@ -614,9 +617,15 @@ public class StatusControllerWsRestTest {
         statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.STATUS).build().encode().toUri());
     }
 
-    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V4 exposure */
+    /** Test the access for API V4, should not be used since API V5 */
     @Test
-    public void testStatusRequestAtRiskSucceedsV4() {
+    public void testAccessV4() {
+        statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.STATUS).build().encode().toUri());
+    }
+
+    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V5 exposure */
+    @Test
+    public void testStatusRequestAtRiskSucceedsV5() {
         statusRequestAtRiskSucceeds(this.targetUrl);
     }
 
