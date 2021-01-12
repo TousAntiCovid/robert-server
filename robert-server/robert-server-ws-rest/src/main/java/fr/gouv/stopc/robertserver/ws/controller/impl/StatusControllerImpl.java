@@ -82,24 +82,14 @@ public class StatusControllerImpl implements IStatusController {
 		GetIdFromStatusResponse response = validationResult.getResponse();
 
 		if (response.hasError()) {
-			// If there is an error but Id is provided, log error in DB
-			if (Objects.nonNull(response.getIdA())) {
-				Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
-				if (record.isPresent()) {
-					int currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
-					Registration registration = record.get();
-					registration.setLastFailedStatusRequestEpoch(currentEpoch);
-					registration.setLastFailedStatusRequestMessage(response.getError().getDescription());
-					this.registrationService.saveRegistration(registration);
-				}
-			}
+			logErrorInDatabaseIfIdIsProvided(response);
 			return ResponseEntity.badRequest().build();
 		}
 
 		Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
 		if (record.isPresent()) {
 			try {
-				Optional<ResponseEntity> responseEntity = validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
+				Optional<ResponseEntity<StatusResponseDto>> responseEntity = validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
 
 				if (responseEntity.isPresent()) {
 
@@ -122,8 +112,22 @@ public class StatusControllerImpl implements IStatusController {
 		}
 	}
 
+    protected void logErrorInDatabaseIfIdIsProvided(GetIdFromStatusResponse response) {
+        if (Objects.isNull(response.getIdA())) 
+            return;
+        
+    	Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
+        if (!record.isPresent()) 
+            return;
+        
+        int currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
+        Registration registration = record.get();
+        registration.setLastFailedStatusRequestEpoch(currentEpoch);
+        registration.setLastFailedStatusRequestMessage(response.getError().getDescription());
+        this.registrationService.saveRegistration(registration);
+    }
 
-	public Optional<ResponseEntity> validate(Registration record, int epoch, byte[] tuples) throws RobertServerException {
+	public Optional<ResponseEntity<StatusResponseDto>> validate(Registration record, int epoch, byte[] tuples) throws RobertServerException {
 		if (Objects.isNull(record)) {
 			return Optional.empty();
 		}
