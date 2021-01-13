@@ -2,8 +2,6 @@ version: "3.8"
 services:
   postgressubmission:
     image: postgres:latest
-    networks:
-      - tac
     environment:
       - POSTGRES_PASSWORD=1234 
       - POSTGRES_DB=dev-submission-code-server-schema
@@ -23,8 +21,7 @@ services:
       restart_policy:
         condition: on-failure   
     entrypoint: ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
-    networks:
-      - tac
 networks:
-  tac:
-    driver: bridge
+  default:
+    external:
+      name: ${TAC_DOCKER_COMPOSE_NETWORK}

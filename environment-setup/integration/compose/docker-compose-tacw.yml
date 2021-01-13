@@ -6,8 +6,6 @@ services:
       - POSTGRES_PASSWORD=robert
       - POSTGRES_DB=warning
       - POSTGRES_USER=robert-warning
-    networks:
-      - tac
     deploy:
       restart_policy:
         condition: on-failure
@@ -25,8 +23,7 @@ services:
     environment:
      - ROBERT_JWT_PUBLIC_KEY=${ROBERT_JWT_PUBLIC_KEY}
     entrypoint: ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
-    networks:
-      - tac
 networks:
-  tac:
-    driver: bridge
+  default:
+    external:
+      name: ${TAC_DOCKER_COMPOSE_NETWORK}

@@ -2,8 +2,6 @@ version: "3.8"
 services:
   mongo:
     image: mongo:latest
-    networks:
-      - tac
     deploy:
       restart_policy:
         condition: on-failure      
@@ -22,8 +20,7 @@ services:
       restart_policy:
         condition: on-failure
     entrypoint: ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
-    networks:
-      - tac
 networks:
-  tac:
-    driver: bridge
+  default:
+    external:
+      name: ${TAC_DOCKER_COMPOSE_NETWORK}

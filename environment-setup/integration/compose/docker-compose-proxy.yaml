@@ -29,8 +29,8 @@ services:
       - BLOCK_REFERRER=no
       - USE_DNSBL=no
 #       - FEATURE_POLICY= accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'none'; camera 'none'; display-capture 'none'; document-domain 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; payment 'none'; picture-in-picture 'none'; speaker 'none'; sync-xhr 'self'; usb 'none'; vibrate 'none'; vr 'none'
-    networks:
-      - tac
+
 networks:
-  tac:
-    driver: bridge
+  default:
+    external:
+      name: ${TAC_DOCKER_COMPOSE_NETWORK}

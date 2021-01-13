@@ -6,8 +6,6 @@ services:
       - POSTGRES_PASSWORD=robert
       - POSTGRES_DB=qr
       - POSTGRES_USER=robert
-    networks:
-      - tac
   captcha-orange-server:
     image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:latest
     container_name: captcha-orange-server
@@ -19,8 +17,8 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    networks:
-      - tac
 networks:
-  tac:
-    driver: bridge
+  default:
+    external:
+      name: ${TAC_DOCKER_COMPOSE_NETWORK}
+    
