@@ -216,7 +216,7 @@ integration_tests:
     - echo "TACW_BASE_URL=$TACW_BASE_URL" >> src/test/resources/config.properties
     - echo "SALT_RANGE=1000" >> src/test/resources/config.properties
     - echo "TIME_ROUNDING=900" >> src/test/resources/config.properties
-    - echo "TACW_VERSION=v1" >> src/test/resources/config.properties
+    - echo "TACW_VERSION=v2" >> src/test/resources/config.properties
     - echo "" >> src/test/resources/config.properties
     - cat src/test/resources/config.properties
     - echo $PWD
