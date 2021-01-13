@@ -192,6 +192,8 @@ integration_tests:
     - echo "ROBERT_SERVER_TAG=$DOCKER_TAG" >> .env.local
     - echo "ROBERT_PUSH_TAG=$DOCKER_TAG" >> .env.local
     - echo "TACW_TAG=$DOCKER_TAG" >> .env.local
+    - echo "AUTO_LETS_ENCRYPT=no" >> .env.local
+    - echo "REDIRECT_HTTP_TO_HTTPS=no" >> .env.local
     - echo "ROBERT_JWT_PRIVATE_KEY=${CI_ROBERT_JWT_PRIVATE_KEY}" >> .env.local
     - echo "ROBERT_JWT_PUBLIC_KEY=${CI_ROBERT_JWT_PUBLIC_KEY}" >> .env.local
     - cat .env.local 
