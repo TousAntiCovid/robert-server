@@ -4,8 +4,8 @@ Feature: One healthy visitor visits a single place simultaneously to two sick vi
   Background:
     Given "Hugo" registered on TAC
     Given "Stephanie" registered on TAC
-    Given "Chez Gusto" created a static QRCode "LunchService" as a "restaurant" with a capacity of 20 and category "CAT1"
-    Given "Chez Gusto" created a static QRCode "DinerService" as a "restaurant" with a capacity of 20 and category "CAT1"
+    Given "Chez Gusto" created a static QRCode "LunchService" as a "restaurant" with a capacity of 20 and category "NUMBER_1"
+    Given "Chez Gusto" created a static QRCode "DinerService" as a "restaurant" with a capacity of 20 and category "NUMBER_1"
     
   Scenario: hugo meets stephanie and Stephen
     Given "Hugo" recorded a visit to "Chez Gusto" at "12:30, 2 days ago" with static QRCode "LunchService"
@@ -16,7 +16,7 @@ Feature: One healthy visitor visits a single place simultaneously to two sick vi
     Given "Stephen" scanned covid positive QRCode
     Given "Stephen" reported to TACWarning a valid covid19 positive QRCode
     When "Hugo" asks for exposure status
-    Then Exposure status should reports "Hugo" as being at risk
+    Then Exposure status should reports "Hugo" as being at high level risk
   
 #  Scenario:
 #    Given "Hugo" recorded a visit to "Chez Gusto" at 12:30, 2 days ago with static QRCode "LunchService"

@@ -1,24 +1,16 @@
 package fr.gouv.tac.systemtest.stepdefinitions;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Objects;
-
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import fr.gouv.tac.systemtest.ScenarioAppContext;
-import fr.gouv.tac.tacwarning.ApiException;
-import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
-import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
-import fr.gouv.tac.tacwarning.model.ReportRequest;
-import fr.gouv.tac.tacwarning.model.VisitToken;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.util.Objects;
+
+import static org.junit.Assert.assertEquals;
 
 public class VisitorTACWarningServerStepDefinitions {
 
@@ -44,12 +36,18 @@ public class VisitorTACWarningServerStepDefinitions {
 
 	@Then("Exposure status should reports {string} as not being at risk")
 	public void status_should_reports_as_not_being_at_risk(String user) {
-		assertFalse(scenarioAppContext.getOrCreateVisitor(user).getLastExposureStatusResponse().getAtRisk());
+		assertEquals(RiskLevel.NONE.getValue(),scenarioAppContext.getOrCreateVisitor(user).getLastExposureStatusResponse().getRiskLevel());
 	}
 	
-	@Then("Exposure status should reports {string} as being at risk")
-	public void exposure_status_should_reports_as_being_at_risk(String user) {
-		assertTrue(scenarioAppContext.getOrCreateVisitor(user).getLastExposureStatusResponse().getAtRisk());
+	@Then("Exposure status should reports {string} as being at high level risk")
+	public void exposure_status_should_reports_as_being_at_high_level_risk(String user) {
+		assertEquals(RiskLevel.HIGH.getValue(), scenarioAppContext.getOrCreateVisitor(user).getLastExposureStatusResponse().getRiskLevel() );
+	}
+
+
+	@Then("Exposure status should reports {string} as being at low level risk")
+	public void exposure_status_should_reports_as_being_at_low_level_risk(String user) {
+		assertEquals(RiskLevel.LOW.getValue(), scenarioAppContext.getOrCreateVisitor(user).getLastExposureStatusResponse().getRiskLevel() );
 	}
 
 }

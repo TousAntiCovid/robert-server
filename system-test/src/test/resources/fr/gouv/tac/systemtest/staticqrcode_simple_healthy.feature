@@ -6,10 +6,10 @@ Feature: Several healthy visitors visit differents places
   Background:
     Given "Hugo" registered on TAC
     Given "Heather" registered on TAC
-    Given "Chez Gusto" created a static QRCode "LunchService" as a "restaurant" with a capacity of 20 and category "CAT1"
-    Given "Chez Gusto" created a static QRCode "DinerService" as a "restaurant" with a capacity of 20 and category "CAT1"
-    Given "La fontaine aux perles" created a static QRCode "LunchService" as a "restaurant" with a capacity of 20 and category "CAT1"
-    Given "La fontaine aux perles" created a static QRCode "DinerService" as a "restaurant" with a capacity of 20 and category "CAT1"
+    Given "Chez Gusto" created a static QRCode "LunchService" as a "restaurant" with a capacity of 20 and category "NUMBER_1"
+    Given "Chez Gusto" created a static QRCode "DinerService" as a "restaurant" with a capacity of 20 and category "NUMBER_1"
+    Given "La fontaine aux perles" created a static QRCode "LunchService" as a "restaurant" with a capacity of 20 and category "NUMBER_1"
+    Given "La fontaine aux perles" created a static QRCode "DinerService" as a "restaurant" with a capacity of 20 and category "NUMBER_1"
     
   Scenario: One healthy visitor alone
     Given "Hugo" recorded a visit to "Chez Gusto" at "12:30, 2 days ago" with static QRCode "LunchService"

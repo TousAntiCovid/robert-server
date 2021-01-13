@@ -39,7 +39,7 @@ public class Place {
 		qrCode.setType(TypeEnum.STATIC);
 		qrCode.setVenueType(QRCode.VenueTypeEnum.N);
 		qrCode.setVenueCapacity(20);
-		qrCode.setVenueCategory(QRCode.VenueCategoryEnum.CAT1);
+		qrCode.setVenueCategory(QRCode.VenueCategoryEnum.NUMBER_1);
 
 		staticQRCodeMap.put(qrcodeId, qrCode);
 	}

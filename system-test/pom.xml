@@ -48,7 +48,7 @@
 						</goals>
 						<phase>generate-sources</phase>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi.yml</inputSpec>
+							<inputSpec>${project.basedir}/../tac-warning/tac-warning-api-spec/openapi.yaml</inputSpec>
 							<output>${project.basedir}/src-gen</output>
 							<generateSupportingFiles>true</generateSupportingFiles>
 							<generatorName>java</generatorName>
@@ -63,7 +63,7 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/robert-openapi.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/../robert-server/robert-api-spec/openapi.yaml</inputSpec>
                             <output>${project.basedir}/src-gen</output>
                             <generateSupportingFiles>true</generateSupportingFiles>
                             <generatorName>java</generatorName>
