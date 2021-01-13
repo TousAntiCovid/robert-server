@@ -24,6 +24,7 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IStatusController;
 import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
+import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
@@ -179,19 +180,19 @@ public class StatusControllerImpl implements IStatusController {
 		        currentEpoch);
 
 		// Step #2: Risk and score were processed during batch, simple lookup
-		boolean atRisk = record.isAtRisk();
+		RiskLevel riskLevel = record.isAtRisk() ? RiskLevel.HIGH : RiskLevel.NONE;
 
 		// Step #3: Set UserNotified to true if at risk
 		// If was never notified and batch flagged a risk, notify
 		// and remember last exposed epoch as new starting point for subsequent risk notifications
 	    // The status atRisk will be reinitialized by the batch
-		if (atRisk) {
+		if (riskLevel != RiskLevel.NONE) {
 			record.setNotified(true);
 		}
 
 		// Include new EBIDs and ECCs for next M epochs
 		StatusResponseDto statusResponse = StatusResponseDto.builder()
-				.atRisk(atRisk)
+				.riskLevel(riskLevel)
 				.config(getClientConfig())
 				.tuples(Base64.encode(tuples))
 				.build();
