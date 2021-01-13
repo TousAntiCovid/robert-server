@@ -129,9 +129,9 @@ public class Visitor {
 		this.lastTACWarningReportResponse = lastTACWarningReportResponse;
 	}
 
-	public Boolean sendTacWarningStatus(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
+	public Integer sendTacWarningStatus(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
 		logger.debug(this.name+".sendTacWarningStatus");
-        Boolean outcome = null;
+        Integer outcome = null;
         ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
         for (VisitToken token : tokens) {
             exposureStatusRequest.addVisitTokensItem(token);
@@ -139,8 +139,8 @@ public class Visitor {
         try {
             ExposureStatusResponse result = apiInstance.eSR(exposureStatusRequest);
             this.setLastExposureStatusResponse(result);
-            outcome = result.getAtRisk();
-            logger.debug("#### sendTacWarningStatus atRisk="+result.getAtRisk().toString());
+            outcome = result.getRiskLevel();
+            logger.debug("#### sendTacWarningStatus atRisk="+result.getRiskLevel().toString());
         } catch (ApiException e) {
         	logger.error(e.getMessage(), e);
         }
@@ -161,7 +161,7 @@ public class Visitor {
             ReportBatchResponse reportBatchResponse = apiInstance.reportBatch(reportBatchRequest);
             String message = reportBatchResponse.getMessage();
             outcome = reportBatchResponse.getSuccess();
-            this.setJwt(reportBatchResponse.getToken());
+            this.setJwt(reportBatchResponse.getReportValidationToken());
         } catch (fr.gouv.tac.robert.ApiException e) {
         	logger.error("Exception when calling RobertDefaultApi#reportBatch", e);
         	logger.error("Status code: " + e.getCode());
