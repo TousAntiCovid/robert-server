@@ -61,7 +61,7 @@ public class DummyMain4Tests {
 	    //When "Hugo" asks for exposure status
 		visitorTACWarningSD.asks_for_exposure_status("Hugo");
 	    //Then Exposure status should reports "Hugo" as being at risk
-		logger.info(scenarioAppContext.getOrCreateVisitor("Hugo").getLastExposureStatusResponse().getAtRisk().toString());
+		logger.info(scenarioAppContext.getOrCreateVisitor("Hugo").getLastExposureStatusResponse().getRiskLevel().toString());
 		
 //		System.out.println("user_registered_on_tac");
 //		visitorRobertSD.user_registered_on_tac("Steffen");

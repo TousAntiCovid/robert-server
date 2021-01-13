@@ -214,13 +214,7 @@ components:
             - 3
             - 4
             - 5
-          enumNames:
-            - CAT1
-            - CAT2
-            - CAT3
-            - CAT4
-            - CAT5
-          example: CAT3
+          example: 2
           description: "See issue #32 for resolution on type and content, https://www.service-public.fr/professionnels-entreprises/vosdroits/F32351"
         venueCapacity:
           type: integer

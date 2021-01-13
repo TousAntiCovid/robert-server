@@ -1,5 +1,6 @@
 package fr.gouv.tac.systemtest;
 
+import fr.gouv.tac.systemtest.stepdefinitions.RiskLevel;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -64,10 +65,10 @@ public class StepDefinitions {
 
     }
 
-    @Then("Covid- person status from TAC-W is false")
-    public void covid_person_status_from_tac_w_is_false() {
+    @Then("Covid- person status from TAC-W is not at risk")
+    public void covid_person_status_from_tac_w_is_not_at_risk() {
       for (Visitor visitor : visitors.getList()){
-          assertFalse(visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
+          assertEquals(RiskLevel.NONE.getValue(), visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
       }
     }
 
@@ -80,10 +81,10 @@ public class StepDefinitions {
         	}
         }
     }
-    @Then("Covid- person status from TAC-W is true")
-    public void covid_person_status_from_tac_w_is_true() {
+    @Then("Covid- person status from TAC-W is at high level risk")
+    public void covid_person_status_from_tac_w_is_at_high_level_risk() {
         for (Visitor visitor : visitors.getList()){
-                assertTrue(visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
+                assertEquals(RiskLevel.HIGH.getValue(), visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
         }
     }
 
