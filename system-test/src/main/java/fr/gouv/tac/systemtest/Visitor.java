@@ -162,11 +162,15 @@ public class Visitor {
             String message = reportBatchResponse.getMessage();
             outcome = reportBatchResponse.getSuccess();
             this.setJwt(reportBatchResponse.getReportValidationToken());
+            if(reportBatchResponse.getReportValidationToken() == null) {
+            	logger.warn("Robert reportBatch returned a null JWT ReportValidationToken. \n"+reportBatchResponse.toString());
+            }
         } catch (fr.gouv.tac.robert.ApiException e) {
         	logger.error("Exception when calling RobertDefaultApi#reportBatch", e);
         	logger.error("Status code: " + e.getCode());
         	logger.error("Reason: " + e.getResponseBody());
         	logger.error("Response headers: " + e.getResponseHeaders());
+        	logger.error("Request was:\n"+reportBatchRequest.toString());
         }
         return outcome;
     }
@@ -187,7 +191,13 @@ public class Visitor {
     	logger.debug(this.name + ".sendTacWarningReport");
         Boolean outcome = null;
         ReportRequest reportRequest = new fr.gouv.tac.tacwarning.model.ReportRequest();
-        ((HttpBearerAuth)(apiInstance.getApiClient().getAuthentication("bearerAuth"))).setBearerToken(this.jwt);
+        if(this.jwt == null) {
+        	logger.warn("JWT token is null, cannot corectly authenticate TAC Warning Report request");
+        	logger.warn("Sending empty string as bearerAuth");
+        	((HttpBearerAuth)(apiInstance.getApiClient().getAuthentication("bearerAuth"))).setBearerToken("");
+        } else {
+        	((HttpBearerAuth)(apiInstance.getApiClient().getAuthentication("bearerAuth"))).setBearerToken(this.jwt);
+        }
         for (Visit visit : visitList) {
             reportRequest.addVisitsItem(visit);
         }
@@ -200,6 +210,7 @@ public class Visitor {
         	logger.error("Status code: " + e.getCode());
         	logger.error("Reason: " + e.getResponseBody());
         	logger.error("Response headers: " + e.getResponseHeaders());
+        	logger.error("Request was:\n"+reportRequest.toString());
         }
         return outcome;
     }
