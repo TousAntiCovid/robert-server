@@ -24,7 +24,5 @@ public class StatusResponseDto {
     @Singular("config")
     private List<ClientConfigDto> config;
 
-    private long lastExposureTimeframe;
-
     private String message;
 }
