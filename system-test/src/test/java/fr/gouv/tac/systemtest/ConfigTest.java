@@ -10,7 +10,7 @@ public class ConfigTest {
 
     @Test
     public void getPropertyTest() {
-        assertEquals(Config.getProperty("SALT_RANGE"),"2");
+        assertEquals(Config.getProperty("SALT_RANGE"),"1000");
     }
 
 }

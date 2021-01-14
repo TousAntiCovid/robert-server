@@ -1,111 +1,120 @@
 package fr.gouv.tac.systemtest;
 
-import fr.gouv.tac.tacwarning.auth.HttpBearerAuth;
-import fr.gouv.tac.robert.model.*;
-import fr.gouv.tac.tacwarning.ApiException;
-import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
-import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
-import fr.gouv.tac.tacwarning.model.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import fr.gouv.tac.robert.model.Contact;
+import fr.gouv.tac.robert.model.PushInfo;
+import fr.gouv.tac.robert.model.RegisterRequest;
+import fr.gouv.tac.robert.model.RegisterSuccessResponse;
+import fr.gouv.tac.robert.model.ReportBatchResponse;
+import fr.gouv.tac.tacwarning.ApiException;
+import fr.gouv.tac.tacwarning.auth.HttpBearerAuth;
+import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
+import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
+import fr.gouv.tac.tacwarning.model.QRCode;
+import fr.gouv.tac.tacwarning.model.ReportRequest;
+import fr.gouv.tac.tacwarning.model.ReportResponse;
+import fr.gouv.tac.tacwarning.model.Visit;
+import fr.gouv.tac.tacwarning.model.VisitToken;
 
 /**
- * This class represents a view of a visitor device (phone)
- * it modelizes its status  (scanned QRCodes, robert status, ...)   in order to capture steps state changes.
+ * This class represents a view of a visitor device (phone) it modelizes its
+ * status (scanned QRCodes, robert status, ...) in order to capture steps state
+ * changes.
  */
 public class Visitor {
 
 	private static Logger logger = LoggerFactory.getLogger(Visitor.class);
-	
-    private static final int MAX_SALT = 1000;
-    private static Random random = new Random();
-    private String name = "";
-    private List<Visit> visitList = new ArrayList<Visit>();
-    private List<VisitToken> tokens = new ArrayList<VisitToken>();
-    private fr.gouv.tac.robert.model.RegisterRequest registerRequest = null;
-    
-    private RegisterSuccessResponse lastRegisterSuccessResponse = null;
-    private ExposureStatusResponse lastExposureStatusResponse = null;
-    private ReportResponse lastTACWarningReportResponse = null;
 
-    private Boolean covidStatus = false;
+	private static final int MAX_SALT = 1000;
+	private static Random random = new Random();
+	private String name = "";
+	private List<Visit> visitList = new ArrayList<Visit>();
+	private List<VisitToken> tokens = new ArrayList<VisitToken>();
+	private fr.gouv.tac.robert.model.RegisterRequest registerRequest = null;
 
+	private RegisterSuccessResponse lastRegisterSuccessResponse = null;
+	private ExposureStatusResponse lastExposureStatusResponse = null;
+	private ReportResponse lastTACWarningReportResponse = null;
 
+	private Boolean covidStatus = false;
 
-    private String outcome ;
-    private String jwt;
+	private String outcome;
+	private String jwt;
 
-    public List<VisitToken> getTokens() {
-        return this.tokens;
-    }
+	public List<VisitToken> getTokens() {
+		return this.tokens;
+	}
 
-    public void setTokens(List<VisitToken> tokens) {
-        this.tokens = tokens;
-    }
-
+	public void setTokens(List<VisitToken> tokens) {
+		this.tokens = tokens;
+	}
 
 	public Visitor() {
-    }
+	}
 
-    public Visitor(String name, String place, String time, String status) {
-        this.name = name;
+	public Visitor(String name, String place, String time, String status) {
+		this.name = name;
 
-        Visit visit = new MyVisit(place);
-        Long time2 = new PrettyTimeParser().parse(time).get(0).getTime();
-        visit.setTimestamp(Long.toString(time2));
+		Visit visit = new MyVisit(place);
+		Long time2 = new PrettyTimeParser().parse(time).get(0).getTime();
+		visit.setTimestamp(Long.toString(time2));
 
-    }
+	}
 
-    public void addVisit(QRCode qrCode, Long timestamp) {
-        Visit visit = new MyVisit("unknown");
-        visit.setTimestamp(Long.toString(timestamp));
-        visit.setQrCode(qrCode);
-        this.visitList.add(visit);
-        VisitToken visitToken = new VisitToken();
-        visitToken.setType(VisitToken.TypeEnum.STATIC);
-        visitToken.setPayload(DigestUtils.sha256Hex(random.nextInt(MAX_SALT) + qrCode.getUuid()).toString());
-        visitToken.setTimestamp(visit.getTimestamp());
-        this.tokens.add(visitToken);
-    }
+	public void addVisit(QRCode qrCode, Long timestamp) {
+		Visit visit = new MyVisit("unknown");
+		visit.setTimestamp(Long.toString(timestamp));
+		visit.setQrCode(qrCode);
+		this.visitList.add(visit);
+		VisitToken visitToken = new VisitToken();
+		visitToken.setType(VisitToken.TypeEnum.STATIC);
+		visitToken.setPayload(DigestUtils.sha256Hex(random.nextInt(MAX_SALT) + qrCode.getUuid()).toString());
+		visitToken.setTimestamp(visit.getTimestamp());
+		this.tokens.add(visitToken);
+	}
 
-    public void addMultipleVisit(QRCode qrCode, List<Long> list) {
-        for (Long temp : list) {
-            //          addVisit(qrCode,temp);
-        }
-    }
+	public void addMultipleVisit(QRCode qrCode, List<Long> list) {
+		for (Long temp : list) {
+			// addVisit(qrCode,temp);
+		}
+	}
 
-    public Visitor(String name) {
-        this.setName(name);
-    }
+	public Visitor(String name) {
+		this.setName(name);
+	}
 
-    public String getName() {
-        return this.name;
-    }
+	public String getName() {
+		return this.name;
+	}
 
-    public void setName(final String name) {
-        this.name = name;
-    }
+	public void setName(final String name) {
+		this.name = name;
+	}
 
-    public Boolean getCovidStatus() {
-        return this.covidStatus;
-    }
-    public void setCovidStatus(final String covidStatus) {
-        if (covidStatus.equals("positive"))
-            this.covidStatus = true;
-        else
-            this.covidStatus = false;
-    }
-    public void setCovidStatus(final Boolean covidStatus) {
-        this.covidStatus = covidStatus;
-    }
+	public Boolean getCovidStatus() {
+		return this.covidStatus;
+	}
 
-    public RegisterSuccessResponse getLastRegisterSuccessResponse() {
+	public void setCovidStatus(final String covidStatus) {
+		if (covidStatus.equals("positive"))
+			this.covidStatus = true;
+		else
+			this.covidStatus = false;
+	}
+
+	public void setCovidStatus(final Boolean covidStatus) {
+		this.covidStatus = covidStatus;
+	}
+
+	public RegisterSuccessResponse getLastRegisterSuccessResponse() {
 		return lastRegisterSuccessResponse;
 	}
 
@@ -130,106 +139,114 @@ public class Visitor {
 	}
 
 	public Integer sendTacWarningStatus(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
-		logger.debug(this.name+".sendTacWarningStatus");
-        Integer outcome = null;
-        ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
-        for (VisitToken token : tokens) {
-            exposureStatusRequest.addVisitTokensItem(token);
-        }
-        try {
-            ExposureStatusResponse result = apiInstance.eSR(exposureStatusRequest);
-            this.setLastExposureStatusResponse(result);
-            outcome = result.getRiskLevel();
-            logger.debug("#### sendTacWarningStatus atRisk="+result.getRiskLevel().toString());
-        } catch (ApiException e) {
-        	logger.error(e.getMessage(), e);
-        }
-        return outcome;
-    }
-	
+		logger.debug(this.name + ".sendTacWarningStatus");
+		Integer outcome = null;
+		ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
+		for (VisitToken token : tokens) {
+			exposureStatusRequest.addVisitTokensItem(token);
+		}
+		try {
+			ExposureStatusResponse result = apiInstance.eSR(exposureStatusRequest);
+			this.setLastExposureStatusResponse(result);
+			outcome = result.getRiskLevel();
+			logger.debug("#### sendTacWarningStatus atRisk=" + result.getRiskLevel().toString());
+		} catch (ApiException e) {
+			logger.error(e.getMessage(), e);
+		}
+		return outcome;
+	}
 
-    public Boolean sendRobertReportBatch(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
-		logger.debug(this.name+".sendRobertReportBatch");
-        Boolean outcome = null;
-        fr.gouv.tac.robert.model.
-        ReportBatchRequest reportBatchRequest = new fr.gouv.tac.robert.model.ReportBatchRequest();
-        reportBatchRequest.token("string");
-        List<Contact> contacts = new ArrayList<Contact>();
-        reportBatchRequest.setContacts(contacts);
-        // TODO add natural language cucumber API to define Bluetooth contacts
-        try {
-            ReportBatchResponse reportBatchResponse = apiInstance.reportBatch(reportBatchRequest);
-            String message = reportBatchResponse.getMessage();
-            outcome = reportBatchResponse.getSuccess();
-            this.setJwt(reportBatchResponse.getReportValidationToken());
-        } catch (fr.gouv.tac.robert.ApiException e) {
-        	logger.error("Exception when calling RobertDefaultApi#reportBatch", e);
-        	logger.error("Status code: " + e.getCode());
-        	logger.error("Reason: " + e.getResponseBody());
-        	logger.error("Response headers: " + e.getResponseHeaders());
-        }
-        return outcome;
-    }
+	public Boolean sendRobertReportBatch(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
+		logger.debug(this.name + ".sendRobertReportBatch");
+		Boolean outcome = null;
+		fr.gouv.tac.robert.model.ReportBatchRequest reportBatchRequest = new fr.gouv.tac.robert.model.ReportBatchRequest();
+		reportBatchRequest.token("string");
+		List<Contact> contacts = new ArrayList<Contact>();
+		reportBatchRequest.setContacts(contacts);
+		// TODO add natural language cucumber API to define Bluetooth contacts
+		try {
+			ReportBatchResponse reportBatchResponse = apiInstance.reportBatch(reportBatchRequest);
+			String message = reportBatchResponse.getMessage();
+			outcome = reportBatchResponse.getSuccess();
+			this.setJwt(reportBatchResponse.getReportValidationToken());
+			if (reportBatchResponse.getReportValidationToken() == null) {
+				logger.warn("Robert reportBatch returned a null JWT ReportValidationToken. \n"
+						+ reportBatchResponse.toString());
+			}
+		} catch (fr.gouv.tac.robert.ApiException e) {
+			logger.error("Exception when calling RobertDefaultApi#reportBatch", e);
+			logger.error("Status code: " + e.getCode());
+			logger.error("Reason: " + e.getResponseBody());
+			logger.error("Response headers: " + e.getResponseHeaders());
+			logger.error("Request was:\n" + reportBatchRequest.toString());
+		}
+		return outcome;
+	}
 
-    private void setJwt(String token) {
-        jwt = token;
-    }
+	private void setJwt(String token) {
+		jwt = token;
+	}
 
-    public String getOutcome() {
-        return this.outcome;
-    }
+	public String getOutcome() {
+		return this.outcome;
+	}
 
-    public void setOutcome(final String outcome) {
-        this.outcome = outcome;
-    }
+	public void setOutcome(final String outcome) {
+		this.outcome = outcome;
+	}
 
-    public Boolean sendTacWarningReport(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
-    	logger.debug(this.name + ".sendTacWarningReport");
-        Boolean outcome = null;
-        ReportRequest reportRequest = new fr.gouv.tac.tacwarning.model.ReportRequest();
-        ((HttpBearerAuth)(apiInstance.getApiClient().getAuthentication("bearerAuth"))).setBearerToken(this.jwt);
-        for (Visit visit : visitList) {
-            reportRequest.addVisitsItem(visit);
-        }
-        try {
-            ReportResponse response = apiInstance.report(reportRequest);
-            this.setLastTACWarningReportResponse(response);
-            outcome = response.getSuccess();
-        } catch (ApiException e) {
-        	logger.error("Exception when calling TACWarningDefaultApi#report", e);
-        	logger.error("Status code: " + e.getCode());
-        	logger.error("Reason: " + e.getResponseBody());
-        	logger.error("Response headers: " + e.getResponseHeaders());
-        }
-        return outcome;
-    }
+	public Boolean sendTacWarningReport(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
+		logger.debug(this.name + ".sendTacWarningReport");
+		Boolean outcome = null;
+		ReportRequest reportRequest = new fr.gouv.tac.tacwarning.model.ReportRequest();
+		if (this.jwt == null) {
+			logger.warn("JWT token is null, cannot correctly authenticate TAC Warning Report request");
+			logger.warn("Sending empty string as bearerAuth");
+			((HttpBearerAuth) (apiInstance.getApiClient().getAuthentication("bearerAuth"))).setBearerToken("");
+		} else {
+			((HttpBearerAuth) (apiInstance.getApiClient().getAuthentication("bearerAuth"))).setBearerToken(this.jwt);
+		}
+		for (Visit visit : visitList) {
+			reportRequest.addVisitsItem(visit);
+		}
+		try {
+			ReportResponse response = apiInstance.report(reportRequest);
+			this.setLastTACWarningReportResponse(response);
+			outcome = response.getSuccess();
+		} catch (ApiException e) {
+			logger.error("Exception when calling TACWarningDefaultApi#report", e);
+			logger.error("Status code: " + e.getCode());
+			logger.error("Reason: " + e.getResponseBody());
+			logger.error("Response headers: " + e.getResponseHeaders());
+			logger.error("Request was:\n" + reportRequest.toString());
+		}
+		return outcome;
+	}
 
+	public RegisterRequest getRegisterRequest() {
+		if (registerRequest == null) {
+			registerRequest = new RegisterRequest();
+			registerRequest.setCaptcha("string");
+			registerRequest.setCaptchaId("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			registerRequest.setClientPublicECDHKey(
+					"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEB+Q03HmTHYPpHUs3UZIcY0robfRuP0zIVwItwseq8JMCl8W9yCuVRyFGTqL7VqnhZN1tQqS4nwbEW4FSK/JLbg==");
+			PushInfo pushInfo = new PushInfo();
+			pushInfo.setLocale("fr");
+			pushInfo.setTimezone("Europe/Paris");
+			pushInfo.setToken("string");
+			registerRequest.setPushInfo(pushInfo);
+		}
+		return this.registerRequest;
+	}
 
-    public RegisterRequest getRegisterRequest() {
-        if (registerRequest == null){
-            registerRequest = new RegisterRequest();
-            registerRequest.setCaptcha("string");
-            registerRequest.setCaptchaId("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-            registerRequest.setClientPublicECDHKey("MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEB+Q03HmTHYPpHUs3UZIcY0robfRuP0zIVwItwseq8JMCl8W9yCuVRyFGTqL7VqnhZN1tQqS4nwbEW4FSK/JLbg==");
-            PushInfo pushInfo = new PushInfo();
-            pushInfo.setLocale("fr");
-            pushInfo.setTimezone("Europe/Paris");
-            pushInfo.setToken("string");
-            registerRequest.setPushInfo(pushInfo);
-            }
-        return this.registerRequest;
-    }
-
-
-
-    public String tacRobertRegister(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
-        String message = null;
-        try {
-            RegisterSuccessResponse registerSuccessResponse =  apiInstance.register(getRegisterRequest());
-            message = registerSuccessResponse.getMessage();
-        } catch (fr.gouv.tac.robert.ApiException e) {
-        	logger.error(e.getMessage(), e);
-        }
-        return message;
-    }
+	public String tacRobertRegister(fr.gouv.tac.robert.api.DefaultApi apiInstance) {
+		String message = null;
+		try {
+			RegisterSuccessResponse registerSuccessResponse = apiInstance.register(getRegisterRequest());
+			message = registerSuccessResponse.getMessage();
+		} catch (fr.gouv.tac.robert.ApiException e) {
+			logger.error(e.getMessage(), e);
+		}
+		return message;
+	}
 }

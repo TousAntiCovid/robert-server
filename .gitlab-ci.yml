@@ -12,6 +12,7 @@ stages:
   - build
   - test
   - docker
+  - integration
   - deploy
 
 .build_template:
@@ -162,6 +163,81 @@ docker-captcha-orange-server:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $CI_REGISTRY_IMAGE/deploy-captcha-orange-rest:$CI_COMMIT_REF_SLUG -f docker/Dockerfile .
     - docker push $CI_REGISTRY_IMAGE/deploy-captcha-orange-rest:$CI_COMMIT_REF_SLUG
+
+integration_tests:
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: unix:///var/run/docker.sock
+  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-system-tests:latest
+  stage: integration
+  needs: 
+    - build_system_test
+    - docker-captcha-orange-server
+    - docker-robert-crypto-grpc-server
+    - docker-tac-warning
+    - docker-robert-server-ws-rest
+    - docker-submission-code-server
+    - docker-robert-push-notif-server
+  tags:
+    - docker_run
+  allow_failure: true
+  before_script:
+  - docker info
+  script:
+    - export DOCKER_TAG=$CI_COMMIT_REF_SLUG
+    - cd environment-setup/integration/compose
+    - echo "ROBERT_CRYPTO_TAG=$DOCKER_TAG" > .env
+    - echo "ROBERT_SUBMISSION_TAG=$DOCKER_TAG" >> .env
+    - echo "ROBERT_SERVER_TAG=$DOCKER_TAG" >> .env
+    - echo "ROBERT_PUSH_TAG=$DOCKER_TAG" >> .env
+    - echo "TACW_TAG=$DOCKER_TAG" >> .env
+    - echo "AUTO_LETS_ENCRYPT=no" >> .env
+    - echo "REDIRECT_HTTP_TO_HTTPS=no" >> .env
+    - echo "TAC_DOCKER_COMPOSE_NETWORK=compose_tac" >> .env
+    - echo "ROBERT_JWT_PRIVATE_KEY=${CI_ROBERT_JWT_PRIVATE_KEY}" >> .env
+    - echo "ROBERT_JWT_PUBLIC_KEY=${CI_ROBERT_JWT_PUBLIC_KEY}" >> .env
+    - cat .env
+    - docker login -u $CI_REGISTRY_USER --password-stdin  $CI_REGISTRY <<< "$CI_REGISTRY_PASSWORD"
+    - echo $PWD
+    - ./startDedicatedDockerNetwork.sh
+    - ./restart.sh
+    - docker network ls
+    - docker ps
+    - cd $CI_PROJECT_DIR/system-test
+    - "export ROBERT_HOST=robert-server-ws-rest"
+    - "export ROBERT_PORT=8086"
+    - "export TACW_HOST=robert-warning-ws-rest"
+    - "export TACW_PORT=8088"
+    - "export ROBERT_BASE_URL=http://$ROBERT_HOST:$ROBERT_PORT/api/"
+    - "export TACW_BASE_URL=http://$TACW_HOST:$TACW_PORT/api/tac-warning"
+    - echo "ROBERT_BASE_URL=$ROBERT_BASE_URL" > src/test/resources/config.properties
+    - echo "ROBERT_VERSION=v4" >> src/test/resources/config.properties
+    - echo "TACW_BASE_URL=$TACW_BASE_URL" >> src/test/resources/config.properties
+    - echo "SALT_RANGE=1000" >> src/test/resources/config.properties
+    - echo "TIME_ROUNDING=900" >> src/test/resources/config.properties
+    - echo "TACW_VERSION=v2" >> src/test/resources/config.properties
+    - echo "" >> src/test/resources/config.properties
+    - cat src/test/resources/config.properties
+    - echo $PWD
+    - ls -ls
+    - docker run -t --network="compose_tac" --rm --name my-maven-project -v "$CI_PROJECT_DIR":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 /bin/bash -c "cd system-test;mvn $MAVEN_CLI_OPTS -Duser.timezone='Europe/Paris' verify"
+  after_script:
+    - docker network ls
+    - docker ps
+    - cd environment-setup/integration/compose
+    - ./stopAll.sh
+    - ./stopDedicatedDockerNetwork.sh
+    
+  artifacts:
+    when: always
+    paths:
+      - environment-setup/integration/compose/logs/* 
+      - "system-test/target/surefire-reports/TEST-*.xml"
+    reports:
+      junit:
+        - "system-test/target/surefire-reports/TEST-*.xml"
+      
 
 deploy-robert-server:
   extends: .deploy_template

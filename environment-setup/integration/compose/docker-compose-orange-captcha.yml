@@ -1,0 +1,24 @@
+version: "3.8"
+services:
+  postgrescaptcha:
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=robert
+      - POSTGRES_DB=qr
+      - POSTGRES_USER=robert
+  captcha-orange-server:
+    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:latest
+    container_name: captcha-orange-server
+    ports:
+      - "8055:8055"
+    volumes:
+      - ./captcha-orange-server-config:/work/config
+      - ./logs:/logs
+    deploy:
+      restart_policy:
+        condition: on-failure
+networks:
+  default:
+    external:
+      name: ${TAC_DOCKER_COMPOSE_NETWORK}
+    
