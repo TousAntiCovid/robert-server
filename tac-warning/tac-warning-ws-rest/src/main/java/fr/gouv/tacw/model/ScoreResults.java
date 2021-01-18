@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import fr.gouv.tacw.database.model.RiskLevel;
 import fr.gouv.tacw.database.model.ScoreResult;
+import fr.gouv.tacw.database.utils.TimeUtils;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -58,7 +59,9 @@ public class ScoreResults {
                 .filter(result -> result.getScore() >= threshold)
                 .max( Comparator.comparing(ScoreResult::getRiskLevel) );
         if (maxScore.isPresent()) {
-            return maxScore.get();
+            ScoreResult maxScoreResult = maxScore.get();
+            return new ScoreResult(maxScoreResult.getRiskLevel(), maxScoreResult.getScore(),
+                    TimeUtils.dayTruncatedTimestamp(maxScoreResult.getLastContactDate()));
         } else {
             return new ScoreResult(RiskLevel.NONE, 0, -1);
         }

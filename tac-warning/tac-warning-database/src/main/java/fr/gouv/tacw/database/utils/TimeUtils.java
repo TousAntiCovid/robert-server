@@ -7,6 +7,8 @@ public final class TimeUtils {
     // TAC-Warning does not keep real visit time but is rounded to the quarter of hour
     public final static long TIME_ROUNDING = 900;
     
+    public final static long SECONDS_PER_DAY = 86400;
+    
     /**
      * Convert UNIX timestamp in milliseconds to NTP seconds
      * @param unixTimeInMillis UNIX time in millis
@@ -26,8 +28,20 @@ public final class TimeUtils {
         return timestampPlusHalfTimeRounding - (timestampPlusHalfTimeRounding % TIME_ROUNDING);
     }
     
+    /**
+     * Get current timestamp rounded to TIME_ROUNDING
+     */
     public static long roundedCurrentTimeTimestamp() {
     	long ntpSeconds = convertUnixMillistoNtpSeconds(System.currentTimeMillis());
     	return roundedTimestamp(ntpSeconds);
+    }
+    
+    /**
+     * Get timestamp truncated to the DAY at noon.
+     * @param timestamp the timestamp in seconds
+     * @return the rounded timestamp
+     */
+    public static long dayTruncatedTimestamp(long timestamp) {
+        return timestamp - (timestamp % SECONDS_PER_DAY);
     }
 }
