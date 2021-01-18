@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,7 +99,8 @@ public class WarningServiceTests {
         visits.add(new OpaqueStaticVisit(infectedToken, visitTime));
 
         assertThat(warningService.getStatus(visits.stream()).getRiskLevel()).isEqualTo(RiskLevel.HIGH);
-        assertThat(warningService.getStatus(visits.stream()).getLastContactDate()).isEqualTo(visitTime);
+        assertThat(warningService.getStatus(visits.stream()).getLastContactDate())
+            .isEqualTo(Instant.ofEpochSecond(visitTime).truncatedTo(ChronoUnit.DAYS).getEpochSecond());
     }
 
     @Test
@@ -117,7 +120,8 @@ public class WarningServiceTests {
         visits.add(new OpaqueStaticVisit(infectedTokenPEV, visitTime));
         
         assertThat(warningService.getStatus(visits.stream()).getRiskLevel()).isEqualTo(RiskLevel.LOW);
-        assertThat(warningService.getStatus(visits.stream()).getLastContactDate()).isEqualTo(visitTime);
+        assertThat(warningService.getStatus(visits.stream()).getLastContactDate())
+            .isEqualTo(Instant.ofEpochSecond(visitTime).truncatedTo(ChronoUnit.DAYS).getEpochSecond());
     }
     
     @Test
@@ -139,7 +143,8 @@ public class WarningServiceTests {
         visits.add(new OpaqueStaticVisit(healthyToken, visitTime));
         
         assertThat(warningService.getStatus(visits.stream()).getRiskLevel()).isEqualTo(RiskLevel.LOW);
-        assertThat(warningService.getStatus(visits.stream()).getLastContactDate()).isEqualTo(visitTimeInfected);
+        assertThat(warningService.getStatus(visits.stream()).getLastContactDate())
+            .isEqualTo(Instant.ofEpochSecond(visitTimeInfected).truncatedTo(ChronoUnit.DAYS).getEpochSecond());
     }
     
     @Disabled("Temporary removed timestamp present/future checking")

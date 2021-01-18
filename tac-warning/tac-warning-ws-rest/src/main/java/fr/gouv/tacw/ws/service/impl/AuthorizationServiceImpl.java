@@ -11,8 +11,10 @@ import fr.gouv.tacw.ws.exception.TacWarningUnauthorizedException;
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class AuthorizationServiceImpl implements AuthorizationService {
 	private TacWarningWsRestConfiguration configuration;
 	
@@ -39,6 +41,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 			jwtPublicKey = keyFactory.generatePublic(keySpec);
 			Jwts.parserBuilder().setSigningKey(jwtPublicKey).build().parseClaimsJws(token);
 		} catch (Exception e) {
+		    log.warn("Failed to verify JWT token!", e);
 			throw new TacWarningUnauthorizedException();
 		}
 	}
