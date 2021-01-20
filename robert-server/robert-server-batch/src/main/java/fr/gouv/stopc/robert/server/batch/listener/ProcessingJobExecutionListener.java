@@ -1,16 +1,17 @@
 package fr.gouv.stopc.robert.server.batch.listener;
 
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobExecutionListener;
+
 import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
-import fr.gouv.stopc.robert.server.batch.service.ItemIdMappingService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobExecutionListener;
 
 /**
  * This JobExecutionListener computes the chunk size according to the contact total count.

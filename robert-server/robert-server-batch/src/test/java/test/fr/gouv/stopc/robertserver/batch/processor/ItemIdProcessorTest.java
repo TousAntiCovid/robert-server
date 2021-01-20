@@ -1,23 +1,24 @@
 package test.fr.gouv.stopc.robertserver.batch.processor;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.security.SecureRandom;
+
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.model.ItemIdMapping;
 import fr.gouv.stopc.robert.server.batch.processor.ContactIdMappingProcessor;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationIdMappingProcessor;
 import fr.gouv.stopc.robertserver.database.model.Contact;
+import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import java.security.SecureRandom;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
