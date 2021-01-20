@@ -33,6 +33,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
+import fr.gouv.stopc.robert.server.batch.listener.PopulateIdMappingListener;
 import fr.gouv.stopc.robert.server.batch.listener.ProcessingJobExecutionListener;
 import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
 import fr.gouv.stopc.robert.server.batch.processor.ContactIdMappingProcessor;
@@ -41,6 +42,7 @@ import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProce
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationIdMappingProcessor;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationProcessor;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationRiskProcessor;
+import fr.gouv.stopc.robert.server.batch.processor.UpdateRegistrationFlagsProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.ContactItemWriter;
