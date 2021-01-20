@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -324,7 +323,7 @@ public class ContactsProcessingConfigurationTest {
 
             this.registrationService.saveRegistration(registrationWithEE);
 
-            
+
 
             Contact contact = this.generateContact(currentEpochId, currentTime);
 
@@ -350,78 +349,6 @@ public class ContactsProcessingConfigurationTest {
             assertFalse(expectedRegistration.get().isAtRisk());
 
             verify(this.cryptoServerClient, times(contact.getMessageDetails().size())).getInfoFromHelloMessage(any());
-
-        } catch (Exception e) {
-            fail(SHOULD_NOT_FAIL);
-        }
-    }
-
-    @Test
-    public void testScoreAndProcessRisksWhenTheRegistrationIsAlreadyAtRiskAndLatestRiskEpochExceedsTheGap() {
-
-        try {
-            // Given
-            this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
-            assertTrue(this.registration.isPresent());
-
-            final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
-            final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
-            final int currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);
-            int latestRiskEpoch = currentEpochId - (((this.propertyLoader.getAtRiskNotificationEpochGapInDays()) * 24 * 3600)/ this.serverConfigurationService.getEpochDurationSecs()) - 1;
-
-            Registration registrationAtRisk = this.registration.get();
-            registrationAtRisk.setAtRisk(true);
-            registrationAtRisk.setLatestRiskEpoch(latestRiskEpoch);
-
-            this.registrationService.saveRegistration(registrationAtRisk);
-
-            // When
-            this.jobLauncherTestUtils.launchJob();
-
-            // Then
-            Optional<Registration> expectedRegistration = this.registrationService
-                    .findById(registrationAtRisk.getPermanentIdentifier());
-
-            assertTrue(expectedRegistration.isPresent()); 
-            assertFalse(expectedRegistration.get().isAtRisk());
-
-            verify(this.cryptoServerClient, never()).getInfoFromHelloMessage(any());
-
-        } catch (Exception e) {
-            fail(SHOULD_NOT_FAIL);
-        }
-    }
-
-    @Test
-    public void testScoreAndProcessRisksWhenTheRegistrationIsAlreadyAtRiskAndLatestRiskEpochExceedsTheGapButAtRiskAgain() {
-
-        try {
-            // Given
-            this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
-            assertTrue(this.registration.isPresent());
-
-            final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
-            final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
-            final int currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);
-            int latestRiskEpoch = currentEpochId - (((this.propertyLoader.getAtRiskNotificationEpochGapInDays()) * 24 * 3600)/ this.serverConfigurationService.getEpochDurationSecs()) - 1;
-
-            Registration registrationAtRisk = this.registration.get();
-            registrationAtRisk.setAtRisk(true);
-            registrationAtRisk.setLatestRiskEpoch(latestRiskEpoch);
-
-            this.registrationService.saveRegistration(registrationAtRisk);
-
-            // When
-            this.jobLauncherTestUtils.launchJob();
-
-            // Then
-            Optional<Registration> expectedRegistration = this.registrationService
-                    .findById(registrationAtRisk.getPermanentIdentifier());
-
-            assertTrue(expectedRegistration.isPresent()); 
-            assertFalse(expectedRegistration.get().isAtRisk());
-
-            verify(this.cryptoServerClient, never()).getInfoFromHelloMessage(any());
 
         } catch (Exception e) {
             fail(SHOULD_NOT_FAIL);
