@@ -32,7 +32,6 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.INotificationService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
 import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
@@ -61,9 +60,6 @@ public class RegistrationRiskProcessorTest {
     @Autowired
     private PropertyLoader propertyLoader;
 
-    @Autowired
-    private INotificationService notificationService;
-
     @MockBean
     private RobertServerBatchConfiguration config;
 
@@ -73,7 +69,6 @@ public class RegistrationRiskProcessorTest {
     public void before() {
 
         this.riskProcessor = new RegistrationRiskProcessor(
-                this.notificationService,
                 this.serverConfigurationService,
                 this.scoringStrategyService,
                 this.propertyLoader);
@@ -260,7 +255,6 @@ public class RegistrationRiskProcessorTest {
                 .expositionScores(Arrays.asList(2.0))
                 .build()));
 
-        assertTrue(CollectionUtils.isEmpty(this.notificationService.findAll()));
 
         try {
             // When
@@ -270,7 +264,6 @@ public class RegistrationRiskProcessorTest {
             assertNotNull(processedRegistration);
             assertFalse(CollectionUtils.isEmpty(processedRegistration.getExposedEpochs()));
             assertEquals(processedRegistration.getExposedEpochs().size(), registrationWithEE.getExposedEpochs().size());
-            assertFalse(CollectionUtils.isEmpty(this.notificationService.findAll()));
             assertTrue(processedRegistration.isAtRisk());
         } catch (Exception e) {
             log.error(e.getMessage());

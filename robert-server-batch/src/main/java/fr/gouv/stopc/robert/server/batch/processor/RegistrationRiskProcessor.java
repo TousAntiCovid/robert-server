@@ -13,15 +13,12 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.INotificationService;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegistrationRiskProcessor implements ItemProcessor<Registration, Registration> {
-
-    private INotificationService notificationService;
 
     private IServerConfigurationService serverConfigurationService;
 
@@ -52,7 +49,7 @@ public class RegistrationRiskProcessor implements ItemProcessor<Registration, Re
                 this.serverConfigurationService.getEpochDurationSecs());
         registration.setExposedEpochs(epochsToKeep);
 
-       boolean isAtRisk = ScoringUtils.updateRegistrationIfRisk(
+       ScoringUtils.updateRegistrationIfRisk(
                 registration,
                 epochsToKeep,
                 this.serverConfigurationService.getServiceTimeStart(),
@@ -60,9 +57,6 @@ public class RegistrationRiskProcessor implements ItemProcessor<Registration, Re
                 this.scoringStrategy
         );
        
-       if(isAtRisk) {
-           this.notificationService.add(registration.getLatestRiskEpoch());
-       }
         return registration;
     }
 
