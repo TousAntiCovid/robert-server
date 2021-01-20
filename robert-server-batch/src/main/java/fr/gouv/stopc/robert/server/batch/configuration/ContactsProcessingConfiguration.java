@@ -37,7 +37,6 @@ import fr.gouv.stopc.robert.server.batch.listener.PopulateIdMappingListener;
 import fr.gouv.stopc.robert.server.batch.listener.ProcessingJobExecutionListener;
 import fr.gouv.stopc.robert.server.batch.model.ItemIdMapping;
 import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
-import fr.gouv.stopc.robert.server.batch.processor.AnalyticsNotificationProcessor;
 import fr.gouv.stopc.robert.server.batch.processor.ContactIdMappingProcessor;
 import fr.gouv.stopc.robert.server.batch.processor.ContactProcessor;
 import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
@@ -53,10 +52,8 @@ import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.database.model.Notification;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
-import fr.gouv.stopc.robertserver.database.service.INotificationService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -80,8 +77,6 @@ public class ContactsProcessingConfiguration {
 
     private final ItemIdMappingService itemIdMappingService;
 
-    private final INotificationService notificationService;
-
     private final ICryptoServerGrpcClient cryptoServerClient;
 
     private final int CHUNK_SIZE = 10000;
@@ -102,7 +97,6 @@ public class ContactsProcessingConfiguration {
             final ICryptoServerGrpcClient cryptoServerClient,
             final ScoringStrategyService scoringStrategyService,
             final ItemIdMappingService itemIdMappingService,
-            final INotificationService notificationService,
             final PropertyLoader propertyLoader,
             final JobBuilderFactory jobBuilderFactory,
             final StepBuilderFactory stepBuilderFactory
@@ -113,7 +107,6 @@ public class ContactsProcessingConfiguration {
         this.contactService = contactService;
         this.cryptoServerClient = cryptoServerClient;
         this.scoringStrategyService = scoringStrategyService;
-        this.notificationService = notificationService;
         this.itemIdMappingService = itemIdMappingService;
         this.propertyLoader =  propertyLoader;
         this.stepBuilderFactory = stepBuilderFactory;
@@ -127,9 +120,7 @@ public class ContactsProcessingConfiguration {
             Step populateIdMappingWithRegistrationForUpdatingFlagsStep,
             Step registrationIdMappingForUpdatingFlagsStep,
             Step populateIdMappingWithScoredRegistrationStep,
-            Step processRegistrationRiskStep,
-            Step populateIdMappingWithRegistrationFoAnalticsNotificationStep,
-            Step registrationIdMappingForgForAnalticsNotificationStep) {
+            Step processRegistrationRiskStep) {
 
         BatchMode batchMode;
 
@@ -167,15 +158,6 @@ public class ContactsProcessingConfiguration {
                     .next(processRegistrationRiskStep)
                     .build();
 
-        case MIGRATE_RISK_NOTIFICATION:
-            log.info("Initializing analytics notification");
-            return this.jobBuilderFactory.get("processContacts")
-                    .listener(new ProcessingJobExecutionListener(TOTAL_CONTACT_COUNT_KEY,
-                            registrationService, contactService, serverConfigurationService,
-                            propertyLoader, itemIdMappingService))
-                    .start(populateIdMappingWithRegistrationFoAnalticsNotificationStep)
-                    .next(registrationIdMappingForgForAnalticsNotificationStep)
-                    .build();
         default:
             return null;
         }
@@ -484,7 +466,7 @@ public class ContactsProcessingConfiguration {
 
     @Bean
     public ItemProcessor<Registration, Registration> updateRegistrationFlagsProcessor() {
-        return new UpdateRegistrationFlagsProcessor(this.propertyLoader, this.serverConfigurationService);
+        return new UpdateRegistrationFlagsProcessor(this.propertyLoader);
     }
 
     @Bean
@@ -532,7 +514,6 @@ public class ContactsProcessingConfiguration {
     @Bean
     public ItemProcessor<Registration, Registration> registrationRiskProcessor() {
         return new RegistrationRiskProcessor(
-                this.notificationService,
                 this.serverConfigurationService,
                 this.scoringStrategyService,
                 this.propertyLoader);
@@ -561,57 +542,6 @@ public class ContactsProcessingConfiguration {
                 .build();
     }
 
-    @Bean
-    public MongoItemReader<Registration> registrationIdMappingForAnalticsNotificationReader(MongoTemplate mongoTemplate) {
-
-        return mongoRegistrationIdMappingReader(mongoTemplate, "{isNotified: true}");
-    }
-
-    @Bean
-    public Step populateIdMappingWithRegistrationFoAnalticsNotificationStep(
-            MongoItemReader<Registration> registrationIdMappingForAnalticsNotificationReader,
-            MongoItemWriter<ItemIdMapping> mongoRegistrationIdMappingItemWriter) {
-
-        return this.stepBuilderFactory.get("populateIdMappingWithRegistrationFoAnalticsNotificationStep")
-                .<Registration, ItemIdMapping>chunk(POPULATE_STEP_CHUNK_SIZE)
-                .reader(registrationIdMappingForAnalticsNotificationReader)
-                .processor(registrationIdMappingProcessor())
-                .writer(mongoRegistrationIdMappingItemWriter).build();
-    }
-
-    @Bean
-    public Step registrationIdMappingForgForAnalticsNotificationStep(Step addAnalyticsNotificationFromNotifiedRegistrationWorkerStep) {
-
-        return this.stepBuilderFactory.get("registrationIdMappingForgForAnalticsNotificationStep")
-                .partitioner("addAnalyticsNotificationFromNotifiedRegistrationPartitioner", partitioner())
-                .partitionHandler(partitionHandler(addAnalyticsNotificationFromNotifiedRegistrationWorkerStep, this.asyncTaskExecutor()))
-                .build();
-    }
-
-    @Bean
-    public Step addAnalyticsNotificationFromNotifiedRegistrationWorkerStep(MongoItemReader<Registration> mongoRegistrationItemReader,
-            ItemProcessor<Registration, Notification> addAnalyticsNotificationFromNotifiedRegistrationProcessor,
-            MongoItemWriter<Notification> analyticsNotificationtemWriter) {
-
-        return this.stepBuilderFactory.get("addAnalyticsNotificationFromNotifiedRegistrationWorkerStep")
-                .<Registration, Notification>chunk(CHUNK_SIZE)
-                .reader(mongoRegistrationItemReader)
-                .processor(addAnalyticsNotificationFromNotifiedRegistrationProcessor)
-                .writer(analyticsNotificationtemWriter)
-                .build();
-    }
-
-    @Bean
-    public ItemProcessor<Registration, Notification> addAnalyticsNotificationFromNotifiedRegistrationProcessor() {
-        return new AnalyticsNotificationProcessor();
-    }
-
-    @Bean
-    public MongoItemWriter<Notification> analyticsNotificationtemWriter(MongoTemplate mongoTemplate) {
-        return new MongoItemWriterBuilder<Notification>().template(mongoTemplate)
-                .collection("analytics_notification").build();
-    }
-
     private MongoItemReader<Registration> mongoRegistrationIdMappingReader(MongoTemplate mongoTemplate, String query) {
 
         MongoItemReader<Registration> reader = new MongoItemReader<>();
@@ -629,7 +559,6 @@ public class ContactsProcessingConfiguration {
         NONE,
         FULL_REGISTRATION_SCAN_COMPUTE_RISK,
         SCORE_CONTACTS_AND_COMPUTE_RISK,
-        PURGE_OLD_EPOCH_EXPOSITIONS,
-        MIGRATE_RISK_NOTIFICATION;
+        PURGE_OLD_EPOCH_EXPOSITIONS;
     }
 }
