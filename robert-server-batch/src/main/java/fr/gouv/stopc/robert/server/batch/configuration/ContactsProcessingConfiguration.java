@@ -150,8 +150,6 @@ public class ContactsProcessingConfiguration {
                             propertyLoader, itemIdMappingService))
                     .start(populateRegistrationIdMappingForEpochPurgeStep)
                     .next(purgeOldEpochExpositionsStep)
-                    .next(populateIdMappingWithRegistrationForUpdatingFlagsStep)
-                    .next(registrationIdMappingForUpdatingFlagsStep)
                     .next(populateContactIdMappingStep)
                     .next(contactProcessingStep)
                     .next(populateIdMappingWithScoredRegistrationStep)
