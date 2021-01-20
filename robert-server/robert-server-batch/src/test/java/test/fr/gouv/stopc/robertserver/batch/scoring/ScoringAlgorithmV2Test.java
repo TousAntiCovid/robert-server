@@ -1,5 +1,9 @@
 package test.fr.gouv.stopc.robertserver.batch.scoring;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -20,16 +24,15 @@ import org.springframework.test.context.ContextConfiguration;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 
+import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
-import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
+import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.extern.slf4j.Slf4j;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ContextConfiguration(classes = RobertServerBatchApplication.class)
@@ -41,6 +44,9 @@ public class ScoringAlgorithmV2Test {
 
     @MockBean
     private RobertServerBatchConfiguration configuration;
+
+    @MockBean
+    private ICryptoServerGrpcClient cryptoServerClient;
 
     @Test
     public void test_C4_20_A() {
