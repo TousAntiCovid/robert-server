@@ -628,12 +628,11 @@ public class StatusControllerWsRestTest {
         statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.STATUS).build().encode().toUri());
     }
     
-    /** Test the access for API V2, should not be used since API V3 */
+    /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
         statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.STATUS).build().encode().toUri());
     }
-
 
     /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V4 exposure */
     @Test
@@ -650,7 +649,6 @@ public class StatusControllerWsRestTest {
                 .permanentIdentifier(idA)
                 .atRisk(true)
                 .isNotified(false)
-                .latestRiskEpoch(currentEpoch - 10)
                 .lastStatusRequestEpoch(currentEpoch - 3).build();
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
@@ -685,7 +683,6 @@ public class StatusControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(response.getBody().getRiskEpoch(), reg.getLatestRiskEpoch());
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
@@ -699,6 +696,7 @@ public class StatusControllerWsRestTest {
         // Given
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
+
         Registration reg = Registration.builder()
                 .permanentIdentifier(idA)
                 .atRisk(false)
@@ -879,9 +877,8 @@ public class StatusControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(true, response.getBody().isAtRisk());
-        assertEquals(currentEpoch - 8 , response.getBody().getRiskEpoch());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(true, reg.isAtRisk());
+        assertEquals(false, reg.isAtRisk());
         assertEquals(true, reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
@@ -1061,7 +1058,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(true, response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(true, reg.isAtRisk());
+        assertEquals(false, reg.isAtRisk());
         assertEquals(true, reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
@@ -1122,7 +1119,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(true, response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(true, reg.isAtRisk());
+        assertEquals(false, reg.isAtRisk());
         assertEquals(true, reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
@@ -1198,7 +1195,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(true, response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(true, reg.isAtRisk());
+        assertEquals(false, reg.isAtRisk());
         assertEquals(true, reg.isNotified());
         assertTrue(reg.getLastTimestampDrift() == Math.abs(timestampDelta) + 1 || reg.getLastTimestampDrift() == Math.abs(timestampDelta));
         verify(this.registrationService, times(2)).findById(idA);

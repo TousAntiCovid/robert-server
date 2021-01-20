@@ -167,14 +167,13 @@ public class UnregisterControllerWsRestTest {
         acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.UNREGISTER).build().encode().toUri());
     }
 
-    /** Test the access for API V3, should not be used since API V3 */
+    /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
         acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.UNREGISTER).build().encode().toUri());
     }
 
-    
-    /** {@link #acceptOldEBIDValueEpochSucceeds(URI)} and shortcut to test for API V3 exposure */
+    /** {@link #acceptOldEBIDValueEpochSucceeds(URI)} and shortcut to test for API V4 exposure */
     @Test
     public void testAcceptOldEBIDValueEpochSucceeds() {
         acceptOldEBIDValueEpochSucceeds(this.targetUrl);
