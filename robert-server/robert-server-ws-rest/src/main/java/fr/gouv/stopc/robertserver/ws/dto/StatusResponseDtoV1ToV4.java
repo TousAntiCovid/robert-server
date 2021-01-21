@@ -27,6 +27,4 @@ public class StatusResponseDtoV1ToV4 {
     private long lastExposureTimeframe;
 
     private String message;
-
-    private int riskEpoch;
 }

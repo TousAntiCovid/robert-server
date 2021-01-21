@@ -1,17 +1,24 @@
 package test.fr.gouv.stopc.robertserver.database.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
+
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DBObject;
 
 import fr.gouv.stopc.robertserver.database.RobertServerDatabaseApplication;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
@@ -133,5 +140,29 @@ public class RegistrationRepositoryTest {
 		// Then
 		long nbOldEpochExpositions = this.registrationRepository.countNbUsersWithOldEpochExpositions(200);
 		assertEquals(2, nbOldEpochExpositions);
+	}
+	
+	/** 
+	 * Get a document from the database not having all fields of the entity can happen when we 
+	 * change the entity model. 
+	 */
+    @Test
+	public void testGetDefaultValueWhenMissingFieldInDocument(@Autowired MongoTemplate mongoTemplate) {
+        SecureRandom sr = new SecureRandom();
+        byte[] id = new byte[5];
+        sr.nextBytes(id);
+        Registration registration = new Registration();
+        registration.setPermanentIdentifier(id);
+        DBObject objectToSave = BasicDBObjectBuilder.start()
+	            .add("_id", id)
+	            .get();
+        mongoTemplate.save(objectToSave, "idTable");
+        
+        Registration fetchedRegistration = registrationRepository.findById(id).get();
+        
+        assertTrue(Arrays.equals(id, fetchedRegistration.getPermanentIdentifier()));
+        assertEquals(0, fetchedRegistration.getLastContactTimestamp());
+        assertFalse(fetchedRegistration.isNotified());
+        assertNull(fetchedRegistration.getLastFailedStatusRequestMessage());
 	}
 }

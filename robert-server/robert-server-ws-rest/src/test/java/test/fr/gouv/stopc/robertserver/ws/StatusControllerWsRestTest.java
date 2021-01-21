@@ -678,10 +678,14 @@ public class StatusControllerWsRestTest {
 
     protected Registration statusRequestAtRiskSucceedsSetUp(URI targetUrl, byte[] idA) {
         byte[] kA = this.generateKA();
+        long lastContactTimestamp = TimeUtils.getNtpSeconds(currentEpoch - 96, serverConfigurationService.getServiceTimeStart());
+        
         Registration reg = Registration.builder()
                 .permanentIdentifier(idA)
                 .atRisk(true)
                 .isNotified(false)
+                .latestRiskEpoch(currentEpoch - 10)
+                .lastContactTimestamp(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp))
                 .lastStatusRequestEpoch(currentEpoch - 3).build();
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
@@ -723,7 +727,6 @@ public class StatusControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(response.getBody().getRiskEpoch(), reg.getLatestRiskEpoch());
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
@@ -744,6 +747,7 @@ public class StatusControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
+        assertEquals(Long.toString(reg.getLastContactTimestamp()), response.getBody().getLastContactDate());
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
@@ -798,6 +802,7 @@ public class StatusControllerWsRestTest {
         assertEquals(RiskLevel.NONE, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
+        assertEquals(0, reg.getLastContactTimestamp());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
@@ -825,6 +830,7 @@ public class StatusControllerWsRestTest {
                 .epochId(currentEpoch - 3)
                 .expositionScores(Arrays.asList(0.052, 0.16))
                 .build());
+        long lastContactTimestamp = TimeUtils.getNtpSeconds(currentEpoch - 24, serverConfigurationService.getServiceTimeStart());
 
         Registration reg = Registration.builder()
                 .permanentIdentifier(idA)
@@ -832,6 +838,7 @@ public class StatusControllerWsRestTest {
                 .isNotified(true)
                 .lastStatusRequestEpoch(currentEpoch - 3)
                 .latestRiskEpoch(currentEpoch - 8)
+                .lastContactTimestamp(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp))
                 .exposedEpochs(epochExpositions)
                 .build();
 
@@ -868,6 +875,7 @@ public class StatusControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(RiskLevel.NONE, response.getBody().getRiskLevel());
+        assertEquals(Long.toString(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp)), response.getBody().getLastContactDate());
         assertNotNull(response.getBody().getTuples());
         assertFalse(reg.isAtRisk());
         assertTrue(reg.isNotified());

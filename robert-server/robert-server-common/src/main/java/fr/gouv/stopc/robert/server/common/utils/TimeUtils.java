@@ -10,6 +10,8 @@ public final class TimeUtils {
 
     // Epoch duration is 15 minutes so 15 * 60 = 900 seconds
     public final static int EPOCH_DURATION_SECS = 900;
+    
+    public final static long SECONDS_PER_DAY = 86400;
 
     private TimeUtils() {
         throw new AssertionError();
@@ -49,17 +51,35 @@ public final class TimeUtils {
     }
 
     /**
+     * Get the NTP time in *seconds* from an epoch relative to timeStart (NTP time in seconds)
+     * 
+     * @param epoch an Epoch
+     * @param timeStart as NTP timestamp in *seconds*
+     * @return
+     */
+    public static long getNtpSeconds(int epoch, long timeStart) {
+        return (EPOCH_DURATION_SECS * epoch) + timeStart;
+    }
+    
+    /**
+     * Get timestamp truncated to the DAY at noon.
+     * @param timestamp the timestamp in seconds
+     * @return the rounded timestamp
+     */
+    public static long dayTruncatedTimestamp(long timestamp) {
+        return timestamp - (timestamp % SECONDS_PER_DAY);
+    }
+    
+    /**
      *
      * @param epoch
      * @param timeStart in NTP seconds
      * @return
      */
     public static LocalDate getDateFromEpoch(int epoch, long timeStart) {
-
         String timezone = epoch < 960 ? "Europe/Paris" : "UTC";
 
-        long fromInNtpSecs = (EPOCH_DURATION_SECS * epoch) + timeStart;
-        long fromUnixMillis = (fromInNtpSecs - SECONDS_FROM_01_01_1900) * 1000;
+        long fromUnixMillis = (getNtpSeconds(epoch, timeStart) - SECONDS_FROM_01_01_1900) * 1000;
         return Instant.ofEpochMilli(fromUnixMillis).atZone(ZoneId.of(timezone)).toLocalDate();
     }
 

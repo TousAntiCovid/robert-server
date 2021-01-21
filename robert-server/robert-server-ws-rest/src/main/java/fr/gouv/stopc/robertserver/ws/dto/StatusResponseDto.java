@@ -25,4 +25,6 @@ public class StatusResponseDto {
     private List<ClientConfigDto> config;
 
     private String message;
+
+    private String lastContactDate;
 }
