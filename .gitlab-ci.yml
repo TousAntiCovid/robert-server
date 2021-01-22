@@ -52,12 +52,11 @@ stages:
   stage: deploy
   script:
     - cd $COMPONENT
-    - VERSION=$(mvn --non-recursive help:evaluate -Dexpression=project.version -q -DforceStdout)
-    - mvn versions:set -DnewVersion=$VERSION-$CI_PIPELINE_IID -DprocessAllModules=true
+    - ./update-artefact-version-if-not-a-tag.sh
     - mvn $MAVEN_CLI_OPTS -DskipTests=true  -DnexusReleasesUrl=$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven -DnexusSnapshotsUrl=$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven -s ../.gitlab-ci/ci_settings.xml deploy
   only:
     - develop
-    - master
+    - tags
 
 build_robert-server:
   extends: .build_template
