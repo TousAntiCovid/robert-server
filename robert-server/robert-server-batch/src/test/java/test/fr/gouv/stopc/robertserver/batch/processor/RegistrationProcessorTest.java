@@ -194,7 +194,7 @@ public class RegistrationProcessorTest {
     }
 
     @Test
-    public void testNotifiedBecomesFalseIfRiskDetectedSucceeds() {
+    public void testNotifiedRemainsTrueIfRiskDetectedSucceeds() {
         Double[] expositionsForFirstEpoch = new Double[] { 10.0, 2.0, 1.0, 4.3 };
         Double[] expositionsForSecondEpoch = new Double[] { };
         ArrayList<EpochExposition> expositions = new ArrayList<>();
@@ -207,7 +207,7 @@ public class RegistrationProcessorTest {
                 .expositionScores(Arrays.asList(expositionsForSecondEpoch))
                 .build());
 
-        testNotifiedNotModified(true, false, expositions, true);
+        testNotifiedNotModified(true, expositions, true);
     }
 
     @Test
@@ -224,7 +224,7 @@ public class RegistrationProcessorTest {
                 .expositionScores(Arrays.asList(expositionsForSecondEpoch))
                 .build());
 
-        testNotifiedNotModified(false, false, expositions, true);
+        testNotifiedNotModified(false, expositions, true);
     }
 
     @Test
@@ -241,7 +241,7 @@ public class RegistrationProcessorTest {
                 .expositionScores(Arrays.asList(expositionsForSecondEpoch))
                 .build());
 
-        testNotifiedNotModified(true, true, expositions, false);
+        testNotifiedNotModified(true, expositions, false);
     }
 
     @Test
@@ -258,10 +258,10 @@ public class RegistrationProcessorTest {
                 .expositionScores(Arrays.asList(expositionsForSecondEpoch))
                 .build());
 
-        testNotifiedNotModified(false, false, expositions, false);
+        testNotifiedNotModified(false, expositions, false);
     }
 
-    private void testNotifiedNotModified(boolean initialValue, boolean expectedValue, List<EpochExposition> expositions, boolean riskDetected) {
+    private void testNotifiedNotModified(boolean initialValue, List<EpochExposition> expositions, boolean riskDetected) {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         this.registration.get().setNotified(initialValue);
@@ -279,6 +279,6 @@ public class RegistrationProcessorTest {
                 expositions.get(0).getExpositionScores().toArray()));
         assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
                 expositions.get(1).getExpositionScores().toArray()));
-        assertEquals(expectedValue, reg.get().isNotified());
+        assertEquals(initialValue, reg.get().isNotified());
     }
 }
