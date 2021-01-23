@@ -52,7 +52,7 @@ stages:
   stage: deploy
   script:
     - cd $COMPONENT
-    - ./update-artefact-version-if-not-a-tag.sh
+    - ../.gitlab-ci/update-artefact-version-if-not-a-tag.sh
     - mvn $MAVEN_CLI_OPTS -DskipTests=true  -DnexusReleasesUrl=$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven -DnexusSnapshotsUrl=$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven -s ../.gitlab-ci/ci_settings.xml deploy
   only:
     - develop
