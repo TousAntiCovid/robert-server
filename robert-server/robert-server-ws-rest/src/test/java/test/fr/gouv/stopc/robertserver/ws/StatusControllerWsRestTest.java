@@ -63,6 +63,7 @@ import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
@@ -648,25 +649,25 @@ public class StatusControllerWsRestTest {
     /** Test the access for API V1, should not be used since API V2 */
     @Test
     public void testAccessV1() {
-        statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV1).path(UriConstants.STATUS).build().encode().toUri());
+        statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV1).path(UriConstants.STATUS).build().encode().toUri());
     }
 
     /** Test the access for API V2, should not be used since API V3 */
     @Test
     public void testAccessV2() {
-        statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.STATUS).build().encode().toUri());
+        statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.STATUS).build().encode().toUri());
     }
     
     /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
-        statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.STATUS).build().encode().toUri());
+        statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.STATUS).build().encode().toUri());
     }
 
     /** Test the access for API V4, should not be used since API V5 */
     @Test
     public void testAccessV4() {
-        statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.STATUS).build().encode().toUri());
+        statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.STATUS).build().encode().toUri());
     }
 
     /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V5 exposure */
@@ -675,10 +676,7 @@ public class StatusControllerWsRestTest {
         statusRequestAtRiskSucceeds(this.targetUrl);
     }
 
-    protected void statusRequestAtRiskSucceeds(URI targetUrl) {
-
-        // Given
-        byte[] idA = this.generateKey(5);
+    protected Registration statusRequestAtRiskSucceedsSetUp(URI targetUrl, byte[] idA) {
         byte[] kA = this.generateKA();
         Registration reg = Registration.builder()
                 .permanentIdentifier(idA)
@@ -709,7 +707,35 @@ public class StatusControllerWsRestTest {
         .when(this.cryptoServerClient).getIdFromStatus(any());
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+        return reg;
+    }
+    
+    protected void statusRequestAtRiskSucceedsV1ToV4(URI targetUrl) {
+        // Given
+        byte[] idA = this.generateKey(5);
+        Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
+        
+        // When
+        ResponseEntity<StatusResponseDtoV1ToV4> response = this.restTemplate.exchange(targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDtoV1ToV4.class);
 
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().isAtRisk());
+        assertNotNull(response.getBody().getTuples());
+        assertEquals(response.getBody().getRiskEpoch(), reg.getLatestRiskEpoch());
+        assertTrue(reg.isNotified());
+        assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
+        verify(this.registrationService, times(2)).findById(idA);
+        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+    }
+    
+    protected void statusRequestAtRiskSucceeds(URI targetUrl) {
+        // Given
+        byte[] idA = this.generateKey(5);
+        Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
+        
         // When
         ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
                 HttpMethod.POST, this.requestEntity, StatusResponseDto.class);

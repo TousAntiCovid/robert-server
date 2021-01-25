@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 
 import org.bson.internal.Base64;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import fr.gouv.stopc.robertserver.ws.controller.IStatusController;
 import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
@@ -68,10 +70,20 @@ public class StatusControllerImpl implements IStatusController {
 		this.restApiService = restApiService;
 		this.wsServerConfiguration = wsServerConfiguration;
 	}
-
-	@Override
-	public ResponseEntity<StatusResponseDto> getStatus(StatusVo statusVo) {
-
+	
+    @Override
+    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo) throws RobertServerException {
+        StatusResponseDto status = this.getStatus(statusVo).getBody();
+        return ResponseEntity.ok(
+                StatusResponseDtoV1ToV4.builder()
+                    .atRisk(status.getRiskLevel() != RiskLevel.NONE)
+                    .config(status.getConfig())
+                    .tuples(status.getTuples())
+                    .build());
+    }
+    
+    @Override
+    public ResponseEntity<StatusResponseDto> getStatus(StatusVo statusVo) {
 		AuthRequestValidationService.ValidationResult<GetIdFromStatusResponse> validationResult =
 				this.authRequestValidationService.validateStatusRequest(statusVo);
 
@@ -83,14 +95,14 @@ public class StatusControllerImpl implements IStatusController {
 		GetIdFromStatusResponse response = validationResult.getResponse();
 
 		if (response.hasError()) {
-			logErrorInDatabaseIfIdIsProvided(response);
+			this.logErrorInDatabaseIfIdIsProvided(response);
 			return ResponseEntity.badRequest().build();
 		}
 
 		Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
 		if (record.isPresent()) {
 			try {
-				Optional<ResponseEntity<StatusResponseDto>> responseEntity = validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
+				Optional<ResponseEntity<StatusResponseDto>> responseEntity = this.validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
 
 				if (responseEntity.isPresent()) {
 
@@ -190,19 +202,20 @@ public class StatusControllerImpl implements IStatusController {
 			record.setNotified(true);
 		}
 
-		// Include new EBIDs and ECCs for next M epochs
-		StatusResponseDto statusResponse = StatusResponseDto.builder()
-				.riskLevel(riskLevel)
-				.config(getClientConfig())
-				.tuples(Base64.encode(tuples))
-				.build();
-
+        // Include new EBIDs and ECCs for next M epochs
+        StatusResponseDto statusResponse = StatusResponseDto.builder()
+                .riskLevel(riskLevel)
+                .lastContactDate(Long.toString(record.getLastContactTimestamp()))
+                .config(this.getClientConfig())
+                .tuples(Base64.encode(tuples))
+                .build();
+        
 		// Save changes to the record
 		this.registrationService.saveRegistration(record);
 
 		return Optional.of(ResponseEntity.ok(statusResponse));
 	}
-
+    
 	private List<ClientConfigDto> getClientConfig() {
 		List<ApplicationConfigurationModel> serverConf = this.applicationConfigService.findAll();
 		if (CollectionUtils.isEmpty(serverConf)) {
