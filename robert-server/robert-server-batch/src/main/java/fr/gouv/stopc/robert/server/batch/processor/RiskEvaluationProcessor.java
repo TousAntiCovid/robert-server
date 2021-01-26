@@ -10,7 +10,9 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.AllArgsConstructor;
 
-
+/**
+ * Evaluates the risk according to scores already computed. 
+ */
 @AllArgsConstructor
 public class RiskEvaluationProcessor implements ItemProcessor<Registration, Registration> {
 

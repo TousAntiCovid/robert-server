@@ -14,6 +14,10 @@ import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.AllArgsConstructor;
 
+/**
+ * Purge scorings having too old epochs, i.e. more than {propertyLoader.getContagiousPeriod()} days old.  
+ */
+@Slf4j
 @AllArgsConstructor
 public class PurgeOldEpochExpositionsProcessor implements ItemProcessor<Registration, Registration> {
 
