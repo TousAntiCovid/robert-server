@@ -1,27 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<licenses>
-		<license>
-			<name>Mozilla Public License, Version 2.0</name>
-			<url>https://www.mozilla.org/en-US/MPL/2.0/</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+    <licenses>
+        <license>
+            <name>Mozilla Public License, Version 2.0</name>
+            <url>https://www.mozilla.org/en-US/MPL/2.0/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<groupId>fr.gouv.stopc</groupId>
-	<artifactId>tac-server-root</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>tac-server-root</name>
-	<packaging>pom</packaging>
-	<description>Root Integration Project</description>
+    <groupId>fr.gouv.stopc</groupId>
+    <artifactId>tac-server-root</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>tac-server-root</name>
+    <packaging>pom</packaging>
+    <description>Root Integration Project</description>
 
-	<modules>
-		<module>robert-server</module>
-	</modules>
-	
-	
+    <modules>
+        <module>robert-server</module>
+        <module>robert-analytics-server</module>
+    </modules>
+
+
     <profiles>
         <profile>
             <id>report</id>
@@ -46,7 +48,7 @@
                     </plugin>
                 </plugins>
             </build>
-             <reporting>
+            <reporting>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

@@ -235,8 +235,8 @@ public class StatusControllerImpl implements IStatusController {
 		  statusResponse.setLastRiskScoringDate(Long.toString(TimeUtils.getNtpSeconds(record.getLatestRiskEpoch(), serviceTimeStart)));
 		}
 
-		//TODO: Test this in integration tests and update api spec
-		//Generate a declaration token if there is a RiskLevel > 0 and an associated lastContactDate
+
+		//Generate declaration token (for CNAM) and atRisk token (for Analytics)
 		if (!RiskLevel.NONE.equals(riskLevel) && record.getLastContactTimestamp() > 0) {
 			long lastStatusRequestTimestamp = TimeUtils.getNtpSeconds(
 					record.getLastStatusRequestEpoch(),
@@ -250,7 +250,13 @@ public class StatusControllerImpl implements IStatusController {
 					.build();
 			String declarationToken = declarationService.generateDeclarationToken(request).orElse(null);
 			statusResponse.setDeclarationToken(declarationToken);
+			log.debug("Declaration token generated : {}", declarationToken);
+
 		}
+
+		String analyticsToken = declarationService.generateAnalyticsToken().orElse(null);
+		statusResponse.setAnalyticsToken(analyticsToken);
+		log.debug("analytics token generated : {}", analyticsToken);
 
 		// Save changes to the record
 		this.registrationService.saveRegistration(record);

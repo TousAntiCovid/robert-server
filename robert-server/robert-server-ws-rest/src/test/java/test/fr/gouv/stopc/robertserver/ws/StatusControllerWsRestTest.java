@@ -201,6 +201,8 @@ public class StatusControllerWsRestTest {
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(oldEpoch), 1, decryptedEbid, 0, 3);
 
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
@@ -749,6 +751,8 @@ public class StatusControllerWsRestTest {
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
@@ -781,6 +785,8 @@ public class StatusControllerWsRestTest {
     public void testStatusRequestNoNewRiskSinceLastNotifSucceeds() {
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         List<EpochExposition> epochExpositions = new ArrayList<>();
 
@@ -892,6 +898,8 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1076,6 +1084,8 @@ public class StatusControllerWsRestTest {
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
@@ -1136,6 +1146,8 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1207,6 +1219,8 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1320,6 +1334,8 @@ public class StatusControllerWsRestTest {
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
@@ -1356,6 +1372,8 @@ public class StatusControllerWsRestTest {
         when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
         when(this.wsServerConfiguration.getDeclareTokenPrivateKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()));
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(false);
+
+        when(this.wsServerConfiguration.getAnalyticsTokenPrivateKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()));
 
         // When
         ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
@@ -1408,6 +1426,53 @@ public class StatusControllerWsRestTest {
 
     }
 
+    @Test
+    public void when_calling_status_should_return_an_analytics_token() {
 
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(false)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
+                .setEpochId(currentEpoch)
+                .setIdA(ByteString.copyFrom(idA))
+                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                .build()))
+                .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody().getAnalyticsToken());
+    }
 
 }

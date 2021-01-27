@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: robert-app-analytics
+  cloud:
+    consul:
+      enabled: false
+
+    vault:
+      enabled: false
+

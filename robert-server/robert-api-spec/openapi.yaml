@@ -364,6 +364,10 @@ components:
           description: >-
             A JWT token used for exposition declaration to CNAM.
             Contains timestamps of the last contact date and notification date.
+        analyticsToken:
+          type: string
+          description: >-
+            A JWT token used for analytics.
         config:
           $ref: "#/components/schemas/ClientConfiguration"
       required:

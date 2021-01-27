@@ -94,6 +94,11 @@ build_clea:
   variables:
     COMPONENT: "clea"
 
+build_robert-analytics-server:
+  extends: .build_template
+  variables:
+    COMPONENT: "robert-analytics-server"
+
 test_tac-warning:
   extends: .test_template
   needs: ["build_tac-warning"]
@@ -125,6 +130,12 @@ test_clea:
   needs: ["build_clea"]
   variables:
     COMPONENT: "clea"
+
+test_robert-analytics-server:
+  extends: .test_template
+  needs: [ "build_robert-analytics-server" ]
+  variables:
+    COMPONENT: "robert-analytics-server"
 
 docker-robert-crypto-grpc-server:
   extends: .docker_template
@@ -209,6 +220,7 @@ integration_tests:
     - echo "ROBERT_JWT_PUBLIC_KEY=${CI_ROBERT_JWT_PUBLIC_KEY}" >> .env
     - echo "ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${CI_ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}" >> .env
     - echo "ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${CI_ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}" >> .env
+    - echo "ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY=${CI_ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}" >> .env
     - cat .env
     - docker login -u $CI_REGISTRY_USER --password-stdin  $CI_REGISTRY <<< "$CI_REGISTRY_PASSWORD"
     - echo $PWD

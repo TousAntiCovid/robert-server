@@ -17,8 +17,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -64,6 +67,34 @@ public class DeclarationServiceImpl implements DeclarationService {
         }
     }
 
+    @Override
+    public Optional<String> generateAnalyticsToken() {
+
+        log.info("Generating simple analytics token");
+
+        try {
+            Date issuedAt = Date.from(ZonedDateTime.now().toInstant());
+            String jti = UUID.randomUUID().toString();
+            Date expiredAt = Date.from(
+                    issuedAt.toInstant()
+                            .plus(configuration.getAnalyticsTokenLifeTime(), ChronoUnit.MINUTES));
+
+            return Optional.of(
+                    Jwts.builder()
+                            .setHeaderParam("type", "JWT")
+                            .setId(jti)
+                            .setIssuedAt(issuedAt)
+                            .setExpiration(expiredAt)
+                            .setIssuer("robert-server")
+                            .signWith(getAnalyticsTokenPrivateKey(), SIGNATURE_ALGORITHM)
+                            .compact());
+
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            log.error("Creation of analytics JWT token failed ", e);
+            return Optional.empty();
+        }
+    }
+
     private PrivateKey getDeclarePrivateKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         if (configuration.getJwtUseTransientKey()) {
@@ -72,6 +103,21 @@ public class DeclarationServiceImpl implements DeclarationService {
             return keyPair.getPrivate();
         } else {
             byte[] encoded = Decoders.BASE64.decode(configuration.getDeclareTokenPrivateKey());
+            KeyFactory keyFactory = KeyFactory.getInstance(SIGNATURE_ALGORITHM.getFamilyName());
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
+            return keyFactory.generatePrivate(keySpec);
+        }
+
+    }
+
+    private PrivateKey getAnalyticsTokenPrivateKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+        if (configuration.getJwtUseTransientKey()) {
+            // In test mode, we generate a transient key
+            KeyPair keyPair = Keys.keyPairFor(SIGNATURE_ALGORITHM);
+            return keyPair.getPrivate();
+        } else {
+            byte[] encoded = Decoders.BASE64.decode(configuration.getAnalyticsTokenPrivateKey());
             KeyFactory keyFactory = KeyFactory.getInstance(SIGNATURE_ALGORITHM.getFamilyName());
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
             return keyFactory.generatePrivate(keySpec);
