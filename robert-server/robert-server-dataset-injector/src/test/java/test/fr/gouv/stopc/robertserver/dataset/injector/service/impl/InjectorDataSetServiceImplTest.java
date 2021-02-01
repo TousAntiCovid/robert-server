@@ -1,5 +1,18 @@
 package test.fr.gouv.stopc.robertserver.dataset.injector.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
@@ -9,21 +22,10 @@ import fr.gouv.stopc.robertserver.dataset.injector.service.GeneratorIdService;
 import fr.gouv.stopc.robertserver.dataset.injector.service.InjectorDataSetService;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robertserver.dataset.injector.utils.GenerateIdUtils;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -48,6 +50,7 @@ public class InjectorDataSetServiceImplTest {
     private RegistrationService registrationService;
 
     @Test
+    @Disabled("This test needs the SoftHSM tools")
     public void testInjectContactsSuccess() {
         // Mock call services
         byte[] idA1 = GenerateIdUtils.generateIdA();
