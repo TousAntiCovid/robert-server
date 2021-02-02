@@ -50,15 +50,9 @@ public class ContactIdMappingStepConfiguration extends StepConfigurationBase {
 
     @Bean
     public MongoItemReader<Contact> mongoContactIdMappingItemReader(MongoTemplate mongoTemplate) {
-        MongoItemReader<Contact> reader = new MongoItemReader<>();
 
-        reader.setTemplate(mongoTemplate);
-        reader.setPageSize(CHUNK_SIZE);
-        reader.setSort(this.getSorts());
-        reader.setTargetType(Contact.class);
-        reader.setQuery("{}");
-
-        return reader;
+        final String queryAsString = "{}";
+        return contactMongoItemReaderFactory.buildMongoItemReader(mongoTemplate, queryAsString, getSorts(), CHUNK_SIZE);
     }
 
     @Bean

@@ -25,6 +25,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
+import fr.gouv.stopc.robert.server.batch.utils.MongoItemReaderFactory;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
@@ -43,6 +44,8 @@ public class StepConfigurationBase {
     protected final StepBuilderFactory stepBuilderFactory;
     protected final IServerConfigurationService serverConfigurationService;
     protected final ItemIdMappingService itemIdMappingService;
+    protected final MongoItemReaderFactory<Registration> registrationMongoItemReaderFactory;
+    protected final MongoItemReaderFactory<Contact> contactMongoItemReaderFactory;
     
     
     public StepConfigurationBase(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
@@ -52,6 +55,8 @@ public class StepConfigurationBase {
         this.stepBuilderFactory = stepBuilderFactory;
         this.serverConfigurationService = serverConfigurationService;
         this.itemIdMappingService = itemIdMappingService;
+        this.registrationMongoItemReaderFactory = new MongoItemReaderFactory<>(Registration.class);
+        this.contactMongoItemReaderFactory = new MongoItemReaderFactory<>(Contact.class);
     }
 
     protected Map<String, Sort.Direction> getSorts() {
@@ -100,12 +105,10 @@ public class StepConfigurationBase {
 
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").in(itemIdentifiers));
-        MongoItemReader<Registration> reader = new MongoItemReader<>();
-        reader.setTemplate(mongoTemplate);
-        reader.setTargetType(Registration.class);
-        reader.setQuery(query);
-        reader.setPageSize(CHUNK_SIZE);
-        return reader;
+        return registrationMongoItemReaderFactory.buildMongoItemReader(mongoTemplate,
+                query,
+                null,
+                CHUNK_SIZE);
     }
     
     @Bean
@@ -117,12 +120,10 @@ public class StepConfigurationBase {
     
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").in(itemIdentifiers));
-        MongoItemReader<Contact> reader = new MongoItemReader<>();
-        reader.setTemplate(mongoTemplate);
-        reader.setTargetType(Contact.class);
-        reader.setQuery(query);
-        reader.setPageSize(CHUNK_SIZE);
-        return reader;
+        return contactMongoItemReaderFactory.buildMongoItemReader(mongoTemplate,
+                query,
+                null,
+                CHUNK_SIZE);
     }
 
     @Bean
