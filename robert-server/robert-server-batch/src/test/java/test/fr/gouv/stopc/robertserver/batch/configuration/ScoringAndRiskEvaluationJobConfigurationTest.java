@@ -1,17 +1,8 @@
 package test.fr.gouv.stopc.robertserver.batch.configuration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.security.Key;
 import java.security.SecureRandom;
@@ -25,10 +16,6 @@ import java.util.Random;
 import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,12 +31,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.CollectionUtils;
 
 import com.google.protobuf.ByteString;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
+import fr.gouv.stopc.robert.server.batch.configuration.ScoringAndRiskEvaluationJobConfiguration;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
@@ -66,15 +52,19 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
 @Slf4j
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {  ContactsProcessingConfigurationTest.BatchTestConfig.class, RobertServerBatchApplication.class })
+@ContextConfiguration(classes = {  ScoringAndRiskEvaluationJobConfigurationTest.BatchTestConfig.class, RobertServerBatchApplication.class })
 @TestPropertySource(locations="classpath:application.properties", properties = {"robert.scoring.algo-version=2",
 "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK"})
-public class ContactsProcessingConfigurationTest {
+public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     private final static String SHOULD_NOT_FAIL = "It should not fail";
 
@@ -489,7 +479,7 @@ public class ContactsProcessingConfigurationTest {
     }
 
     @Configuration
-    @Import({ ContactsProcessingConfiguration.class })
+    @Import({ ScoringAndRiskEvaluationJobConfiguration.class })
     public static class BatchTestConfig {
 
         private Job scoreAndProcessRisks;

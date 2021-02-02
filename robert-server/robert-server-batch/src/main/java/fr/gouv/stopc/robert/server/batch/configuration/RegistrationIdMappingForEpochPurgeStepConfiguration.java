@@ -17,14 +17,17 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
 public class RegistrationIdMappingForEpochPurgeStepConfiguration extends StepConfigurationBase {
     public RegistrationIdMappingForEpochPurgeStepConfiguration(PropertyLoader propertyLoader,
-            StepBuilderFactory stepBuilderFactory, IServerConfigurationService serverConfigurationService) {
-        super(propertyLoader, stepBuilderFactory, serverConfigurationService, null);
+                                                               StepBuilderFactory stepBuilderFactory,
+                                                               IServerConfigurationService serverConfigurationService,
+                                                               ItemIdMappingService itemIdMappingService) {
+        super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
     }
 
     @Bean
@@ -70,7 +73,7 @@ public class RegistrationIdMappingForEpochPurgeStepConfiguration extends StepCon
             @Override
             public ExitStatus afterStep(StepExecution stepExecution) {
                 log.debug("END : Registration id mapping for old epoch expositions purge.");
-                return null;
+                return stepExecution.getExitStatus();
             }
             
             protected void resetItemIdMappingCollection() {

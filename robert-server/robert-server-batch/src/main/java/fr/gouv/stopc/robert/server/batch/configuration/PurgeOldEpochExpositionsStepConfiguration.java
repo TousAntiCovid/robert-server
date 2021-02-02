@@ -8,7 +8,6 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.data.MongoItemReader;
-import org.springframework.batch.item.data.MongoItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -46,7 +45,7 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
 
     @Bean
     public Step purgeOldExpochExpositionsWorkerStep(MongoItemReader<Registration> mongoRegistrationItemReader,
-            MongoItemWriter<Registration> registrationItemWriterForPurge) {
+            ItemWriter<Registration> registrationItemWriterForPurge) {
         return this.stepBuilderFactory.get("purgeOldExpochExpositionsWorkerStep")
                 .<Registration, Registration>chunk(CHUNK_SIZE)
                 .reader(mongoRegistrationItemReader)
@@ -59,8 +58,8 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
         return new PurgeOldEpochExpositionsProcessor(
                 this.serverConfigurationService,
                 this.propertyLoader);
-    }    
-    
+    }
+
     @Bean
     public ItemWriter<Registration> registrationItemWriterForPurge() {
         return new RegistrationItemWriter(this.registrationService, TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY);
@@ -73,13 +72,13 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
                 log.debug("START : Purge Old Epoch Expositions.");
 
                 long totalItemCount = registrationService.countNbUsersWithOldEpochExpositions(computeMinOldEpochId()).longValue();
-                stepExecution.getExecutionContext().putLong(TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY, totalItemCount);
+                stepExecution.getJobExecution().getExecutionContext().putLong(TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY, totalItemCount);
             }
 
             @Override
             public ExitStatus afterStep(StepExecution stepExecution) {
                 log.info("END : Purge Old Epoch Expositions.");
-                return null;
+                return stepExecution.getExitStatus();
             }
             
             private int computeMinOldEpochId(){

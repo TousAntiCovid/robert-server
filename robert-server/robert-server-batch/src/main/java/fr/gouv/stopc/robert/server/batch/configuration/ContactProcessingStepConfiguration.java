@@ -83,13 +83,13 @@ public class ContactProcessingStepConfiguration extends StepConfigurationBase {
                 log.info("START : Contact scoring.");
 
                 long totalItemCount = contactService.count().longValue();
-                stepExecution.getExecutionContext().putLong(ScoringAndRiskEvaluationJobConfiguration.TOTAL_CONTACT_COUNT_KEY, totalItemCount);
+                stepExecution.getJobExecution().getExecutionContext().putLong(ScoringAndRiskEvaluationJobConfiguration.TOTAL_CONTACT_COUNT_KEY, totalItemCount);
             }
 
             @Override
             public ExitStatus afterStep(StepExecution stepExecution) {
                 log.info("END : Contact scoring.");
-                return null;
+                return stepExecution.getExitStatus();
             }
         };
     }

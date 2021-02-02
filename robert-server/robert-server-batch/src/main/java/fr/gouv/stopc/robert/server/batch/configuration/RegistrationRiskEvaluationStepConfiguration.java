@@ -8,7 +8,6 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.data.MongoItemReader;
-import org.springframework.batch.item.data.MongoItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -49,7 +48,7 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
     @Bean
     public Step processRegistrationRiskWorkerStep(MongoItemReader<Registration> mongoRegistrationItemReader,
             ItemProcessor<Registration, Registration> riskEvaluationProcessor,
-            MongoItemWriter<Registration> registrationItemWriter) {
+            ItemWriter<Registration> registrationItemWriter) {
         return this.stepBuilderFactory.get("processRegistrationRiskWorkerStep")
                 .<Registration, Registration>chunk(CHUNK_SIZE)
                 .reader(mongoRegistrationItemReader)
@@ -78,13 +77,13 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
                 log.info("START : Risk Evaluation");
 
                 long totalItemCount = registrationService.count().longValue();
-                stepExecution.getExecutionContext().putLong(RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY, totalItemCount);
+                stepExecution.getJobExecution().getExecutionContext().putLong(RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY, totalItemCount);
             }
 
             @Override
             public ExitStatus afterStep(StepExecution stepExecution) {
                 log.info("END : Risk Evaluation.");
-                return null;
+                return stepExecution.getExitStatus();
             }
         };
     }

@@ -30,12 +30,11 @@ public class ScoringAndRiskEvaluationJobConfiguration {
     }
     
     @Bean
-    public Job scoreAndProcessRisks(Step contactProcessingStep, Step processRegistrationStep,
-            Step purgeOldEpochExpositionsStep, Step populateRegistrationIdMappingStep,
+    public Job scoreAndProcessRisks(Step contactProcessingStep, Step purgeOldEpochExpositionsStep,
             Step populateContactIdMappingStep, Step populateRegistrationIdMappingForEpochPurgeStep,
             Step populateIdMappingWithScoredRegistrationStep, Step processRegistrationRiskStep) {
 
-        log.info("Launching contact batch (Old expositions purge, Contact scoring, Risk computation)");
+        log.info("Building contact batch (Old expositions purge, Contact scoring, Risk computation)");
         return this.jobBuilderFactory.get("processContacts")
                 .start(populateRegistrationIdMappingForEpochPurgeStep)
                 .next(purgeOldEpochExpositionsStep)
