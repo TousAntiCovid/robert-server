@@ -13,10 +13,7 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-
-@Slf4j
 @AllArgsConstructor
 public class PurgeOldEpochExpositionsProcessor implements ItemProcessor<Registration, Registration> {
 
@@ -25,7 +22,6 @@ public class PurgeOldEpochExpositionsProcessor implements ItemProcessor<Registra
 
     @Override
     public Registration process(Registration registration) {
-        log.debug("Purge Old Epoch Expositions started.");
         List<EpochExposition> exposedEpochs = registration.getExposedEpochs();
 
         // Exposed epochs should be empty, never null

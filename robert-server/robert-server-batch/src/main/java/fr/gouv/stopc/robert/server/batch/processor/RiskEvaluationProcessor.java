@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.batch.item.ItemProcessor;
 
@@ -15,7 +16,7 @@ import lombok.AllArgsConstructor;
 
 
 @AllArgsConstructor
-public class RegistrationProcessor implements ItemProcessor<Registration, Registration> {
+public class RiskEvaluationProcessor implements ItemProcessor<Registration, Registration> {
 
     private IServerConfigurationService serverConfigurationService;
 
@@ -25,7 +26,10 @@ public class RegistrationProcessor implements ItemProcessor<Registration, Regist
 
     @Override
     public Registration process(Registration registration) {
-
+        if (Objects.isNull(registration)) {
+            return null;
+        }
+        
         int currentEpochId = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
         List<EpochExposition> epochsToKeep = ScoringUtils.getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
                 registration.getExposedEpochs(),
@@ -41,7 +45,7 @@ public class RegistrationProcessor implements ItemProcessor<Registration, Regist
                 this.scoringStrategy
                 );
 
-        if(isRegistrationAtRisk){
+        if (isRegistrationAtRisk){
             return registration;
         }
 

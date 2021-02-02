@@ -1,7 +1,25 @@
 package test.fr.gouv.stopc.robertserver.batch.processor;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
+import fr.gouv.stopc.robert.server.batch.configuration.PurgeOldEpochExpositionsStepConfiguration;
 import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
@@ -10,22 +28,8 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 
 @ExtendWith(SpringExtension.class)
@@ -59,7 +63,7 @@ public class PurgeOldEpochExpositionsProcessorTest {
         this.purgeOldEpochExpositionsProcessor = new PurgeOldEpochExpositionsProcessor(this.serverConfigurationService,
                 this.propertyLoader);
         this.registrationItemWriter =  new RegistrationItemWriter(registrationService,
-                ContactsProcessingConfiguration.TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY);
+                PurgeOldEpochExpositionsStepConfiguration.TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY);
         
         this.currentEpoch = TimeUtils.getCurrentEpochFrom(serverConfigurationService.getServiceTimeStart());
     }

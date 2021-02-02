@@ -1,9 +1,9 @@
 package test.fr.gouv.stopc.robertserver.batch.processor;
 
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
+import fr.gouv.stopc.robert.server.batch.configuration.RiskEvaluationJobConfiguration;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
-import fr.gouv.stopc.robert.server.batch.processor.RegistrationProcessor;
+import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         })
 public class RegistrationProcessorTest {
 
-    private RegistrationProcessor registrationProcessor;
+    private RiskEvaluationProcessor registrationProcessor;
 
     private RegistrationItemWriter registrationItemWriter;
 
@@ -64,13 +64,13 @@ public class RegistrationProcessorTest {
 
     @BeforeEach
     public void beforeEach() {
-        this.registrationProcessor = new RegistrationProcessor(
+        this.registrationProcessor = new RiskEvaluationProcessor(
                 serverConfigurationService,
                 scoringStrategyService,
                 propertyLoader
         );
 
-        this.registrationItemWriter = new RegistrationItemWriter(registrationService, ContactsProcessingConfiguration.TOTAL_REGISTRATION_COUNT_KEY);
+        this.registrationItemWriter = new RegistrationItemWriter(registrationService, RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY);
 
         this.currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
 

@@ -1,12 +1,13 @@
 package fr.gouv.stopc.robert.server.batch.partitioner;
 
-import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
-import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ExecutionContext;
 
-import java.util.HashMap;
-import java.util.Map;
+import fr.gouv.stopc.robert.server.batch.configuration.StepConfigurationBase;
+import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
 
 public class RangePartitioner implements Partitioner {
 
@@ -16,8 +17,8 @@ public class RangePartitioner implements Partitioner {
         Map<String, ExecutionContext> result = new HashMap<>(gridSize);
 
         long itemIdMappingCount = ItemProcessingCounterUtils.getInstance().getCurrentIdFromItemIdMapping();
-        long elementCountByPartition = (long)Math.ceil((double)itemIdMappingCount/
-                (double) ContactsProcessingConfiguration.GRID_SIZE);
+        long elementCountByPartition = (long) Math.ceil((double) itemIdMappingCount 
+                / (double) StepConfigurationBase.GRID_SIZE);
         long start = 1;
         long end = elementCountByPartition;
 
