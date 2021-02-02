@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 
 import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -26,13 +27,18 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
 
     private final ScoringStrategyService scoringStrategyService;
     private final IRegistrationService registrationService;
+    private final BatchRegistrationServiceImpl batchRegistrationService;
 
     public RegistrationRiskEvaluationStepConfiguration(PropertyLoader propertyLoader,
-            StepBuilderFactory stepBuilderFactory, IServerConfigurationService serverConfigurationService,
-            ScoringStrategyService scoringStrategyService, IRegistrationService registrationService) {
+                                                       StepBuilderFactory stepBuilderFactory,
+                                                       IServerConfigurationService serverConfigurationService,
+                                                       ScoringStrategyService scoringStrategyService,
+                                                       IRegistrationService registrationService,
+                                                       BatchRegistrationServiceImpl batchRegistrationService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, null);
         this.scoringStrategyService = scoringStrategyService;
         this.registrationService = registrationService;
+        this.batchRegistrationService = batchRegistrationService;
     }
 
     @Bean
@@ -62,7 +68,8 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
         return new RiskEvaluationProcessor(
                 this.serverConfigurationService,
                 this.scoringStrategyService,
-                this.propertyLoader);
+                this.propertyLoader,
+                this.batchRegistrationService);
     }
     
     @Bean

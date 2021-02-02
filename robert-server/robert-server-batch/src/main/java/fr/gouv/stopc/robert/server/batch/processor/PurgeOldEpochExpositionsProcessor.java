@@ -7,7 +7,7 @@ import java.util.Objects;
 import org.springframework.batch.item.ItemProcessor;
 
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.utils.ScoringUtils;
+import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
@@ -19,6 +19,7 @@ public class PurgeOldEpochExpositionsProcessor implements ItemProcessor<Registra
 
     private IServerConfigurationService serverConfigurationService;
     private PropertyLoader propertyLoader;
+    private BatchRegistrationServiceImpl batchRegistrationService;
 
     @Override
     public Registration process(Registration registration) {
@@ -30,7 +31,7 @@ public class PurgeOldEpochExpositionsProcessor implements ItemProcessor<Registra
         }
 
         int currentEpochId = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
-        List<EpochExposition> epochsToKeep = ScoringUtils.getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
+        List<EpochExposition> epochsToKeep = batchRegistrationService.getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
                 exposedEpochs,
                 currentEpochId,
                 this.propertyLoader.getContagiousPeriod(),

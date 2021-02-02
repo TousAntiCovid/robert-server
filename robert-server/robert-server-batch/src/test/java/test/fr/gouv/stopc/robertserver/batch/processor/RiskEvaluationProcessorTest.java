@@ -1,10 +1,26 @@
 package test.fr.gouv.stopc.robertserver.batch.processor;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.RiskEvaluationJobConfiguration;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -15,18 +31,7 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
-
-import java.security.SecureRandom;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { RobertServerBatchApplication.class })
@@ -35,9 +40,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                 "robert.scoring.algo-version=2",
                 "robert.scoring.batch-mode=FULL_REGISTRATION_SCAN_COMPUTE_RISK"
         })
-public class RegistrationProcessorTest {
+public class RiskEvaluationProcessorTest {
 
-    private RiskEvaluationProcessor registrationProcessor;
+    private RiskEvaluationProcessor riskEvaluationProcessor;
 
     private RegistrationItemWriter registrationItemWriter;
 
@@ -49,6 +54,9 @@ public class RegistrationProcessorTest {
 
     @Autowired
     private ScoringStrategyService scoringStrategyService;
+
+    @Autowired
+    private BatchRegistrationServiceImpl batchRegistrationService;
 
     @Autowired
     private PropertyLoader propertyLoader;
@@ -64,10 +72,11 @@ public class RegistrationProcessorTest {
 
     @BeforeEach
     public void beforeEach() {
-        this.registrationProcessor = new RiskEvaluationProcessor(
+        this.riskEvaluationProcessor = new RiskEvaluationProcessor(
                 serverConfigurationService,
                 scoringStrategyService,
-                propertyLoader
+                propertyLoader,
+                batchRegistrationService
         );
 
         this.registrationItemWriter = new RegistrationItemWriter(registrationService, RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY);
@@ -79,15 +88,21 @@ public class RegistrationProcessorTest {
     }
 
     @Test
+    public void shouldReturnNullIfProvidedRegistrationIsNull() {
+        assertNull(riskEvaluationProcessor.process(null));
+    }
+
+    @Test
     public void testNoScoresNoRiskSucceeds() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
 
         assertTrue(this.registration.isPresent());
-        this.registrationProcessor.process(this.registration.get());
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
         Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
         assertTrue(reg.isPresent() && !reg.get().isAtRisk());
         assertEquals(reg.get().getLatestRiskEpoch(), 0);
+        assertNull(returnedRegistration);
     }
 
     @Test
@@ -109,7 +124,7 @@ public class RegistrationProcessorTest {
 
         this.registration.get().setExposedEpochs(expositions);
 
-        this.registrationProcessor.process(this.registration.get());
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
         this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
 
@@ -120,6 +135,7 @@ public class RegistrationProcessorTest {
                 expositionsForFirstEpoch));
         assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
                 expositionsForSecondEpoch));
+        assertNull(returnedRegistration);
     }
 
     @Test
@@ -141,7 +157,7 @@ public class RegistrationProcessorTest {
 
         this.registration.get().setExposedEpochs(expositions);
 
-        this.registrationProcessor.process(this.registration.get());
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
         this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
 
@@ -152,6 +168,7 @@ public class RegistrationProcessorTest {
                 expositionsForFirstEpoch));
         assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
                 expositionsForSecondEpoch));
+        assertNotNull(returnedRegistration);
     }
 
     @Test
@@ -173,7 +190,7 @@ public class RegistrationProcessorTest {
 
         this.registration.get().setExposedEpochs(expositions);
 
-        this.registrationProcessor.process(this.registration.get());
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
         this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
 
@@ -184,6 +201,7 @@ public class RegistrationProcessorTest {
                 expositionsForFirstEpoch));
         assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
                 expositionsForSecondEpoch));
+        assertNotNull(returnedRegistration);
     }
 
     @Test
@@ -261,7 +279,7 @@ public class RegistrationProcessorTest {
 
         this.registration.get().setExposedEpochs(expositions);
 
-        this.registrationProcessor.process(this.registration.get());
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
         this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
 
@@ -273,5 +291,11 @@ public class RegistrationProcessorTest {
         assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
                 expositions.get(1).getExpositionScores().toArray()));
         assertEquals(initialValue, reg.get().isNotified());
+        if (riskDetected){
+            assertNotNull(returnedRegistration)  ;
+        }  else {
+            assertNull(returnedRegistration);
+        }
+
     }
 }

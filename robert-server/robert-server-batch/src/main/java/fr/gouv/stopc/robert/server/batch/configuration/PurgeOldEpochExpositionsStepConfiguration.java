@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
+import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -26,12 +27,14 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
     public static final String TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY = "totalRegistrationForPurgeCount";
     
     private final IRegistrationService registrationService;
+    private final BatchRegistrationServiceImpl batchRegistrationService;
     
     public PurgeOldEpochExpositionsStepConfiguration(PropertyLoader propertyLoader,
-            StepBuilderFactory stepBuilderFactory, IServerConfigurationService serverConfigurationService,
-            IRegistrationService registrationService) {
+                                                     StepBuilderFactory stepBuilderFactory, IServerConfigurationService serverConfigurationService,
+                                                     IRegistrationService registrationService, BatchRegistrationServiceImpl batchRegistrationService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, null);
         this.registrationService = registrationService;
+        this.batchRegistrationService = batchRegistrationService;
     }
 
     @Bean
@@ -57,7 +60,8 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
     public ItemProcessor<Registration, Registration> purgeOldExpositionsProcessor() {
         return new PurgeOldEpochExpositionsProcessor(
                 this.serverConfigurationService,
-                this.propertyLoader);
+                this.propertyLoader,
+                this.batchRegistrationService);
     }
 
     @Bean

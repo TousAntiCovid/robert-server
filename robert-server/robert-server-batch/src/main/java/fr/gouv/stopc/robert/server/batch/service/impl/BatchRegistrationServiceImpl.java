@@ -1,9 +1,10 @@
-package fr.gouv.stopc.robert.server.batch.utils;
+package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
@@ -13,18 +14,15 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class ScoringUtils {
-
-    private ScoringUtils() {
-        throw new AssertionError();
-    }
+@Service
+public final class BatchRegistrationServiceImpl {
 
     /**
      * Keep epochs within the contagious period
      * @param exposedEpochs
      * @return
      */
-    public static List<EpochExposition> getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
+    public List<EpochExposition> getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
             List<EpochExposition> exposedEpochs,
             int currentEpochId,
             int contagiousPeriod,
@@ -39,13 +37,13 @@ public final class ScoringUtils {
         }).collect(Collectors.toList());
     }
 
-    public static boolean updateRegistrationIfRisk(Registration registration,
-                                                List<EpochExposition> epochExpositions,
+    public boolean updateRegistrationIfRisk(Registration registration,
                                                 long timeStart,
                                                 double riskThreshold,
                                                 ScoringStrategyService scoringStrategy) {
         boolean isRegistrationAtRisk = false;
         int latestRiskEpoch = registration.getLatestRiskEpoch();
+        List<EpochExposition> epochExpositions = registration.getExposedEpochs();
 
         // Only consider epochs that are after the last notification for scoring
         List<EpochExposition> scoresSinceLastNotif = CollectionUtils.isEmpty(epochExpositions) ?
