@@ -26,6 +26,7 @@ import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.ExposedTokenGenerator;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
+import fr.gouv.tacw.ws.dto.ExposureStatusResponseV1Dto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.utils.UriConstants;
@@ -46,6 +47,9 @@ class TacWarningIntegrationTests {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Value("${controller.path.prefix}" + UriConstants.API_V1)
+    private String pathPrefixV1;
+    
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
     private String pathPrefixV2;
 
@@ -81,6 +85,20 @@ class TacWarningIntegrationTests {
     }
 
     @Test
+    public void testStatusV1OfVisitTokenInfectedIsAtRisk() {
+        List<VisitVo> visits = this.buildExposedVisits("4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd", 3);
+        List<VisitTokenVo> tokensVo = this.staticVisitTokenVoFrom(visits);
+        this.report(visits);
+
+        ResponseEntity<ExposureStatusResponseV1Dto> response = restTemplate.postForEntity(
+                pathPrefixV1 + UriConstants.STATUS, new ExposureStatusRequestVo(tokensVo),
+                ExposureStatusResponseV1Dto.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().isAtRisk()).isTrue();
+    }
+    
+    @Test
     public void testStatusOfVisitTokenInfectedIsAtRisk() {
         List<VisitVo> visits = this.buildExposedVisits("4YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyd", 3);
         List<VisitTokenVo> tokensVo = this.staticVisitTokenVoFrom(visits);
@@ -94,6 +112,15 @@ class TacWarningIntegrationTests {
         assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.LOW);
     }
 
+    @Test
+    public void testCanReportVisitsWhenInfectedV1() {
+        List<VisitVo> visits = new ArrayList<VisitVo>();
+        visits.add(new VisitVo("12345", 
+                new QRCodeVo(TokenTypeVo.STATIC, VenueTypeVo.N, VenueCategoryVo.CAT1, 60, "UUID")));
+
+        this.report(visits, pathPrefixV1);
+    }
+    
     @Test
     public void testCanReportVisitsWhenInfected() {
         List<VisitVo> visits = new ArrayList<VisitVo>();
@@ -126,6 +153,10 @@ class TacWarningIntegrationTests {
     }
 
     private void report(List<VisitVo> visits) {
+        this.report(visits, pathPrefixV2);
+    }
+    
+    private void report(List<VisitVo> visits, String pathPrefix) {
         HttpEntity<ReportRequestVo> entity;
         try {
             entity = new HttpJwtHeaderUtils(keyPair.getPrivate()).
@@ -134,7 +165,7 @@ class TacWarningIntegrationTests {
             throw new RuntimeException(e);
         } 
 
-        ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefixV2 + UriConstants.REPORT,
+        ResponseEntity<ReportResponseDto> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT,
                 entity, ReportResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

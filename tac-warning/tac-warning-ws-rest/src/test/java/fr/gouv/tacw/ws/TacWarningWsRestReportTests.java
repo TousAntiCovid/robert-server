@@ -54,6 +54,9 @@ import io.jsonwebtoken.security.Keys;
 class TacWarningWsRestReportTests {
 	private static final String NULL = "nul";
 
+    @Value("${controller.path.prefix}" + UriConstants.API_V1)
+    private String pathPrefixV1;
+
 	@Value("${controller.path.prefix}" + UriConstants.API_V2)
 	private String pathPrefixV2;
 
@@ -90,7 +93,47 @@ class TacWarningWsRestReportTests {
 		this.badArgumentLoggerAppender.start();
 		((Logger) LoggerFactory.getLogger(BadArgumentsLoggerService.class)).addAppender(this.badArgumentLoggerAppender);
 	}
-	
+
+    @Test
+    public void testInfectedUserCanReportItselfAsInfectedV1() {
+        ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());
+        
+        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefixV1 + UriConstants.REPORT, this.getReportEntityWithBearer(reportRequest),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    
+    @Test
+    public void testInfectedUserCanReportItselfAsInfectedWithVisitInV1Format() throws JsonMappingException, JsonProcessingException {
+        String json = "{\n"
+                + "   \"visits\": [\n"
+                + "     {\n"
+                + "       \"timestamp\": \"3814657232\",\n"
+                + "       \"qrCode\": {\n"
+                + "         \"type\": \"STATIC\",\n"
+                + "         \"venueType\": \"N\",\n"
+                + "         \"venueCategory\": \"CAT3\",\n"
+                + "         \"venueCapacity\": 42,\n"
+                + "         \"uuid\": \"9fb80fea-b3ac-4603-b40a-0be8879dbe79\"\n"
+                + "       }\n"
+                + "     }\n"
+                + "   ]\n"
+                + "}\n"
+                + "";
+        
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                pathPrefixV1 + UriConstants.REPORT, 
+                new HttpEntity<String>(json, this.newJsonHeaderWithBearer()),
+                String.class);
+        
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(warningService).reportVisitsWhenInfected(visitsCaptor.capture());
+        assertThat(visitsCaptor.getValue().size()).isEqualTo(1);
+        assertThat(visitsCaptor.getValue().get(0).getQrCode().getVenueCategory()).isEqualTo(VenueCategoryVo.CAT3);
+        assertThat(badArgumentLoggerAppender.list.size()).isEqualTo(0);
+    }
+    
 	@Test
 	public void testInfectedUserCanReportItselfAsInfected() {
 		ReportRequestVo reportRequest = new ReportRequestVo(new ArrayList<VisitVo>());

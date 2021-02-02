@@ -52,6 +52,7 @@ import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.controller.TACWarningController;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
+import fr.gouv.tacw.ws.dto.ExposureStatusResponseV1Dto;
 import fr.gouv.tacw.ws.service.TestTimestampService;
 import fr.gouv.tacw.ws.service.WarningService;
 import fr.gouv.tacw.ws.utils.BadArgumentsLoggerService;
@@ -81,6 +82,9 @@ class TacWarningWsRestStatusTests {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Value("${controller.path.prefix}" + UriConstants.API_V1)
+    private String pathPrefixV1;
+    
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
     private String pathPrefixV2;
 
@@ -96,6 +100,18 @@ class TacWarningWsRestStatusTests {
     private ListAppender<ILoggingEvent> tacWarningControllerLoggerAppender;
     private ListAppender<ILoggingEvent> badArgumentLoggerAppender;
 
+    @Test
+    public void testCanGetStatusV1() {
+        ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
+
+        ResponseEntity<ExposureStatusResponseV1Dto> response = restTemplate
+                .postForEntity(pathPrefixV1 + UriConstants.STATUS, request, ExposureStatusResponseV1Dto.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().isAtRisk()).isTrue();
+    }
+    
     @Test
     public void testCanGetStatus() {
         ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
