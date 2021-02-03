@@ -105,10 +105,7 @@ public class StepConfigurationBase {
 
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").in(itemIdentifiers));
-        return registrationMongoItemReaderFactory.buildMongoItemReader(mongoTemplate,
-                query,
-                null,
-                CHUNK_SIZE);
+        return registrationMongoItemReaderFactory.getMongoItemReader(mongoTemplate, query, CHUNK_SIZE);
     }
     
     @Bean
@@ -120,10 +117,7 @@ public class StepConfigurationBase {
     
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").in(itemIdentifiers));
-        return contactMongoItemReaderFactory.buildMongoItemReader(mongoTemplate,
-                query,
-                null,
-                CHUNK_SIZE);
+        return contactMongoItemReaderFactory.getMongoItemReader(mongoTemplate, query, CHUNK_SIZE);
     }
 
     @Bean

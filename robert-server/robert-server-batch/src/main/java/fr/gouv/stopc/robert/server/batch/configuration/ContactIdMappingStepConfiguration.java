@@ -52,7 +52,7 @@ public class ContactIdMappingStepConfiguration extends StepConfigurationBase {
     public MongoItemReader<Contact> mongoContactIdMappingItemReader(MongoTemplate mongoTemplate) {
 
         final String queryAsString = "{}";
-        return contactMongoItemReaderFactory.buildMongoItemReader(mongoTemplate, queryAsString, getSorts(), CHUNK_SIZE);
+        return contactMongoItemReaderFactory.getMongoItemReader(mongoTemplate, queryAsString, getSorts(), CHUNK_SIZE);
     }
 
     @Bean

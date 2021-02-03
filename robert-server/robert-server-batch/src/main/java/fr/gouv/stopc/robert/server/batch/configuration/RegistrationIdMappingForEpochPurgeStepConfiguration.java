@@ -51,7 +51,7 @@ public class RegistrationIdMappingForEpochPurgeStepConfiguration extends StepCon
         int minEpochId = currentEpochId - contagiousPeriod * 96;
         String queryAsString = "{exposedEpochs:{$elemMatch:{epochId:{$lte:"+minEpochId+"}}}}}";
 
-        return registrationMongoItemReaderFactory.buildMongoItemReader(mongoTemplate,
+        return registrationMongoItemReaderFactory.getMongoItemReader(mongoTemplate,
                 queryAsString,
                 this.getSorts(),
                 CHUNK_SIZE);
