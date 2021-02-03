@@ -32,7 +32,7 @@ public class RiskEvaluationJobConfiguration {
     @Bean
     public Job evaluateRiskJob(Step populateIdMappingWithScoredRegistrationStep, Step processRegistrationRiskStep) {
         log.info("Launching registration batch (No contact scoring, only risk computation)");
-        return this.jobBuilderFactory.get("processRegistration")
+        return this.jobBuilderFactory.get("FULL_REGISTRATION_SCAN_COMPUTE_RISK")
                 .start(populateIdMappingWithScoredRegistrationStep)
                 .next(processRegistrationRiskStep)
                 .build();

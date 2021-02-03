@@ -72,7 +72,7 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
      */
     @Override
     public Contact process(Contact contact) throws RobertServerCryptoException, RobertScoringException {
-        log.info("Contact processing started");
+        log.debug("Contact processing started");
 
         if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
             log.warn("No messages in contact; discarding contact");
@@ -87,7 +87,7 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
         Integer epoch = null;
         this.nbToBeProcessed = contact.getMessageDetails().size();
 
-        log.info("{} HELLO message(s) to process", this.nbToBeProcessed);
+        log.debug("{} HELLO message(s) to process", this.nbToBeProcessed);
         for (HelloMessageDetail helloMessageDetail : contact.getMessageDetails()) {
             GetInfoFromHelloMessageRequest request = GetInfoFromHelloMessageRequest.newBuilder()
                     .setEcc(ByteString.copyFrom(contact.getEcc()))
@@ -250,8 +250,8 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
     }
 
     private void displayStatus() {
-        log.info("{} HELLO message(s) discarded", this.nbToBeDiscarded);
-        log.info("{} HELLO message(s) successfull processed", (this.nbToBeProcessed - this.nbToBeDiscarded));
+        log.debug("{} HELLO message(s) discarded", this.nbToBeDiscarded);
+        log.debug("{} HELLO message(s) successfull processed", (this.nbToBeProcessed - this.nbToBeDiscarded));
     }
 
     private long castIntegerToLong(int x, int nbOfSignificantBytes) {

@@ -4,6 +4,7 @@ import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 
+import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +34,7 @@ public class ResetIdMappingTableListener implements StepExecutionListener {
 
     protected void resetItemIdMappingCollection() {
         log.info("START : Reset the itemIdMapping collection.");
+        ItemProcessingCounterUtils.getInstance().resetCounters();
         itemIdMappingService.deleteAll();
         log.info("END : Reset the itemIdMapping collection.");
     }

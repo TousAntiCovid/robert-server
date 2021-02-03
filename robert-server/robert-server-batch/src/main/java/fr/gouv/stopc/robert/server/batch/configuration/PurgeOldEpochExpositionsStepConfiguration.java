@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.*;
+
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
@@ -39,9 +41,9 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
 
     @Bean
     public Step purgeOldEpochExpositionsStep(Step purgeOldExpochExpositionsWorkerStep) {
-        return this.stepBuilderFactory.get("readRegistrationsForPurge")
+        return this.stepBuilderFactory.get(PURGE_OLD_EXPOSITIONS_STEP_NAME)
                 .listener(this.purgeStepListener())
-                .partitioner("purgeOldEpochExpositionsWorkerStep", this.partitioner())
+                .partitioner(PURGE_OLD_EXPOSITIONS_PARTITIONER_STEP_NAME, this.partitioner())
                 .partitionHandler(this.partitionHandler(purgeOldExpochExpositionsWorkerStep, this.asyncTaskExecutor()))
                 .build();
     }
@@ -49,7 +51,7 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
     @Bean
     public Step purgeOldExpochExpositionsWorkerStep(MongoItemReader<Registration> mongoRegistrationItemReader,
             ItemWriter<Registration> registrationItemWriterForPurge) {
-        return this.stepBuilderFactory.get("purgeOldExpochExpositionsWorkerStep")
+        return this.stepBuilderFactory.get(PURGE_OLD_EXPOSITIONS_WORKER_STEP_NAME)
                 .<Registration, Registration>chunk(CHUNK_SIZE)
                 .reader(mongoRegistrationItemReader)
                 .processor(this.purgeOldExpositionsProcessor())

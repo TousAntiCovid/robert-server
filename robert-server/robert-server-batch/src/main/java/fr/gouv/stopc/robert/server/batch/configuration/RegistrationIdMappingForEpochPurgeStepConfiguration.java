@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.POPULATE_REGISTRATION_ID_MAPPING_FOR_PURGE_STEP_NAME;
+
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -34,7 +36,7 @@ public class RegistrationIdMappingForEpochPurgeStepConfiguration extends StepCon
             MongoItemReader<Registration> mongoRegistrationIdMappingForPurgeItemReader,
             MongoItemWriter<ItemIdMapping> mongoRegistrationIdMappingItemWriter) {
 
-        return this.stepBuilderFactory.get("populateRegistrationIdMappingForPurge")
+        return this.stepBuilderFactory.get(POPULATE_REGISTRATION_ID_MAPPING_FOR_PURGE_STEP_NAME)
                 .<Registration, ItemIdMapping>chunk(POPULATE_STEP_CHUNK_SIZE)
                 .reader(mongoRegistrationIdMappingForPurgeItemReader)
                 .processor(new RegistrationIdMappingProcessor())

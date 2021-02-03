@@ -38,4 +38,10 @@ public class ItemProcessingCounterUtils {
         currentIdFromItemIdMapping++;
         return currentIdFromItemIdMapping;
     }
+
+    public void resetCounters() {
+        this.numberOfProcessedContacts = 0;
+        this.numberOfProcessedRegistrations = 0;
+        this.currentIdFromItemIdMapping = 0;
+    }
 }

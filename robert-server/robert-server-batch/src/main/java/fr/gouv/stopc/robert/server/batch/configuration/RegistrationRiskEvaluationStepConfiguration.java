@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.*;
+
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
@@ -44,8 +46,8 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
     @Bean
     public Step processRegistrationRiskStep(Step processRegistrationRiskWorkerStep) {
 
-        return this.stepBuilderFactory.get("processRegistrationRiskStep")
-                .partitioner("processRegistrationRiskPartitioner", this.partitioner())
+        return this.stepBuilderFactory.get(REGISTRATION_RISK_EVALUATION_STEP_NAME)
+                .partitioner(REGISTRATION_RISK_EVALUATION_PARTITIONER_STEP_NAME, this.partitioner())
                 .partitionHandler(this.partitionHandler(processRegistrationRiskWorkerStep, this.asyncTaskExecutor()))
                 .listener(this.riskEvaluationStepListener())
                 .build();
@@ -55,7 +57,7 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
     public Step processRegistrationRiskWorkerStep(MongoItemReader<Registration> mongoRegistrationItemReader,
             ItemProcessor<Registration, Registration> riskEvaluationProcessor,
             ItemWriter<Registration> registrationItemWriter) {
-        return this.stepBuilderFactory.get("processRegistrationRiskWorkerStep")
+        return this.stepBuilderFactory.get(REGISTRATION_RISK_EVALUATION_WORKER_STEP_NAME)
                 .<Registration, Registration>chunk(CHUNK_SIZE)
                 .reader(mongoRegistrationItemReader)
                 .processor(riskEvaluationProcessor)

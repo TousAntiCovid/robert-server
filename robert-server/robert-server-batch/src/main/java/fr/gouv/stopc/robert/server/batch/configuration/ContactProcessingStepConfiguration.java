@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.*;
+
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
@@ -46,15 +48,15 @@ public class ContactProcessingStepConfiguration extends StepConfigurationBase {
     public Step contactProcessingStep(MongoItemReader<Contact> mongoContactItemReader) {
         Step workerStep = this.contactWorkerStep(stepBuilderFactory, mongoContactItemReader);
 
-        return this.stepBuilderFactory.get("readContacts")
+        return this.stepBuilderFactory.get(SCORING_CONTACT_STEP_NAME)
                 .listener(this.contactScoringStepListener())
-                .partitioner("contactWorkerStep", partitioner())
+                .partitioner(SCORING_CONTACT_PARTITIONER_STEP_NAME, partitioner())
                 .partitionHandler(partitionHandler(workerStep, syncTaskExecutor()))
                 .build();
     }
 
     public Step contactWorkerStep(StepBuilderFactory stepBuilderFactory, MongoItemReader<Contact> mongoContactItemReader) {
-        return stepBuilderFactory.get("contactWorkerStep")
+        return stepBuilderFactory.get(SCORING_CONTACT_WORKER_STEP_NAME)
                 .<Contact, Contact>chunk(CHUNK_SIZE)
                 .reader(mongoContactItemReader)
                 .processor(this.contactsProcessor())

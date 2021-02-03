@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.POPULATE_CONTACT_ID_MAPPING_STEP_NAME;
+
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemProcessor;
@@ -33,7 +35,7 @@ public class ContactIdMappingStepConfiguration extends StepConfigurationBase {
             MongoItemReader<Contact> mongoContactIdMappingItemReader,
             MongoItemWriter<ItemIdMapping> mongoContactIdMappingItemWriter) {
 
-        return this.stepBuilderFactory.get("populateContactIdMapping")
+        return this.stepBuilderFactory.get(POPULATE_CONTACT_ID_MAPPING_STEP_NAME)
                 .<Contact, ItemIdMapping>chunk(POPULATE_STEP_CHUNK_SIZE)
                 .reader(mongoContactIdMappingItemReader)
                 .processor(this.contactIdMappingProcessor())

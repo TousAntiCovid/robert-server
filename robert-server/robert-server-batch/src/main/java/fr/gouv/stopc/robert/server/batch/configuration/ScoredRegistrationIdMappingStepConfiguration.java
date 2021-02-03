@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.POPULATE_REGISTRATION_WITH_SCORE_STEP_NAME;
+
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -32,7 +34,7 @@ public class ScoredRegistrationIdMappingStepConfiguration extends StepConfigurat
     public Step populateIdMappingWithScoredRegistrationStep(
             MongoItemReader<Registration> scoredRegistrationReader,
             MongoItemWriter<ItemIdMapping> mongoRegistrationIdMappingItemWriter) {
-        return this.stepBuilderFactory.get("populateIdMappingWithScoredRegistrationStep")
+        return this.stepBuilderFactory.get(POPULATE_REGISTRATION_WITH_SCORE_STEP_NAME)
                 .<Registration, ItemIdMapping>chunk(POPULATE_STEP_CHUNK_SIZE)
                 .reader(scoredRegistrationReader)
                 .processor(new RegistrationIdMappingProcessor())

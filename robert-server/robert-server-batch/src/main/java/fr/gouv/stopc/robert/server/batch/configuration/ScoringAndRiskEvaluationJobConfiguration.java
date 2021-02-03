@@ -35,7 +35,7 @@ public class ScoringAndRiskEvaluationJobConfiguration {
             Step populateIdMappingWithScoredRegistrationStep, Step processRegistrationRiskStep) {
 
         log.info("Building contact batch (Old expositions purge, Contact scoring, Risk computation)");
-        return this.jobBuilderFactory.get("processContacts")
+        return this.jobBuilderFactory.get("SCORE_CONTACTS_AND_COMPUTE_RISK")
                 .start(populateRegistrationIdMappingForEpochPurgeStep)
                 .next(purgeOldEpochExpositionsStep)
                 .next(populateContactIdMappingStep)
