@@ -1,8 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
-import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.data.MongoItemReader;
@@ -11,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import fr.gouv.stopc.robert.server.batch.listener.ResetIdMappingTableListener;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationIdMappingProcessor;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -50,24 +49,6 @@ public class ScoredRegistrationIdMappingStepConfiguration extends StepConfigurat
     }
 
     public StepExecutionListener scoredRegistrationIdMappingStepListener() {
-        return new StepExecutionListener() {
-            @Override
-            public void beforeStep(StepExecution stepExecution) {
-                resetItemIdMappingCollection();
-                log.info("START : Scored registration id mapping.");
-            }
-
-            @Override
-            public ExitStatus afterStep(StepExecution stepExecution) {
-                log.info("END : Scored registration id mapping.");
-                return null;
-            }
-            
-            protected void resetItemIdMappingCollection() {
-                log.info("START : Reset the itemIdMapping collection.");
-                itemIdMappingService.deleteAll();
-                log.info("END : Reset the itemIdMapping collection.");
-            }
-        };
+        return new ResetIdMappingTableListener("Scored registration id mapping", this.itemIdMappingService);
     }
 }
