@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -244,8 +243,8 @@ public class ScoringAlgorithmV2Test {
             }).collect(Collectors.toList());
 
             for (int i = 0; i < risks.size(); i++) {
-                if (risks.get(i).equals(expectedOutput.get(i))) {
-                    log.error("Values differ; expected={}; found={}", expectedOutput.get(i), risks.get(i));
+                if (! risks.get(i).equals(expectedOutput.get(i))) {
+                    log.error("Values at index [{}] differ; expected={}; found={}", i, expectedOutput.get(i), risks.get(i));
                 }
             }
 
