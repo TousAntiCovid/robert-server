@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Registration, Registration> {
 
+    public static final String USER_AT_RISK_NOT_NOTIFIED_MESSAGE = "Reseting risk level of a user never notified!";
     private final PropertyLoader propertyLoader;
     private int nbEpochsRiskLevelRetention;
     
@@ -25,7 +26,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
             int nbEpochsSinceLastScoringAtRisk = registration.getLastStatusRequestEpoch() - registration.getLatestRiskEpoch();
             if (nbEpochsSinceLastScoringAtRisk >= nbEpochsRiskLevelRetention) {
                 if ( !registration.isNotified() ) {
-                    log.info("Reseting risk level of a user never notified!");
+                    log.info(USER_AT_RISK_NOT_NOTIFIED_MESSAGE);
                 }
                 registration.setAtRisk(false);
                 // We do not reset registration#isNotified as it is used to compute the number of notifications in TAC 
