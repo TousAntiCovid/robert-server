@@ -68,8 +68,8 @@ public class RegistrationService implements IRegistrationService {
      * {@inheritDoc}
      */
     @Override
-    public Long countNbUsersAtRiskAgain() {
-        return this.registrationRepository.countNbUsersAtRiskAgain();
+    public Long countNbUsersAtRiskAndNotified() {
+        return this.registrationRepository.countNbUsersAtRiskAndNotified();
     }
 
     /**

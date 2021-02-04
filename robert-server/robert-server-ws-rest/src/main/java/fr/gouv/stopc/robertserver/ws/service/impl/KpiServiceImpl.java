@@ -40,8 +40,7 @@ public class KpiServiceImpl implements IKpiService {
 		// Retrieve the different kpis of the current date (because of the
 		// implementation of the Robert Protocol, kpis of Robert Server can be
 		// calculated only for the current date)
-		Long nbAlertedUsers = registrationDbService.countNbUsersAtRiskAgain()
-				+ registrationDbService.countNbUsersNotified();
+		Long nbAlertedUsers = registrationDbService.countNbUsersNotified();
 		Long nbExposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
 		Long nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
 		Long nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
