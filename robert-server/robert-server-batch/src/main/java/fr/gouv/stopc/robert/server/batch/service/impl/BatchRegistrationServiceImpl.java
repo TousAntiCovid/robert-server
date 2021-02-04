@@ -71,6 +71,7 @@ public class BatchRegistrationServiceImpl {
             registration.setLatestRiskEpoch(newLatestRiskEpoch);
             log.info("Updating latest risk epoch {}", newLatestRiskEpoch);
             registration.setAtRisk(true);
+            registration.setNotified(false);
             isRegistrationAtRisk = true;
         }
 

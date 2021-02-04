@@ -34,4 +34,11 @@ public class PropertyLoader {
 
     @Value("${robert.scoring.batch-mode}")
     private String batchMode;
+    
+    /** 
+     * The use of the same value as contagious period is on purpose.
+     * We define an additional property for better understanding in the source code. 
+     */
+    @Value("${robert.protocol.contagious-period}") 
+    private Integer riskLevelRetentionPeriod; 
 }
