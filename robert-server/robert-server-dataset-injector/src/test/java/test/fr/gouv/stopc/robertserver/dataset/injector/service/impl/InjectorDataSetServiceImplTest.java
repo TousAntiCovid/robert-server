@@ -114,7 +114,7 @@ public class InjectorDataSetServiceImplTest {
 
         // check the results
         assertEquals(5, contactService.findAll().size());
-        assertEquals(5, registrationService.findAll().size());
+        assertEquals(3, registrationService.findAll().size());
     }
 
     @Test
