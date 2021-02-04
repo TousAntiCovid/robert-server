@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public final class BatchRegistrationServiceImpl {
+public class BatchRegistrationServiceImpl {
 
     /**
      * Keep epochs within the contagious period
@@ -61,7 +61,7 @@ public final class BatchRegistrationServiceImpl {
         Double totalRisk = scoringStrategy.aggregate(allScoresFromAllEpochs);
 
         if (totalRisk >= riskThreshold) {
-            log.debug("Risk detected. Aggregated risk since {}: {} greater than threshold {}",
+            log.info("Risk detected. Aggregated risk since {}: {} greater than threshold {}",
                     latestRiskEpoch,
                     totalRisk,
                     riskThreshold);
@@ -69,7 +69,7 @@ public final class BatchRegistrationServiceImpl {
             // A risk has been detected, move time marker to now so that further risks are only posterior to this one
             int newLatestRiskEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
             registration.setLatestRiskEpoch(newLatestRiskEpoch);
-            log.debug("Updating latest risk epoch {}", newLatestRiskEpoch);
+            log.info("Updating latest risk epoch {}", newLatestRiskEpoch);
             registration.setAtRisk(true);
             isRegistrationAtRisk = true;
         }
