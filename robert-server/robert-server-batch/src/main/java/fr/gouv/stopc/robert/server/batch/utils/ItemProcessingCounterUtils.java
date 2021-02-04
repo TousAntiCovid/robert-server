@@ -33,12 +33,12 @@ public class ItemProcessingCounterUtils {
         return ItemProcessingCounterUtilsHolder.instance;
     }
 
-    public int addNumberOfProcessedContacts(int contactCount) {
+    public synchronized int addNumberOfProcessedContacts(int contactCount) {
         numberOfProcessedContacts += contactCount;
         return numberOfProcessedContacts;
     }
 
-    public int addNumberOfProcessedRegistrations(int registrationCount) {
+    public synchronized int addNumberOfProcessedRegistrations(int registrationCount) {
         numberOfProcessedRegistrations += registrationCount;
         return numberOfProcessedRegistrations;
     }
