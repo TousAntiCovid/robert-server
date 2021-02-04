@@ -59,7 +59,7 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
                 .addNumberOfProcessedRegistrations(registrationList.size());
 
         log.info("Execution duration of the update registrations : {} second(s).", timeElapsed);
-        log.info("Total number of updated registrations/Total registration count : {}/{}", processedRegistrationCount, totalRegistrationCount);
+        log.info("Total number of updated registrations/Total number of registrations to update : {}/{}", processedRegistrationCount, totalRegistrationCount);
     }
 
     @BeforeStep

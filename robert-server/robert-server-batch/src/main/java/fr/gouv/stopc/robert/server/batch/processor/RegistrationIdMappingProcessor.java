@@ -17,6 +17,8 @@ public class RegistrationIdMappingProcessor implements ItemProcessor<Registratio
         Long id = ItemProcessingCounterUtils.getInstance().incrementCurrentIdOfItemIdMapping();
 
         return ItemIdMapping.builder()
-                .id(id).itemId(registration.getPermanentIdentifier()).build();
+                .id(id)
+                .itemId(registration.getPermanentIdentifier())
+                .build();
     }
 }

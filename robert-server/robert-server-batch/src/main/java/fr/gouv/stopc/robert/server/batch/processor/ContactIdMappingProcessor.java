@@ -17,6 +17,8 @@ public class ContactIdMappingProcessor implements ItemProcessor<Contact, ItemIdM
         Long id = ItemProcessingCounterUtils.getInstance().incrementCurrentIdOfItemIdMapping();
 
         return ItemIdMapping.builder()
-                .id(id).itemId(contact.getId()).build();
+                .id(id)
+                .itemId(contact.getId())
+                .build();
     }
 }

@@ -8,6 +8,10 @@ import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * ItemIdMapping table is used for partitioning in many steps.
+ * The table must be reset before performing a new id mapping. 
+ */
 @Slf4j
 public class ResetIdMappingTableListener implements StepExecutionListener {
 
