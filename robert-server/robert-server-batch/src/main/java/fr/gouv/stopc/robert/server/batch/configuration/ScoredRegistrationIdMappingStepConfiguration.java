@@ -18,9 +18,7 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Configuration
 public class ScoredRegistrationIdMappingStepConfiguration extends StepConfigurationBase {
 

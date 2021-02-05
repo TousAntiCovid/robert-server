@@ -19,9 +19,7 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Configuration
 public class RegistrationIdMappingForEpochPurgeStepConfiguration extends StepConfigurationBase {
     public RegistrationIdMappingForEpochPurgeStepConfiguration(PropertyLoader propertyLoader,
