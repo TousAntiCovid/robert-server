@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.batch.processor;
+package fr.gouv.stopc.robert.server.batch.processor;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,6 +17,7 @@ import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.PurgeOldEpochExpositionsStepConfiguration;
 import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -27,7 +28,6 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
 
 

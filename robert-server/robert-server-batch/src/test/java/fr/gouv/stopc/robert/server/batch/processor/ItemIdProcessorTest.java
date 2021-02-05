@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.batch.processor;
+package fr.gouv.stopc.robert.server.batch.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

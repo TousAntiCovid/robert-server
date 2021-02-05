@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.batch.processor;
+package fr.gouv.stopc.robert.server.batch.processor;
 
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;

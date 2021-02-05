@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.batch.processor;
+package fr.gouv.stopc.robert.server.batch.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,13 +24,13 @@ import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfigur
 import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { RobertServerBatchApplication.class })

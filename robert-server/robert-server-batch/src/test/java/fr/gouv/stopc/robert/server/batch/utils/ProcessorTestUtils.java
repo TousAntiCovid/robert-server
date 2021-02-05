@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.batch.utils;
+package fr.gouv.stopc.robert.server.batch.utils;
 
 import java.security.SecureRandom;
 

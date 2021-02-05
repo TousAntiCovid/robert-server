@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.batch.scoring;
+package fr.gouv.stopc.robert.server.batch.scoring;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

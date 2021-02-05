@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.batch.processor;
+package fr.gouv.stopc.robert.server.batch.processor;
 
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
@@ -7,6 +7,7 @@ import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.processor.ContactProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.ContactItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -34,7 +35,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.CollectionUtils;
-import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
