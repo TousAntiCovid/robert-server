@@ -858,7 +858,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(true, response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(false, reg.isAtRisk());
+        assertEquals(true, reg.isAtRisk());
         assertEquals(true, reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
@@ -1038,7 +1038,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(true, response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(false, reg.isAtRisk());
+        assertEquals(true, reg.isAtRisk());
         assertEquals(true, reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
@@ -1099,7 +1099,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(true, response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(false, reg.isAtRisk());
+        assertEquals(true, reg.isAtRisk());
         assertEquals(true, reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
@@ -1175,7 +1175,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(true, response.getBody().isAtRisk());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(false, reg.isAtRisk());
+        assertEquals(true, reg.isAtRisk());
         assertEquals(true, reg.isNotified());
         assertTrue(reg.getLastTimestampDrift() == Math.abs(timestampDelta) + 1 || reg.getLastTimestampDrift() == Math.abs(timestampDelta));
         verify(this.registrationService, times(2)).findById(idA);
