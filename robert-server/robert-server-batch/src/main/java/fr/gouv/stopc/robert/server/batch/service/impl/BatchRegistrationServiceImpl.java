@@ -11,11 +11,16 @@ import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class BatchRegistrationServiceImpl {
+
+
+    private ScoringStrategyService scoringStrategy;
 
     /**
      * Keep epochs within the contagious period
@@ -39,8 +44,7 @@ public class BatchRegistrationServiceImpl {
 
     public boolean updateRegistrationIfRisk(Registration registration,
                                                 long timeStart,
-                                                double riskThreshold,
-                                                ScoringStrategyService scoringStrategy) {
+                                                double riskThreshold) {
         boolean isRegistrationAtRisk = false;
         int latestRiskEpoch = registration.getLatestRiskEpoch();
         List<EpochExposition> epochExpositions = registration.getExposedEpochs();

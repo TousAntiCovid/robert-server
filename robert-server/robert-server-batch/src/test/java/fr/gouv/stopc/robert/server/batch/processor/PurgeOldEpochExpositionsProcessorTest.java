@@ -1,150 +1,101 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.when;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
+import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.configuration.PurgeOldEpochExpositionsStepConfiguration;
-import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-
-
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { RobertServerBatchApplication.class })
-@TestPropertySource("classpath:application.properties")
-@TestPropertySource(locations = "classpath:application.properties",
-        properties = {
-                "robert.scoring.algo-version=2"
-        })
+@ExtendWith(MockitoExtension.class)
 public class PurgeOldEpochExpositionsProcessorTest {
 
+    @InjectMocks
     private PurgeOldEpochExpositionsProcessor purgeOldEpochExpositionsProcessor;
 
-    private RegistrationItemWriter registrationItemWriter;
-
-    @Autowired
+    @Mock
     private IServerConfigurationService serverConfigurationService;
 
-    @Autowired
-    private IRegistrationService registrationService;
-
-    @Autowired
+    @Mock
     private BatchRegistrationServiceImpl batchRegistrationService;
 
-    @Autowired
+    @Mock
     private PropertyLoader propertyLoader;
 
-    private Optional<Registration> registration;
-
-    private int currentEpoch;
-
-    @BeforeEach
-    public void beforeEach() {
-        this.purgeOldEpochExpositionsProcessor = new PurgeOldEpochExpositionsProcessor(this.serverConfigurationService,
-                this.propertyLoader, this.batchRegistrationService);
-        this.registrationItemWriter =  new RegistrationItemWriter(registrationService,
-                PurgeOldEpochExpositionsStepConfiguration.TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY);
-        
-        this.currentEpoch = TimeUtils.getCurrentEpochFrom(serverConfigurationService.getServiceTimeStart());
-    }
-
     @Test
-    public void testRegistrationWithExposedEpochsNull() {
+    public void shouldReturnsAnEmptyExposeEpochListInCaseProvidedExposedEpochsIsEmpty() {
         // Given
-        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
-        assertTrue(this.registration.isPresent());
+        Registration registration = Registration.builder().permanentIdentifier(ProcessorTestUtils.generateIdA()).build();
 
         // When
-        this.purgeOldEpochExpositionsProcessor.process(this.registration.get());
-        this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
+        Registration returnedRegistration = this.purgeOldEpochExpositionsProcessor.process(registration);
 
         // Then
-        Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
-        assertNotNull(reg.get().getExposedEpochs());
-        assertTrue(reg.get().getExposedEpochs().isEmpty());
+        assertNotNull(returnedRegistration.getExposedEpochs());
+        assertTrue(returnedRegistration.getExposedEpochs().isEmpty());
     }
 
     @Test
-    public void testRegistrationWithOnlyRecentExposedEpochs() {
+    public void shouldReturnsAnEmptyExposeEpochListInCaseProvidedExposedEpochsIsNull() {
         // Given
-        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
-        assertTrue(this.registration.isPresent());
-
-        int epochId = this.currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
-        Double[] expositionsForFirstEpoch = new Double[] { 1.0 };
-        Double[] expositionsForSecondEpoch = new Double[] { 12.5 };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
-                .epochId(epochId)
-                .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
-        expositions.add(EpochExposition.builder()
-                .epochId(epochId + 7)
-                .expositionScores(Arrays.asList(expositionsForSecondEpoch))
-                .build());
-
-        this.registration.get().setExposedEpochs(expositions);
-
-        // WHen
-        this.purgeOldEpochExpositionsProcessor.process(this.registration.get());
-        this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
+        Registration registration = Registration.builder().permanentIdentifier(ProcessorTestUtils.generateIdA()).build();
+        registration.setExposedEpochs(null);
+        // When
+        Registration returnedRegistration = this.purgeOldEpochExpositionsProcessor.process(registration);
 
         // Then
-        Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
-        assertNotNull(reg.get().getExposedEpochs());
-        assertEquals(2, reg.get().getExposedEpochs().size());
+        assertNotNull(returnedRegistration.getExposedEpochs());
+        assertTrue(returnedRegistration.getExposedEpochs().isEmpty());
     }
 
     @Test
-    public void testRegistrationWithOneOldExposedEpochs() {
+    public void shouldReturnTheFilteredExposedEpochs() {
         // Given
-        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
-        assertTrue(this.registration.isPresent());
+        Registration registration = Registration.builder().permanentIdentifier(ProcessorTestUtils.generateIdA()).build();
 
-        int epochId = this.currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
+        int epochId = 21333;
         Double[] expositionsForFirstEpoch = new Double[] { 1.0 };
         Double[] expositionsForSecondEpoch = new Double[] { 12.5 };
         ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
+        EpochExposition notFilteredOutExposedEpoch = EpochExposition.builder()
                 .epochId(epochId)
                 .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
+                .build();
+
+        expositions.add(notFilteredOutExposedEpoch);
         expositions.add(EpochExposition.builder()
                 .epochId(epochId - (30 * 96))
                 .expositionScores(Arrays.asList(expositionsForSecondEpoch))
                 .build());
 
-        this.registration.get().setExposedEpochs(expositions);
+        registration.setExposedEpochs(expositions);
 
-        // WHen
-        this.purgeOldEpochExpositionsProcessor.process(this.registration.get());
-        this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
+        List<EpochExposition> filteredExposedEpochList = Collections.singletonList(notFilteredOutExposedEpoch);
+
+        when(batchRegistrationService.getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(any(), anyInt(), anyInt(), anyInt())).thenReturn(filteredExposedEpochList);
+
+        // When
+        Registration returnedRegistration = this.purgeOldEpochExpositionsProcessor.process(registration);
 
         // Then
-        Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
-        assertNotNull(reg.get().getExposedEpochs());
-        assertEquals(1, reg.get().getExposedEpochs().size());
+        assertNotNull(returnedRegistration.getExposedEpochs());
+        assertThat(returnedRegistration.getExposedEpochs().size()).isEqualTo(1);
     }
 }

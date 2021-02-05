@@ -4,9 +4,8 @@ import java.util.Objects;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.AllArgsConstructor;
@@ -16,8 +15,6 @@ import lombok.AllArgsConstructor;
 public class RiskEvaluationProcessor implements ItemProcessor<Registration, Registration> {
 
     private IServerConfigurationService serverConfigurationService;
-
-    private ScoringStrategyService scoringStrategy;
 
     private PropertyLoader propertyLoader;
 
@@ -35,9 +32,7 @@ public class RiskEvaluationProcessor implements ItemProcessor<Registration, Regi
         boolean isRegistrationAtRisk = registrationService.updateRegistrationIfRisk(
                 registration,
                 this.serverConfigurationService.getServiceTimeStart(),
-                this.propertyLoader.getRiskThreshold(),
-                this.scoringStrategy
-                );
+                this.propertyLoader.getRiskThreshold());
 
         if (isRegistrationAtRisk){
             return registration;

@@ -1,8 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.scoring;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileReader;
@@ -14,38 +13,57 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
-
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-
-import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
+import fr.gouv.stopc.robert.server.batch.configuration.ScoringAlgorithmConfiguration;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
-import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyV2ServiceImpl;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @Slf4j
-@ContextConfiguration(classes = RobertServerBatchApplication.class)
-@SpringBootTest(properties = "robert.scoring.algo-version=2")
+@ExtendWith(MockitoExtension.class)
 public class ScoringAlgorithmV2Test {
 
-    @Autowired
-    private ScoringStrategyService serviceScoring;
+    //class under test
+    @InjectMocks
+    private ScoringStrategyV2ServiceImpl serviceScoring;
 
-    @MockBean
-    private RobertServerBatchConfiguration configuration;
+    @Mock
+    IServerConfigurationService serverConfigurationService;
 
-    @MockBean
-    private ICryptoServerGrpcClient cryptoServerClient;
+    @Mock
+    ScoringAlgorithmConfiguration scoringAlgorithmConfiguration;
+
+    @Mock
+    PropertyLoader propertyLoader;
+
+    @BeforeEach
+    public void beforeAll() {
+
+        when(serverConfigurationService.getEpochDurationSecs()).thenReturn(900);
+
+        when(scoringAlgorithmConfiguration.getDeltas()).thenReturn(new String[]{"39.0", "27.0", "23.0", "21.0", "20.0", "15.0"});
+        when(scoringAlgorithmConfiguration.getRssiMax()).thenReturn(-35);
+        when(scoringAlgorithmConfiguration.getP0()).thenReturn(-66.0);
+        when(scoringAlgorithmConfiguration.getSoftMaxA()).thenReturn(4.342);
+        when(scoringAlgorithmConfiguration.getSoftMaxB()).thenReturn(0.2);
+        when(scoringAlgorithmConfiguration.getEpochTolerance()).thenReturn(180);
+
+        when(propertyLoader.getR0ScoringAlgorithm()).thenReturn(0.0071);
+
+    }
+
 
     @Test
     public void test_C4_20_A() {

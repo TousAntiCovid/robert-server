@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurationBase {
 
-    private final ScoringStrategyService scoringStrategyService;
     private final IRegistrationService registrationService;
     private final BatchRegistrationServiceImpl batchRegistrationService;
 
@@ -38,7 +37,6 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
                                                        IRegistrationService registrationService,
                                                        BatchRegistrationServiceImpl batchRegistrationService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, null);
-        this.scoringStrategyService = scoringStrategyService;
         this.registrationService = registrationService;
         this.batchRegistrationService = batchRegistrationService;
     }
@@ -69,7 +67,6 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
     public ItemProcessor<Registration, Registration> riskEvaluationProcessor() {
         return new RiskEvaluationProcessor(
                 this.serverConfigurationService,
-                this.scoringStrategyService,
                 this.propertyLoader,
                 this.batchRegistrationService);
     }

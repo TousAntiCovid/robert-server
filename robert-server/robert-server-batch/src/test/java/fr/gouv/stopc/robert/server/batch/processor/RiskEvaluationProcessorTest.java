@@ -10,9 +10,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -21,8 +18,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
-import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
-import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
@@ -31,6 +26,9 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { RobertServerBatchApplication.class })
@@ -48,9 +46,6 @@ public class RiskEvaluationProcessorTest {
 
     @Autowired
     private IRegistrationService registrationService;
-
-    @Autowired
-    private ScoringStrategyService scoringStrategyService;
 
     @Autowired
     private BatchRegistrationServiceImpl batchRegistrationService;
@@ -71,7 +66,6 @@ public class RiskEvaluationProcessorTest {
     public void beforeEach() {
         this.riskEvaluationProcessor = new RiskEvaluationProcessor(
                 serverConfigurationService,
-                scoringStrategyService,
                 propertyLoader,
                 batchRegistrationService);
         this.currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
