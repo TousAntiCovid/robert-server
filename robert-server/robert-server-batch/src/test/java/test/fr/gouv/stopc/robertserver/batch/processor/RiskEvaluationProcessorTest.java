@@ -1,14 +1,18 @@
 package test.fr.gouv.stopc.robertserver.batch.processor;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -16,21 +20,16 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.configuration.RiskEvaluationJobConfiguration;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 
 @ExtendWith(SpringExtension.class)
@@ -43,8 +42,6 @@ import test.fr.gouv.stopc.robertserver.batch.utils.ProcessorTestUtils;
 public class RiskEvaluationProcessorTest {
 
     private RiskEvaluationProcessor riskEvaluationProcessor;
-
-    private RegistrationItemWriter registrationItemWriter;
 
     @Autowired
     private IServerConfigurationService serverConfigurationService;
@@ -76,226 +73,168 @@ public class RiskEvaluationProcessorTest {
                 serverConfigurationService,
                 scoringStrategyService,
                 propertyLoader,
-                batchRegistrationService
-        );
-
-        this.registrationItemWriter = new RegistrationItemWriter(registrationService, RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY);
-
+                batchRegistrationService);
         this.currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
 
-        // TODO: Mock configuration service to simulate overall service having been started since 14 days in order to test purge
-        this.ARBITRARY_SCORE_EPOCH_START = this.currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
+        ARBITRARY_SCORE_EPOCH_START = this.currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
     }
 
     @Test
-    public void shouldReturnNullIfProvidedRegistrationIsNull() {
-        assertNull(riskEvaluationProcessor.process(null));
+    public void testShouldReturnNullIfProvidedRegistrationIsNull() {
+        assertThat(riskEvaluationProcessor.process(null)).isNull();
     }
 
     @Test
-    public void testNoScoresNoRiskSucceeds() {
+    public void testWhenNoScoreThenNoRiskDetected() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
-
-        assertTrue(this.registration.isPresent());
+        assertThat(this.registration).isPresent();
+        
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
-        Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
-        assertTrue(reg.isPresent() && !reg.get().isAtRisk());
-        assertEquals(reg.get().getLatestRiskEpoch(), 0);
-        assertNull(returnedRegistration);
+        this.assertThatNoRiskDetected(returnedRegistration);
     }
 
     @Test
-    public void testScoresAtRiskNotSetNoRiskDetectedSucceeds() {
+    public void testWhenScoresNotAtRiskThenNoRiskDetected() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
-
-        Double[] expositionsForFirstEpoch = new Double[] { 1.0 };
-        Double[] expositionsForSecondEpoch = new Double[] { 12.5 };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START)
-                .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START + 7)
-                .expositionScores(Arrays.asList(expositionsForSecondEpoch))
-                .build());
-
+        ArrayList<EpochExposition> expositions = this.expositions(new Double[] { 1.0 }, new Double[] { 12.5 });
         this.registration.get().setExposedEpochs(expositions);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
-        this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
-
-        Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
-        assertTrue(reg.isPresent() && !reg.get().isAtRisk());
-        assertEquals(reg.get().getLatestRiskEpoch(), 0);
-        assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(0).getExpositionScores().toArray(),
-                expositionsForFirstEpoch));
-        assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
-                expositionsForSecondEpoch));
-        assertNull(returnedRegistration);
+        this.assertThatNoRiskDetected(returnedRegistration);
+        assertThat(this.registration.get().isAtRisk()).isFalse();
+        assertThat(this.registration.get().getLatestRiskEpoch()).isEqualTo(0);
+        assertThatRegistrationHasExactExpositions(this.registration.get(), expositions);
     }
 
     @Test
-    public void testScoresAtRiskNotSetButRiskDetectedSucceeds() {
+    public void testWhenScoresAtRiskThenRiskDetected() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
-
-        Double[] expositionsForFirstEpoch = new Double[] { 1.0 };
-        Double[] expositionsForSecondEpoch = new Double[] { 14.5 };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START)
-                .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START + 7)
-                .expositionScores(Arrays.asList(expositionsForSecondEpoch))
-                .build());
-
+        ArrayList<EpochExposition> expositions = this.expositions(new Double[] { 1.0 }, new Double[] { 14.5 });
         this.registration.get().setExposedEpochs(expositions);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
-        this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
-
-        Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
-        assertTrue(reg.isPresent() && reg.get().isAtRisk());
-        assertEquals(reg.get().getLatestRiskEpoch(), this.currentEpoch);
-        assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(0).getExpositionScores().toArray(),
-                expositionsForFirstEpoch));
-        assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
-                expositionsForSecondEpoch));
-        assertNotNull(returnedRegistration);
+        this.assertThatRiskDetected(returnedRegistration);
+        assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
+        assertThatRegistrationHasExactExpositions(returnedRegistration, expositions);
     }
 
     @Test
-    public void testScoresAtRiskNotSetButRiskDetectedSingleEpochSucceeds() {
+    public void testWhenScoresAtRiskForASingleEpochThenRiskDetected() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
-        Double[] expositionsForFirstEpoch = new Double[] { 10.0, 2.0, 1.0, 4.3 };
-        Double[] expositionsForSecondEpoch = new Double[] { };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START)
-                .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START + 7)
-                .expositionScores(Arrays.asList(expositionsForSecondEpoch))
-                .build());
-
+        ArrayList<EpochExposition> expositions = expositionsAtRisk();
         this.registration.get().setExposedEpochs(expositions);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
-        this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
-
-        Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
-        assertTrue(reg.isPresent() && reg.get().isAtRisk());
-        assertEquals(reg.get().getLatestRiskEpoch(), this.currentEpoch);
-        assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(0).getExpositionScores().toArray(),
-                expositionsForFirstEpoch));
-        assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
-                expositionsForSecondEpoch));
-        assertNotNull(returnedRegistration);
+        this.assertThatRiskDetected(returnedRegistration);
+        assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
+        assertThatRegistrationHasExactExpositions(returnedRegistration, expositions);
     }
 
     @Test
-    public void testNotifiedRemainsTrueIfRiskDetectedSucceeds() {
-        Double[] expositionsForFirstEpoch = new Double[] { 10.0, 2.0, 1.0, 4.3 };
-        Double[] expositionsForSecondEpoch = new Double[] { };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START)
-                .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START + 7)
-                .expositionScores(Arrays.asList(expositionsForSecondEpoch))
-                .build());
-
-        testNotifiedNotModified(true, expositions, true);
-    }
-
-    @Test
-    public void testNotifiedRemainsFalseIfRiskDetectedSucceeds() {
-        Double[] expositionsForFirstEpoch = new Double[] { 10.0, 2.0, 1.0, 4.3 };
-        Double[] expositionsForSecondEpoch = new Double[] { };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START)
-                .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START + 7)
-                .expositionScores(Arrays.asList(expositionsForSecondEpoch))
-                .build());
-
-        testNotifiedNotModified(false, expositions, true);
-    }
-
-    @Test
-    public void testNotifiedRemainsTrueIfRiskNotDetectedSucceeds() {
-        Double[] expositionsForFirstEpoch = new Double[] { 10.0 };
-        Double[] expositionsForSecondEpoch = new Double[] { };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START)
-                .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START + 7)
-                .expositionScores(Arrays.asList(expositionsForSecondEpoch))
-                .build());
-
-        testNotifiedNotModified(true, expositions, false);
-    }
-
-    @Test
-    public void testNotifiedRemainsFalseIfRiskNotDetectedSucceeds() {
-        Double[] expositionsForFirstEpoch = new Double[] { 10.0 };
-        Double[] expositionsForSecondEpoch = new Double[] { };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START)
-                .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                .build());
-        expositions.add(EpochExposition.builder()
-                .epochId(ARBITRARY_SCORE_EPOCH_START + 7)
-                .expositionScores(Arrays.asList(expositionsForSecondEpoch))
-                .build());
-
-        testNotifiedNotModified(false, expositions, false);
-    }
-
-    private void testNotifiedNotModified(boolean initialValue, List<EpochExposition> expositions, boolean riskDetected) {
-        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
-        assertTrue(this.registration.isPresent());
-        this.registration.get().setNotified(initialValue);
-
-        this.registration.get().setExposedEpochs(expositions);
+    public void testWhenNotifiedIsTrueAndRiskDetectedThenNotifiedRemainsTrue() {
+        ArrayList<EpochExposition> expositions = this.expositionsAtRisk();
+        this.setNewRegistration(true, expositions);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
+        
+        this.assertThatRiskDetected(returnedRegistration);
+        assertThat(returnedRegistration.isNotified()).isTrue();
+        assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
+        assertThatRegistrationHasExactExpositions(returnedRegistration, expositions);
+    }
 
-        this.registrationItemWriter.write(Collections.singletonList(this.registration.get()));
+    @Test
+    public void testWhenNotifiedIsTrueAndRiskNotDetectedThenNotifiedRemainsTrue() {
+        ArrayList<EpochExposition> expositions = this.expositionsNotAtRisk();
+        this.setNewRegistration(true, expositions);
 
-        Optional<Registration> reg = this.registrationService.findById(this.registration.get().getPermanentIdentifier());
-        assertTrue(reg.isPresent() && riskDetected == reg.get().isAtRisk());
-        assertEquals(reg.get().getLatestRiskEpoch(), riskDetected ? this.currentEpoch : 0);
-        assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(0).getExpositionScores().toArray(),
-                expositions.get(0).getExpositionScores().toArray()));
-        assertTrue(Arrays.equals(reg.get().getExposedEpochs().get(1).getExpositionScores().toArray(),
-                expositions.get(1).getExpositionScores().toArray()));
-        assertEquals(initialValue, reg.get().isNotified());
-        if (riskDetected){
-            assertNotNull(returnedRegistration)  ;
-        }  else {
-            assertNull(returnedRegistration);
-        }
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
+        
+        this.assertThatNoRiskDetected(returnedRegistration);
+        assertThat(this.registration.get().isAtRisk()).isFalse();
+        assertThat(this.registration.get().isNotified()).isTrue();
+        assertThat(this.registration.get().getLatestRiskEpoch()).isEqualTo(0);
+        assertThatRegistrationHasExactExpositions(this.registration.get(), expositions);
+    }
 
+    @Test
+    public void testWhenNotifiedIsFalseAndRiskDetectedThenNotifiedRemainsFalse() {
+        ArrayList<EpochExposition> expositions = this.expositionsAtRisk();
+        this.setNewRegistration(false, expositions);
+
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
+        
+        this.assertThatRiskDetected(returnedRegistration);
+        assertThat(returnedRegistration.isNotified()).isFalse();
+        assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
+        assertThatRegistrationHasExactExpositions(returnedRegistration, expositions);
+    }
+
+    @Test
+    public void testWhenNotifiedIsFalseAndRiskNotDetectedThenNotifiedRemainsFalse() {
+        ArrayList<EpochExposition> expositions = this.expositionsNotAtRisk();
+        this.setNewRegistration(false, expositions);
+
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
+        
+        this.assertThatNoRiskDetected(returnedRegistration);
+        assertThat(this.registration.get().isAtRisk()).isFalse();
+        assertThat(this.registration.get().getLatestRiskEpoch()).isEqualTo(0);
+        assertThatRegistrationHasExactExpositions(this.registration.get(), expositions);
+        assertThat(this.registration.get().isNotified()).isFalse();
+    }
+
+    protected ArrayList<EpochExposition> expositionsAtRisk() {
+        return this.expositions(new Double[] { 10.0, 2.0, 1.0, 4.3 }, new Double[] { });
+    }
+
+    protected ArrayList<EpochExposition> expositionsNotAtRisk() {
+        return this.expositions(new Double[] { 10.0 }, new Double[] { });
+    }
+
+    protected ArrayList<EpochExposition> expositions(Double[] scores1, Double[] scores2) {
+        ArrayList<EpochExposition> expositions = new ArrayList<>();
+        expositions.add(EpochExposition.builder()
+                .epochId(ARBITRARY_SCORE_EPOCH_START)
+                .expositionScores(Arrays.asList(scores1))
+                .build());
+        expositions.add(EpochExposition.builder()
+                .epochId(ARBITRARY_SCORE_EPOCH_START + 7)
+                .expositionScores(Arrays.asList(scores2))
+                .build());
+        return expositions;
+    }
+    
+    protected void assertThatRiskDetected(Registration returnedRegistration) {
+        assertThat(returnedRegistration).isNotNull();
+        assertThat(returnedRegistration.isAtRisk()).isTrue();
+    }
+    
+    protected void assertThatNoRiskDetected(Registration returnedRegistration) {
+        assertThat(returnedRegistration).isNull();
+    }
+    
+    protected void assertThatRegistrationHasExactExpositions(Registration returnedRegistration,
+            List<EpochExposition> expectedExpositions) {
+        IntStream.range(0, expectedExpositions.size())
+            .forEach(idx -> {
+                assertThat(returnedRegistration.getExposedEpochs().get(idx).getExpositionScores())
+                    .containsExactlyElementsOf(expectedExpositions.get(idx).getExpositionScores());
+            });
+    }
+
+    protected void setNewRegistration(boolean isNotified, List<EpochExposition> expositions) {
+        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+        assertTrue(this.registration.isPresent());
+        this.registration.get().setNotified(isNotified);
+        this.registration.get().setExposedEpochs(expositions);
     }
 }
