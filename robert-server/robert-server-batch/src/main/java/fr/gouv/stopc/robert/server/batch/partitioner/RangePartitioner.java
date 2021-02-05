@@ -2,14 +2,20 @@ package fr.gouv.stopc.robert.server.batch.partitioner;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ExecutionContext;
 
-import fr.gouv.stopc.robert.server.batch.configuration.StepConfigurationBase;
 import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
 
 public class RangePartitioner implements Partitioner {
+
+    public static final String START_KEY = "start";
+    public static final String END_KEY = "end";
+    public static final String NAME_KEY = "name";
+    public static final String NAME_VALUE = "Thread ";
+    public static final String PARTITION_NAME = "Partition ";
 
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
@@ -17,21 +23,24 @@ public class RangePartitioner implements Partitioner {
         Map<String, ExecutionContext> result = new HashMap<>(gridSize);
 
         long itemIdMappingCount = ItemProcessingCounterUtils.getInstance().getCurrentIdFromItemIdMapping();
-        long elementCountByPartition = (long) Math.ceil((double) itemIdMappingCount 
-                / (double) StepConfigurationBase.GRID_SIZE);
-        long start = 1;
-        long end = elementCountByPartition;
+        long elementCountByPartition = (long) Math.ceil((double) itemIdMappingCount / (double) gridSize);
 
-        for (int i = 0; i < gridSize; i++) {
+        IntStream.rangeClosed(1, gridSize).forEach(i -> {
+            long from = 1 + ((i-1) * elementCountByPartition),
+                 to =  Math.min(i * elementCountByPartition, itemIdMappingCount);
+            if (from > itemIdMappingCount) {
+                // no more item to process for current partition
+                from = 0;
+                to = 0;
+            } else if (to > itemIdMappingCount) {
+                to = Math.min(to, itemIdMappingCount);
+            };
             ExecutionContext value = new ExecutionContext();
-            value.putLong("start", start);
-            value.putLong("end", end);
-            value.putString("name", "Thread " + i);
-            result.put("Partition " + i, value);
-
-            start += elementCountByPartition;
-            end += elementCountByPartition;
-        }
+            value.putLong(START_KEY, from);
+            value.putLong(END_KEY, to);
+            value.putString(NAME_KEY, NAME_VALUE + i);
+            result.put(PARTITION_NAME + i, value);
+        });
 
         return result;
     }
