@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationRiskLevelResetProcessor;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.utils.StepNameUtils;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Registration;
@@ -22,50 +23,50 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
-public class RegistrationRiskLevelResetStepConfiguration extends StepConfigurationBase {
+public class RegistrationRiskResetStepConfiguration extends StepConfigurationBase {
     public static final String TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY = "totalRegistrationForRiskLevelResetCount";
     
     private final IRegistrationService registrationService;
     
-    public RegistrationRiskLevelResetStepConfiguration(PropertyLoader propertyLoader,
-                                                     StepBuilderFactory stepBuilderFactory, IServerConfigurationService serverConfigurationService,
-                                                     IRegistrationService registrationService, BatchRegistrationServiceImpl batchRegistrationService) {
+    public RegistrationRiskResetStepConfiguration(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
+            IServerConfigurationService serverConfigurationService, IRegistrationService registrationService,
+            BatchRegistrationServiceImpl batchRegistrationService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, null);
         this.registrationService = registrationService;
     }
 
     @Bean
-    public Step registrationRiskLevelResetStep(Step registrationRiskLevelResetWorkerStep) {
-        return this.stepBuilderFactory.get("registrationRiskLevelResetStep")
-                .listener(this.registrationRiskLevelResetStepListener())
-                .partitioner("registrationRiskLevelResetPartitioner", this.partitioner())
-                .partitionHandler(this.partitionHandler(registrationRiskLevelResetWorkerStep, this.asyncTaskExecutor()))
+    public Step registrationRiskResetStep(Step registrationRiskResetWorkerStep) {
+        return this.stepBuilderFactory.get(StepNameUtils.REGISTRATION_RISK_RESET_STEP_NAME)
+                .listener(this.registrationRiskResetStepListener())
+                .partitioner(StepNameUtils.REGISTRATION_RISK_RESET_PARTITIONER_STEP_NAME, this.partitioner())
+                .partitionHandler(this.partitionHandler(registrationRiskResetWorkerStep, this.asyncTaskExecutor()))
                 .build();
     }
 
     @Bean
-    public Step registrationRiskLevelResetWorkerStep(MongoItemReader<Registration> mongoRegistrationItemReader,
-            ItemProcessor<Registration, Registration> registrationRiskLevelResetProcessor,
-            ItemWriter<Registration> registrationItemWriterForRiskLevelReset) {
-        return this.stepBuilderFactory.get("registrationRiskLevelResetWorkerStep")
+    public Step registrationRiskResetWorkerStep(MongoItemReader<Registration> mongoRegistrationItemReader,
+            ItemProcessor<Registration, Registration> registrationRiskResetProcessor,
+            ItemWriter<Registration> registrationItemWriterForRiskReset) {
+        return this.stepBuilderFactory.get(StepNameUtils.REGISTRATION_RISK_RESET_WORKER_STEP_NAME)
                 .<Registration, Registration>chunk(CHUNK_SIZE)
                 .reader(mongoRegistrationItemReader)
-                .processor(registrationRiskLevelResetProcessor)
-                .writer(registrationItemWriterForRiskLevelReset)
+                .processor(registrationRiskResetProcessor)
+                .writer(registrationItemWriterForRiskReset)
                 .build();
     }
 
     @Bean
-    public ItemProcessor<Registration, Registration> registrationRiskLevelResetProcessor() {
+    public ItemProcessor<Registration, Registration> registrationRiskResetProcessor() {
         return new RegistrationRiskLevelResetProcessor(this.propertyLoader);
     }
     
     @Bean
-    public ItemWriter<Registration> registrationItemWriterForRiskLevelReset() {
+    public ItemWriter<Registration> registrationItemWriterForRiskReset() {
         return new RegistrationItemWriter(this.registrationService, TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY);
     }
     
-    public StepExecutionListener registrationRiskLevelResetStepListener() {
+    public StepExecutionListener registrationRiskResetStepListener() {
         return new StepExecutionListener() {
             @Override
             public void beforeStep(StepExecution stepExecution) {

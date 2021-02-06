@@ -18,8 +18,8 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 
 @Configuration
-public class RegistrationIdMappingForRegistrationRiskLevelResetStepConfiguration extends StepConfigurationBase {
-    public RegistrationIdMappingForRegistrationRiskLevelResetStepConfiguration(PropertyLoader propertyLoader,
+public class RegistrationIdMappingForRegistrationRiskLevelStepConfiguration extends StepConfigurationBase {
+    public RegistrationIdMappingForRegistrationRiskLevelStepConfiguration(PropertyLoader propertyLoader,
                                                                StepBuilderFactory stepBuilderFactory,
                                                                IServerConfigurationService serverConfigurationService,
                                                                ItemIdMappingService itemIdMappingService) {
@@ -27,13 +27,13 @@ public class RegistrationIdMappingForRegistrationRiskLevelResetStepConfiguration
     }
 
     @Bean
-    public Step populateIdMappingForRegistrationRiskLevelResetStep(
-            MongoItemReader<Registration> registrationIdMappingForRiskLevelResetReader,
+    public Step populateIdMappingForRegistrationRiskResetStep(
+            MongoItemReader<Registration> registrationIdMappingForRiskResetReader,
             MongoItemWriter<ItemIdMapping> mongoRegistrationIdMappingItemWriter) {
 
         return this.stepBuilderFactory.get("populateIdMappingWithRegistrationForRiskLevelReset")
                 .<Registration, ItemIdMapping>chunk(POPULATE_STEP_CHUNK_SIZE)
-                .reader(registrationIdMappingForRiskLevelResetReader)
+                .reader(registrationIdMappingForRiskResetReader)
                 .processor(new RegistrationIdMappingProcessor())
                 .writer(mongoRegistrationIdMappingItemWriter)
                 .listener(this.registrationIdMappingStepListener())
@@ -41,8 +41,8 @@ public class RegistrationIdMappingForRegistrationRiskLevelResetStepConfiguration
     }
     
     @Bean
-    public MongoItemReader<Registration> registrationIdMappingForRiskLevelResetReader(MongoTemplate mongoTemplate) {
-        String queryString = "{atRisk: true, isNotified: true}";
+    public MongoItemReader<Registration> registrationIdMappingForRiskResetReader(MongoTemplate mongoTemplate) {
+        String queryString = "{atRisk: true}";
 
         return registrationMongoItemReaderFactory.getMongoItemReader(mongoTemplate,
                 queryString,
