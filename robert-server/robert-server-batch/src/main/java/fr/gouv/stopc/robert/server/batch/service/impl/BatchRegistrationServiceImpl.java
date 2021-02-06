@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,8 +25,6 @@ public class BatchRegistrationServiceImpl {
 
     /**
      * Keep epochs within the contagious period
-     * @param exposedEpochs
-     * @return
      */
     public List<EpochExposition> getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
             List<EpochExposition> exposedEpochs,
@@ -43,8 +42,9 @@ public class BatchRegistrationServiceImpl {
     }
 
     public boolean updateRegistrationIfRisk(Registration registration,
-                                                long timeStart,
-                                                double riskThreshold) {
+                                                long serviceTimeStart,
+                                                double riskThreshold,
+                                                ScoringStrategyService scoringStrategy) {
         boolean isRegistrationAtRisk = false;
         int latestRiskEpoch = registration.getLatestRiskEpoch();
         List<EpochExposition> epochExpositions = registration.getExposedEpochs();
@@ -70,8 +70,15 @@ public class BatchRegistrationServiceImpl {
                     totalRisk,
                     riskThreshold);
 
+            scoresSinceLastNotif.stream()
+                .max( Comparator.comparing(EpochExposition::getEpochId) )
+                .ifPresent(lastContactEpoch -> {
+                    long lastContactTimestamp = TimeUtils.getNtpSeconds(lastContactEpoch.getEpochId(), serviceTimeStart);
+                    registration.setLastContactTimestamp(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp));
+                });
+
             // A risk has been detected, move time marker to now so that further risks are only posterior to this one
-            int newLatestRiskEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
+            int newLatestRiskEpoch = TimeUtils.getCurrentEpochFrom(serviceTimeStart);
             registration.setLatestRiskEpoch(newLatestRiskEpoch);
             log.info("Updating latest risk epoch {}", newLatestRiskEpoch);
             registration.setAtRisk(true);

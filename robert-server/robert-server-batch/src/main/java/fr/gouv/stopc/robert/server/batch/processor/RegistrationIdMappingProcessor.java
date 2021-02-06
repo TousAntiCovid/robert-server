@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.batch.processor;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import fr.gouv.stopc.robert.server.batch.model.ItemIdMapping;
 import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;
