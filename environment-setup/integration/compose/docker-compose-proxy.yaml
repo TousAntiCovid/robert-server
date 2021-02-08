@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  proxy:
+    image: bunkerity/bunkerized-nginx
+    ports:
+      - "80:8080"
+      - "443:8443"
+    volumes:
+      - ./server-confs:/server-confs
+      - ./certificates:/etc/letsencrypt
+    environment:
+      - SERVER_NAME=tac-robert-server-ws-rest.inria.fr tac-warning-server-ws-rest.inria.fr tac-submission-code-server-ws-rest.inria.fr
+      - SERVE_FILES=yes
+      - DISABLE_DEFAULT_SERVER=no
+      - PROXY_REAL_IP=yes
+      - MAX_CLIENT_SIZE=100m
+      - USE_FAIL2BAN=no
+      - USE_ANTIBOT=no
+      - AUTO_LETS_ENCRYPT=${AUTO_LETS_ENCRYPT}
+      - REDIRECT_HTTP_TO_HTTPS=${REDIRECT_HTTP_TO_HTTPS}
+      - USE_LIMIT_REQ=no
+      - USE_MODSECURITY=no
+      - USE_MODSECURITY_CRS=no
+      - ALLOWED_METHODS=GET|POST|HEAD|PUT|DELETE|PATCH|GE|LIST
+      - BLOCK_USER_AGENT=no
+      - BLOCK_TOR_EXIT_NODE=no
+      - BLOCK_PROXIES=no
+      - BLOCK_ABUSERS=no
+      - BLOCK_REFERRER=no
+      - USE_DNSBL=no
+#       - FEATURE_POLICY= accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'none'; camera 'none'; display-capture 'none'; document-domain 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; payment 'none'; picture-in-picture 'none'; speaker 'none'; sync-xhr 'self'; usb 'none'; vibrate 'none'; vr 'none'
+
+networks:
+  default:
+    external:
+      name: ${TAC_DOCKER_COMPOSE_NETWORK}

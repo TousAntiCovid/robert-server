@@ -13,13 +13,13 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.6.RELEASE</version>
+		<version>2.2.11.RELEASE</version>
 		<relativePath />
 	</parent>
 
 	<groupId>fr.gouv.stopc</groupId>
 	<artifactId>robert-server</artifactId>
-	<version>1.7.0</version>
+	<version>1.8.0-SNAPSHOT</version>
 	<name>robert-server</name>
 	<packaging>pom</packaging>
 	<description>Projet principal</description>
@@ -49,6 +49,7 @@
 		<postgresql.version>42.2.12</postgresql.version>
 		<bountycastle.version>1.65</bountycastle.version>
 		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
+		<io.jsonwebtoken.version>0.11.2</io.jsonwebtoken.version>
 	</properties>
 
 	<dependencies>
@@ -255,6 +256,7 @@
 				<goal>os-check</goal> </goals> </execution> </executions> <configuration> 
 				<blacklist> <param>agpl-3.0</param> <param>gpl-2.0</param> <param>gpl-3.0</param> 
 				</blacklist> <excludes> </excludes> </configuration> </plugin> -->
+	      
 		</plugins>
 	</build>
 
@@ -287,8 +289,39 @@
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
 					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-site-plugin</artifactId>
+						<version>3.7.1</version>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>3.0.0-M4</version>
+					</plugin>
 				</plugins>
 			</build>
+			 <reporting>
+		        <plugins>
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-surefire-report-plugin</artifactId>
+		                <version>3.0.0-M4</version>
+                        <configuration>
+                            <aggregate>true</aggregate>
+                        </configuration>
+		            </plugin>
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-jxr-plugin</artifactId>
+		                <version>2.1</version>
+		            </plugin>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                    </plugin>
+		        </plugins>
+		    </reporting>
 		</profile>
 
 		<!-- desactivation de l'erreur fatale lors de la release à cause de la 
@@ -315,18 +348,23 @@
 
 	</profiles>
 
-	<distributionManagement>
-		<repository>
-			<id>robert-repository</id>
-			<name>Releases</name>
-			<url>${nexusReleasesUrl}</url>
-		</repository>
-		<snapshotRepository>
-			<id>robert-repository</id>
-			<name>Snapshots</name>
-			<url>${nexusSnapshotsUrl}</url>
-		</snapshotRepository>
-	</distributionManagement>
+    <repositories>
+        <repository>
+            <id>gitlab-maven</id>
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>gitlab-maven</id>
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </repository>
+        <snapshotRepository>
+            <id>gitlab-maven</id>
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 
 	<scm>
 		<connection>scm:git:${gitRepositoryUrl}</connection>

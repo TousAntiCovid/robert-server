@@ -15,7 +15,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
-import java.security.KeyPair;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +23,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,8 +43,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
-import fr.gouv.stopc.robertserver.ws.controller.impl.ReportControllerV4Impl;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseV4Dto;
 import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
@@ -53,12 +51,11 @@ import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
+import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.ContactVo;
 import fr.gouv.stopc.robertserver.ws.vo.HelloMessageDetailVo;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
-import io.jsonwebtoken.io.Encoders;
-import io.jsonwebtoken.security.Keys;
 
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
@@ -79,11 +76,8 @@ public class ReportControllerWsRestTest {
     @MockBean
     private IRestApiService restApiService;
 
-    @MockBean
-    private WsServerConfiguration wsServerConfiguration;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V1)
-    private String pathPrefixV1;
+    @Mock
+    private PropertyLoader propertyLoader;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
     private String pathPrefixV2;
@@ -94,6 +88,10 @@ public class ReportControllerWsRestTest {
     @Value("${controller.path.prefix}" + UriConstants.API_V4)
     private String pathPrefix;
 
+	@Value("${robert.server.disable-check-token}")
+	private Boolean disableCheckToken;
+
+    
     @MockBean
     private RobertServerWsConfiguration config;
 
@@ -106,8 +104,6 @@ public class ReportControllerWsRestTest {
     private List<ContactVo> contacts;
 
     private ReportBatchRequestVo reportBatchRequestVo;
-
-    private KeyPair keyPair;
 
     private static final String EXCEPTION_FAIL_MESSAGE = "Should not fail with exception";
 
@@ -132,10 +128,6 @@ public class ReportControllerWsRestTest {
 
         this.reportBatchRequestVo = ReportBatchRequestVo.builder().token(this.token).contacts(this.contacts).build();
 
-        keyPair = Keys.keyPairFor(ReportControllerV4Impl.signatureAlgo);
-
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(false);
-        when(this.wsServerConfiguration.getJwtPrivateKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()));
     }
 
     @Test
@@ -146,8 +138,9 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
+            when(this.propertyLoader.getDisableCheckToken()).thenReturn(this.disableCheckToken);
             ResponseEntity<ApiError> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
-
+            
             // Then
             assertNotNull(response);
             assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -262,23 +255,22 @@ public class ReportControllerWsRestTest {
         }
     }
 
-    /** Test the access for API V1, should not be used since API V3 */
-    @Test
-    public void testAccessV1() {
-        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV1).path(UriConstants.REPORT).build().encode().toUri());
-    }
-
     /** Test the access for API V2, should not be used since API V3 */
     @Test
     public void testAccessV2() {
-
         reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REPORT).build().encode().toUri());
     }
 
-    /** {@link #reportContactHistorySucceeds(URI)} and shortcut to test for API V2 exposure */
+    /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
         reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REPORT).build().encode().toUri());
+    }
+
+    /** {@link #reportContactHistorySucceeds(URI)} and shortcut to test for API V4 exposure */
+    @Test
+    public void testReportContactHistorySucceeds() {
+    	reportContactHistorySucceeds(this.targetUrl);
     }
 
     private void reportContactHistorySucceeds(URI targetUrl) {

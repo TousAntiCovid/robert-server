@@ -3,6 +3,8 @@ package fr.gouv.stopc.robertserver.ws.controller.impl;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.inject.Inject;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -12,6 +14,7 @@ import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerUnauthorizedException;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
+import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import io.micrometer.core.instrument.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +23,13 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class ReportControllerDelegate {
     private IRestApiService restApiService;
+    private PropertyLoader propertyLoader;
 
-    public ReportControllerDelegate(final IRestApiService restApiService) {
+    @Inject
+    public ReportControllerDelegate(final IRestApiService restApiService,
+		                    final PropertyLoader propertyLoader) {
         this.restApiService = restApiService;
+	this.propertyLoader = propertyLoader;
     }
 
     public boolean isReportRequestValid(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
@@ -37,7 +44,9 @@ public class ReportControllerDelegate {
             return false;
         }
 
-        this.checkValidityToken(reportBatchRequestVo.getToken());
+	if (!this.propertyLoader.getDisableCheckToken())
+            this.checkValidityToken(reportBatchRequestVo.getToken());
+
         return true;
     }
 

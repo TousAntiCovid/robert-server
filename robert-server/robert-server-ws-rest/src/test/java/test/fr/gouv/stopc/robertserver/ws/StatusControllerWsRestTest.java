@@ -627,16 +627,16 @@ public class StatusControllerWsRestTest {
     public void testAccessV2() {
         statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.STATUS).build().encode().toUri());
     }
-
+    
     /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
         statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.STATUS).build().encode().toUri());
     }
 
-    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V2 exposure */
+    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V4 exposure */
     @Test
-    public void testStatusRequestAtRiskSucceedsV3() {
+    public void testStatusRequestAtRiskSucceedsV4() {
         statusRequestAtRiskSucceeds(this.targetUrl);
     }
 
