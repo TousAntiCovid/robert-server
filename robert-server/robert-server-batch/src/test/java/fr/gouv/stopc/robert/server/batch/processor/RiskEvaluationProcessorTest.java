@@ -2,14 +2,19 @@ package fr.gouv.stopc.robert.server.batch.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -26,10 +31,9 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { RobertServerBatchApplication.class })
 @TestPropertySource(locations = "classpath:application.properties",
@@ -41,7 +45,7 @@ public class RiskEvaluationProcessorTest {
 
     private RiskEvaluationProcessor riskEvaluationProcessor;
 
-    @Autowired
+    @MockBean
     private IServerConfigurationService serverConfigurationService;
 
     @Autowired
@@ -58,21 +62,25 @@ public class RiskEvaluationProcessorTest {
     @MockBean
     private RobertServerBatchConfiguration configuration;
 
+    private final static Instant SERVICE_TIME_START = Instant.parse("2021-01-01T02:15:00.00Z");
+    private final static long SERVICE_TIME_START_TIMESTAMP = SERVICE_TIME_START.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+ 
     private int currentEpoch, lastExpositionEpoch;
     private int arbitraryScoreEpochStart = 500;
     private long expectedLastContactDate;
 
     @BeforeEach
     public void beforeEach() {
+        when(serverConfigurationService.getServiceTimeStart()).thenReturn(SERVICE_TIME_START_TIMESTAMP);
         this.riskEvaluationProcessor = new RiskEvaluationProcessor(
                 serverConfigurationService,
                 propertyLoader,
                 batchRegistrationService);
-        this.currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
+        this.currentEpoch = TimeUtils.getCurrentEpochFrom(SERVICE_TIME_START_TIMESTAMP);
 
-        arbitraryScoreEpochStart = this.currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
+        arbitraryScoreEpochStart = this.currentEpoch - (14 * TimeUtils.EPOCHS_PER_DAY) + 1 + new SecureRandom().nextInt(100);
         lastExpositionEpoch = arbitraryScoreEpochStart + TimeUtils.EPOCHS_PER_DAY * 7;
-        expectedLastContactDate = TimeUtils.dayTruncatedTimestamp(TimeUtils.getNtpSeconds(this.lastExpositionEpoch, serverConfigurationService.getServiceTimeStart()));
+        expectedLastContactDate = TimeUtils.dayTruncatedTimestamp(TimeUtils.getNtpSeconds(this.lastExpositionEpoch, SERVICE_TIME_START_TIMESTAMP));
     }
 
     @Test
@@ -156,7 +164,11 @@ public class RiskEvaluationProcessorTest {
 
         this.assertThatRiskDetected(returnedRegistration);
         assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
+        log.info("Service time start: {}, Arbitrary score epoch start: {}", 
+                SERVICE_TIME_START, 
+                TimeUtils.getDateFromEpoch(this.arbitraryScoreEpochStart, SERVICE_TIME_START_TIMESTAMP));
         assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(expectedLastContactDate);
+        log.info("Last contact date: {}", Instant.ofEpochSecond(returnedRegistration.getLastContactTimestamp() - TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970));
     }
 
     @Test
