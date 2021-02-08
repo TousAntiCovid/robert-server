@@ -22,10 +22,12 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 
+import fr.gouv.tacw.database.model.RiskLevel;
 import fr.gouv.tacw.database.model.ScoreResult;
 import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.configuration.TacWarningWsRestConfiguration;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
+import fr.gouv.tacw.ws.dto.ExposureStatusResponseV1Dto;
 import fr.gouv.tacw.ws.dto.ReportResponseDto;
 import fr.gouv.tacw.ws.service.AuthorizationService;
 import fr.gouv.tacw.ws.service.WarningService;
@@ -40,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping(value = { "${controller.path.prefix}" + UriConstants.API_V2 })
+@RequestMapping(path = "${controller.path.prefix}")
 public class TACWarningController {
     public static final String REPORT_LOG_MESSAGE = "Reporting %d visits while infected";
 
@@ -78,7 +80,14 @@ public class TACWarningController {
         this.badArgumentsLoggerService = badArgumentsLoggerService;
     }
 
-    @PostMapping(value = UriConstants.STATUS)
+    @PostMapping(path = UriConstants.API_V1 + UriConstants.STATUS)
+    protected ExposureStatusResponseV1Dto getStatusV1(
+            @Valid @RequestBody(required = true) ExposureStatusRequestVo statusRequestVo, WebRequest webRequest) {
+        ExposureStatusResponseDto esr = this.getStatus(statusRequestVo, webRequest);
+        return new ExposureStatusResponseV1Dto(esr.getRiskLevel() != RiskLevel.NONE);
+    }
+    
+    @PostMapping(path = UriConstants.API_V2 + UriConstants.STATUS)
 	protected ExposureStatusResponseDto getStatus(
 			@Valid @RequestBody(required = true) ExposureStatusRequestVo statusRequestVo, WebRequest webRequest) {
 		int nbVisitTokens = statusRequestVo.getVisitTokens().size();
@@ -95,7 +104,7 @@ public class TACWarningController {
         return new ExposureStatusResponseDto(score.getRiskLevel(), Long.toString(score.getLastContactDate()));
     }
 
-    @PostMapping(value = UriConstants.REPORT)
+    @PostMapping(path = {UriConstants.API_V1 + UriConstants.REPORT, UriConstants.API_V2 + UriConstants.REPORT})
 	protected ReportResponseDto reportVisits(@Valid @RequestBody(required = true) ReportRequestVo reportRequestVo,
 			@RequestHeader("Authorization") String jwtToken, WebRequest webRequest) {
 		this.authorizationService.checkAuthorization(jwtToken);
