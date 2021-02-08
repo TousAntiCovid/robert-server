@@ -20,19 +20,19 @@ import lombok.extern.slf4j.Slf4j;
 public class TimeUtilsTest {
     @Test
     public void testCanGetNtpSecondsWhenEpochIsZero() {
-        long startTime = System.currentTimeMillis() / 1000 + TimeUtils.SECONDS_FROM_01_01_1900;
+        long startTime = System.currentTimeMillis() / 1000 + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
         assertEquals(startTime, TimeUtils.getNtpSeconds(0, startTime));
     }
     
     @Test
     public void testCanGetNtpSeconds() {
-        long startTime = System.currentTimeMillis() / 1000 + TimeUtils.SECONDS_FROM_01_01_1900;
+        long startTime = System.currentTimeMillis() / 1000 + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
         assertEquals(startTime + 60*60*24*7, TimeUtils.getNtpSeconds(TimeUtils.EPOCHS_PER_DAY * 7, startTime));
     }
 
     @Test
     void testGetDateFromEpochNowSucceeds() {
-        long startTime = System.currentTimeMillis() / 1000 + TimeUtils.SECONDS_FROM_01_01_1900;
+        long startTime = System.currentTimeMillis() / 1000 + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
         assertEquals(LocalDate.now(), TimeUtils.getDateFromEpoch(0, startTime));
     }
 
@@ -70,7 +70,7 @@ public class TimeUtilsTest {
     @Test
     public void testTimestampIsDayTruncated() {
         Instant instant = Instant.parse("1980-04-09T10:15:30.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900;
+        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
         
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
@@ -80,7 +80,7 @@ public class TimeUtilsTest {
     @Test
     public void testTimestampJustBeforeMidnightIsTruncatedToCurrentDay() {
         Instant instant = Instant.parse("2021-01-17T23:59:10.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900;
+        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
         
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
@@ -90,7 +90,7 @@ public class TimeUtilsTest {
     @Test
     public void testTimestampJustAfterMidnightIsTruncatedToCurrentDay() {
         Instant instant = Instant.parse("2021-01-17T00:01:50.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900;
+        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
         
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
@@ -100,7 +100,7 @@ public class TimeUtilsTest {
     @Test
     public void testTimestampAtMidnightIsTruncatedToEndingDay() {
         Instant instant = Instant.parse("2021-01-17T00:00:00.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900;
+        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
         
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
@@ -108,7 +108,7 @@ public class TimeUtilsTest {
     }
     
     private Instant instantFromTimestamp(long ntpTimestamp) {
-        return Instant.ofEpochSecond(ntpTimestamp - TimeUtils.SECONDS_FROM_01_01_1900);
+        return Instant.ofEpochSecond(ntpTimestamp - TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970);
     }
 
     private static int MAX_TEST = 96 * 13;
