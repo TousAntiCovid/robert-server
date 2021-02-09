@@ -21,6 +21,7 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -33,8 +34,9 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
     
     public PurgeOldEpochExpositionsStepConfiguration(PropertyLoader propertyLoader,
                                                      StepBuilderFactory stepBuilderFactory, IServerConfigurationService serverConfigurationService,
-                                                     IRegistrationService registrationService, BatchRegistrationServiceImpl batchRegistrationService) {
-        super(propertyLoader, stepBuilderFactory, serverConfigurationService, null);
+                                                     IRegistrationService registrationService, BatchRegistrationServiceImpl batchRegistrationService,
+                                                     ItemIdMappingService itemIdMappingService) {
+        super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
         this.batchRegistrationService = batchRegistrationService;
     }

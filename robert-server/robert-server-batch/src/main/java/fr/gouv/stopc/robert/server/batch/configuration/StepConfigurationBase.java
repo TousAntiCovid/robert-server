@@ -46,8 +46,7 @@ public class StepConfigurationBase {
     protected final ItemIdMappingService itemIdMappingService;
     protected final MongoItemReaderFactory<Registration> registrationMongoItemReaderFactory;
     protected final MongoItemReaderFactory<Contact> contactMongoItemReaderFactory;
-    
-    
+
     public StepConfigurationBase(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
             IServerConfigurationService serverConfigurationService, ItemIdMappingService itemIdMappingService) {
         super();

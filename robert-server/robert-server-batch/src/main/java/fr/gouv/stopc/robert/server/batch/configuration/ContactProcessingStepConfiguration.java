@@ -22,6 +22,7 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -36,8 +37,9 @@ public class ContactProcessingStepConfiguration extends StepConfigurationBase {
     public ContactProcessingStepConfiguration(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
             IServerConfigurationService serverConfigurationService, IRegistrationService registrationService,
             ContactService contactService, ICryptoServerGrpcClient cryptoServerClient,
-            ScoringStrategyService scoringStrategyService) {
-        super(propertyLoader, stepBuilderFactory, serverConfigurationService, null);
+            ScoringStrategyService scoringStrategyService,
+            ItemIdMappingService itemIdMappingService) {
+        super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
         this.contactService = contactService;
         this.scoringStrategyService = scoringStrategyService;
