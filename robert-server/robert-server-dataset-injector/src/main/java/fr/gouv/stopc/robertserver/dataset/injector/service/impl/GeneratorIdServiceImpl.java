@@ -1,5 +1,20 @@
 package fr.gouv.stopc.robertserver.dataset.injector.service.impl;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Optional;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.GCMParameterSpec;
+
+import org.springframework.stereotype.Service;
+
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest;
@@ -10,38 +25,25 @@ import fr.gouv.stopc.robertserver.dataset.injector.service.GeneratorIdService;
 import fr.gouv.stopc.robertserver.dataset.injector.utils.PropertyLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.inject.Inject;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.AlgorithmParameterSpec;
-import java.util.Optional;
 
 @Slf4j
 @Service
 public class GeneratorIdServiceImpl implements GeneratorIdService {
 
+    //see value of the parameter : robert.epoch-bundle-duration-in-days
+    private static final int EPOCH_BUNDLE_DURATION_IN_DAYS = 4;
+
     private static final String AES_ENCRYPTION_CIPHER_SCHEME = "AES/GCM/NoPadding";
     private static final int IV_LENGTH = 12;
 
-    @Autowired
-    private IServerConfigurationService serverConfigurationService;
+    private final IServerConfigurationService serverConfigurationService;
 
-    private ICryptoServerGrpcClient cryptoServerClient;
-    private final PropertyLoader propertyLoader;
+    private final ICryptoServerGrpcClient cryptoServerClient;
 
-    @Inject
-    public GeneratorIdServiceImpl(PropertyLoader propertyLoader, ICryptoServerGrpcClient cryptoServerClient) {
-        this.propertyLoader = propertyLoader;
+    public GeneratorIdServiceImpl(IServerConfigurationService serverConfigurationService,
+                                  PropertyLoader propertyLoader,
+                                  ICryptoServerGrpcClient cryptoServerClient) {
+        this.serverConfigurationService = serverConfigurationService;
         this.cryptoServerClient = cryptoServerClient;
         this.cryptoServerClient.init(propertyLoader.getCryptoServerHost(), Integer.parseInt(propertyLoader.getCryptoServerPort()));
     }
@@ -54,7 +56,7 @@ public class GeneratorIdServiceImpl implements GeneratorIdService {
 
         CreateRegistrationRequest request = CreateRegistrationRequest.newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(clientPublicECDHKey))
-                .setNumberOfDaysForEpochBundles(this.serverConfigurationService.getEpochBundleDurationInDays())
+                .setNumberOfDaysForEpochBundles(EPOCH_BUNDLE_DURATION_IN_DAYS)
                 .setServerCountryCode(ByteString.copyFrom(serverCountryCode))
                 .setFromEpochId(TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart()))
                 .build();
