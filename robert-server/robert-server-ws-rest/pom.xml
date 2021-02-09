@@ -13,7 +13,7 @@
 	<parent>
 		<groupId>fr.gouv.stopc</groupId>
 		<artifactId>robert-server</artifactId>
-		<version>1.8.0-SNAPSHOT</version>
+		<version>1.8.0</version>
 	</parent>
 
 	<artifactId>robert-server-ws-rest</artifactId>

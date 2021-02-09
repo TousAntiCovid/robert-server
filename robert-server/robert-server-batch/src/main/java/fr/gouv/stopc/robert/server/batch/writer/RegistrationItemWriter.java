@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robert.server.batch.writer;
 
-import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
 import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
@@ -36,7 +35,7 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
         if (!CollectionUtils.isEmpty(items)) {
             log.info("== Start of the update of the Registrations ==");
 
-            updateRegistrationList((List<Registration>)items);
+            updateRegistrationList((List<Registration>) items);
 
             log.info("== End of the update of the Registrations ==");
         } else {
@@ -60,7 +59,7 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
                 .addNumberOfProcessedRegistrations(registrationList.size());
 
         log.info("Execution duration of the update registrations : {} second(s).", timeElapsed);
-        log.info("Total number of updated registrations/Total registration count : {}/{}", processedRegistrationCount, totalRegistrationCount);
+        log.info("Total number of updated registrations/Total number of registrations to update : {}/{}", processedRegistrationCount, totalRegistrationCount);
     }
 
     @BeforeStep

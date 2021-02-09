@@ -1,5 +1,21 @@
 package fr.gouv.stopc.robertserver.dataset.injector.service.impl;
 
+import java.security.Key;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.IntStream;
+
+import javax.inject.Inject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
@@ -22,22 +38,6 @@ import fr.gouv.stopc.robertserver.dataset.injector.service.InjectorDataSetServic
 import fr.gouv.stopc.robertserver.dataset.injector.utils.PropertyLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.inject.Inject;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.AlgorithmParameterSpec;
-import java.util.*;
-import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -63,6 +63,9 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
 
     @Autowired
     private ClientIdentifierRepository clientIdentifierRepository;
+
+    @Value("${robert.injector.contact-per-registration:1}")
+    private int contactPerRegistration;
 
     @Autowired
     private GeneratorIdService generatorIdService;
@@ -93,13 +96,13 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
         epochDuration = this.serverConfigurationService.getEpochDurationSecs();
         serviceTimeStart = this.serverConfigurationService.getServiceTimeStart();
 
-        IntStream.range(0, contactCount).parallel().forEach(
+        IntStream.range(0, contactCount/contactPerRegistration).parallel().forEach(
                 nbr -> {
                     try {
 
-                        contactService.saveContacts(Collections.singletonList(buildContact()));
+                        contactService.saveContacts(buildContacts());
                     } catch (Exception e) {
-                        log.error("Can not create the contact #" + nbr, e);
+                        log.error("Can not create the list of contact #" + nbr, e);
                     }
                     ;
                 }
@@ -145,7 +148,11 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
         return registrationWithEE;
     }
 
-    private Contact buildContact() throws Exception{
+    private List<Contact> buildContacts() throws Exception{
+
+        List<Contact> contacts = new ArrayList<>();
+
+
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
         final int previousEpoch = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime - 900);
@@ -177,33 +184,40 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
         Key clientKek = this.cryptographicStorageService.getKeyForEncryptingClientKeys();
         if(Objects.isNull(clientKek)) {
             log.error("The clientKek to decrypt the client keys is null.");
-            return null;
+            return contacts;
         }
 
 
         if(!clientId.isPresent()) {
             log.error("Could not find id in clientIdentifier DB table.");
-            return null;
+            return contacts;
         }
-        ClientIdentifier clientIdentifier = clientId.get();
-        byte[] decryptedKeyForMac = generatorIdService.decryptStoredKeyWithAES256GCMAndKek(Base64.decode(clientIdentifier.getKeyForMac()), clientKek);
 
-        byte[] ebid = this.cryptoService.generateEBID(new CryptoSkinny64(serverKey), currentEpochId, permanentIdentifier);
 
-        byte[] encryptedCountryCode = this.cryptoService.encryptCountryCode(new CryptoAESECB(federationKey), ebid, countryCode);
+        for (int i=0; i<contactPerRegistration; i++) {
+            ClientIdentifier clientIdentifier = clientId.get();
+            byte[] decryptedKeyForMac = generatorIdService.decryptStoredKeyWithAES256GCMAndKek(Base64.decode(clientIdentifier.getKeyForMac()), clientKek);
 
-        // Create HELLO message that will make total score exceed threshold
-        long t = currentEpochId * this.epochDuration + this.serviceTimeStart + 15L;
-        List<HelloMessageDetail> messages = new ArrayList<>();
-        messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t, -78));
-        messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + 165L, -50));
-        messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + 300L, -35));
+            byte[] ebid = this.cryptoService.generateEBID(new CryptoSkinny64(serverKey), currentEpochId, permanentIdentifier);
 
-        return Contact.builder()
-                .ebid(ebid)
-                .ecc(encryptedCountryCode)
-                .messageDetails(messages)
-                .build();
+            byte[] encryptedCountryCode = this.cryptoService.encryptCountryCode(new CryptoAESECB(federationKey), ebid, countryCode);
+
+            // Create HELLO message that will make total score exceed threshold
+            long t = currentEpochId * this.epochDuration + this.serviceTimeStart + 15L;
+            List<HelloMessageDetail> messages = new ArrayList<>();
+            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t, -78));
+            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + 165L, -50));
+            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + 300L, -35));
+
+            contacts.add(Contact.builder()
+                    .ebid(ebid)
+                    .ecc(encryptedCountryCode)
+                    .messageDetails(messages)
+                    .build());
+        }
+
+
+        return contacts;
     }
 
     private HelloMessageDetail generateHelloMessageFor(byte[] decryptedKeyForMac, byte[] ebid, byte[] encryptedCountryCode, long t, int rssi) throws Exception {

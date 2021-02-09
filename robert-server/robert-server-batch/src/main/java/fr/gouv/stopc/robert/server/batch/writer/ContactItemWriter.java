@@ -1,19 +1,20 @@
 package fr.gouv.stopc.robert.server.batch.writer;
 
-import fr.gouv.stopc.robert.server.batch.configuration.ContactsProcessingConfiguration;
-import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
-import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.database.service.ContactService;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
+import fr.gouv.stopc.robert.server.batch.configuration.ScoringAndRiskEvaluationJobConfiguration;
+import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
+import fr.gouv.stopc.robertserver.database.model.Contact;
+import fr.gouv.stopc.robertserver.database.service.ContactService;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @AllArgsConstructor
@@ -64,7 +65,7 @@ public class ContactItemWriter implements ItemWriter<Contact> {
     public void beforeStep(StepExecution stepExecution) {
 
             totalContactCount = stepExecution.getJobExecution().getExecutionContext().
-                    getLong(ContactsProcessingConfiguration.TOTAL_CONTACT_COUNT_KEY);
+                    getLong(ScoringAndRiskEvaluationJobConfiguration.TOTAL_CONTACT_COUNT_KEY);
 
     }
 }
