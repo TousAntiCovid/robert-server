@@ -311,7 +311,6 @@ public class ContactProcessorTest {
         assertTrue(expectedRegistration.isPresent());
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertTrue(expectedRegistration.get().getExposedEpochs().size() == 2);
-        assertEquals(TimeUtils.getNtpSeconds(currentEpochId, tpstStart), expectedRegistration.get().getLastContactTimestamp());
         verify(this.cryptoServerClient, times(messages.size())).getInfoFromHelloMessage(any());
     }
 
@@ -381,7 +380,6 @@ public class ContactProcessorTest {
         assertTrue(expectedRegistration.isPresent());
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertTrue(expectedRegistration.get().getExposedEpochs().size() == 2);
-        assertEquals(0, expectedRegistration.get().getLastContactTimestamp());
 
         verify(this.cryptoServerClient, times(messages.size())).getInfoFromHelloMessage(any());
     }
