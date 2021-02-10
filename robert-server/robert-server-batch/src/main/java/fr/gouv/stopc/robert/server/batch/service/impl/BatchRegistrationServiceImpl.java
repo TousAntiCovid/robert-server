@@ -74,9 +74,10 @@ public class BatchRegistrationServiceImpl {
                 .max( Comparator.comparing(EpochExposition::getEpochId) )
                 .ifPresent(lastContactEpoch -> {
                     long lastContactTimestamp = TimeUtils.getNtpSeconds(lastContactEpoch.getEpochId(), serviceTimeStart);
-                    // TODO: compare if lastContactTimestamp > registration.getLastContactTimestamp()
                     // TODO: uniform random J-1, J, J+1
-                    registration.setLastContactTimestamp(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp));
+                    if (lastContactTimestamp > registration.getLastContactTimestamp()) {
+                        registration.setLastContactTimestamp(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp));
+                    }
                 });
 
             // A risk has been detected, move time marker to now so that further risks are only posterior to this one

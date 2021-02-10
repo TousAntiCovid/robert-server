@@ -244,7 +244,36 @@ public class RiskEvaluationProcessorTest {
         assertThatRegistrationHasExactExpositions(this.registration.get(), expositions);
         assertThat(this.registration.get().isNotified()).isFalse();
     }
+    
+    @Test
+    public void testWhenAlreadyAtRiskAndNewContactAtRiskWithDateGreaterThanCurrentLastContactDateThenLastContactDateIsUpdated() {
+        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+        assertTrue(this.registration.isPresent());
+        this.registration.get().setAtRisk(true);
+        this.registration.get().setLastContactTimestamp(this.expectedLastContactDate - TimeUtils.EPOCHS_PER_DAY);
+        this.registration.get().setExposedEpochs(this.expositionsAtRisk());
+        
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
+        assertThat(returnedRegistration.isAtRisk()).isTrue();
+        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(this.expectedLastContactDate);
+    }
+
+    
+    @Test
+    public void testWhenAlreadyAtRiskAndNewContactAtRiskWithDateLessThanCurrentLastContactDateThenLastContactDateIsNotUpdated() {
+        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+        assertTrue(this.registration.isPresent());
+        this.registration.get().setAtRisk(true);
+        this.registration.get().setLastContactTimestamp(this.expectedLastContactDate + TimeUtils.EPOCHS_PER_DAY * TimeUtils.EPOCH_DURATION_SECS);
+        this.registration.get().setExposedEpochs(this.expositionsAtRisk());
+        
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
+
+        assertThat(returnedRegistration.isAtRisk()).isTrue();
+        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(this.expectedLastContactDate + TimeUtils.EPOCHS_PER_DAY * TimeUtils.EPOCH_DURATION_SECS);
+    }
+    
     protected ArrayList<EpochExposition> expositionsAtRisk() {
         return this.expositions(new Double[] { 10.0, 2.0, 1.0, 4.3 }, new Double[] { });
     }
