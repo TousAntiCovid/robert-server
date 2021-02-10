@@ -42,3 +42,63 @@ This application isn't under the responsability of the TAC team.
 So, it is mocked using [MockServer](https://www.mock-server.com/) standalone application.
 
 The Mockserver loads default [expectations file](../environment-setup/dev/compose/captcha/mock-server-expectation.json) during its start-up.  
+
+# Prepare a release
+
+This release preparation is based on the make a release section of the [git-flow cheatsheet](https://danielkummer.github.io/git-flow-cheatsheet/).
+
+Nevertheless, operations are manually done because currently develop and master branches are protected. 
+
+For example, in this chapter we'll prepare the release 1.8.0
+
+* From the desired commit on `develop` branch, create a release branch named `release/robert-server-1.8.0`
+
+* Bump the new release version to the pom.xml files
+
+      mvn versions:set -DgenerateBackupPoms=false -DnewVersion=1.8.0
+
+/!\ **warning on the robert-server-data-injector module which is not identified in the parent's one, 
+the modification must be manually done** /!\
+
+* set the version to the docker file pointing on Robert server applications to the same value as the pom.xml new version 
+  (e.g : robert-crypto-grpc-server and robert-server-ws-rest docker files)
+  
+* commit your modification on the release branch
+
+      git commit -m"[RELEASE] prepare robert server 1.8.0 release"
+
+* push the release branch to the remote
+
+* verify that the IC succeeds (including docker and system tests)
+
+* add a `robert-server-1.8.0` tag for the version and push it.
+
+* add a release note on gitlab following the markdow pattern :
+
+      **New features & improvements**
+      
+      - Blablabla : <commit_tag>
+      
+      
+      **Bug fix**
+      
+      - Blablabla  : <commit_tag>
+
+* merge this release branch to `master` branch using merge request
+
+* set the next development version (increment pom.xml and dockerfile to the next version including `-SNAPSHOT`)
+
+      mvn versions:set -DgenerateBackupPoms=false -DnewVersion=1.9.0-SNAPSHOT
+
+* commit 
+
+      git commit -m"[RELEASE] prepare robert server 1.9.0-SNAPSHOT release"
+
+* push the release branch to the remote
+
+* verify that the IC succeeds (including docker and system tests)
+
+* merge this release branch to `develop` branch using merge request
+
+* remove release branch
+
