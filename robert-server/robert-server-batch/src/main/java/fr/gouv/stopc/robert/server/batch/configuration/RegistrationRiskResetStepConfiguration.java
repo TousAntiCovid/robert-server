@@ -19,6 +19,7 @@ import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -30,8 +31,8 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
     
     public RegistrationRiskResetStepConfiguration(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
             IServerConfigurationService serverConfigurationService, IRegistrationService registrationService,
-            BatchRegistrationServiceImpl batchRegistrationService) {
-        super(propertyLoader, stepBuilderFactory, serverConfigurationService, null);
+            BatchRegistrationServiceImpl batchRegistrationService, ItemIdMappingService itemIdMappingService) {
+        super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
     }
 
@@ -70,7 +71,7 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
         return new StepExecutionListener() {
             @Override
             public void beforeStep(StepExecution stepExecution) {
-                log.debug("START : Reset risk level of registrations when retention time > {}.", propertyLoader.getRiskLevelRetentionPeriod());
+                log.debug("START : Reset risk level of registrations when retention time > {}.", propertyLoader.getRiskLevelRetentionPeriodInDays());
 
                 long totalItemCount = registrationService.countNbUsersAtRisk().longValue();
                 stepExecution.getJobExecution().getExecutionContext().putLong(TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY, totalItemCount);
