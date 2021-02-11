@@ -52,6 +52,24 @@ public class RegistrationRepositoryTest {
 		// When && Then
 		assertTrue(this.registrationRepository.existsById(rndBytes));	
 	}
+	
+	@Test
+	public void testCountNbUsersAtRisk() {
+	    // Given
+	    List<Registration> registrations = new ArrayList<Registration>(5); 
+        registrations.add(Registration.builder().permanentIdentifier("1".getBytes()).atRisk(false).build());
+        registrations.add(Registration.builder().permanentIdentifier("2".getBytes()).atRisk(true).build());
+        registrations.add(Registration.builder().permanentIdentifier("3".getBytes()).atRisk(false).build());
+        registrations.add(Registration.builder().permanentIdentifier("4".getBytes()).atRisk(false).build());
+        registrations.add(Registration.builder().permanentIdentifier("5".getBytes()).atRisk(true).build());
+        
+        // When
+        registrationRepository.saveAll(registrations);
+
+        // Then
+        long nbUsersAtRisk = this.registrationRepository.countNbUsersAtRisk();
+        assertEquals(2, nbUsersAtRisk);
+	}
 
 	@Test
 	public void testCountNbUsersWithOldEpochExpositions() {

@@ -22,6 +22,11 @@ public interface IRegistrationService {
 	List<Registration> findAll();
 
 	/**
+     * Return the number of users detected at risk (atRisk=true)
+     */
+    Long countNbUsersAtRisk();
+
+    /**
 	 * Return the number of users detected at risk and already notified
 	 * (isNotified = true and atRisk=true)
 	 * 
@@ -68,4 +73,5 @@ public interface IRegistrationService {
 	 * @return the number of users
 	 */
 	Long countNbUsersWithOldEpochExpositions(int minEpochId);
+
 }

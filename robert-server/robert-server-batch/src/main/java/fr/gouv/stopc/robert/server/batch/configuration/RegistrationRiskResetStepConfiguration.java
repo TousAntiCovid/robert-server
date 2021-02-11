@@ -72,7 +72,7 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
             public void beforeStep(StepExecution stepExecution) {
                 log.debug("START : Reset risk level of registrations when retention time > {}.", propertyLoader.getRiskLevelRetentionPeriod());
 
-                long totalItemCount = registrationService.countNbUsersAtRiskAndNotified().longValue();
+                long totalItemCount = registrationService.countNbUsersAtRisk().longValue();
                 stepExecution.getJobExecution().getExecutionContext().putLong(TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY, totalItemCount);
             }
 

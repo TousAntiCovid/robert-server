@@ -10,6 +10,14 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 public interface RegistrationRepository extends MongoRepository<Registration, byte[]> {
 
     /**
+     * Retrieve the number of users at risk
+     *
+     * @return the count result
+     */
+    @Query(value = "{ atRisk: {$eq: true} }", count = true)
+    Long countNbUsersAtRisk();
+    
+    /**
      * Retrieve the number of users already notified and at risk again
      *
      * @return the count result
