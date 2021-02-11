@@ -29,7 +29,7 @@ public class RegistrationRiskLevelResetProcessorTest {
 
     @BeforeEach
     public void beforeEach() {
-        when(this.propertyLoader.getRiskLevelRetentionPeriod()).thenReturn(2);
+        when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(2);
         this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader);
     }
 

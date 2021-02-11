@@ -17,7 +17,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
     public RegistrationRiskLevelResetProcessor(PropertyLoader propertyLoader) {
         super();
         this.propertyLoader = propertyLoader;
-        this.nbEpochsRiskLevelRetention = TimeUtils.EPOCHS_PER_DAY * this.propertyLoader.getRiskLevelRetentionPeriod();
+        this.nbEpochsRiskLevelRetention = TimeUtils.EPOCHS_PER_DAY * this.propertyLoader.getRiskLevelRetentionPeriodInDays();
     }
 
     @Override
