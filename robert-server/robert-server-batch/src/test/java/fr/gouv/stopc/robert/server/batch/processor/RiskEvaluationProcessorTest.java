@@ -20,7 +20,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -53,7 +53,7 @@ public class RiskEvaluationProcessorTest {
     private IRegistrationService registrationService;
 
     @Autowired
-    private BatchRegistrationServiceImpl batchRegistrationService;
+    private BatchRegistrationService batchRegistrationService;
 
     @Autowired
     private PropertyLoader propertyLoader;

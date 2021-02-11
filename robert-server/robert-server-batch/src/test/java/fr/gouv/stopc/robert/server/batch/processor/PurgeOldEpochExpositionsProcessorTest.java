@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -34,7 +34,7 @@ public class PurgeOldEpochExpositionsProcessorTest {
     private IServerConfigurationService serverConfigurationService;
 
     @Mock
-    private BatchRegistrationServiceImpl batchRegistrationService;
+    private BatchRegistrationService batchRegistrationService;
 
     @Mock
     private PropertyLoader propertyLoader;

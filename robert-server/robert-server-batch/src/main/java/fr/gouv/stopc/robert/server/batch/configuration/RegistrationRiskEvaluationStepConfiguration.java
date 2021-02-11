@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
+import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -29,14 +29,14 @@ import lombok.extern.slf4j.Slf4j;
 public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurationBase {
 
     private final IRegistrationService registrationService;
-    private final BatchRegistrationServiceImpl batchRegistrationService;
+    private final BatchRegistrationService batchRegistrationService;
 
     public RegistrationRiskEvaluationStepConfiguration(PropertyLoader propertyLoader,
                                                        StepBuilderFactory stepBuilderFactory,
                                                        IServerConfigurationService serverConfigurationService,
                                                        ScoringStrategyService scoringStrategyService,
                                                        IRegistrationService registrationService,
-                                                       BatchRegistrationServiceImpl batchRegistrationService,
+                                                       BatchRegistrationService batchRegistrationService,
                                                        ItemIdMappingService itemIdMappingService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;

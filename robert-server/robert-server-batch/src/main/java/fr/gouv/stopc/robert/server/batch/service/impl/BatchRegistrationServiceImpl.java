@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
@@ -18,13 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class BatchRegistrationServiceImpl {
+public class BatchRegistrationServiceImpl implements BatchRegistrationService {
 
     private final ScoringStrategyService scoringStrategy;
 
     /**
      * Keep epochs within the contagious period
      */
+    @Override
     public List<EpochExposition> getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
             List<EpochExposition> exposedEpochs,
             int currentEpochId,
@@ -40,6 +42,7 @@ public class BatchRegistrationServiceImpl {
         }).collect(Collectors.toList());
     }
 
+    @Override
     public boolean updateRegistrationIfRisk(Registration registration,
                                                 long serviceTimeStart,
                                                 double riskThreshold) {

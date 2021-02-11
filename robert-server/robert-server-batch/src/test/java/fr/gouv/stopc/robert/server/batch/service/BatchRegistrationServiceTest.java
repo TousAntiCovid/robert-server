@@ -11,25 +11,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
-import fr.gouv.stopc.robertserver.database.model.EpochExposition;
-import fr.gouv.stopc.robertserver.database.model.Registration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+
 @ExtendWith(MockitoExtension.class)
 public class BatchRegistrationServiceTest {
 
-    @InjectMocks
-    BatchRegistrationServiceImpl batchRegistrationService;
+    BatchRegistrationService batchRegistrationService;
 
     @Captor
     private ArgumentCaptor<ArrayList<Double>> acAggregateScores;
@@ -37,6 +37,11 @@ public class BatchRegistrationServiceTest {
     @Mock
     ScoringStrategyService scoringStrategyService;
 
+    @BeforeEach
+    public void setUp() {
+        this.batchRegistrationService = new BatchRegistrationServiceImpl(scoringStrategyService);
+    }
+    
     @Test
     public void shouldExposedEpochsWithoutEpochsOlderThanContagiousPeriodFilterTooOldExposedEpochs(){
 
