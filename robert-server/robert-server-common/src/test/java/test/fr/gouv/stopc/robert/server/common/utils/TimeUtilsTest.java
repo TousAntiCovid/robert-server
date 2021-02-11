@@ -5,13 +5,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Test;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.junit.jupiter.api.Test;
 
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -105,6 +109,19 @@ public class TimeUtilsTest {
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
         assertThat(roundedInstant).isEqualTo(Instant.parse("2021-01-17T00:00:00.00Z"));
+    }
+    
+    @Test
+    public void testRandomizedDateIsBetweenJMinus1AndJPlus1() {
+        Instant instant = Instant.parse("2021-02-11T13:00:00.00Z");
+        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+        
+        Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
+            .mapToObj(i -> this.instantFromTimestamp(TimeUtils.randomizedDate(ntpInstant)))
+            .collect(Collectors.toSet());
+        
+        assertThat(randomizedInstants).
+            containsExactly(instant.minus(1, ChronoUnit.DAYS), instant, instant.plus(1, ChronoUnit.DAYS));
     }
     
     private Instant instantFromTimestamp(long ntpTimestamp) {

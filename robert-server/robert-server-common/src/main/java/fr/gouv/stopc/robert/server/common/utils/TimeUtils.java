@@ -3,6 +3,7 @@ package fr.gouv.stopc.robert.server.common.utils;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class TimeUtils {
     //  Number of seconds to fill the gap between UNIX timestamp (1/1/1970) and NTP timestamp (1/1/1900)
@@ -68,6 +69,16 @@ public final class TimeUtils {
      */
     public static long dayTruncatedTimestamp(long timestamp) {
         return timestamp - (timestamp % SECONDS_PER_DAY);
+    }
+
+    /**
+     * Get a random date between J-1, J, J+1 (uniform distribution)
+     * @param ntpInstant the NTP timestamp representing to randomize
+     * @return a randomized date
+     */
+    public static long randomizedDate(long ntpInstant) {
+        int randomDay = ThreadLocalRandom.current().nextInt(-1, 2);
+        return ntpInstant + randomDay * SECONDS_PER_DAY;
     }
     
     /**
