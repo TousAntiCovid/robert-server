@@ -3,6 +3,7 @@ package fr.gouv.stopc.robert.server.batch.processor;
 import org.springframework.batch.item.ItemProcessor;
 
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.extern.slf4j.Slf4j;
@@ -12,20 +13,20 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
 
     public static final String USER_AT_RISK_NOT_NOTIFIED_MESSAGE = "Reseting risk level of a user never notified!";
     private final PropertyLoader propertyLoader;
+    private IServerConfigurationService serverConfigurationService;
     private int nbEpochsRiskLevelRetention;
-    private int currentEpoch;
     
-    public RegistrationRiskLevelResetProcessor(PropertyLoader propertyLoader, int currentEpoch) {
+    public RegistrationRiskLevelResetProcessor(PropertyLoader propertyLoader, IServerConfigurationService serverConfigurationService) {
         super();
         this.propertyLoader = propertyLoader;
         this.nbEpochsRiskLevelRetention = TimeUtils.EPOCHS_PER_DAY * this.propertyLoader.getRiskLevelRetentionPeriodInDays();
-        this.currentEpoch = currentEpoch;
+        this.serverConfigurationService = serverConfigurationService;
     }
 
     @Override
     public Registration process(Registration registration) throws Exception {
         if (registration.isAtRisk()) {
-            int nbEpochsSinceLastScoringAtRisk =  this.currentEpoch - registration.getLatestRiskEpoch();
+            int nbEpochsSinceLastScoringAtRisk =  TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart()) - registration.getLatestRiskEpoch();
             if (nbEpochsSinceLastScoringAtRisk >= nbEpochsRiskLevelRetention) {
                 if ( !registration.isNotified() ) {
                     log.info(USER_AT_RISK_NOT_NOTIFIED_MESSAGE);

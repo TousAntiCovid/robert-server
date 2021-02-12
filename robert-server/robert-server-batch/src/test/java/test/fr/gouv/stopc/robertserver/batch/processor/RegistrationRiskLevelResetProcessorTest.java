@@ -3,11 +3,14 @@ package test.fr.gouv.stopc.robertserver.batch.processor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -17,20 +20,29 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationRiskLevelResetProcessor;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:application.properties")
 public class RegistrationRiskLevelResetProcessorTest {
-    @MockBean
+    @Mock
     private PropertyLoader propertyLoader;
+    @Mock
+    private IServerConfigurationService serverConfigurationService;
+    @InjectMocks
     private RegistrationRiskLevelResetProcessor processor;
     private ListAppender<ILoggingEvent> processorLoggerAppender;
 
     @BeforeEach
     public void beforeEach() {
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(2);
-        this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, 5000);
+        // TimeUtils.getCurrentEpochFrom(serviceTimeStart) should return 5000 for tests
+        long serviceTimeStart = Instant.now().getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900 
+                                - 5000L * TimeUtils.EPOCH_DURATION_SECS;
+        when(this.serverConfigurationService.getServiceTimeStart()).thenReturn(serviceTimeStart);
+        this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, this.serverConfigurationService);
     }
 
     @Test

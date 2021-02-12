@@ -60,9 +60,7 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     @Bean
     public ItemProcessor<Registration, Registration> registrationRiskResetProcessor() {
-        return new RegistrationRiskLevelResetProcessor(
-                this.propertyLoader, 
-                TimeUtils.getCurrentEpochFrom(serverConfigurationService.getServiceTimeStart()) );
+        return new RegistrationRiskLevelResetProcessor( this.propertyLoader, this.serverConfigurationService);
     }
     
     @Bean
