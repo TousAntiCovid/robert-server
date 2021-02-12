@@ -39,7 +39,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     public void beforeEach() {
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(2);
         // TimeUtils.getCurrentEpochFrom(serviceTimeStart) should return 5000 for tests
-        long serviceTimeStart = Instant.now().getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900 
+        long serviceTimeStart = Instant.now().getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970
                                 - 5000L * TimeUtils.EPOCH_DURATION_SECS;
         when(this.serverConfigurationService.getServiceTimeStart()).thenReturn(serviceTimeStart);
         this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, this.serverConfigurationService);

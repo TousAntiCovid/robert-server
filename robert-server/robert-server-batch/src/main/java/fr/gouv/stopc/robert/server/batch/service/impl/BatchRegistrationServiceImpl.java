@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class BatchRegistrationServiceImpl {
 
-
     private ScoringStrategyService scoringStrategy;
 
     /**
@@ -43,8 +42,7 @@ public class BatchRegistrationServiceImpl {
 
     public boolean updateRegistrationIfRisk(Registration registration,
                                                 long serviceTimeStart,
-                                                double riskThreshold,
-                                                ScoringStrategyService scoringStrategy) {
+                                                double riskThreshold) {
         boolean isRegistrationAtRisk = false;
         int latestRiskEpoch = registration.getLatestRiskEpoch();
         List<EpochExposition> epochExpositions = registration.getExposedEpochs();
