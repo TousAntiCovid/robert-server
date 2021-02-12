@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class BatchRegistrationServiceImpl {
 
-    private ScoringStrategyService scoringStrategy;
+    private final ScoringStrategyService scoringStrategy;
 
     /**
      * Keep epochs within the contagious period
@@ -72,9 +72,21 @@ public class BatchRegistrationServiceImpl {
                 .max( Comparator.comparing(EpochExposition::getEpochId) )
                 .ifPresent(lastContactEpoch -> {
                     long lastContactTimestamp = TimeUtils.getNtpSeconds(lastContactEpoch.getEpochId(), serviceTimeStart);
-                    // TODO: uniform random J-1, J, J+1
                     if (lastContactTimestamp > registration.getLastContactTimestamp()) {
-                        registration.setLastContactTimestamp(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp));
+                        long randomizedLastContactTimestamp = TimeUtils.getRandomizedDateNotInFuture(lastContactTimestamp);
+                        log.debug("Last contact date is updating : last contact date from hello message : {}" +
+                                " - previous last contact date : {} ==> stored last contact date : {}  ",
+                                lastContactTimestamp,
+                                registration.getLastContactTimestamp(),
+                                randomizedLastContactTimestamp
+                                );
+                        registration.setLastContactTimestamp(TimeUtils.dayTruncatedTimestamp(randomizedLastContactTimestamp));
+                    } else {
+                        log.debug("Last contact date isn't updating : last contact date from hello message : {}" +
+                                        " - previous last contact date : {}",
+                                lastContactTimestamp,
+                                registration.getLastContactTimestamp()
+                        );
                     }
                 });
 

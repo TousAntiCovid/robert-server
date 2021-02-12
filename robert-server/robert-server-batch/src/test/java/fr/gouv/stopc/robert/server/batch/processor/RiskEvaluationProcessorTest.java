@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -32,6 +29,10 @@ import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.data.Offset;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
@@ -68,6 +69,8 @@ public class RiskEvaluationProcessorTest {
     private int currentEpoch, lastExpositionEpoch;
     private int arbitraryScoreEpochStart = 500;
     private long expectedLastContactDate;
+    private long lastExpositionTimestamp;
+    private long expectedLastContactDateOffet;
 
     @BeforeEach
     public void beforeEach() {
@@ -80,7 +83,9 @@ public class RiskEvaluationProcessorTest {
 
         arbitraryScoreEpochStart = this.currentEpoch - (14 * TimeUtils.EPOCHS_PER_DAY) + 1 + new SecureRandom().nextInt(100);
         lastExpositionEpoch = arbitraryScoreEpochStart + TimeUtils.EPOCHS_PER_DAY * 7;
+        lastExpositionTimestamp = TimeUtils.dayTruncatedTimestamp(lastExpositionEpoch);
         expectedLastContactDate = TimeUtils.dayTruncatedTimestamp(TimeUtils.getNtpSeconds(this.lastExpositionEpoch, SERVICE_TIME_START_TIMESTAMP));
+        expectedLastContactDateOffet = 24*3600; // +/- 1 day in seconds
     }
 
     @Test
@@ -125,12 +130,12 @@ public class RiskEvaluationProcessorTest {
 
         this.assertThatRiskDetected(returnedRegistration);
         assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
-        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(expectedLastContactDate);
+        assertThat(returnedRegistration.getLastContactTimestamp()).isCloseTo(expectedLastContactDate , Offset.offset(expectedLastContactDateOffet));
         assertThatRegistrationHasExactExpositions(returnedRegistration, expositions);
     }
     
     @Test
-    public void testWhenManyExpositionsGivinfScoreAtRiskThenGetLastAtRiskExpositionDate() {
+    public void testWhenManyExpositionsGivingScoreAtRiskThenGetLastAtRiskExpositionDate() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         ArrayList<EpochExposition> expositions = new ArrayList<>();
@@ -167,7 +172,8 @@ public class RiskEvaluationProcessorTest {
         log.info("Service time start: {}, Arbitrary score epoch start: {}", 
                 SERVICE_TIME_START, 
                 TimeUtils.getDateFromEpoch(this.arbitraryScoreEpochStart, SERVICE_TIME_START_TIMESTAMP));
-        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(expectedLastContactDate);
+        assertThat(returnedRegistration.getLastContactTimestamp()).isGreaterThan(lastExpositionTimestamp);
+        assertThat(returnedRegistration.getLastContactTimestamp()).isCloseTo(expectedLastContactDate , Offset.offset(expectedLastContactDateOffet));
         log.info("Last contact date: {}", Instant.ofEpochSecond(returnedRegistration.getLastContactTimestamp() - TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970));
     }
 
@@ -183,7 +189,7 @@ public class RiskEvaluationProcessorTest {
 
         this.assertThatRiskDetected(returnedRegistration);
         assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
-        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(expectedLastContactDate);
+        assertThat(returnedRegistration.getLastContactTimestamp()).isCloseTo(expectedLastContactDate , Offset.offset(expectedLastContactDateOffet));
         assertThatRegistrationHasExactExpositions(returnedRegistration, expositions);
     }
 
@@ -197,7 +203,7 @@ public class RiskEvaluationProcessorTest {
         this.assertThatRiskDetected(returnedRegistration);
         assertThat(returnedRegistration.isNotified()).isTrue();
         assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
-        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(expectedLastContactDate);
+        assertThat(returnedRegistration.getLastContactTimestamp()).isCloseTo(expectedLastContactDate , Offset.offset(expectedLastContactDateOffet));
         assertThatRegistrationHasExactExpositions(returnedRegistration, expositions);
     }
 
@@ -226,7 +232,7 @@ public class RiskEvaluationProcessorTest {
         this.assertThatRiskDetected(returnedRegistration);
         assertThat(returnedRegistration.isNotified()).isFalse();
         assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
-        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(expectedLastContactDate);
+        assertThat(returnedRegistration.getLastContactTimestamp()).isCloseTo(expectedLastContactDate , Offset.offset(expectedLastContactDateOffet));
         assertThatRegistrationHasExactExpositions(returnedRegistration, expositions);
     }
 
@@ -250,13 +256,13 @@ public class RiskEvaluationProcessorTest {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         this.registration.get().setAtRisk(true);
-        this.registration.get().setLastContactTimestamp(this.expectedLastContactDate - TimeUtils.EPOCHS_PER_DAY);
+        this.registration.get().setLastContactTimestamp(this.expectedLastContactDate - (TimeUtils.EPOCHS_PER_DAY * 3));
         this.registration.get().setExposedEpochs(this.expositionsAtRisk());
         
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
         assertThat(returnedRegistration.isAtRisk()).isTrue();
-        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(this.expectedLastContactDate);
+        assertThat(returnedRegistration.getLastContactTimestamp()).isCloseTo(expectedLastContactDate , Offset.offset(expectedLastContactDateOffet));
     }
 
     

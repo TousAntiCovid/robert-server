@@ -122,7 +122,7 @@ public class TimeUtilsTest {
             .collect(Collectors.toSet());
         
         assertThat(randomizedInstants).
-            containsExactly(instant.minus(1, ChronoUnit.DAYS), instant, instant.plus(1, ChronoUnit.DAYS));
+            containsExactlyInAnyOrder(instant.minus(1, ChronoUnit.DAYS), instant, instant.plus(1, ChronoUnit.DAYS));
     }
 
     @Test
@@ -150,8 +150,7 @@ public class TimeUtilsTest {
                 .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant)))
                 .collect(Collectors.toSet());
 
-        assertThat(randomizedInstants).
-                containsExactly(instantInPast.minus(1, ChronoUnit.DAYS), instantInPast, instantInPast.plus(1, ChronoUnit.DAYS));
+        assertThat(randomizedInstants).containsExactlyInAnyOrder(instantInPast.minus(1, ChronoUnit.DAYS), instantInPast, instantInPast.plus(1, ChronoUnit.DAYS));
     }
 
 
