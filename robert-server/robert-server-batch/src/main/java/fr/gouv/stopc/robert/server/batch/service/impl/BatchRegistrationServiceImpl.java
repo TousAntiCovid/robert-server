@@ -75,6 +75,8 @@ public class BatchRegistrationServiceImpl {
             registration.setLatestRiskEpoch(newLatestRiskEpoch);
             log.info("Updating latest risk epoch {}", newLatestRiskEpoch);
             registration.setAtRisk(true);
+            // Do not reset isNotified since it is used to compute the number of notifications
+            // It is up to the client to know if it should notify (new risk) or not given the risk change or not.
             isRegistrationAtRisk = true;
         }
 

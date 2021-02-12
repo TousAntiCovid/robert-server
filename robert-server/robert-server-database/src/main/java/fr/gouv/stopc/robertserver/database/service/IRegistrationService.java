@@ -22,12 +22,17 @@ public interface IRegistrationService {
 	List<Registration> findAll();
 
 	/**
-	 * Return the number of users detected a new time at risk (isNotified = true and
-	 * atRisk=true)
+     * Return the number of users detected at risk (atRisk=true)
+     */
+    Long countNbUsersAtRisk();
+
+    /**
+	 * Return the number of users detected at risk and already notified
+	 * (isNotified = true and atRisk=true)
 	 * 
 	 * @return the number
 	 */
-	Long countNbUsersAtRiskAgain();
+	Long countNbUsersAtRiskAndNotified();
 
 	/**
 	 * Return the number of users detected a new time at risk (isNotified = false
@@ -38,7 +43,7 @@ public interface IRegistrationService {
 	Long countNbUsersAtRiskAndNotNotified();
 
 	/**
-	 * Return the number of users notified (isNotified = true, atRisk = false)
+	 * Return the number of users notified (isNotified = true)
 	 * 
 	 * @return the number
 	 */
@@ -68,4 +73,5 @@ public interface IRegistrationService {
 	 * @return the number of users
 	 */
 	Long countNbUsersWithOldEpochExpositions(int minEpochId);
+
 }

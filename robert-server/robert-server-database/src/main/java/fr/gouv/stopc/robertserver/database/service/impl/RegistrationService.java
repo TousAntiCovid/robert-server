@@ -68,8 +68,16 @@ public class RegistrationService implements IRegistrationService {
      * {@inheritDoc}
      */
     @Override
-    public Long countNbUsersAtRiskAgain() {
-        return this.registrationRepository.countNbUsersAtRiskAgain();
+    public Long countNbUsersAtRisk() {
+        return this.registrationRepository.countNbUsersAtRisk();
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Long countNbUsersAtRiskAndNotified() {
+        return this.registrationRepository.countNbUsersAtRiskAndNotified();
     }
 
     /**
@@ -113,4 +121,5 @@ public class RegistrationService implements IRegistrationService {
     public Long countNbUsersWithOldEpochExpositions(int minEpochId) {
         return this.registrationRepository.countNbUsersWithOldEpochExpositions(minEpochId);
     }
+
 }

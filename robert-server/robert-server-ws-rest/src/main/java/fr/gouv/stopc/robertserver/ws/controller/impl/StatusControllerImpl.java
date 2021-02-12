@@ -166,7 +166,7 @@ public class StatusControllerImpl implements IStatusController {
 		}
 		// Request is valid
 		// (now iterating through steps from section "If the ESR_REQUEST_A,i is valid, the server:", p11 of spec)
-		// Step #1: Set SRE with current epoch number
+		// Step #1: Set StatusRequestEpoch with current epoch number
 		int previousLastStatusRequestEpoch = record.getLastStatusRequestEpoch();
 		record.setLastStatusRequestEpoch(currentEpoch);
 		log.info("The registration previous last status epoch request was {} and the next epoch, {}, will be the current epoch {}",
@@ -180,8 +180,8 @@ public class StatusControllerImpl implements IStatusController {
 		// Step #3: Set UserNotified to true if at risk
 		// If was never notified and batch flagged a risk, notify
 		// and remember last exposed epoch as new starting point for subsequent risk notifications
+	    // The status atRisk will be reinitialized by the batch
 		if (atRisk) {
-			record.setAtRisk(false);
 			record.setNotified(true);
 		}
 
