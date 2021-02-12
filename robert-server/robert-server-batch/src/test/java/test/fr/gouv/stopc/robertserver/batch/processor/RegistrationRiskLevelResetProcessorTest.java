@@ -6,8 +6,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -22,7 +22,7 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:application.properties")
 public class RegistrationRiskLevelResetProcessorTest {
-    @Mock
+    @MockBean
     private PropertyLoader propertyLoader;
     private RegistrationRiskLevelResetProcessor processor;
     private ListAppender<ILoggingEvent> processorLoggerAppender;
@@ -30,7 +30,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     @BeforeEach
     public void beforeEach() {
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(2);
-        this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader);
+        this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, 5000);
     }
 
     @Test
@@ -56,8 +56,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     @Test
     public void testRiskLevelShouldNotBeResetWhenAtRiskAndNotifiedButEpochMinimunIsNotReached() throws Exception {
         // Given
-        Registration registration = Registration.builder().atRisk(true).isNotified(true).lastStatusRequestEpoch(5000)
-                .latestRiskEpoch(4912).build();
+        Registration registration = Registration.builder().atRisk(true).isNotified(true).latestRiskEpoch(4912).build();
         // When
         Registration processedRegistration = this.processor.process(registration);
         // Then
@@ -67,8 +66,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     @Test
     public void testRiskLevelShouldBeResetWhenAtRiskAndNotifiedAndEpochMinimunIsReached() throws Exception {
         // Given
-        Registration registration = Registration.builder().atRisk(true).isNotified(true).lastStatusRequestEpoch(5000)
-                .latestRiskEpoch(4808).build();
+        Registration registration = Registration.builder().atRisk(true).isNotified(true).latestRiskEpoch(4808).build();
         // When
         Registration processedRegistration = this.processor.process(registration);
         // Then
@@ -81,8 +79,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     public void testRiskLevelShouldBeResetWhenAtRiskAndNotNotifiedAndEpochMinimunIsReached() throws Exception {
         // Given
         this.setUpLogHandler();
-        Registration registration = Registration.builder().atRisk(true).isNotified(false).lastStatusRequestEpoch(5000)
-                .latestRiskEpoch(4808).build();
+        Registration registration = Registration.builder().atRisk(true).isNotified(false).latestRiskEpoch(4808).build();
         // When
         Registration processedRegistration = this.processor.process(registration);
         // Then

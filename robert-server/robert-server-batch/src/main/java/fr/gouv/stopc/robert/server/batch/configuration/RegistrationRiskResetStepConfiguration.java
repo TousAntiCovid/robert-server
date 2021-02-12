@@ -17,6 +17,7 @@ import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.utils.StepNameUtils;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
@@ -59,7 +60,9 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     @Bean
     public ItemProcessor<Registration, Registration> registrationRiskResetProcessor() {
-        return new RegistrationRiskLevelResetProcessor(this.propertyLoader);
+        return new RegistrationRiskLevelResetProcessor(
+                this.propertyLoader, 
+                TimeUtils.getCurrentEpochFrom(serverConfigurationService.getServiceTimeStart()) );
     }
     
     @Bean

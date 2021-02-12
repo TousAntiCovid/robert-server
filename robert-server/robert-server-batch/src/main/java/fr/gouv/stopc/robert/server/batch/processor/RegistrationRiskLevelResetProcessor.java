@@ -13,17 +13,19 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
     public static final String USER_AT_RISK_NOT_NOTIFIED_MESSAGE = "Reseting risk level of a user never notified!";
     private final PropertyLoader propertyLoader;
     private int nbEpochsRiskLevelRetention;
+    private int currentEpoch;
     
-    public RegistrationRiskLevelResetProcessor(PropertyLoader propertyLoader) {
+    public RegistrationRiskLevelResetProcessor(PropertyLoader propertyLoader, int currentEpoch) {
         super();
         this.propertyLoader = propertyLoader;
         this.nbEpochsRiskLevelRetention = TimeUtils.EPOCHS_PER_DAY * this.propertyLoader.getRiskLevelRetentionPeriodInDays();
+        this.currentEpoch = currentEpoch;
     }
 
     @Override
     public Registration process(Registration registration) throws Exception {
         if (registration.isAtRisk()) {
-            int nbEpochsSinceLastScoringAtRisk = registration.getLastStatusRequestEpoch() - registration.getLatestRiskEpoch();
+            int nbEpochsSinceLastScoringAtRisk =  this.currentEpoch - registration.getLatestRiskEpoch();
             if (nbEpochsSinceLastScoringAtRisk >= nbEpochsRiskLevelRetention) {
                 if ( !registration.isNotified() ) {
                     log.info(USER_AT_RISK_NOT_NOTIFIED_MESSAGE);
