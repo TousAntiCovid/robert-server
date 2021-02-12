@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.dto;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum RiskLevel {
     NONE(0),
     LOW(1),
@@ -13,6 +15,7 @@ public enum RiskLevel {
         this.value = i;
     }
 
+    @JsonValue
     public int getValue() {
         return this.value;
     }
