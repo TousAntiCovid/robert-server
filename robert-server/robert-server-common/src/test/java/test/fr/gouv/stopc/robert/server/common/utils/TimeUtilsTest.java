@@ -75,7 +75,7 @@ public class TimeUtilsTest {
     @Test
     public void testTimestampIsDayTruncated() {
         Instant instant = Instant.parse("1980-04-09T10:15:30.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+        long ntpInstant = this.ntpTimestampFromInstant(instant);
         
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
@@ -85,7 +85,7 @@ public class TimeUtilsTest {
     @Test
     public void testTimestampJustBeforeMidnightIsTruncatedToCurrentDay() {
         Instant instant = Instant.parse("2021-01-17T23:59:10.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+        long ntpInstant = this.ntpTimestampFromInstant(instant);
         
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
@@ -95,7 +95,7 @@ public class TimeUtilsTest {
     @Test
     public void testTimestampJustAfterMidnightIsTruncatedToCurrentDay() {
         Instant instant = Instant.parse("2021-01-17T00:01:50.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+        long ntpInstant = this.ntpTimestampFromInstant(instant);
         
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
@@ -105,7 +105,7 @@ public class TimeUtilsTest {
     @Test
     public void testTimestampAtMidnightIsTruncatedToEndingDay() {
         Instant instant = Instant.parse("2021-01-17T00:00:00.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+        long ntpInstant = this.ntpTimestampFromInstant(instant);
         
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
         
@@ -115,7 +115,7 @@ public class TimeUtilsTest {
     @Test
     public void testRandomizedDateIsBetweenJMinus1AndJPlus1() {
         Instant instant = Instant.parse("2021-02-11T13:00:00.00Z");
-        long ntpInstant = instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+        long ntpInstant = this.ntpTimestampFromInstant(instant);
         
         Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
             .mapToObj(i -> this.instantFromTimestamp(TimeUtils.randomizedDate(ntpInstant)))
@@ -129,7 +129,7 @@ public class TimeUtilsTest {
     public void shouldGetRandomizedDateNotInFutureReturnTheCurrentNtpTimestampInCaseProvidedNtpInstantIsInFuture() {
 
         Instant instantInFuture = Instant.now().plus(5, ChronoUnit.DAYS);
-        long ntpInstant = instantInFuture.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+        long ntpInstant = this.ntpTimestampFromInstant(instantInFuture);
 
         Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
                 .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant)))
@@ -144,7 +144,7 @@ public class TimeUtilsTest {
     public void shouldGetRandomizedDateNotInFutureReturnNtpInstantBetweenJMinus1AndJPlus1FromProvidedNtpInstantIsInPast() {
 
         Instant instantInPast = Instant.now().minus(10, ChronoUnit.DAYS).with(ChronoField.MILLI_OF_SECOND, 0);
-        long ntpInstant = instantInPast.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+        long ntpInstant = this.ntpTimestampFromInstant(instantInPast);
 
         Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
                 .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant)))
@@ -153,6 +153,9 @@ public class TimeUtilsTest {
         assertThat(randomizedInstants).containsExactlyInAnyOrder(instantInPast.minus(1, ChronoUnit.DAYS), instantInPast, instantInPast.plus(1, ChronoUnit.DAYS));
     }
 
+    private long ntpTimestampFromInstant(Instant instant) {
+        return instant.getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+    }
 
     private Instant instantFromTimestamp(long ntpTimestamp) {
         return Instant.ofEpochSecond(ntpTimestamp - TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970);
