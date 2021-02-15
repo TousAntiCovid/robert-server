@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.validation.Valid;
 
-import org.bson.internal.Base64;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -34,6 +33,7 @@ import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.internal.Base64;
 
 @Slf4j
 @Service
@@ -205,11 +205,15 @@ public class StatusControllerImpl implements IStatusController {
         // Include new EBIDs and ECCs for next M epochs
         StatusResponseDto statusResponse = StatusResponseDto.builder()
                 .riskLevel(riskLevel)
-                .lastContactDate(Long.toString(record.getLastContactTimestamp()))
                 .config(this.getClientConfig())
                 .tuples(Base64.encode(tuples))
                 .build();
-        
+
+		// Include lastContactDate only if any
+		if (record.getLastContactTimestamp() > 0) {
+			statusResponse.setLastContactDate(Long.toString(record.getLastContactTimestamp()));
+		}
+
 		// Save changes to the record
 		this.registrationService.saveRegistration(record);
 

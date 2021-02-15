@@ -1,15 +1,9 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.security.Key;
@@ -23,10 +17,6 @@ import java.util.Optional;
 import javax.crypto.KeyGenerator;
 import javax.inject.Inject;
 
-import org.bson.internal.Base64;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,7 +32,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.protobuf.ByteString;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
@@ -67,6 +56,10 @@ import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.internal.Base64;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -772,6 +765,7 @@ public class StatusControllerWsRestTest {
         assertEquals(RiskLevel.NONE, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
+        assertThat(response.getBody().getLastContactDate()).isNull();
         assertEquals(0, reg.getLastContactTimestamp());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
