@@ -363,6 +363,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         verify(this.cryptoServerClient, never()).getInfoFromHelloMessage(any());
 
     }
+
     @Test
     public void testScoreAndProcessRisksWhenRecentExposedEpochScoreGreaterThanRiskThresholdShouldBeAtRisk() throws Exception {
 
@@ -443,6 +444,47 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         verify(this.cryptoServerClient, never()).getInfoFromHelloMessage(any());
 
     }
+
+    @Test
+    public void testResetAtRisk() throws Exception {
+
+        // Given
+        final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
+        final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
+
+        Registration registrationHavingRiskLevelThatMustBeReset = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA()).get();
+
+        registrationHavingRiskLevelThatMustBeReset.setAtRisk(true);
+        registrationHavingRiskLevelThatMustBeReset.setLatestRiskEpoch(currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) - 1);
+
+        this.registrationService.saveRegistration(registrationHavingRiskLevelThatMustBeReset);
+
+        Registration registrationHavingRiskLevelThatMustNotBeReset = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA()).get();
+
+        registrationHavingRiskLevelThatMustNotBeReset.setAtRisk(true);
+        registrationHavingRiskLevelThatMustNotBeReset.setLatestRiskEpoch(currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) + 1);
+
+        this.registrationService.saveRegistration(registrationHavingRiskLevelThatMustNotBeReset);
+
+        // When
+        this.jobLauncherTestUtils.launchJob();
+
+        // Then
+        Optional<Registration> expectedRegistrationHavingRiskLevelThatMustBeReset = this.registrationService
+                .findById(registrationHavingRiskLevelThatMustBeReset.getPermanentIdentifier());
+
+        assertTrue(expectedRegistrationHavingRiskLevelThatMustBeReset.isPresent());
+        assertFalse(expectedRegistrationHavingRiskLevelThatMustBeReset.get().isAtRisk());
+
+        Optional<Registration> expectedRegistrationHavingRiskLevelThatMustNotBeReset = this.registrationService
+                .findById(registrationHavingRiskLevelThatMustNotBeReset.getPermanentIdentifier());
+
+        assertTrue(expectedRegistrationHavingRiskLevelThatMustNotBeReset.isPresent());
+        assertTrue(expectedRegistrationHavingRiskLevelThatMustNotBeReset.get().isAtRisk());
+
+    }
+
+
 
     @Configuration
     @Import({ ScoringAndRiskEvaluationJobConfiguration.class })
