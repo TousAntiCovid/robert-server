@@ -73,14 +73,14 @@ public class BatchRegistrationServiceImpl {
                 .ifPresent(lastContactEpoch -> {
                     long lastContactTimestamp = TimeUtils.getNtpSeconds(lastContactEpoch.getEpochId(), serviceTimeStart);
                     if (lastContactTimestamp > registration.getLastContactTimestamp()) {
-                        long randomizedLastContactTimestamp = TimeUtils.getRandomizedDateNotInFuture(lastContactTimestamp);
+                        long randomizedLastContactTimestamp = TimeUtils.dayTruncatedTimestamp(
+                                TimeUtils.getRandomizedDateNotInFuture(lastContactTimestamp) );
                         log.debug("Last contact date is updating : last contact date from hello message : {}" +
                                 " - previous last contact date : {} ==> stored last contact date : {}  ",
                                 lastContactTimestamp,
                                 registration.getLastContactTimestamp(),
-                                randomizedLastContactTimestamp
-                                );
-                        registration.setLastContactTimestamp(TimeUtils.dayTruncatedTimestamp(randomizedLastContactTimestamp));
+                                randomizedLastContactTimestamp);
+                        registration.setLastContactTimestamp(randomizedLastContactTimestamp);
                     } else {
                         log.debug("Last contact date isn't updating : last contact date from hello message : {}" +
                                         " - previous last contact date : {}",
