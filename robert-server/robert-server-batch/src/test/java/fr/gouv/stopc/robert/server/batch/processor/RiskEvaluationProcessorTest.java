@@ -280,6 +280,25 @@ public class RiskEvaluationProcessorTest {
         assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(this.expectedLastContactDate + TimeUtils.EPOCHS_PER_DAY * TimeUtils.EPOCH_DURATION_SECS);
     }
     
+    @Test
+    public void testShouldNotReturnALastContactDateInTheFutureWhenAtRisk() {
+        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+        assertTrue(this.registration.isPresent());
+        ArrayList<EpochExposition> expositions = new ArrayList<>();
+        int exposedEpoch = this.currentEpoch + TimeUtils.EPOCHS_PER_DAY * 4;
+        expositions.add(EpochExposition.builder()
+                .epochId(exposedEpoch)
+                .expositionScores(Arrays.asList(new Double[] {10.0, 5.0}))
+                .build());
+        this.registration.get().setExposedEpochs(expositions);
+
+        Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
+
+        this.assertThatRiskDetected(returnedRegistration);
+        assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
+        assertThat(returnedRegistration.getLastContactTimestamp()).isEqualTo(TimeUtils.dayTruncatedTimestamp(Instant.now().getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970));
+    }
+    
     protected ArrayList<EpochExposition> expositionsAtRisk() {
         return this.expositions(new Double[] { 10.0, 2.0, 1.0, 4.3 }, new Double[] { });
     }
