@@ -31,13 +31,12 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
 
     @Override
     public List<ScoreResult> riskScore(String token, long visitTime) {
-        return exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(token), visitTime);
+        return exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(token), visitTime, this.getRetentionStart());
     }
 
     @Scheduled(cron = "${tacw.database.visit_token_deletion_job_cron_expression}")
     public long deleteExpiredTokens() {
-        final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
-        final long retentionStart = currentNtpTime - TimeUnit.DAYS.toSeconds(configuration.getVisitTokenRetentionPeriodDays());
+        final long retentionStart = getRetentionStart();
         log.debug(String.format("Purge expired tokens before %d", retentionStart));
         final long nbDeletedTokens = exposedStaticVisitRepository.deleteByVisitEndTimeLessThan(retentionStart);
         log.info(String.format("Deleted %d static tokens from exposed tokens", nbDeletedTokens));
@@ -48,6 +47,12 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
     public void registerExposedStaticVisitEntities(List<ExposedStaticVisitEntity> exposedStaticVisitEntityToSave) {
         log.debug(String.format("Registering %d new exposed visit entities", exposedStaticVisitEntityToSave.size()));
         exposedStaticVisitRepository.saveAll(exposedStaticVisitEntityToSave);
+    }
+
+    private long getRetentionStart() {
+        final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
+        final long retentionStart = currentNtpTime - TimeUnit.DAYS.toSeconds(configuration.getVisitTokenRetentionPeriodDays());
+        return retentionStart;
     }
 
 }

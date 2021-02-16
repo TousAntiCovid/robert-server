@@ -1,15 +1,19 @@
 package fr.gouv.tacw.database;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
@@ -21,24 +25,39 @@ import fr.gouv.tacw.database.repository.ExposedStaticVisitRepository;
 @Transactional
 class ExposedStaticVisitRepositoryTests {
     @Autowired
-    ExposedStaticVisitRepository exposedStaticVisitRepository;
+    private ExposedStaticVisitRepository exposedStaticVisitRepository;
+
+    @MockBean
+    private TacWarningDatabaseConfiguration configuration;
 
     private int lastVisitId = 0;
-    private final long referenceTime = System.currentTimeMillis();
+    private long referenceTime;
+    private long retentionStart;
     int startDelta = 0;
     int endDelta = 2000;
 
+    @BeforeEach
+    void init() {
+        assertThat(exposedStaticVisitRepository).isNotNull();
+        assertThat(configuration).isNotNull();
+        when(configuration.getVisitTokenRetentionPeriodDays())
+                .thenReturn(8L);
+        referenceTime  = System.currentTimeMillis();
+        retentionStart = referenceTime - TimeUnit.DAYS.toSeconds(configuration.getVisitTokenRetentionPeriodDays());
+    }
+
     /**
      *  |----------| <- exposed
-     *               |----------| <- risk ? 
+     *               |----------| <- risk ?
      */
     @Test
     void testRiskScoreWhenPresenceTimeDoNotOverlapThenRiskIsZero() {
         ExposedStaticVisitEntity exposedStaticVisit;
         exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
         exposedStaticVisitRepository.save(exposedStaticVisit);
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 2001);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 2001, retentionStart);
 
         assertScoreAndLastContactDate(scores, 0, -1);
     }
@@ -52,8 +71,10 @@ class ExposedStaticVisitRepositoryTests {
         ExposedStaticVisitEntity exposedStaticVisit;
         exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
         exposedStaticVisitRepository.save(exposedStaticVisit);
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), exposedStaticVisit.getVisitStartTime());
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), exposedStaticVisit.getVisitStartTime(), retentionStart);
 
         assertScoreAndLastContactDate(scores, 1, referenceTime + 2000);
     }
@@ -67,8 +88,10 @@ class ExposedStaticVisitRepositoryTests {
         ExposedStaticVisitEntity exposedStaticVisit;
         exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
         exposedStaticVisitRepository.save(exposedStaticVisit);
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 1000);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 1000, retentionStart);
 
         assertScoreAndLastContactDate(scores, 1, referenceTime + 2000);
     }
@@ -82,8 +105,10 @@ class ExposedStaticVisitRepositoryTests {
         ExposedStaticVisitEntity exposedStaticVisit;
         exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
         exposedStaticVisitRepository.save(exposedStaticVisit);
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime - 1000);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime - 1000, retentionStart);
 
         assertScoreAndLastContactDate(scores, 1, referenceTime + 2000);
     }
@@ -97,8 +122,10 @@ class ExposedStaticVisitRepositoryTests {
         ExposedStaticVisitEntity exposedStaticVisit;
         exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
         exposedStaticVisitRepository.save(exposedStaticVisit);
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime - 2000);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime - 2000, retentionStart);
 
         assertScoreAndLastContactDate(scores, 0, -1);
     }
@@ -113,8 +140,10 @@ class ExposedStaticVisitRepositoryTests {
         ExposedStaticVisitEntity exposedStaticVisit;
         exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
         exposedStaticVisitRepository.save(exposedStaticVisit);
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 2000);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 2000, retentionStart);
 
         assertScoreAndLastContactDate(scores, 0, -1);
     }
@@ -130,8 +159,10 @@ class ExposedStaticVisitRepositoryTests {
         exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
         exposedStaticVisitRepository.save(exposedStaticVisit);
         exposedStaticVisitRepository.save( this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), referenceTime, referenceTime + 2000) );
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 1000);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 1000, retentionStart);
 
         assertScoreAndLastContactDate(scores, 2, referenceTime + 2000);
     }
@@ -153,8 +184,10 @@ class ExposedStaticVisitRepositoryTests {
         exposedStaticVisitRepository.save( this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), referenceTime + 400, referenceTime + 2400) );
         exposedStaticVisitRepository.save( this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), referenceTime + 4600, referenceTime + 6600) );
         exposedStaticVisitRepository.save( this.newExposedStaticVisitEntity(referenceTime + 4600, referenceTime + 6600) );
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 1600);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 1600, retentionStart);
 
         assertScoreAndLastContactDate(scores, 3, referenceTime + 4800);
     }
@@ -162,7 +195,7 @@ class ExposedStaticVisitRepositoryTests {
     /**
      * In practice, this use case is not used because a riskScore is only computed for one visit,
      * and so one venue risk level.
-     * 
+     *
      *  |----------| <- exposed (risk high)
      *                   |----------| <- exposed (risk low)
      *    |----------| <- exposed (risk low)
@@ -177,8 +210,10 @@ class ExposedStaticVisitRepositoryTests {
         exposedStaticVisitRepository.save( this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), RiskLevel.LOW, referenceTime + 2800, referenceTime + 4800) );
         exposedStaticVisitRepository.save( this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), RiskLevel.LOW, referenceTime + 400, referenceTime + 2400) );
         exposedStaticVisitRepository.save( this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), RiskLevel.HIGH, referenceTime + 4600, referenceTime + 6600) );
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 1600);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), referenceTime + 1600, retentionStart);
 
         assertThat(scores.size()).isEqualTo(2);
         Optional<ScoreResult> lowRiskLevelScore = scores.stream()
@@ -187,7 +222,7 @@ class ExposedStaticVisitRepositoryTests {
         assertThat(lowRiskLevelScore.isPresent());
         assertThat(lowRiskLevelScore.get().getScore()).isEqualTo(2);
         assertThat(lowRiskLevelScore.get().getLastContactDate()).isEqualTo(referenceTime + 4800);
-        
+
         Optional<ScoreResult> highRiskLevelScore = scores.stream()
                 .filter(score -> score.getRiskLevel() == RiskLevel.HIGH)
                 .findFirst();
@@ -201,16 +236,28 @@ class ExposedStaticVisitRepositoryTests {
         ExposedStaticVisitEntity exposedStaticVisit;
         exposedStaticVisit = this.newExposedStaticVisitEntity(referenceTime, referenceTime + 2000);
         exposedStaticVisitRepository.save(exposedStaticVisit);
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart - 1));
 
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(this.nextVisitId()), referenceTime);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(this.nextVisitId()), referenceTime, retentionStart);
 
         assertScoreAndLastContactDate(scores, 0, -1);
     }
 
     @Test
-    void testRiskScoreWhenNoExposedTokenThenRiskIsZero() {	
-        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(this.nextVisitId()), referenceTime);
+    void testRiskScoreWhenNoExposedTokenThenRiskIsZero() {
+        // expired visit
+        exposedStaticVisitRepository.save(this.newExposedStaticVisitEntity(retentionStart - 2, retentionStart - 1));
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(this.nextVisitId()), referenceTime, retentionStart);
 
+        assertScoreAndLastContactDate(scores, 0, -1);
+    }
+
+    @Test
+    void testRiskScoreWhenVisitEndsBeforeRetentionDate() {
+        ExposedStaticVisitEntity exposedStaticVisit = this.newExposedStaticVisitEntity(retentionStart - 2, retentionStart - 1);
+        exposedStaticVisitRepository.save(exposedStaticVisit);
+        List<ScoreResult> scores = exposedStaticVisitRepository.riskScore(exposedStaticVisit.getToken(), retentionStart - 2, retentionStart);
         assertScoreAndLastContactDate(scores, 0, -1);
     }
 
@@ -251,8 +298,8 @@ class ExposedStaticVisitRepositoryTests {
         return new ExposedStaticVisitEntity(
                 token,
                 venueRiskLevel,
-                startTime, 
-                startTime + 2000,
+                startTime,
+                endTime,
                 startDelta,
                 endDelta,
                 1L);
@@ -268,7 +315,7 @@ class ExposedStaticVisitRepositoryTests {
             assertThat(scores).isEmpty();
             return;
         }
-        
+
         assertThat(scores.size()).isEqualTo(1);
         assertThat(scores.get(0).getScore()).isEqualTo(score);
         assertThat(scores.get(0).getLastContactDate()).isEqualTo(expectedLastContactDate);
