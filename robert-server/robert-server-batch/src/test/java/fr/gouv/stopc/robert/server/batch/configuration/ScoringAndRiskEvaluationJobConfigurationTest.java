@@ -65,8 +65,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK"})
 public class ScoringAndRiskEvaluationJobConfigurationTest {
 
-    private final static String SHOULD_NOT_FAIL = "It should not fail";
-
     @Inject
     JobLauncherTestUtils jobLauncherTestUtils;
 
