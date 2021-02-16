@@ -3,6 +3,7 @@ package fr.gouv.stopc.robert.server.batch.utils;
 public final class StepNameUtils {
 
     public static final String POPULATE_REGISTRATION_ID_MAPPING_FOR_PURGE_STEP_NAME = "POPULATE_REGISTRATION_ID_MAPPING_FOR_PURGE_STEP";
+    public static final String POPULATE_REGISTRATION_ID_MAPPING_FOR_RISK_RESET_STEP_NAME = "POPULATE_REGISTRATION_ID_MAPPING_FOR_RISK_RESET_STEP";
 
 
     public static final String PURGE_OLD_EXPOSITIONS_STEP_NAME = "PURGE_OLD_EXPOSITIONS_STEP";
