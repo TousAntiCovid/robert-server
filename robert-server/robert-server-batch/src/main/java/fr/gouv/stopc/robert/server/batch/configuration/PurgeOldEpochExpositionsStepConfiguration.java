@@ -77,7 +77,7 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
         return new StepExecutionListener() {
             @Override
             public void beforeStep(StepExecution stepExecution) {
-                log.debug("START : Purge Old Epoch Expositions.");
+                log.info("START : Purge Old Epoch Expositions.");
 
                 long totalItemCount = registrationService.countNbUsersWithOldEpochExpositions(computeMinOldEpochId()).longValue();
                 stepExecution.getJobExecution().getExecutionContext().putLong(TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY, totalItemCount);
