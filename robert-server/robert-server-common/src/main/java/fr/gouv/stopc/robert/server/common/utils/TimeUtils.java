@@ -11,6 +11,9 @@ public final class TimeUtils {
 
     // Epoch duration is 15 minutes so 15 * 60 = 900 seconds
     public final static int EPOCH_DURATION_SECS = 900;
+
+    // Number of epoch per days = 15 * 4 * 24
+    public final static int NB_EPOCH_PER_DAY = 1440;
     
     public final static long SECONDS_PER_DAY = 86400;
 
@@ -76,7 +79,7 @@ public final class TimeUtils {
      * @param ntpInstant the NTP timestamp representing to randomize
      * @return a randomized NTP timestamp
      */
-    public static long randomizedDate(long ntpInstant) {
+    public static Long randomizedDate(long ntpInstant) {
         int randomDay = ThreadLocalRandom.current().nextInt(-1, 2);
         return ntpInstant + randomDay * SECONDS_PER_DAY;
     }
@@ -154,5 +157,12 @@ public final class TimeUtils {
             }
         }
         return false;
+    }
+
+    public static Long randomizedDate(String longAsString) {
+        return Long.getLong(longAsString);
+    }
+
+    public static void randomizedDate() {
     }
 }
