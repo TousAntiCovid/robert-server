@@ -3,20 +3,26 @@ package fr.gouv.stopc.robert.server.common.utils;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class TimeUtils {
     //  Number of seconds to fill the gap between UNIX timestamp (1/1/1970) and NTP timestamp (1/1/1900)
-    public final static long SECONDS_FROM_01_01_1900 = 2208988800L;
+    public final static long SECONDS_FROM_01_01_1900_TO_01_01_1970 = 2208988800L;
 
     // Epoch duration is 15 minutes so 15 * 60 = 900 seconds
     public final static int EPOCH_DURATION_SECS = 900;
+
+    // Number of epoch per days = 15 * 4 * 24
+    public final static int NB_EPOCH_PER_DAY = 1440;
+    
+    public final static long SECONDS_PER_DAY = 86400;
 
     private TimeUtils() {
         throw new AssertionError();
     }
 
     public static long convertNTPSecondsToUnixMillis(long ntpTime) {
-        return (ntpTime - SECONDS_FROM_01_01_1900) * 1000;
+        return (ntpTime - SECONDS_FROM_01_01_1900_TO_01_01_1970) * 1000;
     }
 
     /**
@@ -25,7 +31,7 @@ public final class TimeUtils {
      * @return time converted in NTP in seconds
      */
     public static long convertUnixMillistoNtpSeconds(final long unixTimeInMillis) {
-        return (unixTimeInMillis / 1000) + SECONDS_FROM_01_01_1900;
+        return (unixTimeInMillis / 1000) + SECONDS_FROM_01_01_1900_TO_01_01_1970;
     }
 
     /**
@@ -49,17 +55,56 @@ public final class TimeUtils {
     }
 
     /**
+     * Get the NTP time in *seconds* from an epoch relative to timeStart (NTP time in seconds)
+     * 
+     * @param epoch an Epoch
+     * @param timeStart as NTP timestamp in *seconds*
+     * @return
+     */
+    public static long getNtpSeconds(int epoch, long timeStart) {
+        return (EPOCH_DURATION_SECS * epoch) + timeStart;
+    }
+    
+    /**
+     * Get timestamp truncated to the DAY at noon.
+     * @param timestamp the timestamp in seconds
+     * @return the rounded timestamp
+     */
+    public static long dayTruncatedTimestamp(long timestamp) {
+        return timestamp - (timestamp % SECONDS_PER_DAY);
+    }
+
+    /**
+     * Get a random date between J-1, J, J+1 (uniform distribution)
+     * @param ntpInstant the NTP timestamp representing to randomize
+     * @return a randomized NTP timestamp
+     */
+    public static Long randomizedDate(long ntpInstant) {
+        int randomDay = ThreadLocalRandom.current().nextInt(-1, 2);
+        return ntpInstant + randomDay * SECONDS_PER_DAY;
+    }
+
+    /**
+     * Get a random date between J-1, J, J+1 (uniform distribution) assuming the randomized value can't be in future
+     * @param ntpInstant the NTP timestamp representing to randomize
+     * @return a randomized NTP timestamp
+     */
+    public static long getRandomizedDateNotInFuture(long ntpInstant) {
+        long currentNtpInstant = convertUnixMillistoNtpSeconds(System.currentTimeMillis());
+        long randomizedDate = randomizedDate(ntpInstant);
+        return currentNtpInstant < randomizedDate ? currentNtpInstant : randomizedDate;
+    }
+
+    /**
      *
      * @param epoch
      * @param timeStart in NTP seconds
      * @return
      */
     public static LocalDate getDateFromEpoch(int epoch, long timeStart) {
-
         String timezone = epoch < 960 ? "Europe/Paris" : "UTC";
 
-        long fromInNtpSecs = (EPOCH_DURATION_SECS * epoch) + timeStart;
-        long fromUnixMillis = (fromInNtpSecs - SECONDS_FROM_01_01_1900) * 1000;
+        long fromUnixMillis = (getNtpSeconds(epoch, timeStart) - SECONDS_FROM_01_01_1900_TO_01_01_1970) * 1000;
         return Instant.ofEpochMilli(fromUnixMillis).atZone(ZoneId.of(timezone)).toLocalDate();
     }
 
@@ -112,5 +157,12 @@ public final class TimeUtils {
             }
         }
         return false;
+    }
+
+    public static Long randomizedDate(String longAsString) {
+        return Long.getLong(longAsString);
+    }
+
+    public static void randomizedDate() {
     }
 }

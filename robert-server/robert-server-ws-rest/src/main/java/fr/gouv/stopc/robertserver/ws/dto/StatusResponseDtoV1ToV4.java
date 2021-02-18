@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,10 +14,9 @@ import lombok.Singular;
 @NoArgsConstructor
 @Data
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class StatusResponseDto {
+public class StatusResponseDtoV1ToV4 {
     @NotNull
-    private RiskLevel riskLevel;
+    private boolean atRisk;
 
     @NotNull
     private String tuples;
@@ -26,7 +24,7 @@ public class StatusResponseDto {
     @Singular("config")
     private List<ClientConfigDto> config;
 
-    private String message;
+    private long lastExposureTimeframe;
 
-    private String lastContactDate;
+    private String message;
 }

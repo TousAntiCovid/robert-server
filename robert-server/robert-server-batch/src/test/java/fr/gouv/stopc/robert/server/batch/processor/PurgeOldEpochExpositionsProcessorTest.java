@@ -40,7 +40,7 @@ public class PurgeOldEpochExpositionsProcessorTest {
     private PropertyLoader propertyLoader;
 
     @Test
-    public void shouldReturnsAnEmptyExposeEpochListInCaseProvidedExposedEpochsIsEmpty() {
+    public void shouldReturnAnEmptyExposedEpochListInCaseProvidedExposedEpochsIsEmpty() {
         // Given
         Registration registration = Registration.builder().permanentIdentifier(ProcessorTestUtils.generateIdA()).build();
 
@@ -53,10 +53,11 @@ public class PurgeOldEpochExpositionsProcessorTest {
     }
 
     @Test
-    public void shouldReturnsAnEmptyExposeEpochListInCaseProvidedExposedEpochsIsNull() {
+    public void shouldReturnAnEmptyExposedEpochListInCaseProvidedExposedEpochsIsNull() {
         // Given
         Registration registration = Registration.builder().permanentIdentifier(ProcessorTestUtils.generateIdA()).build();
         registration.setExposedEpochs(null);
+        
         // When
         Registration returnedRegistration = this.purgeOldEpochExpositionsProcessor.process(registration);
 

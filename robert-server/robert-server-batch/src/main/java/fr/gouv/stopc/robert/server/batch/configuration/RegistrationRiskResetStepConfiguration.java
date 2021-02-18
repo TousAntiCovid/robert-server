@@ -17,7 +17,6 @@ import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.utils.StepNameUtils;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
@@ -72,7 +71,7 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
         return new StepExecutionListener() {
             @Override
             public void beforeStep(StepExecution stepExecution) {
-                log.debug("START : Reset risk level of registrations when retention time > {}.", propertyLoader.getRiskLevelRetentionPeriodInDays());
+                log.info("START : Reset risk level of registrations when retention time > {}.", propertyLoader.getRiskLevelRetentionPeriodInDays());
 
                 long totalItemCount = registrationService.countNbUsersAtRisk().longValue();
                 stepExecution.getJobExecution().getExecutionContext().putLong(TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY, totalItemCount);

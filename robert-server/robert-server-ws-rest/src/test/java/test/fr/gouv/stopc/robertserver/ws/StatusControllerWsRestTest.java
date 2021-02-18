@@ -1,5 +1,36 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.net.URI;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import javax.crypto.KeyGenerator;
+import javax.inject.Inject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
@@ -16,7 +47,9 @@ import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
+import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
@@ -27,29 +60,6 @@ import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.crypto.KeyGenerator;
-import javax.inject.Inject;
-import java.net.URI;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -67,6 +77,9 @@ public class StatusControllerWsRestTest {
     private String pathPrefixV3;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V4)
+    private String pathPrefixV4;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V5)
     private String pathPrefix;
 
     @Value("${robert.server.status-request-minimum-epoch-gap}")
@@ -599,36 +612,43 @@ public class StatusControllerWsRestTest {
     /** Test the access for API V1, should not be used since API V2 */
     @Test
     public void testAccessV1() {
-        statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV1).path(UriConstants.STATUS).build().encode().toUri());
+        statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV1).path(UriConstants.STATUS).build().encode().toUri());
     }
 
     /** Test the access for API V2, should not be used since API V3 */
     @Test
     public void testAccessV2() {
-        statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.STATUS).build().encode().toUri());
+        statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.STATUS).build().encode().toUri());
     }
     
     /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
-        statusRequestAtRiskSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.STATUS).build().encode().toUri());
+        statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.STATUS).build().encode().toUri());
     }
 
-    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V4 exposure */
+    /** Test the access for API V4, should not be used since API V5 */
     @Test
-    public void testStatusRequestAtRiskSucceedsV4() {
+    public void testAccessV4() {
+        statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.STATUS).build().encode().toUri());
+    }
+
+    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V5 exposure */
+    @Test
+    public void testStatusRequestAtRiskSucceedsV5() {
         statusRequestAtRiskSucceeds(this.targetUrl);
     }
 
-    protected void statusRequestAtRiskSucceeds(URI targetUrl) {
-
-        // Given
-        byte[] idA = this.generateKey(5);
+    protected Registration statusRequestAtRiskSucceedsSetUp(URI targetUrl, byte[] idA) {
         byte[] kA = this.generateKA();
+        long lastContactTimestamp = TimeUtils.getNtpSeconds(currentEpoch - 96, serverConfigurationService.getServiceTimeStart());
+        
         Registration reg = Registration.builder()
                 .permanentIdentifier(idA)
                 .atRisk(true)
                 .isNotified(false)
+                .latestRiskEpoch(currentEpoch - 10)
+                .lastContactTimestamp(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp))
                 .lastStatusRequestEpoch(currentEpoch - 3).build();
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
@@ -654,15 +674,43 @@ public class StatusControllerWsRestTest {
         .when(this.cryptoServerClient).getIdFromStatus(any());
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+        return reg;
+    }
+    
+    protected void statusRequestAtRiskSucceedsV1ToV4(URI targetUrl) {
+        // Given
+        byte[] idA = this.generateKey(5);
+        Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
+        
+        // When
+        ResponseEntity<StatusResponseDtoV1ToV4> response = this.restTemplate.exchange(targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDtoV1ToV4.class);
 
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().isAtRisk());
+        assertNotNull(response.getBody().getTuples());
+        assertTrue(reg.isNotified());
+        assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
+        verify(this.registrationService, times(2)).findById(idA);
+        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+    }
+    
+    protected void statusRequestAtRiskSucceeds(URI targetUrl) {
+        // Given
+        byte[] idA = this.generateKey(5);
+        Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
+        
         // When
         ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
                 HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().isAtRisk());
+        assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
+        assertEquals(Long.toString(reg.getLastContactTimestamp()), response.getBody().getLastContactDate());
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
@@ -714,9 +762,11 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(!response.getBody().isAtRisk());
+        assertEquals(RiskLevel.NONE, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
+        assertThat(response.getBody().getLastContactDate()).isNull();
+        assertEquals(0, reg.getLastContactTimestamp());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
@@ -744,6 +794,7 @@ public class StatusControllerWsRestTest {
                 .epochId(currentEpoch - 3)
                 .expositionScores(Arrays.asList(0.052, 0.16))
                 .build());
+        long lastContactTimestamp = TimeUtils.getNtpSeconds(currentEpoch - 24, serverConfigurationService.getServiceTimeStart());
 
         Registration reg = Registration.builder()
                 .permanentIdentifier(idA)
@@ -751,6 +802,7 @@ public class StatusControllerWsRestTest {
                 .isNotified(true)
                 .lastStatusRequestEpoch(currentEpoch - 3)
                 .latestRiskEpoch(currentEpoch - 8)
+                .lastContactTimestamp(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp))
                 .exposedEpochs(epochExpositions)
                 .build();
 
@@ -786,10 +838,11 @@ public class StatusControllerWsRestTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
-        assertEquals(false, response.getBody().isAtRisk());
+        assertEquals(RiskLevel.NONE, response.getBody().getRiskLevel());
+        assertEquals(Long.toString(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp)), response.getBody().getLastContactDate());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(false, reg.isAtRisk());
-        assertEquals(true, reg.isNotified());
+        assertFalse(reg.isAtRisk());
+        assertTrue(reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
@@ -856,10 +909,10 @@ public class StatusControllerWsRestTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
-        assertEquals(true, response.getBody().isAtRisk());
+        assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(true, reg.isAtRisk());
-        assertEquals(true, reg.isNotified());
+        assertTrue(reg.isAtRisk());
+        assertTrue(reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
@@ -1036,10 +1089,10 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
-        assertEquals(true, response.getBody().isAtRisk());
+        assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(true, reg.isAtRisk());
-        assertEquals(true, reg.isNotified());
+        assertTrue(reg.isAtRisk());
+        assertTrue(reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
@@ -1097,10 +1150,10 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
-        assertEquals(true, response.getBody().isAtRisk());
+        assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(true, reg.isAtRisk());
-        assertEquals(true, reg.isNotified());
+        assertTrue(reg.isAtRisk());
+        assertTrue(reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService).registerPushNotif(pushInfo);
@@ -1173,10 +1226,10 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
-        assertEquals(true, response.getBody().isAtRisk());
+        assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
-        assertEquals(true, reg.isAtRisk());
-        assertEquals(true, reg.isNotified());
+        assertTrue(reg.isAtRisk());
+        assertTrue(reg.isNotified());
         assertTrue(reg.getLastTimestampDrift() == Math.abs(timestampDelta) + 1 || reg.getLastTimestampDrift() == Math.abs(timestampDelta));
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);

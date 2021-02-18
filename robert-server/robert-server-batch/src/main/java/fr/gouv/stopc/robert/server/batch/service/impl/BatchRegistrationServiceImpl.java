@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,13 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class BatchRegistrationServiceImpl {
 
-
-    private ScoringStrategyService scoringStrategy;
+    private final ScoringStrategyService scoringStrategy;
 
     /**
      * Keep epochs within the contagious period
-     * @param exposedEpochs
-     * @return
      */
     public List<EpochExposition> getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
             List<EpochExposition> exposedEpochs,
@@ -43,7 +41,7 @@ public class BatchRegistrationServiceImpl {
     }
 
     public boolean updateRegistrationIfRisk(Registration registration,
-                                                long timeStart,
+                                                long serviceTimeStart,
                                                 double riskThreshold) {
         boolean isRegistrationAtRisk = false;
         int latestRiskEpoch = registration.getLatestRiskEpoch();
@@ -70,8 +68,31 @@ public class BatchRegistrationServiceImpl {
                     totalRisk,
                     riskThreshold);
 
+            scoresSinceLastNotif.stream()
+                .max( Comparator.comparing(EpochExposition::getEpochId) )
+                .ifPresent(lastContactEpoch -> {
+                    long lastContactTimestamp = TimeUtils.getNtpSeconds(lastContactEpoch.getEpochId(), serviceTimeStart);
+                    long randomizedLastContactTimestamp = TimeUtils.dayTruncatedTimestamp(
+                            TimeUtils.getRandomizedDateNotInFuture(lastContactTimestamp) );
+                    if (randomizedLastContactTimestamp > registration.getLastContactTimestamp()) {
+                        log.debug("Last contact date is updating : last contact date from hello message : {}" +
+                                " - previous last contact date : {} ==> stored last contact date : {}  ",
+                                lastContactTimestamp,
+                                registration.getLastContactTimestamp(),
+                                randomizedLastContactTimestamp);
+                        registration.setLastContactTimestamp(randomizedLastContactTimestamp);
+                    } else {
+                        log.debug("Last contact date isn't updating : last contact date from hello message : {} - randomized to {}" +
+                                        " - previous last contact date : {}",
+                                lastContactTimestamp,
+                                randomizedLastContactTimestamp,
+                                registration.getLastContactTimestamp()
+                        );
+                    }
+                });
+
             // A risk has been detected, move time marker to now so that further risks are only posterior to this one
-            int newLatestRiskEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
+            int newLatestRiskEpoch = TimeUtils.getCurrentEpochFrom(serviceTimeStart);
             registration.setLatestRiskEpoch(newLatestRiskEpoch);
             log.info("Updating latest risk epoch {}", newLatestRiskEpoch);
             registration.setAtRisk(true);

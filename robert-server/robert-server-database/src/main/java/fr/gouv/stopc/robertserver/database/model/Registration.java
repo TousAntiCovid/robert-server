@@ -25,6 +25,8 @@ public class Registration {
     private int lastStatusRequestEpoch;
 
     private int latestRiskEpoch;
+    
+    private long lastContactTimestamp;
 
     private int lastFailedStatusRequestEpoch;
 

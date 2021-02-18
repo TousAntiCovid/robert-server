@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.POPULATE_REGISTRATION_ID_MAPPING_FOR_RISK_RESET_STEP_NAME;
+
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -31,7 +33,7 @@ public class RegistrationIdMappingForRegistrationRiskLevelStepConfiguration exte
             MongoItemReader<Registration> registrationIdMappingForRiskResetReader,
             MongoItemWriter<ItemIdMapping> mongoRegistrationIdMappingItemWriter) {
 
-        return this.stepBuilderFactory.get("populateIdMappingWithRegistrationForRiskLevelReset")
+        return this.stepBuilderFactory.get(POPULATE_REGISTRATION_ID_MAPPING_FOR_RISK_RESET_STEP_NAME)
                 .<Registration, ItemIdMapping>chunk(POPULATE_STEP_CHUNK_SIZE)
                 .reader(registrationIdMappingForRiskResetReader)
                 .processor(new RegistrationIdMappingProcessor())

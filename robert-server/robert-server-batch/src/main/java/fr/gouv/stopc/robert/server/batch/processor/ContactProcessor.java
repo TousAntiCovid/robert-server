@@ -29,6 +29,11 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
 
 
+/**
+ * Process contacts to compute the score and evaluate the risk.
+ * It includes many checks according to Robert Specification (see section 6.2, page 9): 
+ * https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf
+ */
 @Slf4j
 public class ContactProcessor implements ItemProcessor<Contact, Contact> {
 
