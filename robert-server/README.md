@@ -13,27 +13,29 @@ Le composant implémente également une fédération des initiatives nationales 
 
 ## ROBERT SERVER
 
+If not already done, please log in to the inria gitlab
+
+    docker login registry.gitlab.inria.fr
+
 To run, robert-crypto-grpc-server needs SoftHsmV2.
 
-So this application is running in a dedicated Docker container (See [DockerFile-openjdk8](./robert-crypto-grpc-server/Dockerfile-openjdk8))
+So this application is running in a dedicated Docker container (See [DockerFile](./robert-crypto-grpc-server/src/main/docker/Dockerfile))
 
 If the source of this application is updated, you have to rebuild your docker environment :
 
-    cd /robert-server/robert-crypto-grpc-server
-    mvn clean install -DskipTests
-    
-    cd /robert-server
-    docker-compose -f ./docker-compose-openjdk8.yaml build
+    # from robert-server folder
+    mvn clean install -DskipTests 
+    docker-compose -f ../environment-setup/dev/compose/docker-compose-robert-server-openjdk8.yaml build
 
 After that you can run you docker environment :
 
-    docker-compose -f ./docker-compose-openjdk8.yaml up -d
+    docker-compose -f ../environment-setup/dev/compose/docker-compose-robert-server-openjdk8.yaml up -d
 
 It is possible to run the `robert-server-ws-rest` application on your dev laptop using `dev` profile
 
 To stop you docker environment :
 
-    docker-compose -f ./docker-compose-openjdk8.yaml down -v
+    docker-compose -f ../environment-setup/dev/compose/docker-compose-robert-server-openjdk8.yaml down -v
 
 ### Orange captcha
 
