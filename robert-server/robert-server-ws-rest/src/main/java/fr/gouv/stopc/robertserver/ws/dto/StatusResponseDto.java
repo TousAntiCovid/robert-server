@@ -25,5 +25,7 @@ public class StatusResponseDto {
 
     private String lastContactDate;
 
+    private String lastRiskScoringDate;
+
     private String declarationToken;
 }

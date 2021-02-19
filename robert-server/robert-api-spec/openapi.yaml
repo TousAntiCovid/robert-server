@@ -338,6 +338,15 @@ components:
 
             provided as an NTP timestamp. Last contact date (i.e. the timestamp of QR code scan in a given place) "
           example: "3814601613"
+        lastRiskScoringDate:
+          type: string
+          minLength: 10
+          maxLength: 10
+          description: |-
+            Optional. Provided only if riskLevel is not 0. Returns the last date when scoring detected a risk.
+
+            Provided as an NTP timestamp."
+          example: "3814601613"
         message:
           type: string
         tuples:
