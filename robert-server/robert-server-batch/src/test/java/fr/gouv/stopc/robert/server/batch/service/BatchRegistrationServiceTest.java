@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.service;
 
-import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.NB_EPOCH_PER_DAY;
+import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCHS_PER_DAY;;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
@@ -174,7 +174,7 @@ public class BatchRegistrationServiceTest {
         int lastContactDateFromExposedEpoch = currentEpoch;
         long realLastContactDateFromExposedEpoch = TimeUtils.getNtpSeconds(lastContactDateFromExposedEpoch, timeStart);
         long lastContactDateFromRegistration = TimeUtils.getNtpSeconds(currentEpoch - 2, timeStart);
-        long randomizedLastContactDate = TimeUtils.getNtpSeconds(currentEpoch - NB_EPOCH_PER_DAY, timeStart);
+        long randomizedLastContactDate = TimeUtils.getNtpSeconds(currentEpoch - EPOCHS_PER_DAY, timeStart);
         long truncateTimestamp = TimeUtils.dayTruncatedTimestamp(randomizedLastContactDate);
         int latestRiskEpoch = currentEpoch - 5;
 

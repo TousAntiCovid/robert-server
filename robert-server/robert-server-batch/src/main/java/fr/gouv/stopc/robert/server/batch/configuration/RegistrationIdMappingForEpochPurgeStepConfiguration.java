@@ -47,7 +47,7 @@ public class RegistrationIdMappingForEpochPurgeStepConfiguration extends StepCon
     public MongoItemReader<Registration> mongoRegistrationIdMappingForPurgeItemReader(MongoTemplate mongoTemplate) {
         int currentEpochId = TimeUtils.getCurrentEpochFrom(serverConfigurationService.getServiceTimeStart());
         int contagiousPeriod = this.propertyLoader.getContagiousPeriod();
-        int minEpochId = currentEpochId - contagiousPeriod * 96;
+        int minEpochId = currentEpochId - contagiousPeriod * TimeUtils.EPOCHS_PER_DAY;
         String queryAsString = "{exposedEpochs:{$elemMatch:{epochId:{$lte:"+minEpochId+"}}}}}";
 
         return registrationMongoItemReaderFactory.getMongoItemReader(mongoTemplate,

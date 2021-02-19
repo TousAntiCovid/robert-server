@@ -12,9 +12,8 @@ public final class TimeUtils {
     // Epoch duration is 15 minutes so 15 * 60 = 900 seconds
     public final static int EPOCH_DURATION_SECS = 900;
 
-    // Number of epoch per days = 15 * 4 * 24
-    public final static int NB_EPOCH_PER_DAY = 1440;
-    
+    public final static int EPOCHS_PER_DAY = 4 * 24;
+
     public final static long SECONDS_PER_DAY = 86400;
 
     private TimeUtils() {
@@ -108,7 +107,6 @@ public final class TimeUtils {
         return Instant.ofEpochMilli(fromUnixMillis).atZone(ZoneId.of(timezone)).toLocalDate();
     }
 
-    public final static int EPOCHS_PER_DAY = 4 * 24;
     public static int remainingEpochsForToday(int epochId) {
         if (epochId >= 960) {
             return EPOCHS_PER_DAY - epochId % EPOCHS_PER_DAY;
