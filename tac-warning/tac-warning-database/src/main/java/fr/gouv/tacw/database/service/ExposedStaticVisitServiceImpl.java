@@ -3,6 +3,7 @@ package fr.gouv.tacw.database.service;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.transaction.Transactional;
 import javax.xml.bind.DatatypeConverter;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,7 +35,9 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
         return exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(token), visitTime, this.getRetentionStart());
     }
 
+    @Transactional
     @Scheduled(cron = "${tacw.database.visit_token_deletion_job_cron_expression}")
+    @Override
     public long deleteExpiredTokens() {
         final long retentionStart = getRetentionStart();
         log.debug(String.format("Purge expired tokens before %d", retentionStart));
