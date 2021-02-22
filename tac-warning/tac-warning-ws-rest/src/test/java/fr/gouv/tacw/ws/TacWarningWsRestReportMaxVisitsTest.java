@@ -87,7 +87,9 @@ public class TacWarningWsRestReportMaxVisitsTest {
         assertThat(log.getMessage()).contains(
                 String.format(TACWarningController.REPORT_LOG_MESSAGE, this.configuration.getMaxVisits()));
         assertThat(log.getLevel()).isEqualTo(Level.INFO);
-        assertThat(warningServiceLoggerAppender.list).isEmpty(); // no log with filter
+        assertThat(warningServiceLoggerAppender.list)
+            .filteredOn(logEvent -> ! logEvent.getMessage().startsWith("Adding exposed visit"))
+            .isEmpty(); // no log with filter
         assertThat(badArgumentLoggerAppender.list).isEmpty();
     }
 
@@ -112,7 +114,7 @@ public class TacWarningWsRestReportMaxVisitsTest {
         assertThat(log.getMessage()).contains(
                 String.format(TACWarningController.REPORT_LOG_MESSAGE, nbVisits));
         assertThat(log.getLevel()).isEqualTo(Level.INFO);
-        assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(1); 
+        assertThat(warningServiceLoggerAppender.list.size()).isEqualTo(31); 
         ILoggingEvent wlog = warningServiceLoggerAppender.list.get(0);  // filter log
         assertThat(wlog.getMessage()).contains(
                 String.format(WarningServiceImpl.REPORT_MAX_VISITS_FILTER_LOG_MESSAGE, 1, nbVisits));

@@ -62,6 +62,8 @@ public class WarningServiceImpl implements WarningService {
 	}
 
     protected void registerAllExposedStaticTokens(VisitVo visit) {
+        // Temporary log to remove after the beta tests
+        log.info("Adding exposed visit {}", visit);
         exposedStaticVisitService.registerExposedStaticVisitEntities(this.allExposedStaticVisitsFromVisit(visit));
     }
 
