@@ -713,6 +713,8 @@ public class StatusControllerWsRestTest {
         assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
         assertNotNull(response.getBody().getTuples());
         assertEquals(Long.toString(reg.getLastContactTimestamp()), response.getBody().getLastContactDate());
+        assertNotNull(response.getBody().getLastRiskScoringDate());
+        assertTrue(Long.parseLong(response.getBody().getLastRiskScoringDate()) > 0);
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
@@ -768,6 +770,7 @@ public class StatusControllerWsRestTest {
         assertNotNull(response.getBody().getTuples());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         assertThat(response.getBody().getLastContactDate()).isNull();
+        assertThat(response.getBody().getLastRiskScoringDate()).isNull();
         assertEquals(0, reg.getLastContactTimestamp());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
@@ -842,6 +845,8 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(RiskLevel.NONE, response.getBody().getRiskLevel());
         assertEquals(Long.toString(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp)), response.getBody().getLastContactDate());
+        assertNotNull(response.getBody().getLastRiskScoringDate());
+        assertTrue(Long.parseLong(response.getBody().getLastRiskScoringDate()) > 0);
         assertNotNull(response.getBody().getTuples());
         assertFalse(reg.isAtRisk());
         assertTrue(reg.isNotified());
