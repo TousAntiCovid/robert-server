@@ -30,10 +30,11 @@ public interface ExposedStaticVisitRepository extends JpaRepository<ExposedStati
 	 * as we compute the risk for ONE visit.
 	 */
 	@Query("SELECT new fr.gouv.tacw.database.model.ScoreResult(venueRiskLevel, COALESCE(SUM(exposureCount), 0), COALESCE(MAX(visitEndTime), -1))"
-			+ " FROM ExposedStaticVisitEntity WHERE token = :tokenValue" 
+			+ " FROM ExposedStaticVisitEntity WHERE token = :tokenValue"
+			+ " AND (visitEndTime > :retentionStart)"
 		    + " AND ((visitStartTime > :visitTime - startDelta AND visitStartTime < :visitTime + endDelta) "
 			+ " OR (visitStartTime = :visitTime - startDelta AND visitEndTime = :visitTime + endDelta) "
 			+ " OR (visitEndTime > :visitTime - startDelta AND visitEndTime < :visitTime + endDelta))"
 	        + " GROUP BY venueRiskLevel")
-	List<ScoreResult> riskScore(@Param("tokenValue") byte[] token, @Param("visitTime") long visitTime);
+	List<ScoreResult> riskScore(@Param("tokenValue") byte[] token, @Param("visitTime") long visitTime, @Param("retentionStart") long retentionStart);
 }

@@ -3,6 +3,7 @@ package fr.gouv.tacw.database.service;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.transaction.Transactional;
 import javax.xml.bind.DatatypeConverter;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,13 +32,14 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
 
     @Override
     public List<ScoreResult> riskScore(String token, long visitTime) {
-        return exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(token), visitTime);
+        return exposedStaticVisitRepository.riskScore(DatatypeConverter.parseHexBinary(token), visitTime, this.getRetentionStart());
     }
 
+    @Transactional
     @Scheduled(cron = "${tacw.database.visit_token_deletion_job_cron_expression}")
+    @Override
     public long deleteExpiredTokens() {
-        final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
-        final long retentionStart = currentNtpTime - TimeUnit.DAYS.toSeconds(configuration.getVisitTokenRetentionPeriodDays());
+        final long retentionStart = getRetentionStart();
         log.debug(String.format("Purge expired tokens before %d", retentionStart));
         final long nbDeletedTokens = exposedStaticVisitRepository.deleteByVisitEndTimeLessThan(retentionStart);
         log.info(String.format("Deleted %d static tokens from exposed tokens", nbDeletedTokens));
@@ -48,6 +50,12 @@ public class ExposedStaticVisitServiceImpl implements ExposedStaticVisitService 
     public void registerExposedStaticVisitEntities(List<ExposedStaticVisitEntity> exposedStaticVisitEntityToSave) {
         log.debug(String.format("Registering %d new exposed visit entities", exposedStaticVisitEntityToSave.size()));
         exposedStaticVisitRepository.saveAll(exposedStaticVisitEntityToSave);
+    }
+
+    private long getRetentionStart() {
+        final long currentNtpTime = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
+        final long retentionStart = currentNtpTime - TimeUnit.DAYS.toSeconds(configuration.getVisitTokenRetentionPeriodDays());
+        return retentionStart;
     }
 
 }
