@@ -1,36 +1,5 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.net.URI;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import javax.crypto.KeyGenerator;
-import javax.inject.Inject;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
@@ -55,11 +24,38 @@ import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.*;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.crypto.KeyGenerator;
+import javax.inject.Inject;
+import java.net.URI;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -681,6 +677,9 @@ public class StatusControllerWsRestTest {
         // Given
         byte[] idA = this.generateKey(5);
         Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
+
+        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
         
         // When
         ResponseEntity<StatusResponseDtoV1ToV4> response = this.restTemplate.exchange(targetUrl.toString(),
@@ -701,7 +700,10 @@ public class StatusControllerWsRestTest {
         // Given
         byte[] idA = this.generateKey(5);
         Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
-        
+
+        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
         // When
         ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
                 HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
@@ -1285,4 +1287,122 @@ public class StatusControllerWsRestTest {
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
+
+    @Test
+    public void when_not_at_risk_then_status_does_not_have_a_declaration_token() {
+
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(false)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
+                .setEpochId(currentEpoch)
+                .setIdA(ByteString.copyFrom(idA))
+                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                .build()))
+                .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNull(Objects.requireNonNull(response.getBody()).getDeclarationToken());
+        assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
+        assertEquals(RiskLevel.NONE, response.getBody().getRiskLevel());
+        assertFalse(reg.isAtRisk());
+
+    }
+
+    @Test
+    public void when_at_risk_then_status_got_a_declaration_token_with_last_contact_date_and_last_status_request_both_in_timestamp() {
+
+        // Given
+        KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+
+        byte[] idA = this.generateKey(5);
+        Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
+
+        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
+        when(this.wsServerConfiguration.getDeclareTokenPrivateKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()));
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(false);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(RiskLevel.HIGH, Objects.requireNonNull(response.getBody()).getRiskLevel());
+        assertNotNull(response.getBody().getTuples());
+        assertNotNull(response.getBody().getDeclarationToken());
+        assertEquals(Long.toString(reg.getLastContactTimestamp()), response.getBody().getLastContactDate());
+        assertTrue(reg.isNotified());
+        assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
+        verify(this.registrationService, times(2)).findById(idA);
+        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(keyPair.getPublic())
+                .build()
+                .parseClaimsJws(response.getBody().getDeclarationToken())
+                .getBody();
+
+        assertNotNull(claims.get("notificationDateTimestamp"));
+        assertEquals(claims.get("notificationDateTimestamp"), TimeUtils.getNtpSeconds(
+                reg.getLastStatusRequestEpoch(),
+                serverConfigurationService.getServiceTimeStart()));
+        assertNotNull(claims.get("lastContactDateTimestamp"));
+        assertEquals(claims.get("lastContactDateTimestamp"), reg.getLastContactTimestamp());
+    }
+
+    //Implement me
+    @Test
+    public void when_at_risk_during_risk_retention_period_then_two_status_have_declarations_token_with_different_last_status_request_timestamp() {
+
+
+    }
+
+    //Implement me
+    @Test
+    public void when_at_risk_during_risk_retention_period_then_two_status_have_declarations_token_with_same_last_contact_date_timestamp() {
+
+
+    }
+
+    //Implement me
+    @Test
+    public void when_at_risk_after_risk_retention_period_then_two_status_have_declarations_token_with_different_identifier_and_last_contact_date() {
+
+
+    }
+
+
+
 }

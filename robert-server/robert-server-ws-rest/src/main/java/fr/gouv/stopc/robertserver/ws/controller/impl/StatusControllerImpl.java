@@ -1,19 +1,5 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -27,13 +13,27 @@ import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
+import fr.gouv.stopc.robertserver.ws.dto.declaration.GenerateDeclarationTokenRequest;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
+import fr.gouv.stopc.robertserver.ws.service.DeclarationService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -53,6 +53,8 @@ public class StatusControllerImpl implements IStatusController {
 
 	private final IRestApiService restApiService;
 
+	private final DeclarationService declarationService;
+
 	@Inject
 	public StatusControllerImpl(
 			final IServerConfigurationService serverConfigurationService,
@@ -61,7 +63,8 @@ public class StatusControllerImpl implements IStatusController {
 			final AuthRequestValidationService authRequestValidationService,
 			final PropertyLoader propertyLoader,
 			final IRestApiService restApiService,
-			final WsServerConfiguration wsServerConfiguration) {
+			final WsServerConfiguration wsServerConfiguration,
+			final DeclarationService declarationService) {
 		this.serverConfigurationService = serverConfigurationService;
 		this.registrationService = registrationService;
 		this.applicationConfigService = applicationConfigService;
@@ -69,6 +72,7 @@ public class StatusControllerImpl implements IStatusController {
 		this.propertyLoader = propertyLoader;
 		this.restApiService = restApiService;
 		this.wsServerConfiguration = wsServerConfiguration;
+		this.declarationService = declarationService;
 	}
 	
     @Override
@@ -212,6 +216,23 @@ public class StatusControllerImpl implements IStatusController {
 		// Include lastContactDate only if any
 		if (record.getLastContactTimestamp() > 0) {
 			statusResponse.setLastContactDate(Long.toString(record.getLastContactTimestamp()));
+		}
+
+		//TODO: Test this in integration tests and update api spec
+		//Generate a declaration token if there is a RiskLevel > 0 and an associated lastContactDate
+		if (!RiskLevel.NONE.equals(riskLevel) && record.getLastContactTimestamp() > 0) {
+			long lastStatusRequestTimestamp = TimeUtils.getNtpSeconds(
+					record.getLastStatusRequestEpoch(),
+					serverConfigurationService.getServiceTimeStart());
+			GenerateDeclarationTokenRequest request = GenerateDeclarationTokenRequest.builder()
+					.technicalApplicationIdentifier(Base64.encode(record.getPermanentIdentifier()))
+					.lastContactDateTimestamp(record.getLastContactTimestamp())
+					.riskLevel(riskLevel)
+					.lastStatusRequestTimestamp(lastStatusRequestTimestamp)
+					.latestRiskEpoch(record.getLatestRiskEpoch())
+					.build();
+			String declarationToken = declarationService.generateDeclarationToken(request).orElse(null);
+			statusResponse.setDeclarationToken(declarationToken);
 		}
 
 		// Save changes to the record
