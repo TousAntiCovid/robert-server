@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -48,7 +47,6 @@ import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.tacw.database.model.ExposedStaticVisitEntity;
 import fr.gouv.tacw.database.model.RiskLevel;
 import fr.gouv.tacw.database.model.ScoreResult;
-import fr.gouv.tacw.database.utils.TimeUtils;
 import fr.gouv.tacw.model.OpaqueVisit;
 import fr.gouv.tacw.ws.controller.TACWarningController;
 import fr.gouv.tacw.ws.dto.ExposureStatusResponseDto;
@@ -84,7 +82,7 @@ class TacWarningWsRestStatusTests {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V1)
     private String pathPrefixV1;
-    
+
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
     private String pathPrefixV2;
 
@@ -111,9 +109,9 @@ class TacWarningWsRestStatusTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().isAtRisk()).isTrue();
     }
-    
+
     @Test
-    public void testCanGetStatus() {
+    public void testCanGetStatusWithNullLastContactDate() {
         ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
         when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
 
@@ -122,9 +120,20 @@ class TacWarningWsRestStatusTests {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.HIGH);
-        Instant instant = Instant.ofEpochSecond( Long.parseLong(response.getBody().getLastContactDate())
-                - TimeUtils.SECONDS_FROM_01_01_1900 );
-        assertThat(instant).isBefore(Instant.now());
+        assertThat(response.getBody().getLastContactDate()).isNull();
+    }
+
+    @Test
+    public void testCanGetStatusWithExistingLastContactDate() {
+        ExposureStatusRequestVo request = new ExposureStatusRequestVo(new ArrayList<VisitTokenVo>());
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, 1L));
+
+        ResponseEntity<ExposureStatusResponseDto> response = restTemplate
+                .postForEntity(pathPrefixV2 + UriConstants.STATUS, request, ExposureStatusResponseDto.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.HIGH);
+        assertThat(response.getBody().getLastContactDate()).isEqualTo("1");
     }
 
     @Test
@@ -133,11 +142,12 @@ class TacWarningWsRestStatusTests {
         when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
 
         mockMvc
-        .perform(post(pathPrefixV2 + UriConstants.STATUS)
-                .content(objectMapper.writeValueAsString(request))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.riskLevel", is(RiskLevel.HIGH.getValue())));
+                .perform(post(pathPrefixV2 + UriConstants.STATUS)
+                        .content(objectMapper.writeValueAsString(request))
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.riskLevel", is(RiskLevel.HIGH.getValue())))
+                .andExpect(jsonPath("$.lastContactDate").doesNotExist());;
     }
 
     @Test
@@ -151,6 +161,7 @@ class TacWarningWsRestStatusTests {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.HIGH);
+        assertThat(response.getBody().getLastContactDate()).isNull();
         assertThat(tacWarningControllerLoggerAppender.list.size()).isEqualTo(2); // common log + filter
         ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(1);
         assertThat(log.getMessage()).contains(
@@ -172,12 +183,13 @@ class TacWarningWsRestStatusTests {
                 + "  } ]\n"
                 + "}";
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
+                pathPrefixV2 + UriConstants.STATUS,
                 new HttpEntity<String>(json, this.newJsonHeader()),
                 ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.HIGH);
+        assertThat(response.getBody().getLastContactDate()).isNull();
     }
 
     @Test
@@ -185,12 +197,12 @@ class TacWarningWsRestStatusTests {
         this.setUpLogHandler();
         List<VisitTokenVo> visits = new ArrayList<VisitTokenVo>(maxVisits);
         IntStream.rangeClosed(1, maxVisits)
-        .forEach(i -> visits.add(
-                new VisitTokenVo(TokenTypeVo.STATIC, "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", timestampService.validTimestampString())));
+                .forEach(i -> visits.add(
+                        new VisitTokenVo(TokenTypeVo.STATIC, "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", timestampService.validTimestampString())));
 
         restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
-                new ExposureStatusRequestVo(visits), 
+                pathPrefixV2 + UriConstants.STATUS,
+                new ExposureStatusRequestVo(visits),
                 ExposureStatusResponseDto.class);
 
         verify(warningService).getStatus(opaqueVisitsCaptor.capture());
@@ -207,12 +219,12 @@ class TacWarningWsRestStatusTests {
         this.setUpLogHandler();
         List<VisitTokenVo> visits = new ArrayList<VisitTokenVo>(maxVisits);
         IntStream.rangeClosed(1, maxVisits + 1)
-        .forEach(i -> visits.add(
-                new VisitTokenVo(TokenTypeVo.STATIC, "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", timestampService.validTimestampString())));
+                .forEach(i -> visits.add(
+                        new VisitTokenVo(TokenTypeVo.STATIC, "0YWN3LXR5cGUiOiJTVEFUSUMiLCJ0YWN3LXZlcnNpb24iOjEsImVyc", timestampService.validTimestampString())));
 
         restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
-                new ExposureStatusRequestVo(visits), 
+                pathPrefixV2 + UriConstants.STATUS,
+                new ExposureStatusRequestVo(visits),
                 ExposureStatusResponseDto.class);
 
         verify(warningService).getStatus(opaqueVisitsCaptor.capture());
@@ -220,14 +232,14 @@ class TacWarningWsRestStatusTests {
         ILoggingEvent log = tacWarningControllerLoggerAppender.list.get(1); // first log is nb visits for ESR
         assertThat(log.getMessage()).contains(
                 String.format(TACWarningController.MAX_VISITS_FILTER_LOG_MESSAGE, 1, maxVisits+1));
-        assertThat(log.getLevel()).isEqualTo(Level.INFO);	
+        assertThat(log.getLevel()).isEqualTo(Level.INFO);
     }
 
     @Test
     public void testWhenExposureStatusRequestWithNullVisitTokensThenGetBadRequest() {
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
-                new ExposureStatusRequestVo(null), 
+                pathPrefixV2 + UriConstants.STATUS,
+                new ExposureStatusRequestVo(null),
                 ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -243,8 +255,8 @@ class TacWarningWsRestStatusTests {
         visitTokens.add(new VisitTokenVo(null, "payload", "123456789"));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
-                entity, 
+                pathPrefixV2 + UriConstants.STATUS,
+                entity,
                 ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -265,7 +277,7 @@ class TacWarningWsRestStatusTests {
                 + "  } ]\n"
                 + "}";
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
+                pathPrefixV2 + UriConstants.STATUS,
                 new HttpEntity<String>(json, this.newJsonHeader()),
                 ExposureStatusResponseDto.class);
 
@@ -282,8 +294,8 @@ class TacWarningWsRestStatusTests {
         visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, null, "123456789"));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
-                entity, 
+                pathPrefixV2 + UriConstants.STATUS,
+                entity,
                 ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -301,8 +313,8 @@ class TacWarningWsRestStatusTests {
         visitTokens.add(new VisitTokenVo(TokenTypeVo.STATIC, "payload", null));
         ExposureStatusRequestVo entity = new ExposureStatusRequestVo(visitTokens);
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
-                entity, 
+                pathPrefixV2 + UriConstants.STATUS,
+                entity,
                 ExposureStatusResponseDto.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -316,7 +328,7 @@ class TacWarningWsRestStatusTests {
     @Test
     public void testWhenExposureStatusRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
+                pathPrefixV2 + UriConstants.STATUS,
                 new HttpEntity<String>("foo"),
                 ExposureStatusResponseDto.class);
 
@@ -330,7 +342,7 @@ class TacWarningWsRestStatusTests {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", 1);
         ResponseEntity<ExposureStatusResponseDto> response = restTemplate.postForEntity(
-                pathPrefixV2 + UriConstants.STATUS, 
+                pathPrefixV2 + UriConstants.STATUS,
                 new HttpEntity<String>(jsonObject.toString(), this.newJsonHeader()),
                 ExposureStatusResponseDto.class);
 
