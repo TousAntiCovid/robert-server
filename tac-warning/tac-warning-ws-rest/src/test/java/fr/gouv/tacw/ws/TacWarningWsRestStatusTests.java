@@ -173,7 +173,7 @@ class TacWarningWsRestStatusTests {
 
     @Test
     public void testCanGetStatusWhenVisitHasExtraField() throws JsonMappingException, JsonProcessingException {
-        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, -1));
+        when(warningService.getStatus(any())).thenReturn(new ScoreResult(RiskLevel.HIGH, 0, 1));
 
         String json = "{\n"
                 + "  \"visitTokens\" : [ {\n"
@@ -189,7 +189,7 @@ class TacWarningWsRestStatusTests {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().getRiskLevel()).isEqualTo(RiskLevel.HIGH);
-        assertThat(response.getBody().getLastContactDate()).isNull();
+        assertThat(response.getBody().getLastContactDate()).isEqualTo("1");
     }
 
     @Test
