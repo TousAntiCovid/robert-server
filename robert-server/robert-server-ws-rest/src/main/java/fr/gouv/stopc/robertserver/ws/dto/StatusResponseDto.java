@@ -1,15 +1,10 @@
 package fr.gouv.stopc.robertserver.ws.dto;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
 
 import javax.validation.constraints.NotNull;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Singular;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,4 +24,6 @@ public class StatusResponseDto {
     private String message;
 
     private String lastContactDate;
+
+    private String declarationToken;
 }
