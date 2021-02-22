@@ -218,6 +218,12 @@ public class StatusControllerImpl implements IStatusController {
 			statusResponse.setLastContactDate(Long.toString(record.getLastContactTimestamp()));
 		}
 
+		// Include lastRiskScoringDate only if any
+		if (record.getLatestRiskEpoch() > 0) {
+		  long serviceTimeStart = serverConfigurationService.getServiceTimeStart();
+		  statusResponse.setLastRiskScoringDate(Long.toString(TimeUtils.getNtpSeconds(record.getLatestRiskEpoch(), serviceTimeStart)));
+		}
+
 		//TODO: Test this in integration tests and update api spec
 		//Generate a declaration token if there is a RiskLevel > 0 and an associated lastContactDate
 		if (!RiskLevel.NONE.equals(riskLevel) && record.getLastContactTimestamp() > 0) {
