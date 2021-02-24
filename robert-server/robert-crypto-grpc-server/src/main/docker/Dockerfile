@@ -41,6 +41,6 @@ RUN PATH=/go/bin/:$PATH make install
 
 # install grpc-crypto app
 WORKDIR /
-ADD ./target/robert-crypto-grpc-server-1.9.0-SNAPSHOT.jar /app.jar
+ADD ./target/robert-crypto-grpc-server-1.10.0-SNAPSHOT.jar /app.jar
 ADD ./src/main/resources/application.properties /work/config/application.properties
 CMD ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
