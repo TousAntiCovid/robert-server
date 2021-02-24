@@ -6,20 +6,23 @@ import java.util.Objects;
 
 import org.springframework.batch.item.ItemProcessor;
 
+import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.AllArgsConstructor;
 
+/**
+ * Purge scorings having too old epochs, i.e. more than {propertyLoader.getContagiousPeriod()} days old.  
+ */
 @AllArgsConstructor
 public class PurgeOldEpochExpositionsProcessor implements ItemProcessor<Registration, Registration> {
 
     private IServerConfigurationService serverConfigurationService;
     private PropertyLoader propertyLoader;
-    private BatchRegistrationServiceImpl batchRegistrationService;
+    private BatchRegistrationService batchRegistrationService;
 
     @Override
     public Registration process(Registration registration) {

@@ -4,13 +4,15 @@ import java.util.Objects;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.AllArgsConstructor;
 
-
+/**
+ * Evaluates the risk according to scores already computed. 
+ */
 @AllArgsConstructor
 public class RiskEvaluationProcessor implements ItemProcessor<Registration, Registration> {
 
@@ -18,7 +20,7 @@ public class RiskEvaluationProcessor implements ItemProcessor<Registration, Regi
 
     private PropertyLoader propertyLoader;
 
-    private BatchRegistrationServiceImpl registrationService;
+    private BatchRegistrationService registrationService;
 
     @Override
     public Registration process(Registration registration) {

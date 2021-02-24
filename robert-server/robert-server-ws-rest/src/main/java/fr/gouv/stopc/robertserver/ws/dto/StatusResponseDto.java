@@ -1,23 +1,19 @@
 package fr.gouv.stopc.robertserver.ws.dto;
 
-import java.util.List;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Singular;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
 
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class StatusResponseDto {
     @NotNull
-    private boolean atRisk;
+    private RiskLevel riskLevel;
 
     @NotNull
     private String tuples;
@@ -25,7 +21,11 @@ public class StatusResponseDto {
     @Singular("config")
     private List<ClientConfigDto> config;
 
-    private long lastExposureTimeframe;
-
     private String message;
+
+    private String lastContactDate;
+
+    private String lastRiskScoringDate;
+
+    private String declarationToken;
 }

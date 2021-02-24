@@ -1,19 +1,5 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
-import org.bson.internal.Base64;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -24,13 +10,30 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IStatusController;
 import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
+import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
+import fr.gouv.stopc.robertserver.ws.dto.declaration.GenerateDeclarationTokenRequest;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
+import fr.gouv.stopc.robertserver.ws.service.DeclarationService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.internal.Base64;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -50,6 +53,8 @@ public class StatusControllerImpl implements IStatusController {
 
 	private final IRestApiService restApiService;
 
+	private final DeclarationService declarationService;
+
 	@Inject
 	public StatusControllerImpl(
 			final IServerConfigurationService serverConfigurationService,
@@ -58,7 +63,8 @@ public class StatusControllerImpl implements IStatusController {
 			final AuthRequestValidationService authRequestValidationService,
 			final PropertyLoader propertyLoader,
 			final IRestApiService restApiService,
-			final WsServerConfiguration wsServerConfiguration) {
+			final WsServerConfiguration wsServerConfiguration,
+			final DeclarationService declarationService) {
 		this.serverConfigurationService = serverConfigurationService;
 		this.registrationService = registrationService;
 		this.applicationConfigService = applicationConfigService;
@@ -66,11 +72,22 @@ public class StatusControllerImpl implements IStatusController {
 		this.propertyLoader = propertyLoader;
 		this.restApiService = restApiService;
 		this.wsServerConfiguration = wsServerConfiguration;
+		this.declarationService = declarationService;
 	}
-
-	@Override
-	public ResponseEntity<StatusResponseDto> getStatus(StatusVo statusVo) {
-
+	
+    @Override
+    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo) throws RobertServerException {
+        StatusResponseDto status = this.getStatus(statusVo).getBody();
+        return ResponseEntity.ok(
+                StatusResponseDtoV1ToV4.builder()
+                    .atRisk(status.getRiskLevel() != RiskLevel.NONE)
+                    .config(status.getConfig())
+                    .tuples(status.getTuples())
+                    .build());
+    }
+    
+    @Override
+    public ResponseEntity<StatusResponseDto> getStatus(StatusVo statusVo) {
 		AuthRequestValidationService.ValidationResult<GetIdFromStatusResponse> validationResult =
 				this.authRequestValidationService.validateStatusRequest(statusVo);
 
@@ -82,24 +99,14 @@ public class StatusControllerImpl implements IStatusController {
 		GetIdFromStatusResponse response = validationResult.getResponse();
 
 		if (response.hasError()) {
-			// If there is an error but Id is provided, log error in DB
-			if (Objects.nonNull(response.getIdA())) {
-				Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
-				if (record.isPresent()) {
-					int currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
-					Registration registration = record.get();
-					registration.setLastFailedStatusRequestEpoch(currentEpoch);
-					registration.setLastFailedStatusRequestMessage(response.getError().getDescription());
-					this.registrationService.saveRegistration(registration);
-				}
-			}
+			this.logErrorInDatabaseIfIdIsProvided(response);
 			return ResponseEntity.badRequest().build();
 		}
 
 		Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
 		if (record.isPresent()) {
 			try {
-				Optional<ResponseEntity> responseEntity = validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
+				Optional<ResponseEntity<StatusResponseDto>> responseEntity = this.validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
 
 				if (responseEntity.isPresent()) {
 
@@ -122,8 +129,22 @@ public class StatusControllerImpl implements IStatusController {
 		}
 	}
 
+    protected void logErrorInDatabaseIfIdIsProvided(GetIdFromStatusResponse response) {
+        if (Objects.isNull(response.getIdA())) 
+            return;
+        
+    	Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
+        if (!record.isPresent()) 
+            return;
+        
+        int currentEpoch = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
+        Registration registration = record.get();
+        registration.setLastFailedStatusRequestEpoch(currentEpoch);
+        registration.setLastFailedStatusRequestMessage(response.getError().getDescription());
+        this.registrationService.saveRegistration(registration);
+    }
 
-	public Optional<ResponseEntity> validate(Registration record, int epoch, byte[] tuples) throws RobertServerException {
+	public Optional<ResponseEntity<StatusResponseDto>> validate(Registration record, int epoch, byte[] tuples) throws RobertServerException {
 		if (Objects.isNull(record)) {
 			return Optional.empty();
 		}
@@ -166,7 +187,7 @@ public class StatusControllerImpl implements IStatusController {
 		}
 		// Request is valid
 		// (now iterating through steps from section "If the ESR_REQUEST_A,i is valid, the server:", p11 of spec)
-		// Step #1: Set SRE with current epoch number
+		// Step #1: Set StatusRequestEpoch with current epoch number
 		int previousLastStatusRequestEpoch = record.getLastStatusRequestEpoch();
 		record.setLastStatusRequestEpoch(currentEpoch);
 		log.info("The registration previous last status epoch request was {} and the next epoch, {}, will be the current epoch {}",
@@ -175,29 +196,57 @@ public class StatusControllerImpl implements IStatusController {
 		        currentEpoch);
 
 		// Step #2: Risk and score were processed during batch, simple lookup
-		boolean atRisk = record.isAtRisk();
+		RiskLevel riskLevel = record.isAtRisk() ? RiskLevel.HIGH : RiskLevel.NONE;
 
 		// Step #3: Set UserNotified to true if at risk
 		// If was never notified and batch flagged a risk, notify
 		// and remember last exposed epoch as new starting point for subsequent risk notifications
-		if (atRisk) {
-			record.setAtRisk(false);
+	    // The status atRisk will be reinitialized by the batch
+		if (riskLevel != RiskLevel.NONE) {
 			record.setNotified(true);
 		}
 
-		// Include new EBIDs and ECCs for next M epochs
-		StatusResponseDto statusResponse = StatusResponseDto.builder()
-				.atRisk(atRisk)
-				.config(getClientConfig())
-				.tuples(Base64.encode(tuples))
-				.build();
+        // Include new EBIDs and ECCs for next M epochs
+        StatusResponseDto statusResponse = StatusResponseDto.builder()
+                .riskLevel(riskLevel)
+                .config(this.getClientConfig())
+                .tuples(Base64.encode(tuples))
+                .build();
+
+		// Include lastContactDate only if any
+		if (record.getLastContactTimestamp() > 0) {
+			statusResponse.setLastContactDate(Long.toString(record.getLastContactTimestamp()));
+		}
+
+		// Include lastRiskScoringDate only if any
+		if (record.getLatestRiskEpoch() > 0) {
+		  long serviceTimeStart = serverConfigurationService.getServiceTimeStart();
+		  statusResponse.setLastRiskScoringDate(Long.toString(TimeUtils.getNtpSeconds(record.getLatestRiskEpoch(), serviceTimeStart)));
+		}
+
+		//TODO: Test this in integration tests and update api spec
+		//Generate a declaration token if there is a RiskLevel > 0 and an associated lastContactDate
+		if (!RiskLevel.NONE.equals(riskLevel) && record.getLastContactTimestamp() > 0) {
+			long lastStatusRequestTimestamp = TimeUtils.getNtpSeconds(
+					record.getLastStatusRequestEpoch(),
+					serverConfigurationService.getServiceTimeStart());
+			GenerateDeclarationTokenRequest request = GenerateDeclarationTokenRequest.builder()
+					.technicalApplicationIdentifier(Base64.encode(record.getPermanentIdentifier()))
+					.lastContactDateTimestamp(record.getLastContactTimestamp())
+					.riskLevel(riskLevel)
+					.lastStatusRequestTimestamp(lastStatusRequestTimestamp)
+					.latestRiskEpoch(record.getLatestRiskEpoch())
+					.build();
+			String declarationToken = declarationService.generateDeclarationToken(request).orElse(null);
+			statusResponse.setDeclarationToken(declarationToken);
+		}
 
 		// Save changes to the record
 		this.registrationService.saveRegistration(record);
 
 		return Optional.of(ResponseEntity.ok(statusResponse));
 	}
-
+    
 	private List<ClientConfigDto> getClientConfig() {
 		List<ApplicationConfigurationModel> serverConf = this.applicationConfigService.findAll();
 		if (CollectionUtils.isEmpty(serverConf)) {

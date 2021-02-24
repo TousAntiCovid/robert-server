@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * An epoch exposition reflects the exposure of the user (temporal and frequency information). 
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Data

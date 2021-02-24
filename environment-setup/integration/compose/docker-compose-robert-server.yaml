@@ -10,6 +10,8 @@ services:
     container_name: robert-server-ws-rest
     environment:
       - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY}
+      - ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}
+      - ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}
     ports:
       - "8086:8086"
     volumes:

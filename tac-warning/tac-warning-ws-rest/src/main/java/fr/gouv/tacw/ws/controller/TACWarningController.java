@@ -101,7 +101,7 @@ public class TACWarningController {
 				.limit(this.configuration.getMaxVisits())
 				.map(tokenVo -> this.tokenMapper.getToken(tokenVo));
 		ScoreResult score = this.warningService.getStatus(tokens);
-        return new ExposureStatusResponseDto(score.getRiskLevel(), Long.toString(score.getLastContactDate()));
+        return new ExposureStatusResponseDto(score.getRiskLevel(),  score.getLastContactDate() > 0 ? Long.toString(score.getLastContactDate()) : null);
     }
 
     @PostMapping(path = {UriConstants.API_V1 + UriConstants.REPORT, UriConstants.API_V2 + UriConstants.REPORT})

@@ -27,4 +27,6 @@ public final class UriConstants {
 
     public static final String API_V4 = "/v4";
 
+    public static final String API_V5 = "/v5";
+
 }

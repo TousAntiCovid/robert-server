@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.service;
 
+import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCHS_PER_DAY;;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
@@ -10,23 +11,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
-import fr.gouv.stopc.robertserver.database.model.EpochExposition;
-import fr.gouv.stopc.robertserver.database.model.Registration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.Registration;
 
 @ExtendWith(MockitoExtension.class)
 public class BatchRegistrationServiceTest {
 
-    @InjectMocks
-    BatchRegistrationServiceImpl batchRegistrationService;
+    BatchRegistrationService batchRegistrationService;
 
     @Captor
     private ArgumentCaptor<ArrayList<Double>> acAggregateScores;
@@ -34,6 +37,11 @@ public class BatchRegistrationServiceTest {
     @Mock
     ScoringStrategyService scoringStrategyService;
 
+    @BeforeEach
+    public void setUp() {
+        this.batchRegistrationService = new BatchRegistrationServiceImpl(scoringStrategyService);
+    }
+    
     @Test
     public void shouldExposedEpochsWithoutEpochsOlderThanContagiousPeriodFilterTooOldExposedEpochs(){
 
@@ -158,4 +166,47 @@ public class BatchRegistrationServiceTest {
 
     }
 
+    @Test
+    public void shouldNotTakeIntoAccountRandomizedLastContactDateIfItIsBeforeRegistrationLastContactDate() {
+        //GIVEN
+        long timeStart = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis()-(48*3600*1000));
+        int currentEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
+        int lastContactDateFromExposedEpoch = currentEpoch;
+        long realLastContactDateFromExposedEpoch = TimeUtils.getNtpSeconds(lastContactDateFromExposedEpoch, timeStart);
+        long lastContactDateFromRegistration = TimeUtils.getNtpSeconds(currentEpoch - 2, timeStart);
+        long randomizedLastContactDate = TimeUtils.getNtpSeconds(currentEpoch - EPOCHS_PER_DAY, timeStart);
+        long truncateTimestamp = TimeUtils.dayTruncatedTimestamp(randomizedLastContactDate);
+        int latestRiskEpoch = currentEpoch - 5;
+
+
+        List<EpochExposition> exposedEpochs = new ArrayList<>();
+        exposedEpochs.add(EpochExposition.builder().epochId(currentEpoch - 60).expositionScores(Arrays.asList(0.1)).build());
+        exposedEpochs.add(EpochExposition.builder().epochId(lastContactDateFromExposedEpoch).expositionScores(Arrays.asList(0.05)).build());
+
+        Registration registration = Registration.builder()
+                .atRisk(false)
+                .lastContactTimestamp(lastContactDateFromRegistration)
+                .latestRiskEpoch(latestRiskEpoch)
+                .exposedEpochs(exposedEpochs)
+                .build();
+
+        when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
+
+        try (MockedStatic<TimeUtils> mockedTimeUtils = Mockito.mockStatic(TimeUtils.class)) {
+            //mock the static methods
+            mockedTimeUtils.when(()-> TimeUtils.getNtpSeconds(lastContactDateFromExposedEpoch, timeStart)).thenReturn(realLastContactDateFromExposedEpoch);
+            mockedTimeUtils.when(()-> TimeUtils.getRandomizedDateNotInFuture(realLastContactDateFromExposedEpoch)).thenReturn(randomizedLastContactDate);
+            mockedTimeUtils.when(()-> TimeUtils.dayTruncatedTimestamp(randomizedLastContactDate)).thenReturn(truncateTimestamp);
+
+            //WHEN
+            batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
+        } // the static mock is not visible outside the try resource block
+
+
+        //THEN
+        assertThat(registration.getLastContactTimestamp()).isEqualTo(lastContactDateFromRegistration);
+        assertThat(registration.isAtRisk()).isTrue();
+
+
+    }
 }

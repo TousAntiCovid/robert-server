@@ -8,8 +8,9 @@ import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-@AllArgsConstructor
+/**
+ * Create ItemIdMapping objects from a Contact.
+ */
 public class ContactIdMappingProcessor implements ItemProcessor<Contact, ItemIdMapping<String>> {
 
     @Override

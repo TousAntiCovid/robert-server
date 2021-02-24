@@ -196,6 +196,8 @@ integration_tests:
     - echo "TAC_DOCKER_COMPOSE_NETWORK=compose_tac" >> .env
     - echo "ROBERT_JWT_PRIVATE_KEY=${CI_ROBERT_JWT_PRIVATE_KEY}" >> .env
     - echo "ROBERT_JWT_PUBLIC_KEY=${CI_ROBERT_JWT_PUBLIC_KEY}" >> .env
+    - echo "ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${CI_ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}" >> .env
+    - echo "ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${CI_ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}" >> .env
     - cat .env
     - docker login -u $CI_REGISTRY_USER --password-stdin  $CI_REGISTRY <<< "$CI_REGISTRY_PASSWORD"
     - echo $PWD

@@ -32,8 +32,6 @@ public class RangePartitioner implements Partitioner {
                 // no more item to process for current partition
                 from = 0;
                 to = 0;
-            } else if (to > itemIdMappingCount) {
-                to = Math.min(to, itemIdMappingCount);
             };
             ExecutionContext value = new ExecutionContext();
             value.putLong(START_KEY, from);

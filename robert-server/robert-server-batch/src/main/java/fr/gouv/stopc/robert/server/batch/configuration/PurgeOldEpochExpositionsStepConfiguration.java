@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor;
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -30,11 +30,11 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
     public static final String TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY = "totalRegistrationForPurgeCount";
     
     private final IRegistrationService registrationService;
-    private final BatchRegistrationServiceImpl batchRegistrationService;
+    private final BatchRegistrationService batchRegistrationService;
     
     public PurgeOldEpochExpositionsStepConfiguration(PropertyLoader propertyLoader,
                                                      StepBuilderFactory stepBuilderFactory, IServerConfigurationService serverConfigurationService,
-                                                     IRegistrationService registrationService, BatchRegistrationServiceImpl batchRegistrationService,
+                                                     IRegistrationService registrationService, BatchRegistrationService batchRegistrationService,
                                                      ItemIdMappingService itemIdMappingService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
@@ -77,7 +77,7 @@ public class PurgeOldEpochExpositionsStepConfiguration extends StepConfiguration
         return new StepExecutionListener() {
             @Override
             public void beforeStep(StepExecution stepExecution) {
-                log.debug("START : Purge Old Epoch Expositions.");
+                log.info("START : Purge Old Epoch Expositions.");
 
                 long totalItemCount = registrationService.countNbUsersWithOldEpochExpositions(computeMinOldEpochId()).longValue();
                 stepExecution.getJobExecution().getExecutionContext().putLong(TOTAL_REGISTRATION_FOR_PURGE_COUNT_KEY, totalItemCount);

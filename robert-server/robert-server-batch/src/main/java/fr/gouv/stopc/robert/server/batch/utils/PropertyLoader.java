@@ -34,4 +34,7 @@ public class PropertyLoader {
 
     @Value("${robert.scoring.batch-mode}")
     private String batchMode;
+    
+    @Value("${robert.protocol.risk-flag-retention-period}") 
+    private Integer riskLevelRetentionPeriodInDays; 
 }

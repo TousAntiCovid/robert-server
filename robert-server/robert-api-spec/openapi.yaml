@@ -240,7 +240,7 @@ externalDocs:
   description: Find out more about ROBERT
   url: https://github.com/ROBERT-proximity-tracing/
 servers:
-  - url: https://yourrobertserver.org/v3
+  - url: https://yourrobertserver.org/v5
 components:
   requestBodies:
     AuthentifiedRequest:
@@ -322,20 +322,31 @@ components:
     ExposureStatusResponse:
       type: object
       properties:
-        atRisk:
-          type: boolean
-          description: True if was exposed at risk. If already notified of a risk exposure,
-            means exposed to a new risk since.
-        lastExposureTimeframe:
+        riskLevel:
           type: integer
-          format: int32
+          maximum: 4
+          minimum: 0
+          description: "riskLevel (0 to 4) : 0 no risk at all, 4 highest risk => this riskLevel is resilient
+          i.e. each time we call it, the backend sends back the status at this given time (on the frontend side,
+          no intelligence whatsoever)"
+        lastContactDate:
+          type: string
+          minLength: 10
+          maxLength: 10
           description: |-
-            Optional. Provided only if atRisk=true. 
-            
+            Optional. Provided only if riskLevel is not 0. Returns the last date you were in contact with a Covid+ person.
 
-            The timeframe during which the user was exposed. In days. Resolution of 2 days 
-            (e.g. 2 => user was exposed during the last 2 days, 
-            4 => user was exposed during the last 4 days...)
+            provided as an NTP timestamp. Last contact date (i.e. the timestamp of QR code scan in a given place) "
+          example: "3814601613"
+        lastRiskScoringDate:
+          type: string
+          minLength: 10
+          maxLength: 10
+          description: |-
+            Optional. Provided only if riskLevel is not 0. Returns the last date when scoring detected a risk.
+
+            Provided as an NTP timestamp."
+          example: "3814601613"
         message:
           type: string
         tuples:
@@ -348,6 +359,11 @@ components:
 
 
             Base64 encoded
+        declarationToken:
+          type: string
+          description: >-
+            A JWT token used for exposition declaration to CNAM.
+            Contains timestamps of the last contact date and notification date.
         config:
           $ref: "#/components/schemas/ClientConfiguration"
       required:

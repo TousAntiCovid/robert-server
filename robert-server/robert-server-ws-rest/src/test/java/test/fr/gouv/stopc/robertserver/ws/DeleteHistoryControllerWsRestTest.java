@@ -59,6 +59,9 @@ public class DeleteHistoryControllerWsRestTest {
     private String pathPrefixV3;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V4)
+    private String pathPrefixV4;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V5)
     private String pathPrefix;
 
     @Inject
@@ -165,7 +168,13 @@ public class DeleteHistoryControllerWsRestTest {
         deleteHistoryWithExposedEpochsSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.DELETE_HISTORY).build().encode().toUri());
     }
 
-    /** {@link #deleteHistoryWithExposedEpochsSucceeds(URI)} and shortcut to test for API V4 exposure */
+    /** Test the access for API V4, should not be used since API V5 */
+    @Test
+    public void testAccessV4() {
+        deleteHistoryWithExposedEpochsSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.DELETE_HISTORY).build().encode().toUri());
+    }
+
+    /** {@link #deleteHistoryWithExposedEpochsSucceeds(URI)} and shortcut to test for API V2 exposure */
     @Test
     public void testDeleteHistoryWithExposedEpochsSucceedsV3() {
         deleteHistoryWithExposedEpochsSucceeds(this.targetUrl);
