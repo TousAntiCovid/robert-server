@@ -110,17 +110,11 @@ test_submission-code-server:
   allow_failure: true
 
 docker-robert-crypto-grpc-server:
-  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
-  stage: docker
-  tags:    
-    - docker_build 
-  needs: ["build_robert-server"]
-  script:
-    - cd robert-server/robert-crypto-grpc-server
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/hsm-tools 
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY_IMAGE/robert-crypto-grpc-server:$CI_COMMIT_REF_SLUG -f src/main/docker/Dockerfile .
-    - docker push $CI_REGISTRY_IMAGE/robert-crypto-grpc-server:$CI_COMMIT_REF_SLUG
+  extends: .docker_template
+  needs: [ "build_robert-server" ]
+  variables:
+    COMPONENT: "robert-server"
+    SUBCOMPONENT: "robert-crypto-grpc-server"
 
 docker-robert-server-ws-rest:
   extends: .docker_template
