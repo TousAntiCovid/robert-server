@@ -1,6 +1,6 @@
 # mvn package -Dmaven.test.skip=true && docker build -f src/main/docker/Dockerfile -t tac/robert-server-ws-rest .
 FROM registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/oracle-serverjre:1.8.0_241-b07
-ADD ./target/robert-server-ws-rest-1.9.0.jar /app.jar
+ADD ./target/robert-server-ws-rest-1.9.1.jar /app.jar
 ADD ./src/main/resources/application.properties /work/config/application.properties
 ENV ROBERT_JWT_PRIVATE_KEY changeit
 ENV ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY changeit
