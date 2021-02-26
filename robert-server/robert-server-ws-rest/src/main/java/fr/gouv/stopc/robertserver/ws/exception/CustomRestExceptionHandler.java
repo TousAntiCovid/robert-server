@@ -1,5 +1,8 @@
 package fr.gouv.stopc.robertserver.ws.exception;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +48,9 @@ public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
 		}
 		log.error(e.getMessage());
 		log.error(message, e.getCause());
+		StringWriter errors = new StringWriter();
+		e.printStackTrace(new PrintWriter(errors));
+		log.error(errors.toString());
 
 		return new ResponseEntity<>(buildApiError(message), retrieveHttpStatus(e));
 	}
