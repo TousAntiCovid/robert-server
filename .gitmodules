@@ -1,6 +1,3 @@
-[submodule "robert-push-notif-server"]
-	path = robert-push-notif-server
-	url = ../../wp3-robert-server/robert-push-notif-server.git
 [submodule "submission-code-server"]
 	path = submission-code-server
 	url = ../../wp3-submission-code-server/submission-code-server.git
