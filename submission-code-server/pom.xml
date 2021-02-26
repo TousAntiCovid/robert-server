@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.2.6.RELEASE</version>
+		<relativePath />
+	</parent>
+
+	<groupId>fr.gouv.stopc</groupId>
+	<artifactId>submission-code-server</artifactId>
+	<version>1.4.0-SNAPSHOT</version>
+
+	<name>submission-code-server-client-api</name>
+	<packaging>pom</packaging>
+	<description>Projet Principal</description>
+
+	<modules>
+		<module>submission-code-server-commun</module>
+		<module>submission-code-server-database</module>
+		<module>submission-code-server-ws-rest</module>
+	</modules>
+
+	<properties>
+		<java.version>1.8</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.jar.plugin.version>3.1.1</maven.jar.plugin.version>
+		<javax-rs.version>2.1.1</javax-rs.version>
+		<postgresql.version>42.2.12</postgresql.version>
+		<javax.validation.version>2.0.1.Final</javax.validation.version>
+	</properties>
+
+	<dependencies>
+
+		<!--
+		https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-to-slf4j
+		Fixes CVE-2020-9488 2.12.1 low vulnerability
+		-->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-to-slf4j</artifactId>
+			<version>2.13.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.batch</groupId>
+			<artifactId>spring-batch-test</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>javax.inject</groupId>
+				<artifactId>javax.inject</artifactId>
+				<version>1</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.ws.rs</groupId>
+				<artifactId>javax.ws.rs-api</artifactId>
+				<version>${javax-rs.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.validation</groupId>
+				<artifactId>validation-api</artifactId>
+				<version>${javax.validation.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>${postgresql.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.liquibase</groupId>
+					<artifactId>liquibase-maven-plugin</artifactId>
+					<version>${liquibase.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+				</plugin>
+				<plugin>
+					<groupId>org.sonarsource.scanner.maven</groupId>
+					<artifactId>sonar-maven-plugin</artifactId>
+					<version>3.6.0.1398</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>${maven.jar.plugin.version}</version>
+				</plugin>
+
+				<plugin>
+					<groupId>pl.project13.maven</groupId>
+					<artifactId>git-commit-id-plugin</artifactId>
+					<version>2.2.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>0.8.4</version>
+					<executions>
+						<execution>
+							<id>pre-unit-agent</id>
+							<goals>
+								<goal>prepare-agent</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>post-unit-test</id>
+							<phase>test</phase>
+							<goals>
+								<goal>report</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>pre-integration-tests</id>
+							<goals>
+								<goal>prepare-agent-integration</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>post-integration-test</id>
+							<goals>
+								<goal>report-integration</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>merge</id>
+							<goals>
+								<goal>merge</goal>
+							</goals>
+							<configuration>
+								<fileSets>
+									<fileSet
+										implementation="org.apache.maven.shared.model.fileset.FileSet">
+										<directory>${project.basedir}</directory>
+										<includes>
+											<include>**/*.exec</include>
+										</includes>
+									</fileSet>
+								</fileSets>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<!-- <plugins>
+			<plugin>
+				<groupId>org.complykit</groupId>
+				<artifactId>license-check-maven-plugin</artifactId>
+				<version>0.5.3</version>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>os-check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<blacklist>
+						<param>agpl-3.0</param>
+						<param>gpl-2.0</param>
+						<param>gpl-3.0</param>
+					</blacklist>
+					<excludes>
+						<param>org.modelmapper:modelmapper:2.3.7</param>
+						<param>fr.gouv.stopc:submission-code-server-commun:${project.parent.version}</param>
+						<param>fr.gouv.stopc:submission-code-server-database:${project.parent.version}</param>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins> -->
+	</build>
+
+	<profiles>
+		<profile>
+			<id>report</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<!-- No fatal error on release because of javadoc -->
+		<profile>
+			<id>doclint-java8-disable</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<configuration>
+							<doclint>none</doclint>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<distributionManagement>
+		<repository>
+			<id>robert-repository</id>
+			<name>Releases</name>
+			<url>${nexusReleasesUrl}</url>
+		</repository>
+		<snapshotRepository>
+			<id>robert-repository</id>
+			<name>Snapshots</name>
+			<url>${nexusSnapshotsUrl}</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<scm>
+		<connection>scm:git:${gitRepositoryUrl}</connection>
+		<developerConnection>scm:git:${gitRepositoryUrl}</developerConnection>
+		<url>${gitRepositoryUrl}</url>
+		<tag>HEAD</tag>
+	</scm>
+
+</project>

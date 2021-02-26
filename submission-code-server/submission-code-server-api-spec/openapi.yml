@@ -1,0 +1,99 @@
+openapi: 3.0.0
+info:
+  description: Submission Code Server Client API Spec. This server generates one-time codes
+    to be used in the StopCovid app.
+  version: 0.0.1
+  title: Submission Code Server Client API Spec
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Custom (see repository's LICENSE.md)
+paths:
+  /verify:
+    get:
+      tags:
+        - Verify Code
+      summary: Verify a code
+      description: >-
+        Check the validity of a submission code (originally provided by the
+        app).
+
+        NOTE: This API must be protected and used only by a trusted back-end server over a secure private connection.
+      operationId: verify
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          description: should respect regexp ([a-zA-Z0-9]{6}) |
+            ([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returns the submission code validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyResponse"
+  /generate/short:
+    get:
+      tags:
+        - Generate Code
+      summary: Generate 6-alphanum code
+      description: Generate a new submission code. Codes are usable once and are valid
+        after a specific date and until a validity date.
+      operationId: generate
+      responses:
+        "200":
+          description: Generated code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateResponse"
+      security: []
+externalDocs:
+  description: Find out more about ROBERT
+  url: https://github.com/ROBERT-proximity-tracing/
+servers:
+  - url: mycodeserver.org/api/v1
+components:
+  schemas:
+    GenerateResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: The submission code to display. Should be encoded as a QR code by
+            the client (combined with type info).
+          example: AS3F5Z
+          pattern: "[a-zA-Z0-9]{6}"
+        validFrom:
+          type: string
+          format: date-time
+          description: Submission code must not be used before this validity date.
+        validUntil:
+          type: string
+          format: date-time
+          description: Submission code must not be used after this validity date.
+      description: A submission code and its type as well as validity information
+      required:
+        - code
+        - validFrom
+        - validUntil
+    VerifyResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: >-
+            True if the code is valid, false if invalid or expired, or if type
+            does not match an existing code.
+
+            A valid code is destroyed when validated successfully.
+      required:
+        - valid
