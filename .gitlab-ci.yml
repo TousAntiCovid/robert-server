@@ -216,7 +216,7 @@ integration_tests:
     - cat src/test/resources/config.properties
     - echo $PWD
     - ls -ls
-    - docker run -t --network="compose_tac" --rm --name my-maven-project -v "$CI_PROJECT_DIR":/usr/src/mymaven -w /usr/src/mymaven maven:3.6.3-jdk-11 /bin/bash -c "cd system-test;mvn $MAVEN_CLI_OPTS -Duser.timezone='Europe/Paris' verify"
+    - docker run -t --network="compose_tac" --rm --name my-maven-project -v "$CI_PROJECT_DIR":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 /bin/bash -c "cd system-test;mvn $MAVEN_CLI_OPTS -Duser.timezone='Europe/Paris' verify"
   after_script:
     - docker network ls
     - docker ps
