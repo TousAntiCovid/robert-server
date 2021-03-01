@@ -1,22 +1,28 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
-import fr.gouv.stopc.robertserver.ws.dto.CaptchaCreationDto;
-import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
-import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
-import fr.gouv.stopc.robertserver.ws.vo.CaptchaCreationVo;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import fr.gouv.stopc.robertserver.ws.dto.CaptchaCreationDto;
+import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
+import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
+import fr.gouv.stopc.robertserver.ws.vo.CaptchaCreationVo;
+
 @RestController
 @RequestMapping(value = {"${controller.path.prefix}" + UriConstants.API_V2, 
 		"${controller.path.prefix}" + UriConstants.API_V3,
-        "${controller.path.prefix}" + UriConstants.API_V4,
-		"${controller.path.prefix}" + UriConstants.API_V5})
+		"${controller.path.prefix}" + UriConstants.API_V4,
+        "${controller.path.prefix}" + UriConstants.API_V5})
 public interface ICaptchaController {
 
     @PostMapping(value = UriConstants.CAPTCHA)
