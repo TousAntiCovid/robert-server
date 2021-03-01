@@ -6,7 +6,7 @@ services:
   robert-crypto-server:
     build:
       context: ../../../robert-server/robert-crypto-grpc-server
-      dockerfile: ./src/main/docker/Dockerfile-openjdk8
+      dockerfile: ./src/main/docker/Dockerfile-openjdk11
     ports:
       - "9090:9090"
       - "19090:19090"
