@@ -1,7 +1,9 @@
 version: "3.8"
 services:
   mongo:
-    image: mongo:latest
+    image: mongo:4.2.5
+    ports:
+      - "27017:27017"
     deploy:
       restart_policy:
         condition: on-failure      
