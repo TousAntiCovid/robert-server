@@ -3,7 +3,7 @@ image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-openjdk1
 variables:
   MAVEN_CLI_OPTS: "-Dmaven.repo.local=.m2/repository --batch-mode"
   GIT_SUBMODULE_STRATEGY: recursive
-  
+
 cache:
   paths:
     - .m2/repository/
@@ -37,15 +37,16 @@ stages:
         - "$COMPONENT/*/target/surefire-reports/TEST-*.xml"
         - "$COMPONENT/*/target/failsafe-reports/TEST-*.xml"
 
+
 .docker_template:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
   stage: docker
-  tags:    
-    - docker_build 
+  tags:
+    - docker_build
   script:
     - cd $COMPONENT/$SUBCOMPONENT
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY_IMAGE/$SUBCOMPONENT:$CI_COMMIT_REF_SLUG -f src/main/docker/Dockerfile .
+    - docker build --pull -t $CI_REGISTRY_IMAGE/$SUBCOMPONENT:$CI_COMMIT_REF_SLUG -f src/main/docker/Dockerfile .
     - docker push $CI_REGISTRY_IMAGE/$SUBCOMPONENT:$CI_COMMIT_REF_SLUG
 
 .deploy_template:
@@ -132,7 +133,7 @@ docker-tac-warning:
 
 docker-robert-push-notif-server:
   extends: .docker_template
-  needs: ["build_robert-push-notif-server"] 
+  needs: ["build_robert-push-notif-server"]
   variables:
     COMPONENT: "robert-push-notif-server"
     SUBCOMPONENT: "robert-push-notif-server-ws-rest"
@@ -148,8 +149,8 @@ docker-captcha-orange-server:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
   stage: docker
   needs: []
-  tags:    
-    - docker_build 
+  tags:
+    - docker_build
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.inria.fr/stemcovid19/wp3-robert-server/cicd/deploy_captcha-orange.git
     - cd deploy_captcha-orange
@@ -164,7 +165,7 @@ integration_tests:
     DOCKER_HOST: unix:///var/run/docker.sock
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-system-tests:latest
   stage: integration
-  needs: 
+  needs:
     - build_system_test
     - docker-captcha-orange-server
     - docker-robert-crypto-grpc-server
@@ -176,7 +177,7 @@ integration_tests:
     - docker_run
   allow_failure: true
   before_script:
-  - docker info
+    - docker info
   script:
     - export DOCKER_TAG=$CI_COMMIT_REF_SLUG
     - cd environment-setup/integration/compose
@@ -223,16 +224,16 @@ integration_tests:
     - cd environment-setup/integration/compose
     - ./stopAll.sh
     - ./stopDedicatedDockerNetwork.sh
-    
+
   artifacts:
     when: always
     paths:
-      - environment-setup/integration/compose/logs/* 
+      - environment-setup/integration/compose/logs/*
       - "system-test/target/surefire-reports/TEST-*.xml"
     reports:
       junit:
         - "system-test/target/surefire-reports/TEST-*.xml"
-      
+
 
 deploy-robert-server:
   extends: .deploy_template
