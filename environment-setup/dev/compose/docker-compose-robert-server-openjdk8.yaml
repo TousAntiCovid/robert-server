@@ -37,3 +37,30 @@ services:
       - ./captcha-orange-server-config:/mock-expectation
     environment:
       - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
+  robert-server-batch:
+    build:
+      context: ../../../robert-server/robert-server-batch
+      dockerfile: ./src/main/docker/Dockerfile-openjdk8
+    depends_on:
+      - postgresql-robert
+  submission-code-server:
+    build:
+      context: ./../../../submission-code-server
+      dockerfile: ./submission-code-server-ws-rest/src/main/docker/Dockerfile-openjdk8
+    ports:
+      - "8087:8080"
+      - "18087:18087"
+    environment:
+      - ROBERT_CRYPTO_SERVER_CONFIG_FILE=/conf/softhsm2.cfg
+      - SUBMISSION_CODE_SERVER_DB_URL=jdbc:postgresql://postgresql-scs:5432/dev-submission-code-server-schema
+      - JAVA_OPTS=-Xrunjdwp:transport=dt_socket,address=18087,server=y,suspend=n
+    depends_on:
+      - postgresql-scs
+  postgresql-scs:
+    image: 'postgres:9.6'
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=dev-submission-code-server-schema
+      - POSTGRES_USER=postgres

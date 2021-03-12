@@ -1,15 +1,19 @@
 package fr.gouv.tac.systemtest.stepdefinitions;
 
+import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.robert.ApiException;
 import fr.gouv.tac.robert.model.PushInfo;
 import fr.gouv.tac.robert.model.RegisterRequest;
 import fr.gouv.tac.robert.model.RegisterSuccessResponse;
 import fr.gouv.tac.systemtest.ScenarioAppContext;
+import fr.gouv.tac.systemtest.User;
 import io.cucumber.java.en.Given;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
 public class VisitorRobertStepDefinitions {
@@ -37,25 +41,18 @@ public class VisitorRobertStepDefinitions {
         registerRequest.pushInfo(pushInfo);
         
         try {
-        	RegisterSuccessResponse lastRegisterSuccessResponse = scenarioAppContext.getRobertApiInstance().register(registerRequest);
-        	scenarioAppContext.getOrCreateVisitor(userName).setLastRegisterSuccessResponse(lastRegisterSuccessResponse);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling RobertDefaultApi#register");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
+            final User user = scenarioAppContext.getOrCreateUser(userName);
+            RegisterSuccessResponse lastRegisterSuccessResponse = user.tacRobertRegister(scenarioAppContext.getRobertApiInstance());
+
+            user.setLastRegisterSuccessResponse(lastRegisterSuccessResponse);
+        } catch (RobertServerCryptoException | NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
-            throw e;
         }
-	    
-	    
-	}
+    }
+
     @Given("{string} scanned covid positive QRCode")
-    public void user_scanned_covid_positive_QRCode(String user) {
-		scenarioAppContext.getOrCreateVisitor(user).sendRobertReportBatch(scenarioAppContext.getRobertApiInstance());
+    public void user_scanned_covid_positive_QRCode(String user) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException, fr.gouv.tac.submission.code.server.ApiException {
+        String shortCode = scenarioAppContext.getGenerateCodeApiInstance().generate().getCode();
+        scenarioAppContext.getOrCreateUser(user).sendRobertReportBatch(shortCode, scenarioAppContext.getRobertApiInstance());
 	}
-	
-
-	
-
 }

@@ -1,0 +1,16 @@
+FROM openjdk:8u275
+
+WORKDIR /opt/submission-code-server/
+
+COPY submission-code-server-ws-rest/src/main/resources/application.properties ./
+COPY submission-code-server-ws-rest/src/main/docker/logback.xml ./logback.xml
+COPY submission-code-server-ws-rest/target/submission-code-server-ws-rest-*.jar app.jar
+COPY submission-code-server-ws-rest/src/main/docker/entrypoint.sh /entrypoint.sh
+# COPY submission-code-server-ws-rest/src/main/docker/run.sh /run.sh
+
+RUN apt-get update && apt-get -y install dos2unix \
+   && echo 'some cleanup' && rm -rf /var/lib/apt/lists/*
+
+RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

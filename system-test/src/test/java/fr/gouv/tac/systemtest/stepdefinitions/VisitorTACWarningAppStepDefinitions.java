@@ -1,11 +1,17 @@
 package fr.gouv.tac.systemtest.stepdefinitions;
 
+import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.systemtest.*;
+import fr.gouv.tac.systemtest.config.ServerConfigUtil;
+import fr.gouv.tac.systemtest.model.Place;
+import fr.gouv.tac.systemtest.utils.TimeUtil;
 import io.cucumber.java.en.Given;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
 public class VisitorTACWarningAppStepDefinitions {
@@ -20,30 +26,30 @@ public class VisitorTACWarningAppStepDefinitions {
 	}
 
 	@Given("{string} recorded a visit to {string} at {string}")
-	public void user_recorded_a_visit_to_venue_at(String userName, String venueName, String time) {
+	public void user_recorded_a_visit_to_venue_at(String userName, String venueName, String time) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
 
 		logger.debug(userName+".user_recorded_a_visit_to_venue_(\"+venueName+\")_at_(\"+time+\")");
 		Long timestamp = TimeUtil.naturalLanguageDateStringToNTPTimestamp(time);
 
 		timestamp = timestamp - (timestamp % ServerConfigUtil.getTimeRounding());
 
-		Visitor userVisitor = scenarioAppContext.getOrCreateVisitor(userName);
+		User userUser = scenarioAppContext.getOrCreateUser(userName);
 		Place place = scenarioAppContext.getOrCreatePlace(venueName);
 		place.generateNewStaticQRCode("newcode");
-		userVisitor.addVisit(place.getDefaultStaticQrCode(), timestamp);
+		userUser.addVisit(place.getDefaultStaticQrCode(), timestamp);
 
 	}
 	
 	@Given("{string} recorded a visit to {string} at {string} with static QRCode {string}")
-	public void user_recorded_a_visit_to_venue_at_with_static_qrcode(String userName, String venueName, String time, String qrCodeId) {
+	public void user_recorded_a_visit_to_venue_at_with_static_qrcode(String userName, String venueName, String time, String qrCodeId) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
 
 		logger.debug(userName+".user_recorded_a_visit_to_venue_("+venueName+")_at_("+time+")_with_static_qrcode("+qrCodeId+")");
 		Long timestamp = TimeUtil.naturalLanguageDateStringToNTPTimestamp(time);
 		timestamp = timestamp - (timestamp % ServerConfigUtil.getTimeRounding());
 
-		Visitor userVisitor = scenarioAppContext.getOrCreateVisitor(userName);
+		User userUser = scenarioAppContext.getOrCreateUser(userName);
 		Place place = scenarioAppContext.getOrCreatePlace(venueName);
-		userVisitor.addVisit(place.getStaticQRCodeMap().get(qrCodeId), timestamp);
+		userUser.addVisit(place.getStaticQRCodeMap().get(qrCodeId), timestamp);
 
 	}
 

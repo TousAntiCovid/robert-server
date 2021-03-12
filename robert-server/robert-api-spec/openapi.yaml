@@ -208,7 +208,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnregisterResponse"
+                $ref: "#/components/schemas/SuccessResponse"
         "400":
           description: bad request
         "401":
@@ -231,7 +231,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnregisterResponse"
+                $ref: "#/components/schemas/SuccessResponse"
         "400":
           description: bad request
         "401":
@@ -259,7 +259,7 @@ components:
           schema:
             $ref: "#/components/schemas/UnregisterRequest"
   schemas:
-    UnregisterResponse:
+    SuccessResponse:
       type: object
       properties:
         success:
@@ -544,7 +544,7 @@ components:
       properties:
         timeCollectedOnDevice:
           type: integer
-          format: int32
+          format: int64
           description: Timestamp at which the current device collected the HELLO messages
         timeFromHelloMessage:
           type: integer

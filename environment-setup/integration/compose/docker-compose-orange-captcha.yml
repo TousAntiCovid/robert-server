@@ -1,19 +1,13 @@
 version: "3.8"
 services:
-  postgrescaptcha:
-    image: postgres:latest
-    environment:
-      - POSTGRES_PASSWORD=robert
-      - POSTGRES_DB=qr
-      - POSTGRES_USER=robert
   captcha-orange-server:
-    image: registry.gitlab.inria.fr/stopcovid19/backend-server/deploy-captcha-orange-rest:latest
+    image: mockserver/mockserver:mockserver-5.11.2
     container_name: captcha-orange-server
+    command: -logLevel DEBUG -serverPort 8055
     ports:
       - "8055:8055"
     volumes:
-      - ./captcha-orange-server-config:/work/config
-      - ./logs:/logs
+      - ./captcha-orange-server-config:/mock-expectation
     deploy:
       restart_policy:
         condition: on-failure

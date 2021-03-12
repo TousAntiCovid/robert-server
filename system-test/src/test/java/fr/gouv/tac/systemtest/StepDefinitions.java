@@ -1,12 +1,21 @@
 package fr.gouv.tac.systemtest;
 
+import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
+import fr.gouv.tac.robert.ApiException;
+import fr.gouv.tac.systemtest.model.Place;
+import fr.gouv.tac.systemtest.model.Places;
+import fr.gouv.tac.systemtest.model.Visitors;
 import fr.gouv.tac.systemtest.stepdefinitions.RiskLevel;
+import fr.gouv.tac.systemtest.utils.TimeUtil;
+import fr.gouv.tac.systemtest.utils.WhoWhereWhenHow;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 import javax.inject.Inject;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +37,11 @@ public class StepDefinitions {
 	}
 
     @Given("I have the following visits in the tac_warning")
-    public void i_have_the_following_visits_in_the_tac_warning(DataTable dataTable) {
+    public void i_have_the_following_visits_in_the_tac_warning(DataTable dataTable) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException, ApiException {
 
 
         List<Map<String, String>> rows = dataTable.asMaps(String.class, String.class);
-        steps = new ArrayList<WhoWhereWhenHow>();
+        steps = new ArrayList<>();
         for (Map<String, String> columns : rows) {
             steps.add(new
                     WhoWhereWhenHow(
@@ -45,17 +54,17 @@ public class StepDefinitions {
             );
         }
 
-        Visitor currentVisitor;
+        User currentUser;
         Place currentPlace;
         for (WhoWhereWhenHow step : steps){
-            currentVisitor = visitors.getVisitorByName(step.getWho());
-            currentVisitor.setCovidStatus(step.getCovidStatus());
-            currentVisitor.setOutcome(step.getOutcome());
+            currentUser = visitors.getUserByName(step.getWho());
+            currentUser.setCovidStatus(step.getCovidStatus());
+            currentUser.setOutcome(step.getOutcome());
             currentPlace = places.getPlaceByName(step.getWhere());
-            currentVisitor.addVisit(
+            currentUser.addVisit(
                     currentPlace.getDefaultStaticQrCode(),
                     TimeUtil.naturalLanguageDateStringToNTPTimestamp(step.getWhen()));
-            currentVisitor.tacRobertRegister(scenarioAppContext.getRobertApiInstance());
+            currentUser.tacRobertRegister(scenarioAppContext.getRobertApiInstance());
         }
 
     }
@@ -67,25 +76,25 @@ public class StepDefinitions {
 
     @Then("Covid- person status from TAC-W is not at risk")
     public void covid_person_status_from_tac_w_is_not_at_risk() {
-      for (Visitor visitor : visitors.getList()){
-          assertEquals(RiskLevel.NONE.getValue(), visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
+      for (User user : visitors.getList()){
+          assertEquals(RiskLevel.NONE.getValue(), user.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
       }
     }
 
     @When("Covid+ person report to TAC and TAC-W")
     public void covid_person_report_to_tac_and_tac_w() {
-        for (Visitor visitor : visitors.getList()){
-        	if(visitor.getCovidStatus()) {
-        		assertTrue(visitor.sendRobertReportBatch(scenarioAppContext.getRobertApiInstance()));
-            	assertTrue(visitor.sendTacWarningReport(scenarioAppContext.getTacwApiInstance()));
+        for (User user : visitors.getList()){
+        	if(user.getCovidStatus()) {
+        		assertTrue(user.sendRobertReportBatch("string", scenarioAppContext.getRobertApiInstance()).getSuccess());
+            	assertTrue(user.sendTacWarningReport(scenarioAppContext.getTacwApiInstance()));
         	}
         }
     }
+
     @Then("Covid- person status from TAC-W is at high level risk")
     public void covid_person_status_from_tac_w_is_at_high_level_risk() {
-        for (Visitor visitor : visitors.getList()){
-                assertEquals(RiskLevel.HIGH.getValue(), visitor.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
+        for (User user : visitors.getList()){
+                assertEquals(RiskLevel.HIGH.getValue(), user.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
         }
     }
-
 }
