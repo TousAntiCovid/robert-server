@@ -1,40 +1,21 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.impl;
 
-import java.io.IOException;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.ProviderException;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Comparator;
-import java.util.stream.Collectors;
-
-import javax.crypto.spec.SecretKeySpec;
-
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
-import lombok.extern.slf4j.Slf4j;
-import sun.security.pkcs11.SunPKCS11;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -87,19 +68,13 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     private boolean loadSecurityProvider(String password, String configFile) {
         try {
 
-            // Required for JDK 1.8
-            this.provider = new SunPKCS11(configFile);
-            if (-1 == Security.addProvider(this.provider)) {
-                return false;
-            }
-
             // For JDK 1.9+, uncomment line below and delete code above
-            //this.provider = Security.getProvider("SunPKCS11").configure(configFile);
+            this.provider = Security.getProvider("SunPKCS11").configure(configFile);
 
             char[] keyStorePassword = password.toCharArray();
             this.keyStore = KeyStore.getInstance(KEYSTORE_TYPE, this.provider);
             this.keyStore.load(null, keyStorePassword);
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | ProviderException  e) {
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | ProviderException e) {
 
             log.error("An expected error occurred when trying to initialize the keyStore {} due to {}", e.getClass(), e.getMessage());
             return false;
@@ -122,6 +97,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
 
     /**
      * Register key
+     *
      * @return
      */
     @Override
@@ -179,7 +155,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     }
 
     private Key getKeyForEncryptingKeys(String alias, String errorMessage) {
-        
+
         if (this.kekCache.containsKey(alias)) {
             return this.kekCache.get(alias);
         } else {
@@ -206,7 +182,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     public byte[] getServerKey(int epochId, long serviceTimeStart, boolean takePreviousDaysKey) {
 
         LocalDate dateFromEpoch = TimeUtils.getDateFromEpoch(epochId, serviceTimeStart);
-        if (Objects.isNull(dateFromEpoch) ) {
+        if (Objects.isNull(dateFromEpoch)) {
             log.error("The date from epoch {} from the time start {} is null", epochId, serviceTimeStart);
             return null;
         }
@@ -226,8 +202,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
             String alias = String.format("%s%s", ALIAS_SERVER_KEY_PREFIX, dateFromEpoch.format(dateFormatter));
             if (this.serverKeyCache.containsKey(alias)) {
                 serverKey = this.serverKeyCache.get(alias);
-            }
-            else {
+            } else {
                 synchronized (protectHsmReload) {
                     if (!this.serverKeyCache.containsKey(alias)) {
                         if (!this.keyStore.containsAlias(alias)) {
@@ -253,13 +228,13 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     public byte[][] getServerKeys(int epochId, long timeStart, int nbDays) {
 
         LocalDate dateFromEpoch = TimeUtils.getDateFromEpoch(epochId, timeStart);
-        if(Objects.isNull(dateFromEpoch) ) {
+        if (Objects.isNull(dateFromEpoch)) {
             log.error("The date from epoch {} and the time start {} is null", epochId, timeStart);
             return null;
         }
 
         byte[][] keyMap = new byte[nbDays][SERVER_KEY_SIZE];
-        for(int i = 0; i < nbDays; i++) {
+        for (int i = 0; i < nbDays; i++) {
             keyMap[i] = this.getServerKey(dateFromEpoch.plusDays(i));
         }
         return keyMap;
