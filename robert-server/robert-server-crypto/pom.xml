@@ -21,12 +21,6 @@
 	<name>robert-server-crypto</name>
 	<description>Cryptography library module. Do not use directly except for tests and from crypto server</description>
 
-	<properties>
-		<java.version>11</java.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-	</properties>
-
 	<dependencies>
 
 		<dependency>
