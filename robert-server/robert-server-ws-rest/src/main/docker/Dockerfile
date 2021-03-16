@@ -1,6 +1,6 @@
 # mvn package -Dmaven.test.skip=true && docker build -f src/main/docker/Dockerfile -t tac/robert-server-ws-rest .
 FROM adoptopenjdk:11-jre-hotspot
-ADD ./target/robert-server-ws-rest-1.10.0-SNAPSHOT.jar /app.jar
+ADD ./target/robert-server-ws-rest-*.jar /app.jar
 ADD ./src/main/resources/application.properties /work/config/application.properties
 ENV ROBERT_JWT_PRIVATE_KEY changeit
 ENV ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY changeit
