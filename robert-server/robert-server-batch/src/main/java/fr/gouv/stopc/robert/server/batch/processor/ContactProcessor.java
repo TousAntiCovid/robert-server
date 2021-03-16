@@ -118,7 +118,7 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                 if (!Arrays.equals(helloMessageResponse.getCountryCode().toByteArray(), serverCountryCode)) {
                     log.info(
                             "Country code {} is not managed by this server ({}); rerouting contact to federation network",
-                            helloMessageResponse.getCountryCode(),
+                            helloMessageResponse.getCountryCode().toByteArray(),
                             serverCountryCode);
 
                     // TODO: send the message to the dedicated country server

@@ -14,13 +14,16 @@ services:
     container_name: robert-crypto-grpc-server
     ports:
       - "9090:9090"
+    environment:
+      - JAVA_OPTS=-Xrunjdwp:transport=dt_socket,address=*:19090,server=y,suspend=n
+
     volumes:
       - ${PWD}/robert-crypto-grpc-server-config:/work/config
       - ${PWD}/logs:/logs
     deploy:
       restart_policy:
         condition: on-failure
-    entrypoint: ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties"]
+    entrypoint: ["/entrypoint.sh"]
 networks:
   default:
     external:

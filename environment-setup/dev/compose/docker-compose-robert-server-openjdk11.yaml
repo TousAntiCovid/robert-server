@@ -1,0 +1,39 @@
+# This docker compose file allow to deploy all  mandatory components that are not easy to launch from your IDE of your
+# development laptop.
+
+version: '3.5'
+services:
+  robert-crypto-server:
+    build:
+      context: ../../../robert-server/robert-crypto-grpc-server
+      dockerfile: ./src/main/docker/Dockerfile
+    ports:
+      - "9090:9090"
+      - "19090:19090"
+    environment:
+      - ROBERT_CRYPTO_SERVER_CONFIG_FILE=/conf/softhsm2.cfg
+      - ROBERT_CRYPTO_SERVER_DB_URL=jdbc:postgresql://postgresql-robert:5432/robert
+      - JAVA_OPTS=-Xrunjdwp:transport=dt_socket,address=*:19090,server=y,suspend=n
+    depends_on:
+      - postgresql-robert
+  postgresql-robert:
+    image: 'postgres:9.6'
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=robert
+      - POSTGRES_DB=robert
+      - POSTGRES_USER=robert
+  mongo:
+    image: 'mongo:4.2.5'
+    ports:
+      - "27017:27017"
+  captcha:
+    image: mockserver/mockserver:mockserver-5.11.2
+    command: -logLevel DEBUG -serverPort 8055
+    ports:
+      - "8055:8055"
+    volumes:
+      - ./captcha-orange-server-config:/mock-expectation
+    environment:
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json

@@ -38,25 +38,32 @@
                 <maxFileSize>10MB</maxFileSize>
         </rollingPolicy>
     </appender>
-     
-    <!-- LOG everything at INFO level -->
-    <root level="info">
-        <appender-ref ref="RollingFile" />
-    </root>
- 
-    <!-- at TRACE level -->
-    <logger name="trace" level="trace" additivity="false">
-        <appender-ref ref="RollingFile" />
-    </logger>
 
-	<!-- at WARN level -->
-	<logger name="warn" level="warn" additivity="false">
-		<appender-ref ref="RollingFile" />
-	</logger>
+    <springProfile name="dev">
+        <include resource="org/springframework/boot/logging/logback/base.xml" />
+        <logger name="org.springframework" level="OFF"/>
+    </springProfile>
 
-    <!-- at TRACE level -->
-    <logger name="error" level="error" additivity="false">
-        <appender-ref ref="RollingErrorFile" />
-    </logger>
- 
+    <springProfile name="!dev">
+        <!-- LOG everything at INFO level -->
+        <root level="info">
+            <appender-ref ref="RollingFile" />
+        </root>
+
+        <!-- at TRACE level -->
+        <logger name="trace" level="trace" additivity="false">
+            <appender-ref ref="RollingFile" />
+        </logger>
+
+        <!-- at WARN level -->
+        <logger name="warn" level="warn" additivity="false">
+            <appender-ref ref="RollingFile" />
+        </logger>
+
+        <!-- at TRACE level -->
+        <logger name="error" level="error" additivity="false">
+            <appender-ref ref="RollingErrorFile" />
+        </logger>
+    </springProfile>
+
 </configuration>
