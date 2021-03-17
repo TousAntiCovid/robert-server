@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>fr.gouv.clea</groupId>
+		<artifactId>clea-server</artifactId>
+		<version>0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>clea-venue-consumer</artifactId>
+	<name>clea-venue-consumer</name>
+	<description>Clea (Cluster Exposure Verification) Venue consumer used to decode, verify and store infected visits.</description>
+</project>
