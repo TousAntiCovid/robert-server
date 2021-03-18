@@ -15,7 +15,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static fr.gouv.tac.systemtest.config.DockerConfig.*;
-import static fr.gouv.tac.systemtest.config.RobertServerBatchConfig.*;
+import static fr.gouv.tac.systemtest.config.RobertServerBatchConfig.ROBERT_PROTOCOL_SCORING_THRESHOLD_KEY;
+import static fr.gouv.tac.systemtest.config.RobertServerBatchConfig.ROBERT_SCORING_BATCH_MODE_KEY;
 import static java.util.Optional.ofNullable;
 
 @Slf4j

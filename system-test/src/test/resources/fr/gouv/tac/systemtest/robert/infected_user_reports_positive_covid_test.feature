@@ -1,6 +1,5 @@
+@beforeEmptyBase
 Feature: One sick person reports positive covid test
-
-  #TODO: empty base through mongo client & @After hook
 
   Scenario: Hugo meets Stephanie enough time to infect her
     Given "Hugo" registered on TAC
@@ -27,6 +26,3 @@ Feature: One sick person reports positive covid test
     And Did not meet anyone
     When "Stephanie" requests exposure status
     Then "Stephanie" exposure status should report risk level equal to 0
-
-  #TODO: Unregister scenario
-  #TODO: DeleteHistory scenario

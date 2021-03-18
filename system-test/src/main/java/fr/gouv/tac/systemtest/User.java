@@ -1,11 +1,5 @@
 package fr.gouv.tac.systemtest;
 
-import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
@@ -14,11 +8,16 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
+import fr.gouv.tac.robert.model.*;
 import fr.gouv.tac.systemtest.model.MyVisit;
+import fr.gouv.tac.systemtest.robert.AuthRequestDto;
 import fr.gouv.tac.systemtest.robert.ClientIdentifierBundle;
 import fr.gouv.tac.systemtest.robert.EphemeralTupleJson;
-import fr.gouv.tac.systemtest.robert.AuthRequestDto;
-import fr.gouv.tac.robert.model.*;
+import fr.gouv.tac.tacwarning.ApiException;
+import fr.gouv.tac.tacwarning.auth.HttpBearerAuth;
+import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
+import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
+import fr.gouv.tac.tacwarning.model.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,15 +26,11 @@ import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import fr.gouv.tac.tacwarning.ApiException;
-import fr.gouv.tac.tacwarning.auth.HttpBearerAuth;
-import fr.gouv.tac.tacwarning.model.ExposureStatusRequest;
-import fr.gouv.tac.tacwarning.model.ExposureStatusResponse;
-import fr.gouv.tac.tacwarning.model.QRCode;
-import fr.gouv.tac.tacwarning.model.ReportRequest;
-import fr.gouv.tac.tacwarning.model.ReportResponse;
-import fr.gouv.tac.tacwarning.model.Visit;
-import fr.gouv.tac.tacwarning.model.VisitToken;
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 import static fr.gouv.tac.systemtest.utils.EcdhUtils.deriveKeysFromBackendPublicKey;
 import static fr.gouv.tac.systemtest.utils.EcdhUtils.generateKeyPair;
@@ -158,7 +153,7 @@ public class User {
 		this.covidStatus = covidStatus.equals("positive");
 	}
 
-	public fr.gouv.tac.robert.model.ExposureStatusResponse status(final fr.gouv.tac.robert.api.DefaultApi robertApi) {
+	public fr.gouv.tac.robert.model.ExposureStatusResponse status(final fr.gouv.tac.robert.api.DefaultApi robertApi) throws fr.gouv.tac.robert.ApiException {
 
 		AuthRequestDto authRequestDto = prepareAuthRequestDto(0, DigestSaltEnum.STATUS, 0);
 		final fr.gouv.tac.robert.model.ExposureStatusRequest statusRequest = new fr.gouv.tac.robert.model.ExposureStatusRequest();
@@ -166,16 +161,10 @@ public class User {
 		statusRequest.setEpochId(authRequestDto.getEpochId());
 		statusRequest.setTime(authRequestDto.getTime());
 		statusRequest.setMac(authRequestDto.getMac());
-
-		try {
-			final fr.gouv.tac.robert.model.ExposureStatusResponse result = robertApi.eSR(statusRequest);
-			this.setLastRobertExposureStatusResponse(result);
-			logger.debug("#### sendTacWarningStatus atRisk={}", result.getRiskLevel());
-			return result;
-		} catch (fr.gouv.tac.robert.ApiException e) {
-			logger.error(e.getMessage(), e);
-		}
-		return null;
+		final fr.gouv.tac.robert.model.ExposureStatusResponse result = robertApi.eSR(statusRequest);
+		this.setLastRobertExposureStatusResponse(result);
+		logger.debug("#### sendTacWarningStatus atRisk={}", result.getRiskLevel());
+		return result;
 	}
 
 	public Integer sendTacWarningStatus(fr.gouv.tac.tacwarning.api.DefaultApi apiInstance) {
@@ -196,28 +185,19 @@ public class User {
 		return evaluatedRiskLevel;
 	}
 
-	public ReportBatchResponse sendRobertReportBatch(final String qrCode, final fr.gouv.tac.robert.api.DefaultApi apiInstance) {
+	public ReportBatchResponse sendRobertReportBatch(final String qrCode, final fr.gouv.tac.robert.api.DefaultApi apiInstance) throws fr.gouv.tac.robert.ApiException {
 		logger.debug("{}.sendRobertReportBatch", this.name);
 		fr.gouv.tac.robert.model.ReportBatchRequest reportBatchRequest = new fr.gouv.tac.robert.model.ReportBatchRequest();
 		reportBatchRequest.token(qrCode);
 		reportBatchRequest.setContacts(contacts);
 		// TODO add natural language cucumber API to define Bluetooth contacts
-		try {
-			ReportBatchResponse reportBatchResponse = apiInstance.reportBatch(reportBatchRequest);
-			this.setLastRobertReportsResponse(reportBatchResponse);
-			this.setJwt(reportBatchResponse.getReportValidationToken());
-			if (reportBatchResponse.getReportValidationToken() == null) {
-				logger.warn("Robert reportBatch returned a null JWT ReportValidationToken. \n{}", reportBatchResponse);
-			}
-			return reportBatchResponse;
-		} catch (fr.gouv.tac.robert.ApiException e) {
-			logger.error("Exception when calling RobertDefaultApi#reportBatch", e);
-			logger.error("Status code: {}", e.getCode());
-			logger.error("Reason: {}", e.getResponseBody());
-			logger.error("Response headers: {}", e.getResponseHeaders());
-			logger.error("Request was:\n{}", reportBatchRequest);
+		ReportBatchResponse reportBatchResponse = apiInstance.reportBatch(reportBatchRequest);
+		this.setLastRobertReportsResponse(reportBatchResponse);
+		this.setJwt(reportBatchResponse.getReportValidationToken());
+		if (reportBatchResponse.getReportValidationToken() == null) {
+			logger.warn("Robert reportBatch returned a null JWT ReportValidationToken. \n{}", reportBatchResponse);
 		}
-		return null;
+		return reportBatchResponse;
 	}
 
 
@@ -447,38 +427,32 @@ public class User {
 		return Arrays.copyOfRange(encryptedMac, 0, 5);
 	}
 
-	public SuccessResponse deleteHistory(fr.gouv.tac.robert.api.DefaultApi robertApi) {
+	public SuccessResponse deleteHistory(fr.gouv.tac.robert.api.DefaultApi robertApi) throws fr.gouv.tac.robert.ApiException {
 
-		AuthRequestDto authRequestDto = prepareAuthRequestDto(0, DigestSaltEnum.STATUS, 0);
+		AuthRequestDto authRequestDto = prepareAuthRequestDto(0, DigestSaltEnum.DELETE_HISTORY, 0);
 		AuthentifiedRequest statusRequest = new AuthentifiedRequest();
 		statusRequest.setEbid(authRequestDto.getEbid());
 		statusRequest.setEpochId(authRequestDto.getEpochId());
 		statusRequest.setTime(authRequestDto.getTime());
 		statusRequest.setMac(authRequestDto.getMac());
 
-		try {
-			SuccessResponse deleteHistoryResponse = robertApi.deleteExposureHistory(statusRequest);
-			this.setLastDeleteHistoryResponse(deleteHistoryResponse);
-			return deleteHistoryResponse;
-		} catch (fr.gouv.tac.robert.ApiException e) {
-			logger.error(e.getMessage(), e);
-		}
-		return null;
+		SuccessResponse deleteHistoryResponse = robertApi.deleteExposureHistory(statusRequest);
+		this.setLastDeleteHistoryResponse(deleteHistoryResponse);
+		return deleteHistoryResponse;
 	}
 
 	public SuccessResponse unregister(fr.gouv.tac.robert.api.DefaultApi robertApi) {
 
-		AuthRequestDto authRequestDto = prepareAuthRequestDto(0, DigestSaltEnum.STATUS, 0);
+		AuthRequestDto authRequestDto = prepareAuthRequestDto(0, DigestSaltEnum.UNREGISTER, 0);
 		UnregisterRequest unregisterRequest = new UnregisterRequest();
 		unregisterRequest.setEbid(authRequestDto.getEbid());
 		unregisterRequest.setEpochId(authRequestDto.getEpochId());
 		unregisterRequest.setTime(authRequestDto.getTime());
 		unregisterRequest.setMac(authRequestDto.getMac());
-
 		try {
-			SuccessResponse deleteHistoryResponse = robertApi.unregister(unregisterRequest);
-			this.setLastDeleteHistoryResponse(deleteHistoryResponse);
-			return deleteHistoryResponse;
+			SuccessResponse unregisterResponse = robertApi.unregister(unregisterRequest);
+			this.setLastUnregisterResponse(unregisterResponse);
+			return unregisterResponse;
 		} catch (fr.gouv.tac.robert.ApiException e) {
 			logger.error(e.getMessage(), e);
 		}

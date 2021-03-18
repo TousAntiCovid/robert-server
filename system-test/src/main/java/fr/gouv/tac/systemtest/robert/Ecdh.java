@@ -8,9 +8,6 @@ import java.security.KeyPairGenerator;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
-import java.util.Scanner;
-
-import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
 @Slf4j
 public class Ecdh {

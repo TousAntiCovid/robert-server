@@ -1,7 +1,8 @@
-package fr.gouv.tac.systemtest.stepdefinitions;
+package fr.gouv.tac.systemtest.stepdefinitions.tacw;
 
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
-import fr.gouv.tac.systemtest.*;
+import fr.gouv.tac.systemtest.ScenarioAppContext;
+import fr.gouv.tac.systemtest.User;
 import fr.gouv.tac.systemtest.config.ServerConfigUtil;
 import fr.gouv.tac.systemtest.model.Place;
 import fr.gouv.tac.systemtest.utils.TimeUtil;
@@ -14,14 +15,14 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
-public class VisitorTACWarningAppStepDefinitions {
+public class UserAppStepDefinitions {
 
-	private static Logger logger = LoggerFactory.getLogger(VisitorTACWarningAppStepDefinitions.class);
+	private static Logger logger = LoggerFactory.getLogger(UserAppStepDefinitions.class);
 
 	private final ScenarioAppContext scenarioAppContext;
 
 	@Inject
-	public VisitorTACWarningAppStepDefinitions(ScenarioAppContext scenarioAppContext) {
+	public UserAppStepDefinitions(ScenarioAppContext scenarioAppContext) {
 		this.scenarioAppContext = Objects.requireNonNull(scenarioAppContext, "scenarioAppContext must not be null");
 	}
 

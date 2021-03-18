@@ -1,24 +1,21 @@
-package fr.gouv.tac.systemtest.stepdefinitions;
+package fr.gouv.tac.systemtest.stepdefinitions.tacw;
 
-import java.util.Objects;
-
-import javax.inject.Inject;
-
+import fr.gouv.tac.systemtest.ScenarioAppContext;
+import io.cucumber.java.en.Given;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import fr.gouv.tac.systemtest.DummyMain4Tests;
-import fr.gouv.tac.systemtest.ScenarioAppContext;
-import io.cucumber.java.en.Given;
+import javax.inject.Inject;
+import java.util.Objects;
 
-public class PlaceTACWarningStepDefinitions {
+public class PlaceStepDefinitions {
 
-	private static Logger logger = LoggerFactory.getLogger(PlaceTACWarningStepDefinitions.class);
+	private static Logger logger = LoggerFactory.getLogger(PlaceStepDefinitions.class);
 	
 	private final ScenarioAppContext scenarioAppContext;
 
 	@Inject
-	public PlaceTACWarningStepDefinitions(ScenarioAppContext scenarioAppContext) {
+	public PlaceStepDefinitions(ScenarioAppContext scenarioAppContext) {
 		this.scenarioAppContext = Objects.requireNonNull(scenarioAppContext, "scenarioAppContext must not be null");
 	}
 

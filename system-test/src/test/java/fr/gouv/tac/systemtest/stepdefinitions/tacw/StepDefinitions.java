@@ -1,7 +1,9 @@
-package fr.gouv.tac.systemtest;
+package fr.gouv.tac.systemtest.stepdefinitions.tacw;
 
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.robert.ApiException;
+import fr.gouv.tac.systemtest.ScenarioAppContext;
+import fr.gouv.tac.systemtest.User;
 import fr.gouv.tac.systemtest.model.Place;
 import fr.gouv.tac.systemtest.model.Places;
 import fr.gouv.tac.systemtest.model.Visitors;
@@ -21,7 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class StepDefinitions {
 
@@ -82,7 +85,7 @@ public class StepDefinitions {
     }
 
     @When("Covid+ person report to TAC and TAC-W")
-    public void covid_person_report_to_tac_and_tac_w() {
+    public void covid_person_report_to_tac_and_tac_w() throws ApiException {
         for (User user : visitors.getList()){
         	if(user.getCovidStatus()) {
         		assertTrue(user.sendRobertReportBatch("string", scenarioAppContext.getRobertApiInstance()).getSuccess());

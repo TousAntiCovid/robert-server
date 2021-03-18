@@ -1,10 +1,12 @@
-package fr.gouv.tac.systemtest.stepdefinitions;
+package fr.gouv.tac.systemtest.stepdefinitions.tacw;
 
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.systemtest.ScenarioAppContext;
+import fr.gouv.tac.systemtest.stepdefinitions.RiskLevel;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,14 +17,14 @@ import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 
-public class VisitorTACWarningServerStepDefinitions {
+public class UserServerStepDefinitions {
 
-	private static Logger logger = LoggerFactory.getLogger(VisitorTACWarningServerStepDefinitions.class);
+	private static Logger logger = LoggerFactory.getLogger(UserServerStepDefinitions.class);
 
 	private final ScenarioAppContext scenarioAppContext;
 
 	@Inject
-	public VisitorTACWarningServerStepDefinitions(ScenarioAppContext scenarioAppContext) {
+	public UserServerStepDefinitions(ScenarioAppContext scenarioAppContext) {
 		this.scenarioAppContext = Objects.requireNonNull(scenarioAppContext, "scenarioAppContext must not be null");
 	}
 	
@@ -39,7 +41,7 @@ public class VisitorTACWarningServerStepDefinitions {
 
 	@Then("Exposure status should reports {string} as not being at risk")
 	public void status_should_reports_as_not_being_at_risk(String user) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
-		assertEquals(RiskLevel.NONE.getValue(),scenarioAppContext.getOrCreateUser(user).getLastExposureStatusResponse().getRiskLevel());
+		Assert.assertEquals(RiskLevel.NONE.getValue(),scenarioAppContext.getOrCreateUser(user).getLastExposureStatusResponse().getRiskLevel());
 	}
 	
 	@Then("Exposure status should reports {string} as being at high level risk")

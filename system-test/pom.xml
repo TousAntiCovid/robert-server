@@ -33,6 +33,7 @@
         <junit-version>4.13</junit-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <io-rest-assured.version>4.3.0</io-rest-assured.version>
+        <robert-crypto-grpc-server.version>1.10.0</robert-crypto-grpc-server.version>
     </properties>
 
     <build>
@@ -266,11 +267,6 @@
             <version>${cucumber.version}</version>
             <scope>test</scope>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>net.time4j</groupId>-->
-<!--            <artifactId>time4j-core</artifactId>-->
-<!--            <version>4.38</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.ocpsoft.prettytime</groupId>
             <artifactId>prettytime-nlp</artifactId>
@@ -295,18 +291,6 @@
             <version>5.6.3</version>
         </dependency>
         <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <version>4.3.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <version>4.3.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-core</artifactId>
             <version>3.2.7</version>
@@ -319,10 +303,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.12.8</version>
+        </dependency>
+        <dependency>
             <groupId>fr.gouv.stopc</groupId>
-            <artifactId>robert-server-crypto</artifactId>
-            <version>1.10.0-SNAPSHOT</version>
-            <scope>compile</scope>
+            <artifactId>robert-crypto-grpc-server</artifactId>
+            <version>${robert-crypto-grpc-server.version}</version>
         </dependency>
 
         <!--Added required dependencies due to : https://github.com/rest-assured/rest-assured/issues/1168 -->

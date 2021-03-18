@@ -10,7 +10,6 @@ cache:
 
 stages:
   - build
-  - test
   - docker
   - integration
   - deploy
@@ -18,21 +17,11 @@ stages:
 .build_template:
   stage: build
   script:
-    # build all (for other phase such as docker) but skip tests
     - cd $COMPONENT
-    - mvn $MAVEN_CLI_OPTS -DskipTests=true -P swagger,logstash  package
+    - mvn $MAVEN_CLI_OPTS -P swagger,logstash verify
   artifacts:
     paths:
       - $COMPONENT/*/target/*.jar
-  tags:
-    - ci
-
-.test_template:
-  stage: test
-  script:
-    - cd $COMPONENT
-    - mvn $MAVEN_CLI_OPTS verify
-  artifacts:
     when: always
     reports:
       junit:
@@ -74,11 +63,6 @@ build_tac-warning:
   variables:
     COMPONENT: "tac-warning"
 
-build_system_test:
-  extends: .build_template
-  variables:
-    COMPONENT: "system-test"
-
 build_robert-push-notif-server:
   extends: .build_template
   variables:
@@ -99,42 +83,6 @@ build_analytics-server:
   variables:
     COMPONENT: "analytics-server"
 
-test_tac-warning:
-  extends: .test_template
-  needs: ["build_tac-warning"]
-  variables:
-    COMPONENT: "tac-warning"
-
-test_robert-server:
-  extends: .test_template
-  needs: ["build_robert-server"]
-  variables:
-    COMPONENT: "robert-server"
-
-test_robert-push-notif-server:
-  extends: .test_template
-  needs: ["build_robert-push-notif-server"]
-  variables:
-    COMPONENT: "robert-push-notif-server"
-
-test_submission-code-server:
-  extends: .test_template
-  needs: ["build_submission-code-server"]
-  variables:
-    COMPONENT: "submission-code-server"
-
-test_clea:
-  extends: .test_template
-  needs: ["build_clea"]
-  variables:
-    COMPONENT: "clea"
-
-test_analytics-server:
-  extends: .test_template
-  needs: [ "build_analytics-server" ]
-  variables:
-    COMPONENT: "analytics-server"
-
 docker-robert-crypto-grpc-server:
   extends: .docker_template
   needs: [ "build_robert-server" ]
@@ -148,6 +96,13 @@ docker-robert-server-ws-rest:
   variables:
     COMPONENT: "robert-server"
     SUBCOMPONENT: "robert-server-ws-rest"
+
+docker-robert-server-batch:
+  extends: .docker_template
+  needs: ["build_robert-server"]
+  variables:
+    COMPONENT: "robert-server"
+    SUBCOMPONENT: "robert-server-batch"
 
 docker-tac-warning:
   extends: .docker_template
@@ -191,23 +146,33 @@ integration_tests:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-system-tests:latest
   stage: integration
   needs:
-    - build_system_test
     - docker-captcha-orange-server
     - docker-robert-crypto-grpc-server
     - docker-tac-warning
     - docker-robert-server-ws-rest
+    - docker-robert-server-batch
     - docker-submission-code-server
     - docker-robert-push-notif-server
   tags:
     - docker_run
   before_script:
     - docker info
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: always
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $INTEGRATION_TESTS
+      when: manual
   script:
     - export DOCKER_TAG=$CI_COMMIT_REF_SLUG
     - cd environment-setup/integration/compose
     - echo "ROBERT_CRYPTO_TAG=$DOCKER_TAG" > .env
     - echo "ROBERT_SUBMISSION_TAG=$DOCKER_TAG" >> .env
     - echo "ROBERT_SERVER_TAG=$DOCKER_TAG" >> .env
+    - echo "ROBERT_SERVER_BATCH_TAG=$DOCKER_TAG" >> .env
     - echo "ROBERT_PUSH_TAG=$DOCKER_TAG" >> .env
     - echo "TACW_TAG=$DOCKER_TAG" >> .env
     - echo "AUTO_LETS_ENCRYPT=no" >> .env

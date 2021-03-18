@@ -80,3 +80,9 @@ Sauf mention contraire, les composants du backend TousAntiCovid sont publiés so
 * Le document [de ressources scientifiques du projet](SCIENTIFIC_RESOURCES.md)
 * La [liste des sous-projets déjà publiés](https://gitlab.inria.fr/stopcovid19)
 
+
+#Integration tests
+The integration tests are automatically run on *develop* and *master* branches, and tags.
+
+If one wants to run it on a feature branch, one must manually trigger the pipeline on the selected branch with the 
+following variable `INTEGRATION_TESTS` set to `true`.
