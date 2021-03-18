@@ -84,6 +84,11 @@ build_submission-code-server:
   variables:
     COMPONENT: "submission-code-server"
 
+build_clea:
+  extends: .build_template
+  variables:
+    COMPONENT: "clea"
+
 test_tac-warning:
   extends: .test_template
   needs: ["build_tac-warning"]
@@ -109,6 +114,12 @@ test_submission-code-server:
   variables:
     COMPONENT: "submission-code-server"
   allow_failure: true
+
+test_clea:
+  extends: .test_template
+  needs: ["build_clea"]
+  variables:
+    COMPONENT: "clea"
 
 docker-robert-crypto-grpc-server:
   extends: .docker_template
@@ -258,3 +269,9 @@ deploy-tac-warning:
   needs: ["test_tac-warning"]
   variables:
     COMPONENT: "tac-warning"
+
+deploy-clea:
+  extends: .deploy_template
+  needs: ["test_clea"]
+  variables:
+    COMPONENT: "clea"
