@@ -88,6 +88,7 @@ build_clea:
   extends: .build_template
   variables:
     COMPONENT: "clea"
+  allow_failure: true
 
 test_tac-warning:
   extends: .test_template
@@ -120,6 +121,7 @@ test_clea:
   needs: ["build_clea"]
   variables:
     COMPONENT: "clea"
+  allow_failure: true
 
 docker-robert-crypto-grpc-server:
   extends: .docker_template
@@ -275,3 +277,4 @@ deploy-clea:
   needs: ["test_clea"]
   variables:
     COMPONENT: "clea"
+  allow_failure: true
