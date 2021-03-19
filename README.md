@@ -81,6 +81,19 @@ Sauf mention contraire, les composants du backend TousAntiCovid sont publiés so
 * La [liste des sous-projets déjà publiés](https://gitlab.inria.fr/stopcovid19)
 
 
+#Maven configuration
+In order to access the Gitlab package registry from your dev laptop
+* First generate a private token from your GitLab account : [official documentation](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#creating-a-personal-access-token)
+* Customize your maven settings: 
+    * add the following repository :
+
+            <repository>
+              <id>gitlab-maven-inria</id>
+              <url>https://gitlab.inria.fr/api/v4/projects/25110/packages/maven</url>
+            </repository>
+      
+    * authenticate to the package registry using the private token : [official documentation](https://docs.gitlab.com/ee/user/packages/maven_repository/#authenticate-to-the-package-registry-with-maven) 
+
 #Integration tests
 The integration tests are automatically run on *develop* and *master* branches, and tags.
 
