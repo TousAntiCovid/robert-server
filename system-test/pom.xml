@@ -310,7 +310,7 @@
         <dependency>
             <groupId>fr.gouv.stopc</groupId>
             <artifactId>robert-crypto-grpc-server</artifactId>
-            <version>${robert-crypto-grpc-server.version}</version>
+            <version>1.10.0</version>
         </dependency>
 
         <!--Added required dependencies due to : https://github.com/rest-assured/rest-assured/issues/1168 -->
@@ -336,4 +336,23 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+    <repositories>
+        <repository>
+            <id>gitlab-maven</id>
+            <!--suppress UnresolvedMavenProperty -->
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>gitlab-maven</id>
+            <!--suppress UnresolvedMavenProperty -->
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </repository>
+        <snapshotRepository>
+            <id>gitlab-maven</id>
+            <!--suppress UnresolvedMavenProperty -->
+            <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

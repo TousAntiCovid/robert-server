@@ -86,3 +86,6 @@ The integration tests are automatically run on *develop* and *master* branches, 
 
 If one wants to run it on a feature branch, one must manually trigger the pipeline on the selected branch with the 
 following variable `INTEGRATION_TESTS` set to `true`.
+
+Integration tests have a dependency on robert-crypto-grpc-server. This version needs to be present in the gitlab package 
+repository. There is currently no way to deploy a new version and use it in the same pipeline.
