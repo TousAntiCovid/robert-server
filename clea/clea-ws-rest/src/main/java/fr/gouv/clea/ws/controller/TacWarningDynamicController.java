@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import fr.gouv.clea.ws.api.TacWarningDynamicAPI;
+import fr.gouv.clea.ws.api.CleaWsRestAPI;
 import fr.gouv.clea.ws.dto.ReportResponse;
 import fr.gouv.clea.ws.dto.Reports;
 import fr.gouv.clea.ws.model.DecodedLocationSpecificPart;
@@ -16,12 +16,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
-public class TacWarningDynamicCtrl implements TacWarningDynamicAPI {
+public class TacWarningDynamicController implements CleaWsRestAPI {
 
     private final IReportService reportService;
 
     @Autowired
-    public TacWarningDynamicCtrl(IReportService reportService) {
+    public TacWarningDynamicController(IReportService reportService) {
         this.reportService = reportService;
     }
 

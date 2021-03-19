@@ -16,7 +16,7 @@ import static springfox.documentation.builders.RequestHandlerSelectors.basePacka
 
 @Configuration
 @EnableSwagger2
-public class SwaggerConf {
+public class SwaggerConfiguration {
 
     @Bean
     public Docket tacwdApi() {
@@ -27,7 +27,7 @@ public class SwaggerConf {
                 .build()
                 .apiInfo(
                         new ApiInfo(
-                                "TACW Dynamic",
+                                "Tous AntiCovid Cluster Exposure Verification (Cléa)",
                                 "#TOUSANTICOVID, TAC Warning Dynamic API",
                                 "1.0.0",
                                 null,

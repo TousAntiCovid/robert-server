@@ -8,14 +8,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.annotation.RequestScope;
 
 @Configuration
-public class SecurityConf {
+public class SecurityConfiguration {
 
     private final String serverAuthoritySecretKey;
 
     @Autowired
-    public SecurityConf(
-            @Value("${clea.conf.security.crypto.manualCTAuthoritySecretKey}") String serverAuthoritySecretKey
-    ) {
+    public SecurityConfiguration(
+            @Value("${clea.conf.security.crypto.manualCTAuthoritySecretKey}") String serverAuthoritySecretKey) {
         this.serverAuthoritySecretKey = serverAuthoritySecretKey;
     }
 

@@ -12,7 +12,7 @@ import fr.gouv.clea.ws.dto.Reports;
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )
-public interface TacWarningDynamicAPI {
+public interface CleaWsRestAPI {
 
     @ApiOperation(
             value = "Upload locations history",
@@ -51,7 +51,6 @@ public interface TacWarningDynamicAPI {
                     value = "JWT Bearer Token for authorization (provided by the Robert Server Report answer)",
                     required = true
             ) String jwtToken,
-
             Reports body
     );
 }
