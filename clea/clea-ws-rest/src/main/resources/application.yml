@@ -1,0 +1,19 @@
+clea:
+  conf:
+    duplicateScanThreshold: 10800 # in seconds
+    retentionDuration: 14 # in days
+    security:
+      crypto:
+        manualCTAuthoritySecretKey: 536efbdc5d8668d4a16e89059f15849fa979caf988841394eab1308f82d4e8e4
+      report:
+        checkAuthorization: true
+        robertJwtPublicKey: TODO
+kafka:
+  bootstrapAddress: localhost:8080
+  topic:
+    name: qrCodes
+    numPartitions: 1
+    replicationFactor: 1
+logging:
+  level:
+    fr.gouv.tacw: DEBUG

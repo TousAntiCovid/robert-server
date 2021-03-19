@@ -1,0 +1,87 @@
+openapi: 3.0.3
+info:
+  title: TACW Dynamic
+  description: "#TOUSANTICOVID, TAC Warning Dynamic API"
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Inferred Url
+tags:
+  - name: tacw
+    description: APIs for TACW Dynamic
+paths:
+  "/api/v1/report":
+    post:
+      tags:
+        - tacw
+      summary: Upload locations history
+      description: |
+        Upload a list of {qrCode, timestamp} tuples where :
+        * **qrCode**: QR code content encoded in Base64
+        * **qrCodeScanTime**: NTP timestamp when a user terminal scans a given QR code
+      operationId: reportUsingPOST
+      parameters:
+        - name: Authorization
+          in: header
+          description: JWT Bearer Token for authorization (provided by the Robert Server
+            Report answer)
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Reports"
+      responses:
+        '200':
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ReportResponse"
+              examples:
+                example-0:
+                  value: |-
+                    {
+                      "success": "true",
+                      "message": "2 qr processed, 0 rejected"
+                    }
+        '400':
+          description: Bad Request
+        '401':
+          description: Invalid Authentication
+        '500':
+          description: Internal Error
+components:
+  schemas:
+    Report:
+      title: Report
+      type: object
+      properties:
+        qrCode:
+          type: string
+        qrCodeScanTime:
+          type: integer
+          format: int64
+    ReportResponse:
+      title: ReportResponse
+      type: object
+      properties:
+        message:
+          type: string
+        success:
+          type: boolean
+    Reports:
+      title: Reports
+      type: object
+      properties:
+        reports:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Report"
