@@ -10,10 +10,11 @@ clea:
         robertJwtPublicKey: TODO
 kafka:
   bootstrapAddress: localhost:8080
-  topic:
-    name: qrCodes
-    numPartitions: 1
-    replicationFactor: 1
+  producer:
+    topic:
+      name: qrCodes
+      numPartitions: 1
+      replicationFactor: 1
 logging:
   level:
     fr.gouv.tacw: DEBUG

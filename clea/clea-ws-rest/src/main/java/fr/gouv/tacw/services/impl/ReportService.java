@@ -4,7 +4,7 @@ import fr.gouv.tacw.data.DecodedLocationSpecificPart;
 import fr.gouv.tacw.dtos.Report;
 import fr.gouv.tacw.dtos.Reports;
 import fr.gouv.tacw.services.IAuthorizationService;
-import fr.gouv.tacw.services.IProcessService;
+import fr.gouv.tacw.services.IProducerService;
 import fr.gouv.tacw.services.IReportService;
 import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.LocationSpecificPart;
@@ -30,7 +30,7 @@ public class ReportService implements IReportService {
 
     private final LocationSpecificPartDecoder decoder;
 
-    private final IProcessService processService;
+    private final IProducerService processService;
 
     private final IAuthorizationService authorizationService;
 
@@ -39,7 +39,7 @@ public class ReportService implements IReportService {
             @Value("${clea.conf.retentionDuration}") int retentionDuration,
             @Value("${clea.conf.duplicateScanThreshold}") long duplicateScanThreshold,
             LocationSpecificPartDecoder decoder,
-            IProcessService processService,
+            IProducerService processService,
             IAuthorizationService authorizationService
     ) {
         this.retentionDuration = retentionDuration;
@@ -58,7 +58,7 @@ public class ReportService implements IReportService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         List<DecodedLocationSpecificPart> pruned = this.pruneDuplicates(verified);
-        processService.process(pruned);
+        processService.produce(List.of());
         return pruned;
     }
 
