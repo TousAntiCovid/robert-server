@@ -10,7 +10,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: ${TACW_SERVER_MONITORING_ENDPOINTS:health,metrics}
+        include: ${CLEA_SERVER_MONITORING_ENDPOINTS:health,metrics}
 
 clea:
   conf:
@@ -30,4 +30,4 @@ kafka:
     replicationFactor: 1
 logging:
   level:
-    fr.gouv.tacw: DEBUG
+    fr.gouv.clea.ws: DEBUG
