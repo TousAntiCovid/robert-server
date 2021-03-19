@@ -26,8 +26,7 @@ public class AuthorizationService implements IAuthorizationService {
     @Autowired
     public AuthorizationService(
             @Value("${clea.conf.security.report.checkAuthorization}") boolean checkAuthorization,
-            @Value("${clea.conf.security.report.robertJwtPublicKey}") String robertJwtPublicKey
-    ) {
+            @Value("${clea.conf.security.report.robertJwtPublicKey}") String robertJwtPublicKey) {
         this.checkAuthorization = checkAuthorization;
         this.robertJwtPublicKey = robertJwtPublicKey;
     }

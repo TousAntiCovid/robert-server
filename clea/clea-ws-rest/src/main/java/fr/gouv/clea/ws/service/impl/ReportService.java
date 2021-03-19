@@ -1,7 +1,17 @@
 package fr.gouv.clea.ws.service.impl;
 
-import fr.gouv.clea.ws.dto.Report;
-import fr.gouv.clea.ws.dto.Reports;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import fr.gouv.clea.ws.dto.Visit;
 import fr.gouv.clea.ws.model.DecodedLocationSpecificPart;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProcessService;
@@ -11,14 +21,6 @@ import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -40,8 +42,7 @@ public class ReportService implements IReportService {
             @Value("${clea.conf.duplicateScanThreshold}") long duplicateScanThreshold,
             LocationSpecificPartDecoder decoder,
             IProcessService processService,
-            IAuthorizationService authorizationService
-    ) {
+            IAuthorizationService authorizationService) {
         this.retentionDuration = retentionDuration;
         this.duplicateScanThreshold = duplicateScanThreshold;
         this.decoder = decoder;
@@ -50,11 +51,13 @@ public class ReportService implements IReportService {
     }
 
     @Override
-    public List<DecodedLocationSpecificPart> report(String jwtToken, Reports body) {
+    public List<DecodedLocationSpecificPart> report(String jwtToken, List<Visit> visits) {
         this.authorizationService.checkAuthorization(jwtToken);
 
-        List<DecodedLocationSpecificPart> verified = body.getReports().stream()
-                .map(this::verify)
+        List<DecodedLocationSpecificPart> verified = visits.stream()
+                .filter(visit -> ! this.isOutdated(visit))
+                .filter(visit -> ! this.isFuture(visit))
+                .map(this::decode)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         List<DecodedLocationSpecificPart> pruned = this.pruneDuplicates(verified);
@@ -62,52 +65,56 @@ public class ReportService implements IReportService {
         return pruned;
     }
 
-    private DecodedLocationSpecificPart verify(Report report) {
+    private DecodedLocationSpecificPart decode(Visit visit) {
         try {
-            LocationSpecificPart lsp = decoder.decrypt(report.getQrCode());
-            if (!this.isCurrent(report)) {
-                log.warn("report: " + this.truncateQrCode(report.getQrCode()) + "... rejected: Outdated");
-                return null;
-            } else if (this.isFuture(report)) {
-                log.warn("report: " + this.truncateQrCode(report.getQrCode()) + "... rejected: In future");
-                return null;
-            } else {
-                return DecodedLocationSpecificPart.fromLocationSpecificPart(lsp, report.getQrCodeScanTime(), report.getQrCode());
-            }
+            LocationSpecificPart lsp = decoder.decrypt(visit.getQrCode());
+            return DecodedLocationSpecificPart.fromLocationSpecificPart(lsp, visit.getQrCodeScanTime(), visit.getQrCode());
         } catch (CleaEncryptionException e) {
-            log.warn("report: " + this.truncateQrCode(report.getQrCode()) + "... rejected: Invalid format");
+            log.warn("report: {}... rejected: Invalid format", this.truncateQrCode(visit.getQrCode()));
             return null;
         }
     }
 
-    private boolean isCurrent(Report report) {
-        return ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(report.getQrCodeScanTime()), Instant.now()) <= retentionDuration; // FIXME < OR <=
+    private boolean isOutdated(Visit visit) {
+        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTime()), Instant.now()) > retentionDuration; // FIXME < OR <=
+        if (outdated) {
+            log.warn("report: {} ... rejected: Outdated", this.truncateQrCode(visit.getQrCode()));
+        }
+        return outdated;
     }
 
-    private boolean isFuture(Report report) {
-        return TimeUtils.instantFromTimestamp(report.getQrCodeScanTime()).isAfter(Instant.now());
+    private boolean isFuture(Visit visit) {
+        boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTime()).isAfter(Instant.now());
+        if (future) {
+            log.warn("report: {} ... rejected: In future", this.truncateQrCode(visit.getQrCode()));
+        }
+        return future;
+    }
+    
+    private boolean isDuplicatedScan(DecodedLocationSpecificPart lsp, List<DecodedLocationSpecificPart> cleaned) {
+        return cleaned.stream().anyMatch(cleanedLsp -> this.isDuplicatedScan(lsp, cleanedLsp));
     }
 
-    private List<DecodedLocationSpecificPart> pruneDuplicates(List<DecodedLocationSpecificPart> dlsParts) {
-        Map<UUID, DecodedLocationSpecificPart> cleaned = new HashMap<>();
-        dlsParts.forEach(it -> {
-            UUID currentUIID = it.getLocationTemporaryPublicId();
-            if (cleaned.containsKey(currentUIID)) {
-                long existingScan = cleaned.get(currentUIID).getQrCodeScanTime();
-                long currentScan = it.getQrCodeScanTime();
-                if (Math.abs(existingScan - currentScan) <= duplicateScanThreshold) { // FIXME < OR <=
-                    if (currentScan < existingScan) {
-                        log.warn("report: " + this.truncateQrCode(it.getQrCode()) + "... rejected: Duplicate");
-                        cleaned.replace(currentUIID, it);
-                    }
-                } else {
-                    cleaned.put(currentUIID, it);
-                }
-            } else {
-                cleaned.put(currentUIID, it);
+    private boolean isDuplicatedScan(DecodedLocationSpecificPart one, DecodedLocationSpecificPart other) {
+        if (one.getLocationTemporaryPublicId() != other.getLocationTemporaryPublicId()) {
+            return false;
+        }
+        
+        if (Math.abs(one.getQrCodeScanTime() - other.getQrCodeScanTime()) <= duplicateScanThreshold) { // FIXME < OR <=
+            log.warn("report: {}... rejected: Duplicate", this.truncateQrCode(one.getQrCode()));
+            return true;
+        }
+        return false;
+    }
+    
+    private List<DecodedLocationSpecificPart> pruneDuplicates(List<DecodedLocationSpecificPart> locationSpecificParts) {
+        List<DecodedLocationSpecificPart> cleaned = new ArrayList<>();
+        locationSpecificParts.forEach(it -> {
+            if ( !this.isDuplicatedScan(it, cleaned) ) {
+                cleaned.add(it);
             }
         });
-        return new ArrayList<>(cleaned.values());
+        return cleaned;
     }
 
     private String truncateQrCode(String qrCode) {

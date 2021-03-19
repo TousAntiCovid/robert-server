@@ -1,10 +1,18 @@
 package fr.gouv.clea.ws.api;
 
-import io.swagger.annotations.*;
+import java.util.List;
+
 import org.springframework.http.MediaType;
 
+import fr.gouv.clea.ws.dto.Visit;
 import fr.gouv.clea.ws.dto.ReportResponse;
-import fr.gouv.clea.ws.dto.Reports;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Example;
+import io.swagger.annotations.ExampleProperty;
 
 @Api(
         tags = "tacw",
@@ -48,9 +56,9 @@ public interface CleaWsRestAPI {
     )
     ReportResponse report(
             @ApiParam(
-                    value = "JWT Bearer Token for authorization (provided by the Robert Server Report answer)",
+                    value = "JWT Bearer Token for authorization (provided by the Robert Server Visit answer)",
                     required = true
             ) String jwtToken,
-            Reports body
+            List<Visit> visits
     );
 }

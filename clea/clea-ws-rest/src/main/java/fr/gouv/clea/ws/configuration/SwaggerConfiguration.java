@@ -19,7 +19,7 @@ import static springfox.documentation.builders.RequestHandlerSelectors.basePacka
 public class SwaggerConfiguration {
 
     @Bean
-    public Docket tacwdApi() {
+    public Docket cleaApi() {
         return new Docket(DocumentationType.OAS_30)
                 .select()
                 .apis(basePackage("fr.gouv.clea.ws"))

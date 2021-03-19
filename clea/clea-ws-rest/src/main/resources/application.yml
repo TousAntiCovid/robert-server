@@ -1,3 +1,17 @@
+controller:
+  path:
+    prefix: /api/clea
+server:
+  port: 8088
+
+    
+# Available endpoints for the monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${TACW_SERVER_MONITORING_ENDPOINTS:health,metrics}
+
 clea:
   conf:
     duplicateScanThreshold: 10800 # in seconds

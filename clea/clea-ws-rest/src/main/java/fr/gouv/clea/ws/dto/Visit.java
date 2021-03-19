@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Report {
+public class Visit {
     private String qrCode;
     private Long qrCodeScanTime; // t_qrScan
 }
