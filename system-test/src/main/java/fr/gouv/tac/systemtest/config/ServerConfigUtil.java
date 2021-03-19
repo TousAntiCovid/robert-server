@@ -6,21 +6,20 @@ public class ServerConfigUtil {
 	
 	public static String getRobertServerPath() {
 		String roberServerPath = Config.getProperty("ROBERT_BASE_URL","http://127.0.0.1:8086/api");
-        String roberServerVersion = Config.getProperty("ROBERT_VERSION","v4");
+        String roberServerVersion = Config.getProperty("ROBERT_VERSION","v5");
         roberServerPath = roberServerPath+ "/" + roberServerVersion;
         return roberServerPath;
 	}
 
 	public static String getSubmissionCodeServerPath() {
-		String submissionCodeServerPath = Config.getProperty("SUBMISSION_CODE_SERVER_BASE_URL","http://127.0.0.1:8086/api");
+		String submissionCodeServerPath = Config.getProperty("SUBMISSION_CODE_SERVER_BASE_URL","http://127.0.0.1:8087/api");
         String submissionCodeServerVersion = Config.getProperty("SUBMISSION_CODE_SERVER_VERSION","v1");
         submissionCodeServerPath = submissionCodeServerPath+ "/" + submissionCodeServerVersion;
         return submissionCodeServerPath;
 	}
 
 	public static String getRobertServerRegisterURL() {
-        String roberServerRegisterURL = getRobertServerPath()+ "/register";
-        return roberServerRegisterURL;
+        return getRobertServerPath()+ "/register";
 	}
 	
 	public static String getTACWarningServerPath() {

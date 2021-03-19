@@ -191,14 +191,11 @@ integration_tests:
     - docker network ls
     - docker ps
     - cd $CI_PROJECT_DIR/system-test
-    - "export ROBERT_HOST=127.0.0.1"
-    - "export ROBERT_PORT=8086"
-    - "export TACW_HOST=127.0.0.1"
-    - "export TACW_PORT=8088"
-    - "export ROBERT_BASE_URL=http://$ROBERT_HOST:$ROBERT_PORT/api/"
-    - "export TACW_BASE_URL=http://$TACW_HOST:$TACW_PORT/api/tac-warning"
+    - "export ROBERT_BASE_URL=http://127.0.0.1:8086/api"
+    - "export SUBMISSION_CODE_SERVER_BASE_URL=http://127.0.0.1:8087/api"
+    - "export TACW_BASE_URL=http://127.0.0.1:8088/api"
     - echo "ROBERT_BASE_URL=$ROBERT_BASE_URL" > src/test/resources/config.properties
-    - echo "ROBERT_VERSION=v4" >> src/test/resources/config.properties
+    - echo "ROBERT_VERSION=v5" >> src/test/resources/config.properties
     - echo "TACW_BASE_URL=$TACW_BASE_URL" >> src/test/resources/config.properties
     - echo "SALT_RANGE=1000" >> src/test/resources/config.properties
     - echo "TIME_ROUNDING=900" >> src/test/resources/config.properties
