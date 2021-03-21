@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import fr.gouv.clea.ws.api.CleaWsRestAPI;
 import fr.gouv.clea.ws.dto.ReportResponse;
 import fr.gouv.clea.ws.dto.Visit;
-import fr.gouv.clea.ws.model.DecodedLocationSpecificPart;
+import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.utils.UriConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class TacWarningDynamicController implements CleaWsRestAPI {
     public ReportResponse report(
             @RequestHeader(value = "Authorization", required = false) String jwtToken,
             @RequestBody List<Visit> visits) {
-        List<DecodedLocationSpecificPart> reported = reportService.report(jwtToken, visits);
+        List<DecodedVisit> reported = reportService.report(jwtToken, visits);
         String message = visits.size() - reported.size() + " reports processed, " + reported.size() + " rejected";
         log.info(message);
         return new ReportResponse(true, message);

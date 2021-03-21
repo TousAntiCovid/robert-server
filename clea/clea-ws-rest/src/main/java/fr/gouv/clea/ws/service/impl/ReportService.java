@@ -3,6 +3,7 @@ package fr.gouv.clea.ws.service.impl;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -12,12 +13,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.clea.ws.dto.Visit;
-import fr.gouv.clea.ws.model.DecodedLocationSpecificPart;
+import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProcessService;
 import fr.gouv.clea.ws.service.IReportService;
-import fr.inria.clea.lsp.CleaEncryptionException;
-import fr.inria.clea.lsp.LocationSpecificPart;
+import fr.inria.clea.lsp.CleaEncodingException;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -51,25 +52,26 @@ public class ReportService implements IReportService {
     }
 
     @Override
-    public List<DecodedLocationSpecificPart> report(String jwtToken, List<Visit> visits) {
+    public List<DecodedVisit> report(String jwtToken, List<Visit> visits) {
         this.authorizationService.checkAuthorization(jwtToken);
 
-        List<DecodedLocationSpecificPart> verified = visits.stream()
+        List<DecodedVisit> verified = visits.stream()
                 .filter(visit -> ! this.isOutdated(visit))
                 .filter(visit -> ! this.isFuture(visit))
                 .map(this::decode)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        List<DecodedLocationSpecificPart> pruned = this.pruneDuplicates(verified);
+        List<DecodedVisit> pruned = this.pruneDuplicates(verified);
         processService.process(pruned);
         return pruned;
     }
 
-    private DecodedLocationSpecificPart decode(Visit visit) {
+    private DecodedVisit decode(Visit visit) {
         try {
-            LocationSpecificPart lsp = decoder.decrypt(visit.getQrCode());
-            return DecodedLocationSpecificPart.fromLocationSpecificPart(lsp, visit.getQrCodeScanTime(), visit.getQrCode());
-        } catch (CleaEncryptionException e) {
+            byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());
+            EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
+            return new DecodedVisit(visit.getQrCodeScanTime(), encryptedLocationSpecificPart);
+        } catch (CleaEncodingException e) {
             log.warn("report: {}... rejected: Invalid format", this.truncateQrCode(visit.getQrCode()));
             return null;
         }
@@ -91,24 +93,24 @@ public class ReportService implements IReportService {
         return future;
     }
     
-    private boolean isDuplicatedScan(DecodedLocationSpecificPart lsp, List<DecodedLocationSpecificPart> cleaned) {
+    private boolean isDuplicatedScan(DecodedVisit lsp, List<DecodedVisit> cleaned) {
         return cleaned.stream().anyMatch(cleanedLsp -> this.isDuplicatedScan(lsp, cleanedLsp));
     }
 
-    private boolean isDuplicatedScan(DecodedLocationSpecificPart one, DecodedLocationSpecificPart other) {
+    private boolean isDuplicatedScan(DecodedVisit one, DecodedVisit other) {
         if (one.getLocationTemporaryPublicId() != other.getLocationTemporaryPublicId()) {
             return false;
         }
         
         if (Math.abs(one.getQrCodeScanTime() - other.getQrCodeScanTime()) <= duplicateScanThreshold) { // FIXME < OR <=
-            log.warn("report: {}... rejected: Duplicate", this.truncateQrCode(one.getQrCode()));
+            log.warn("report: {} {} rejected: Duplicate", one.getLocationTemporaryPublicId(), one.getQrCodeScanTime());
             return true;
         }
         return false;
     }
     
-    private List<DecodedLocationSpecificPart> pruneDuplicates(List<DecodedLocationSpecificPart> locationSpecificParts) {
-        List<DecodedLocationSpecificPart> cleaned = new ArrayList<>();
+    private List<DecodedVisit> pruneDuplicates(List<DecodedVisit> locationSpecificParts) {
+        List<DecodedVisit> cleaned = new ArrayList<>();
         locationSpecificParts.forEach(it -> {
             if ( !this.isDuplicatedScan(it, cleaned) ) {
                 cleaned.add(it);

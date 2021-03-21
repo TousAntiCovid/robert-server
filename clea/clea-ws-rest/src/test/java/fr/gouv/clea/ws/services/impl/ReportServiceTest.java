@@ -12,19 +12,22 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import fr.gouv.clea.ws.dto.Visit;
-import fr.gouv.clea.ws.model.DecodedLocationSpecificPart;
+import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProcessService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.service.impl.ReportService;
-import fr.inria.clea.lsp.CleaEncryptionException;
+import fr.inria.clea.lsp.CleaEncodingException;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.LocationSpecificPartEncoder;
 import fr.inria.clea.lsp.utils.TimeUtils;
 
 class ReportServiceTest {
@@ -49,19 +52,16 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test successful report with no rejection")
-    void report() throws CleaEncryptionException {
-        List<Visit> visits = List.of(
-            new Visit("qr1", TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))), // pass
-            new Visit("qr2", TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))), // pass
-            new Visit("qr3", TimeUtils.ntpTimestampFromInstant(now)) /* pass */);
+    void report() throws CleaEncodingException {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
-        when(decoder.decrypt("qr1")).thenReturn(createLocationSpecificPart(uuid1));
-        when(decoder.decrypt("qr2")).thenReturn(createLocationSpecificPart(uuid2));
-        when(decoder.decrypt("qr3")).thenReturn(createLocationSpecificPart(uuid3));
+        List<Visit> visits = List.of(
+            newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))), // pass
+            newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))), // pass
+            newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now)) /* pass */);
         
-        List<DecodedLocationSpecificPart> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", visits);
         
         assertThat(processed.size()).isEqualTo(3);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findAny()).isPresent();
@@ -71,19 +71,17 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with non valid qr codes")
-    void testWithNonValidReports() throws CleaEncryptionException {
-        List<Visit> visits = List.of(
-            new Visit("qr1", TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))), // pass
-            new Visit("qr2", TimeUtils.ntpTimestampFromInstant(now)), // pass
-            new Visit("qr3", TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.DAYS))) /* don't pass */ );
+    void testWithNonValidReports() throws CleaEncodingException {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
-        when(decoder.decrypt("qr1")).thenReturn(createLocationSpecificPart(uuid1));
-        when(decoder.decrypt("qr2")).thenReturn(createLocationSpecificPart(uuid2));
-        when(decoder.decrypt("qr3")).thenThrow(new CleaEncryptionException(new Exception()));
+        List<Visit> visits = List.of(
+            newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))), // pass
+            newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now)), // pass
+            newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.DAYS))) /* don't pass */ );
 
-        List<DecodedLocationSpecificPart> processed = reportService.report("", visits);
+
+        List<DecodedVisit> processed = reportService.report("", visits);
         
         assertThat(processed.size()).isEqualTo(2);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findAny()).isPresent();
@@ -93,22 +91,19 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with outdated scans")
-    void testWithOutdatedReports() throws CleaEncryptionException {
-        List<Visit> visits = List.of(
-                        new Visit("qr1", TimeUtils.ntpTimestampFromInstant(now.minus(15, ChronoUnit.DAYS))), // don't pass
-                        new Visit("qr2", TimeUtils.ntpTimestampFromInstant(now.minus(14, ChronoUnit.DAYS))), // pass
-                        new Visit("qr3", TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))), // pass
-                        new Visit("qr4", TimeUtils.ntpTimestampFromInstant(now)) /* pass */);
+    void testWithOutdatedReports() throws CleaEncodingException {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
         UUID uuid4 = UUID.randomUUID();
-        when(decoder.decrypt("qr1")).thenReturn(createLocationSpecificPart(uuid1));
-        when(decoder.decrypt("qr2")).thenReturn(createLocationSpecificPart(uuid2));
-        when(decoder.decrypt("qr3")).thenReturn(createLocationSpecificPart(uuid3));
-        when(decoder.decrypt("qr4")).thenReturn(createLocationSpecificPart(uuid4));
+        List<Visit> visits = List.of(
+            newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(15, ChronoUnit.DAYS))), // don't pass
+            newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.minus(14, ChronoUnit.DAYS))), // pass
+            newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))), // pass
+            newVisit(uuid4, TimeUtils.ntpTimestampFromInstant(now)) /* pass */);
+
         
-        List<DecodedLocationSpecificPart> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", visits);
         
         assertThat(processed.size()).isEqualTo(3);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findAny()).isNotPresent();
@@ -119,16 +114,14 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with future scans")
-    void testWithFutureReports() throws CleaEncryptionException {
-        List<Visit> visits = List.of(
-            new Visit("qr1", TimeUtils.ntpTimestampFromInstant(now)), // pass
-            new Visit("qr2", TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.SECONDS))) /* don't pass */);
+    void testWithFutureReports() throws CleaEncodingException {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
-        when(decoder.decrypt("qr1")).thenReturn(createLocationSpecificPart(uuid1));
-        when(decoder.decrypt("qr2")).thenReturn(createLocationSpecificPart(uuid2));
+        List<Visit> visits = List.of(
+            newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now)), // pass
+            newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.SECONDS))) /* don't pass */);
         
-        List<DecodedLocationSpecificPart> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", visits);
         
         assertThat(processed.size()).isEqualTo(1);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findAny()).isPresent();
@@ -137,25 +130,19 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with duplicated qr codes")
-    void testWithDuplicates() throws CleaEncryptionException {
-        List<Visit> visits = List.of(
-            new Visit("qrA1", TimeUtils.ntpTimestampFromInstant(now.minus(4, ChronoUnit.HOURS))), // pass
-            new Visit("qrA2", TimeUtils.ntpTimestampFromInstant(now)), // pass
-            new Visit("qrB1", TimeUtils.ntpTimestampFromInstant(now.minus(3, ChronoUnit.HOURS))), // pass
-            new Visit("qrB2", TimeUtils.ntpTimestampFromInstant(now)), // don't pass
-            new Visit("qrC1", TimeUtils.ntpTimestampFromInstant(now)), // pass
-            new Visit("qrC2", TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */ );
+    void testWithDuplicates() throws CleaEncodingException {
         UUID uuidA = UUID.randomUUID();
         UUID uuidB = UUID.randomUUID();
         UUID uuidC = UUID.randomUUID();
-        when(decoder.decrypt("qrA1")).thenReturn(createLocationSpecificPart(uuidA));
-        when(decoder.decrypt("qrA2")).thenReturn(createLocationSpecificPart(uuidA));
-        when(decoder.decrypt("qrB1")).thenReturn(createLocationSpecificPart(uuidB));
-        when(decoder.decrypt("qrB2")).thenReturn(createLocationSpecificPart(uuidB));
-        when(decoder.decrypt("qrC1")).thenReturn(createLocationSpecificPart(uuidC));
-        when(decoder.decrypt("qrC2")).thenReturn(createLocationSpecificPart(uuidC));
+        List<Visit> visits = List.of(
+            newVisit(uuidA, TimeUtils.ntpTimestampFromInstant(now.minus(4, ChronoUnit.HOURS))), // pass
+            newVisit(uuidA, TimeUtils.ntpTimestampFromInstant(now)), // pass
+            newVisit(uuidB, TimeUtils.ntpTimestampFromInstant(now.minus(3, ChronoUnit.HOURS))), // pass
+            newVisit(uuidB, TimeUtils.ntpTimestampFromInstant(now)), // don't pass
+            newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)), // pass
+            newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */ );
         
-        List<DecodedLocationSpecificPart> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", visits);
         
         assertThat(processed.size()).isEqualTo(4);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuidA)).count()).isEqualTo(2);
@@ -163,10 +150,20 @@ class ReportServiceTest {
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuidC)).count()).isEqualTo(1);
     }
 
-    private static LocationSpecificPart createLocationSpecificPart(UUID locationTemporaryPublicId) {
-        return LocationSpecificPart.builder()
+    private EncryptedLocationSpecificPart createEncryptedLocationSpecificPart(UUID locationTemporaryPublicId) {
+        return EncryptedLocationSpecificPart.builder()
                 .locationTemporaryPublicId(locationTemporaryPublicId)
                 .build();
+    }
+    
+    private Visit newVisit(UUID uuid, Long qrCodeScanTime) throws CleaEncodingException {
+        LocationSpecificPart lsp = LocationSpecificPart.builder()
+                .locationTemporaryPublicId(uuid)
+                .build();
+        byte[] qrCodeHeader = new LocationSpecificPartEncoder(null).binaryEncodedHeader(lsp);
+        String qrCode = Base64.encodeBase64String(qrCodeHeader);
+        when(decoder.decodeHeader(qrCodeHeader)).thenReturn(createEncryptedLocationSpecificPart(uuid));
+        return new Visit(qrCode, qrCodeScanTime);
     }
 
 }
