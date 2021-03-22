@@ -28,7 +28,7 @@ public class SwaggerConfiguration {
                 .apiInfo(
                         new ApiInfo(
                                 "Tous AntiCovid Cluster Exposure Verification (Cléa)",
-                                "#TOUSANTICOVID, TAC Warning Dynamic API",
+                                "#TOUSANTICOVID, Cléa API",
                                 "1.0.0",
                                 null,
                                 new Contact(null, null, "stopcovid@inria.fr"),
@@ -37,7 +37,7 @@ public class SwaggerConfiguration {
                                 List.of()
                         )
                 )
-                .groupName("tacwd")
+                .groupName("clea")
                 .globalResponses(HttpMethod.GET, List.of())
                 .globalResponses(HttpMethod.POST, List.of());
     }

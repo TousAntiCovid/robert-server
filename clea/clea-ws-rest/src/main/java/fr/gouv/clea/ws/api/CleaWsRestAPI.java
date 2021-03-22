@@ -13,13 +13,12 @@ import io.swagger.annotations.Example;
 import io.swagger.annotations.ExampleProperty;
 
 @Api(
-        tags = "tacw",
-        description = "APIs for TACW Dynamic",
+        tags = "clea",
+        description = "Clea API",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )
 public interface CleaWsRestAPI {
-
     @ApiOperation(
             value = "Upload locations history",
             notes = "" +
