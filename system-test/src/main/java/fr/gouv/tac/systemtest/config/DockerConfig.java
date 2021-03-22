@@ -15,6 +15,7 @@ public class DockerConfig {
     public static final String ROBERT_SERVER_BATCH_IMAGE_NAME_KEY = "ROBERT_SERVER_BATCH_IMAGE_NAME";
     public static final String ROBERT_SERVER_BATCH_IMAGE_VERSION_KEY = "ROBERT_SERVER_BATCH_IMAGE_VERSION";
     public static final String DOCKERD_ADDRESS_KEY = "DOCKERD_ADDRESS";
+    public static final String ROBERT_SERVER_BATCH_CONTAINER_NAME_KEY = "ROBERT_SERVER_BATCH_CONTAINER_NAME";
 
     private final String configFilePath = "/docker/";
 

@@ -66,7 +66,7 @@ public class DockerUtils {
 
         List<Container> containers = dockerClient.listContainersCmd()
                 .withShowAll(true)
-                .withNameFilter(Collections.singletonList("robert-server-batch-functional-test"))
+                .withNameFilter(Collections.singletonList(DockerConfig.getProperty(ROBERT_SERVER_BATCH_CONTAINER_NAME_KEY)))
                 .exec();
 
         for (Container container : containers) {
@@ -93,7 +93,7 @@ public class DockerUtils {
         env.add(String.join("=", ROBERT_SCORING_BATCH_MODE_KEY, batchMode.name()));
 
         CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(batchServerImage.getRepoTags()[0])
-                .withName("robert-server-batch-functional-test");
+                .withName(DockerConfig.getProperty(ROBERT_SERVER_BATCH_CONTAINER_NAME_KEY));
 
         if (isDebug) {
             env.add("JAVA_OPTS=-Xrunjdwp:transport=dt_socket,address=19091,server=y,suspend=y");
