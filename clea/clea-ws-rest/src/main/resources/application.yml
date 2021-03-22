@@ -26,8 +26,6 @@ kafka:
   bootstrapAddress: localhost:8080
   topic:
     name: cleaQrCodes
-    numPartitions: 1
-    replicationFactor: 1
 logging:
   level:
-    fr.gouv.clea.ws: WARNING
+    fr.gouv.clea.ws: WARN

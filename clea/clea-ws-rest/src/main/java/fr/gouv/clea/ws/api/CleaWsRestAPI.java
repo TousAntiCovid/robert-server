@@ -53,7 +53,7 @@ public interface CleaWsRestAPI {
     )
     ReportResponse report(
             @ApiParam(
-                    value = "JWT Bearer Token for authorization (provided by the Robert Server Visit answer)",
+                    value = "JWT Bearer Token for authorization (provided by the Robert Server /report answer)",
                     required = true
             ) String jwtToken,
             ReportRequest reportRequestVo

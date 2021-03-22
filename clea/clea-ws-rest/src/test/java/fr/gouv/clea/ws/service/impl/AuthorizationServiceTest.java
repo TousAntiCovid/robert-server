@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.security.KeyPair;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import fr.gouv.clea.ws.exception.TacWarningUnauthorizedException;
+import fr.gouv.clea.ws.exception.CleaUnauthorizedException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Encoders;
@@ -30,31 +32,31 @@ class AuthorizationServiceTest {
 
     @Test
     void testGivenAnInvalidJwtBearerWhenRequestingAuthorizationThenAuthorizationFails() {
-        assertThatExceptionOfType(TacWarningUnauthorizedException.class)
+        assertThatExceptionOfType(CleaUnauthorizedException.class)
                 .isThrownBy(() -> authorizationService.checkAuthorization("unauthorized"));
     }
 
     @Test
     void testGivenAValidJwtBearerWhenRequestingAuthorizationThenAuthorizationSucceeds() {
-        long jwtLifeTime = 5 * 60000;
-        Date now = new Date();
-        Date expiration = new Date(now.getTime() + jwtLifeTime * 60000);
+        long jwtLifeTime = 5;
+        Instant now = Instant.now();
+        Instant expiration = now.plus(jwtLifeTime, ChronoUnit.MINUTES);
         boolean isAuthorized = authorizationService.checkAuthorization(this.newJwtToken(now, expiration));
         assertThat(isAuthorized).isTrue();
     }
 
     @Test
     public void testGivenAValidJwtBearerAlreadyExpiredWhenRequestingAuthorizationThenAuthorizationFails() {
-        Date now = new Date();
-        assertThatExceptionOfType(TacWarningUnauthorizedException.class)
+        Instant now = Instant.now();
+        assertThatExceptionOfType(CleaUnauthorizedException.class)
                 .isThrownBy(() -> authorizationService.checkAuthorization(this.newJwtToken(now, now)));
     }
 
-    protected String newJwtToken(Date now, Date expiration) {
+    protected String newJwtToken(Instant now, Instant expiration) {
         return Jwts.builder()
                 .setHeaderParam("type", "JWT")
-                .setIssuedAt(now)
-                .setExpiration(expiration)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(expiration))
                 .signWith(keyPair.getPrivate(), SignatureAlgorithm.RS256)
                 .compact();
     }

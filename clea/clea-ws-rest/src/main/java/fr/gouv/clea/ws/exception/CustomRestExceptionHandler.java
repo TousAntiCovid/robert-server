@@ -52,8 +52,7 @@ public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
             MethodArgumentNotValidException exception,
             HttpHeaders headers,
             HttpStatus status,
-            WebRequest webRequest
-    ) {
+            WebRequest webRequest) {
         this.badArgumentsLoggerService.logValidationErrorMessage(exception.getBindingResult(), webRequest);
         return this.newResponseEntity(null, status);
     }
@@ -64,7 +63,7 @@ public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
             HttpHeaders headers,
             HttpStatus status,
             WebRequest request) {
-        log.info("Bad Request: ", ex.getMessage());
+        log.warn("Bad Request: ", ex.getMessage());
         log.debug("Bad Request: ", ex);
 
         return this.newResponseEntity(null, HttpStatus.BAD_REQUEST);

@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import fr.gouv.clea.ws.exception.TacWarningUnauthorizedException;
+import fr.gouv.clea.ws.exception.CleaUnauthorizedException;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 
 import java.security.KeyFactory;
@@ -31,7 +31,7 @@ public class AuthorizationService implements IAuthorizationService {
         this.robertJwtPublicKey = robertJwtPublicKey;
     }
 
-    public boolean checkAuthorization(String jwtToken) throws TacWarningUnauthorizedException {
+    public boolean checkAuthorization(String jwtToken) throws CleaUnauthorizedException {
         jwtToken = jwtToken.replace("Bearer ", "");
         if (this.checkAuthorization) {
             this.verifyJWT(jwtToken);
@@ -39,7 +39,7 @@ public class AuthorizationService implements IAuthorizationService {
         return true;
     }
 
-    private void verifyJWT(String token) throws TacWarningUnauthorizedException {
+    private void verifyJWT(String token) throws CleaUnauthorizedException {
         PublicKey jwtPublicKey;
         try {
             byte[] encoded = Decoders.BASE64.decode(this.robertJwtPublicKey);
@@ -49,7 +49,7 @@ public class AuthorizationService implements IAuthorizationService {
             Jwts.parserBuilder().setSigningKey(jwtPublicKey).build().parseClaimsJws(token);
         } catch (Exception e) {
             log.warn("Failed to verify JWT token!", e);
-            throw new TacWarningUnauthorizedException();
+            throw new CleaUnauthorizedException();
         }
     }
 }

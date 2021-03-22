@@ -41,7 +41,8 @@ public class CleaController implements CleaWsRestAPI {
             @RequestHeader(value = "Authorization", required = false) String jwtToken,
             @RequestBody @Valid ReportRequest reportRequestVo) {
         List<DecodedVisit> reported = reportService.report(jwtToken, reportRequestVo);
-        String message = reportRequestVo.getVisits().size() - reported.size() + " reports processed, " + reported.size() + " rejected";
+        String message = String.format("{} reports processed, {} rejected", 
+                reported.size(), reportRequestVo.getVisits().size() - reported.size());
         log.info(message);
         return new ReportResponse(true, message);
     }
