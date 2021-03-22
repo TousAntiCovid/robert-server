@@ -1,9 +1,8 @@
-package fr.gouv.clea.ws.services.impl;
+package fr.gouv.clea.ws.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONException;

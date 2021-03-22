@@ -1,11 +1,10 @@
-package fr.gouv.clea.ws.services.impl;
+package fr.gouv.clea.ws.service.impl;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 
 import fr.gouv.clea.ws.service.IProcessService;
-import fr.gouv.clea.ws.service.impl.ProcessService;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class ProcessServiceTest {
 

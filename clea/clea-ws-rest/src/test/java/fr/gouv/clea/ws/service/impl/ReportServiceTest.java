@@ -1,4 +1,4 @@
-package fr.gouv.clea.ws.services.impl;
+package fr.gouv.clea.ws.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,7 +21,6 @@ import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProcessService;
 import fr.gouv.clea.ws.service.IReportService;
-import fr.gouv.clea.ws.service.impl.ReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
 import fr.inria.clea.lsp.CleaEncodingException;
