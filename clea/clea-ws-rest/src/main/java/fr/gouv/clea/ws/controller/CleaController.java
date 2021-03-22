@@ -21,12 +21,12 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping(path = "${controller.path.prefix}")
 @Slf4j
-public class TacWarningDynamicController implements CleaWsRestAPI {
+public class CleaController implements CleaWsRestAPI {
 
     private final IReportService reportService;
 
     @Autowired
-    public TacWarningDynamicController(IReportService reportService) {
+    public CleaController(IReportService reportService) {
         this.reportService = reportService;
     }
 
