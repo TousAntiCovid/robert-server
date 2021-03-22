@@ -28,9 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ReportService implements IReportService {
 
-    private final int retentionDuration;
+    private final int retentionDurationInDays;
 
-    private final long duplicateScanThreshold;
+    private final long duplicateScanThresholdInSeconds;
 
     private final LocationSpecificPartDecoder decoder;
 
@@ -40,13 +40,13 @@ public class ReportService implements IReportService {
 
     @Autowired
     public ReportService(
-            @Value("${clea.conf.retentionDuration}") int retentionDuration,
-            @Value("${clea.conf.duplicateScanThreshold}") long duplicateScanThreshold,
+            @Value("${clea.conf.retentionDurationInDays}") int retentionDuration,
+            @Value("${clea.conf.duplicateScanThresholdInSeconds}") long duplicateScanThreshold,
             LocationSpecificPartDecoder decoder,
             IProcessService processService,
             IAuthorizationService authorizationService) {
-        this.retentionDuration = retentionDuration;
-        this.duplicateScanThreshold = duplicateScanThreshold;
+        this.retentionDurationInDays = retentionDuration;
+        this.duplicateScanThresholdInSeconds = duplicateScanThreshold;
         this.decoder = decoder;
         this.processService = processService;
         this.authorizationService = authorizationService;
@@ -79,7 +79,7 @@ public class ReportService implements IReportService {
     }
 
     private boolean isOutdated(Visit visit) {
-        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTime()), Instant.now()) > retentionDuration; // FIXME < OR <=
+        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTime()), Instant.now()) > retentionDurationInDays; // FIXME < OR <=
         if (outdated) {
             log.warn("report: {} ... rejected: Outdated", this.truncateQrCode(visit.getQrCode()));
         }
@@ -103,7 +103,7 @@ public class ReportService implements IReportService {
             return false;
         }
         
-        if (Math.abs(one.getQrCodeScanTime() - other.getQrCodeScanTime()) <= duplicateScanThreshold) { // FIXME < OR <=
+        if (Math.abs(one.getQrCodeScanTime() - other.getQrCodeScanTime()) <= duplicateScanThresholdInSeconds) { // FIXME < OR <=
             log.warn("report: {} {} rejected: Duplicate", one.getLocationTemporaryPublicId(), one.getQrCodeScanTime());
             return true;
         }

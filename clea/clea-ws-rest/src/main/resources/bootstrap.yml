@@ -1,11 +1,12 @@
 spring:
   application:
-    name: clea-ws-rest-app
+    name: clea-server
   cloud:
     consul:
       enabled: ${CONSUL_ENABLED:false}
       host: ${CONSUL_HOST:localhost}
       port: ${CONSUL_PORT:8500}
+      token: ${CLEA_SERVER_CONSUL_ACL_TOKEN:token}
       scheme: ${CONSUL_SCHEME:http}
       config:
         enabled: ${CONSUL_CONFIG_ENABLED:false}

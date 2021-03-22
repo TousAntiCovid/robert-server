@@ -14,8 +14,8 @@ management:
 
 clea:
   conf:
-    duplicateScanThreshold: 10800 # in seconds
-    retentionDuration: 14 # in days
+    duplicateScanThresholdInSeconds: 10800
+    retentionDurationInDays: 14
     security:
       crypto:
         manualCTAuthoritySecretKey: 536efbdc5d8668d4a16e89059f15849fa979caf988841394eab1308f82d4e8e4
@@ -25,9 +25,9 @@ clea:
 kafka:
   bootstrapAddress: localhost:8080
   topic:
-    name: qrCodes
+    name: cleaQrCodes
     numPartitions: 1
     replicationFactor: 1
 logging:
   level:
-    fr.gouv.clea.ws: DEBUG
+    fr.gouv.clea.ws: WARNING
