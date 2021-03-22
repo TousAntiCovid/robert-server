@@ -12,11 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import fr.gouv.clea.ws.dto.Visit;
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProcessService;
 import fr.gouv.clea.ws.service.IReportService;
+import fr.gouv.clea.ws.vo.ReportRequest;
+import fr.gouv.clea.ws.vo.Visit;
 import fr.inria.clea.lsp.CleaEncodingException;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
@@ -52,10 +53,10 @@ public class ReportService implements IReportService {
     }
 
     @Override
-    public List<DecodedVisit> report(String jwtToken, List<Visit> visits) {
+    public List<DecodedVisit> report(String jwtToken, ReportRequest reportRequestVo) {
         this.authorizationService.checkAuthorization(jwtToken);
 
-        List<DecodedVisit> verified = visits.stream()
+        List<DecodedVisit> verified = reportRequestVo.getVisits().stream()
                 .filter(visit -> ! this.isOutdated(visit))
                 .filter(visit -> ! this.isFuture(visit))
                 .map(this::decode)

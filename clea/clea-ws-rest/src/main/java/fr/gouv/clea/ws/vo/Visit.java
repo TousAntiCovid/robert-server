@@ -1,4 +1,4 @@
-package fr.gouv.clea.ws.dto;
+package fr.gouv.clea.ws.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

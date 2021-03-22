@@ -1,11 +1,9 @@
 package fr.gouv.clea.ws.api;
 
-import java.util.List;
-
 import org.springframework.http.MediaType;
 
-import fr.gouv.clea.ws.dto.Visit;
 import fr.gouv.clea.ws.dto.ReportResponse;
+import fr.gouv.clea.ws.vo.ReportRequest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -59,6 +57,6 @@ public interface CleaWsRestAPI {
                     value = "JWT Bearer Token for authorization (provided by the Robert Server Visit answer)",
                     required = true
             ) String jwtToken,
-            List<Visit> visits
+            ReportRequest reportRequestVo
     );
 }

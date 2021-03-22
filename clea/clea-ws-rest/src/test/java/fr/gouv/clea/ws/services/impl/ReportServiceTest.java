@@ -17,12 +17,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import fr.gouv.clea.ws.dto.Visit;
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProcessService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.service.impl.ReportService;
+import fr.gouv.clea.ws.vo.ReportRequest;
+import fr.gouv.clea.ws.vo.Visit;
 import fr.inria.clea.lsp.CleaEncodingException;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPart;
@@ -61,7 +62,7 @@ class ReportServiceTest {
             newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))), // pass
             newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now)) /* pass */);
         
-        List<DecodedVisit> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", new ReportRequest(visits, 0L));
         
         assertThat(processed.size()).isEqualTo(3);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findAny()).isPresent();
@@ -81,7 +82,7 @@ class ReportServiceTest {
             newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.DAYS))) /* don't pass */ );
 
 
-        List<DecodedVisit> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", new ReportRequest(visits, 0L));
         
         assertThat(processed.size()).isEqualTo(2);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findAny()).isPresent();
@@ -103,7 +104,7 @@ class ReportServiceTest {
             newVisit(uuid4, TimeUtils.ntpTimestampFromInstant(now)) /* pass */);
 
         
-        List<DecodedVisit> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", new ReportRequest(visits, 0L));
         
         assertThat(processed.size()).isEqualTo(3);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findAny()).isNotPresent();
@@ -121,7 +122,7 @@ class ReportServiceTest {
             newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now)), // pass
             newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.SECONDS))) /* don't pass */);
         
-        List<DecodedVisit> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", new ReportRequest(visits, 0L));
         
         assertThat(processed.size()).isEqualTo(1);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findAny()).isPresent();
@@ -142,7 +143,7 @@ class ReportServiceTest {
             newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)), // pass
             newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */ );
         
-        List<DecodedVisit> processed = reportService.report("", visits);
+        List<DecodedVisit> processed = reportService.report("", new ReportRequest(visits, 0L));
         
         assertThat(processed.size()).isEqualTo(4);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuidA)).count()).isEqualTo(2);
