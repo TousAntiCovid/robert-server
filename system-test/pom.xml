@@ -291,18 +291,6 @@
             <version>5.6.3</version>
         </dependency>
         <dependency>
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java-core</artifactId>
-            <version>3.2.7</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java</artifactId>
-            <version>3.2.7</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
             <version>3.12.8</version>
@@ -312,7 +300,11 @@
             <artifactId>robert-crypto-grpc-server</artifactId>
             <version>1.10.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
         <!--Added required dependencies due to : https://github.com/rest-assured/rest-assured/issues/1168 -->
         <dependency>
             <groupId>io.rest-assured</groupId>
@@ -328,12 +320,6 @@
             <groupId>io.rest-assured</groupId>
             <artifactId>xml-path</artifactId>
             <version>${io-rest-assured.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java</artifactId>
-            <version>3.2.7</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
     <repositories>

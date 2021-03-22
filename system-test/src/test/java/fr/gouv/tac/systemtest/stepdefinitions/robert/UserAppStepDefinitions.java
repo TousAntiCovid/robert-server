@@ -1,24 +1,31 @@
 package fr.gouv.tac.systemtest.stepdefinitions.robert;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.inject.Inject;
+
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.robert.api.DefaultApi;
-import fr.gouv.tac.robert.model.*;
+import fr.gouv.tac.robert.model.ExposureStatusResponse;
+import fr.gouv.tac.robert.model.PushInfo;
+import fr.gouv.tac.robert.model.RegisterRequest;
+import fr.gouv.tac.robert.model.RegisterSuccessResponse;
+import fr.gouv.tac.robert.model.ReportBatchResponse;
+import fr.gouv.tac.robert.model.SuccessResponse;
 import fr.gouv.tac.submission.code.server.ApiException;
 import fr.gouv.tac.systemtest.ScenarioAppContext;
 import fr.gouv.tac.systemtest.User;
 import fr.gouv.tac.systemtest.stepdefinitions.RiskLevel;
 import fr.gouv.tac.systemtest.utils.DockerUtils;
+import fr.gouv.tac.systemtest.utils.TacSystemTestException;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
-
-import javax.inject.Inject;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 public class UserAppStepDefinitions {
@@ -81,7 +88,7 @@ public class UserAppStepDefinitions {
     }
 
     @Given("Did not meet anyone")
-    public void a_mobile_app_did_not_meet_anyone() {
+    public void a_mobile_app_did_not_meet_anyone() throws TacSystemTestException {
 
         // lowest threshold leading to a systematic positive risk evaluation when anyone meets the infected person
         final boolean mustBeAtRisk = true;
@@ -98,14 +105,14 @@ public class UserAppStepDefinitions {
     }
 
     @Given("They did not spend enough time together to propagate infection")
-    public void a_mobile_app_did_not_spend_enough_time_near_another_mobile_app_to_infect_it() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
+    public void a_mobile_app_did_not_spend_enough_time_near_another_mobile_app_to_infect_it() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException, TacSystemTestException {
         final boolean mustBeAtRisk = false;
 
         dockerUtils.launchRobertServerBatchContainer(DockerUtils.BatchMode.SCORE_CONTACTS_AND_COMPUTE_RISK, false, mustBeAtRisk);
     }
 
     @Given("They spent enough time together to propagate infection")
-    public void andSpentEnoughTimeTogetherToPropagateInfection() {
+    public void andSpentEnoughTimeTogetherToPropagateInfection() throws TacSystemTestException {
         final boolean mustBeAtRisk = true;
 
         dockerUtils.launchRobertServerBatchContainer(DockerUtils.BatchMode.SCORE_CONTACTS_AND_COMPUTE_RISK, false, mustBeAtRisk);

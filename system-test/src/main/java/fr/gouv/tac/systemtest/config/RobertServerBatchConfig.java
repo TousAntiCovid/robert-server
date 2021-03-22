@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileInputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,10 @@ public class RobertServerBatchConfig {
                 .stream()
                 .map(entry -> String.join("=", entry.getKey().toString(), entry.getValue().toString()))
                 .collect(Collectors.toList());
+    }
+
+    public static Map<String,String> getPropertiesAsMap() {
+        return loadedProperties.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> entry.getValue().toString()));
     }
 
     public static String getProperty(String key) {

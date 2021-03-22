@@ -204,6 +204,9 @@ integration_tests:
     - echo "TACW_VERSION=v2" >> src/test/resources/config.properties
     - echo "" >> src/test/resources/config.properties
     - cat src/test/resources/config.properties
+    - docker pull $CI_REGISTRY_IMAGE/robert-server-batch:$DOCKER_TAG
+    - sed -i 's~^ROBERT_SERVER_BATCH_IMAGE_NAME.*$~ROBERT_SERVER_BATCH_IMAGE_NAME='"$CI_REGISTRY_IMAGE/robert-server-batch"'~' src/test/resources/docker/docker-config.properties
+    - sed -i 's~^ROBERT_SERVER_BATCH_IMAGE_VERSION.*$~ROBERT_SERVER_BATCH_IMAGE_VERSION='"$DOCKER_TAG"'~' src/test/resources/docker/docker-config.properties
     - echo $PWD
     - ls -ls
     - mvn $MAVEN_CLI_OPTS -Duser.timezone='Europe/Paris' verify
