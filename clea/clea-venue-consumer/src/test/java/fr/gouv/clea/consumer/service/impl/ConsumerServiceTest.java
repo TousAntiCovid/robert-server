@@ -1,10 +1,13 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.consumer.CleaVenueConsumerApplication;
-import fr.gouv.clea.consumer.model.DecodedVisit;
-import fr.gouv.clea.consumer.service.IConsumerService;
-import fr.gouv.clea.consumer.utils.KafkaLSPSerializer;
-import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import static org.awaitility.Awaitility.await;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -25,12 +28,11 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import static org.awaitility.Awaitility.await;
+import fr.gouv.clea.consumer.CleaVenueConsumerApplication;
+import fr.gouv.clea.consumer.model.DecodedVisit;
+import fr.gouv.clea.consumer.service.IConsumerService;
+import fr.gouv.clea.consumer.utils.KafkaLSPSerializer;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 
 @SpringBootTest(classes = CleaVenueConsumerApplication.class)
 @DirtiesContext
@@ -64,7 +66,7 @@ class ConsumerServiceTest {
     @DisplayName("test that kafka listener triggers when something is sent to the queue")
     void testCanConsumeMessageSentinDefaultQueue() {
         DecodedVisit decodedVisit = new DecodedVisit(
-                RandomUtils.nextLong(),
+                Instant.now(),
                 EncryptedLocationSpecificPart.builder()
                         .version(RandomUtils.nextInt())
                         .type(RandomUtils.nextInt())

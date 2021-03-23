@@ -1,18 +1,22 @@
 package fr.gouv.clea.ws.utils;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+
+import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.serialization.Deserializer;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
-import org.apache.kafka.common.errors.SerializationException;
-import org.apache.kafka.common.serialization.Deserializer;
-
-import java.io.IOException;
-import java.util.UUID;
 
 public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
 
@@ -22,8 +26,7 @@ public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
             return null;
         try {
             return new ObjectMapper()
-                    .registerModule(
-                            new SimpleModule().addDeserializer(DecodedVisit.class, new JacksonLSPDeserializer()))
+                    .registerModule(new SimpleModule().addDeserializer(DecodedVisit.class, new JacksonLSPDeserializer()))
                     .readValue(data, DecodedVisit.class);
         } catch (IOException e) {
             throw new SerializationException("Error deserializing JSON message", e);
@@ -32,6 +35,7 @@ public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
 }
 
 class JacksonLSPDeserializer extends StdDeserializer<DecodedVisit> {
+
     private static final long serialVersionUID = 1L;
 
     public JacksonLSPDeserializer() {
@@ -51,10 +55,15 @@ class JacksonLSPDeserializer extends StdDeserializer<DecodedVisit> {
         int type = node.get("type").asInt();
         UUID locationTemporaryPublicId = UUID.fromString(node.get("locationTemporaryPublicId").asText());
         byte[] encryptedLocationMessage = node.get("encryptedLocationMessage").binaryValue();
-        return new DecodedVisit(qrCodeScanTime,
-                EncryptedLocationSpecificPart.builder().version(version).type(type)
+        return new DecodedVisit(
+                Instant.ofEpochMilli(qrCodeScanTime).truncatedTo(ChronoUnit.SECONDS),
+                EncryptedLocationSpecificPart.builder()
+                        .version(version)
+                        .type(type)
                         .locationTemporaryPublicId(locationTemporaryPublicId)
-                        .encryptedLocationMessage(encryptedLocationMessage).build(),
-                isBackward);
+                        .encryptedLocationMessage(encryptedLocationMessage)
+                        .build(),
+                isBackward
+        );
     }
 }

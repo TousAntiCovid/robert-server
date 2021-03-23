@@ -22,6 +22,7 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -71,9 +72,9 @@ class DecodedVisitProducerServiceTest {
         boolean isBackward2 = RandomUtils.nextBoolean();
         boolean isBackward3 = RandomUtils.nextBoolean();
 
-        Long qrCodeScanTime1 = RandomUtils.nextLong();
-        Long qrCodeScanTime2 = RandomUtils.nextLong();
-        Long qrCodeScanTime3 = RandomUtils.nextLong();
+        Instant qrCodeScanTime1 = newRandomInstant();
+        Instant qrCodeScanTime2 = newRandomInstant();
+        Instant qrCodeScanTime3 = newRandomInstant();
 
         List<DecodedVisit> decoded = List.of(
                 createSerializableDecodedVisit(qrCodeScanTime1, isBackward1, uuid1, encryptedLocationMessage1),
@@ -114,7 +115,11 @@ class DecodedVisitProducerServiceTest {
         assertThat(visit3.isBackward()).isEqualTo(isBackward3);
     }
 
-    private static DecodedVisit createSerializableDecodedVisit(Long qrCodeScanTime, boolean isBackward, UUID locationTemporaryPublicId, byte[] encryptedLocationMessage) {
+    protected Instant newRandomInstant() {
+        return Instant.ofEpochSecond(RandomUtils.nextLong(0, Instant.now().getEpochSecond()));
+    }
+
+    private static DecodedVisit createSerializableDecodedVisit(Instant qrCodeScanTime, boolean isBackward, UUID locationTemporaryPublicId, byte[] encryptedLocationMessage) {
         return new DecodedVisit(
                 qrCodeScanTime,
                 EncryptedLocationSpecificPart.builder()

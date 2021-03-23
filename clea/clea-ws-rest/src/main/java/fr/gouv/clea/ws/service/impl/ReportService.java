@@ -1,5 +1,18 @@
 package fr.gouv.clea.ws.service.impl;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
 import fr.gouv.clea.ws.service.IReportService;
@@ -9,17 +22,6 @@ import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -62,7 +64,8 @@ public class ReportService implements IReportService {
         try {
             byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
-            return new DecodedVisit(visit.getQrCodeScanTimeAsNtpTimestamp(), encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);
+            Instant qrCodeScanTime = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp());
+            return new DecodedVisit(qrCodeScanTime, encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);
         } catch (Exception e) {
             log.warn("report: {}... rejected: Invalid format", this.truncateQrCode(visit.getQrCode()));
             return null;
@@ -94,7 +97,8 @@ public class ReportService implements IReportService {
             return false;
         }
 
-        if (Math.abs(one.getQrCodeScanTime() - other.getQrCodeScanTime()) <= duplicateScanThresholdInSeconds) { // FIXME < OR <=
+        long secondsBetweenScans = Duration.between(one.getQrCodeScanTime(), other.getQrCodeScanTime()).abs().toSeconds();
+        if (secondsBetweenScans <= duplicateScanThresholdInSeconds) { // FIXME < OR <=
             log.warn("report: {} {} rejected: Duplicate", one.getLocationTemporaryPublicId(), one.getQrCodeScanTime());
             return true;
         }

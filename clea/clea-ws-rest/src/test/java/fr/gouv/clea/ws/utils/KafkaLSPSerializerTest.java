@@ -1,20 +1,23 @@
 package fr.gouv.clea.ws.utils;
 
-import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 
 class KafkaLSPSerializerTest {
 
     @Test
     void testCanSerializeAndDeserializeAVisit() {
         DecodedVisit decoded = new DecodedVisit(
-                RandomUtils.nextLong(),
+                Instant.now().truncatedTo(ChronoUnit.SECONDS),
                 EncryptedLocationSpecificPart.builder()
                         .version(RandomUtils.nextInt())
                         .type(RandomUtils.nextInt())

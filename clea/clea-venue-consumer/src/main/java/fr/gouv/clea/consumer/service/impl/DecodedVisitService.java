@@ -1,19 +1,21 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.consumer.model.DecodedVisit;
-import fr.gouv.clea.consumer.model.Visit;
-import fr.gouv.clea.consumer.model.ExposedVisitEntity;
-import fr.gouv.clea.consumer.service.IDecodedVisitService;
-import fr.inria.clea.lsp.CleaEciesEncoder;
-import fr.inria.clea.lsp.CleaEncryptionException;
-import fr.inria.clea.lsp.LocationSpecificPartDecoder;
-import fr.inria.clea.lsp.utils.TimeUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-import java.util.UUID;
+import fr.gouv.clea.consumer.model.DecodedVisit;
+import fr.gouv.clea.consumer.model.Visit;
+import fr.gouv.clea.consumer.service.IDecodedVisitService;
+import fr.inria.clea.lsp.CleaEciesEncoder;
+import fr.inria.clea.lsp.CleaEncodingException;
+import fr.inria.clea.lsp.CleaEncryptionException;
+import fr.inria.clea.lsp.LocationSpecificPart;
+import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -27,8 +29,15 @@ public class DecodedVisitService implements IDecodedVisitService {
     }
 
     @Override
-    public Optional<ExposedVisitEntity> decryptAndValidate(DecodedVisit decodedVisit) {
-        return Optional.empty();
+    public Optional<Visit> decryptAndValidate(DecodedVisit decodedVisit) {
+        try {
+            LocationSpecificPart lsp = this.decoder.decrypt(decodedVisit.getEncryptedLocationSpecificPart());
+            Visit visit = Visit.from(lsp, decodedVisit);
+            return this.verify(visit);
+        } catch (CleaEncryptionException | CleaEncodingException e) {
+            log.error("Cannot decrypt visit", e);
+            return Optional.empty();
+        }
     }
 
     private Optional<Visit> verify(Visit visit) {
