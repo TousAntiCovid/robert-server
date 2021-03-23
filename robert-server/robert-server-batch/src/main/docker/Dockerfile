@@ -1,7 +1,7 @@
 # in robert-crypto-grpc-server folder mvn clean package -dmaven.test.skip=true
 # docker build -f ./Dockerfile-openjdk8 -t tac/robert-crypto-server .
 
-FROM openjdk:8u275
+FROM adoptopenjdk:11-jre-hotspot
 
 WORKDIR /opt/robert-server-batch/
 
