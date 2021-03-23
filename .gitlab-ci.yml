@@ -24,6 +24,8 @@ stages:
   artifacts:
     paths:
       - $COMPONENT/*/target/*.jar
+  tags:
+    - ci
 
 .test_template:
   stage: test
@@ -36,7 +38,8 @@ stages:
       junit:
         - "$COMPONENT/*/target/surefire-reports/TEST-*.xml"
         - "$COMPONENT/*/target/failsafe-reports/TEST-*.xml"
-
+  tags:
+    - ci
 
 .docker_template:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
@@ -58,6 +61,8 @@ stages:
   only:
     - develop
     - tags
+  tags:
+    - ci
 
 build_robert-server:
   extends: .build_template
