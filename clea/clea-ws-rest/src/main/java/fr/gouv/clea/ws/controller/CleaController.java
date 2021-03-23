@@ -37,6 +37,8 @@ public class CleaController implements CleaWsRestAPI {
             path = UriConstants.API_V1 + UriConstants.REPORT,
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
+    // TODO: Authorization should be mandatory. 
+    // TODO: Also we should switch from AuthorizationService to SpringSecurity using jwtDecoder
     public ReportResponse report(
             @RequestHeader(value = "Authorization", required = false) String jwtToken,
             @RequestBody @Valid ReportRequest reportRequestVo) {
