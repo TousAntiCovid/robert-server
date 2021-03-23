@@ -1,9 +1,10 @@
-package fr.gouv.tacw.services.impl;
+package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.tacw.CleaVenueConsumerApplication;
-import fr.gouv.tacw.dto.DecodedLocationSpecificPart;
-import fr.gouv.tacw.services.IConsumerService;
-import fr.gouv.tacw.utils.KafkaLSPSerializer;
+import fr.gouv.clea.consumer.CleaVenueConsumerApplication;
+import fr.gouv.clea.consumer.model.DecodedVisit;
+import fr.gouv.clea.consumer.service.IConsumerService;
+import fr.gouv.clea.consumer.utils.KafkaLSPSerializer;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -46,7 +47,7 @@ class ConsumerServiceTest {
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-    private Producer<String, DecodedLocationSpecificPart> producer;
+    private Producer<String, DecodedVisit> producer;
 
     @BeforeEach
     void init() {
@@ -60,16 +61,24 @@ class ConsumerServiceTest {
     }
 
     @Test
-    @DisplayName("")
-    void testSuccessfulConsumeVenue() {
-        DecodedLocationSpecificPart decodedLocationSpecificPart = DecodedLocationSpecificPart
-                .createDecodedLocationSpecificPart(UUID.randomUUID(), RandomUtils.nextBytes(20), RandomUtils.nextBytes(20));
-        producer.send(new ProducerRecord<>(topicName, decodedLocationSpecificPart));
+    @DisplayName("test that kafka listener triggers when something is sent to the queue")
+    void consume() {
+        DecodedVisit decodedVisit = new DecodedVisit(
+                RandomUtils.nextLong(),
+                EncryptedLocationSpecificPart.builder()
+                        .version(RandomUtils.nextInt())
+                        .type(RandomUtils.nextInt())
+                        .locationTemporaryPublicId(UUID.randomUUID())
+                        .encryptedLocationMessage(RandomUtils.nextBytes(20))
+                        .build(),
+                RandomUtils.nextBoolean()
+        );
+        producer.send(new ProducerRecord<>(topicName, decodedVisit));
         producer.flush();
         await().atMost(1, TimeUnit.MINUTES)
                 .untilAsserted(
                         () -> Mockito.verify(consumerService, Mockito.times(1))
-                                .consumeVenue(decodedLocationSpecificPart)
+                                .consume(Mockito.any(DecodedVisit.class))
                 );
     }
 }

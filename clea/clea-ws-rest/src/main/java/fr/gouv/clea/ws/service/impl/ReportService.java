@@ -65,7 +65,6 @@ public class ReportService implements IReportService {
         return pruned;
     }
 
-
     private DecodedVisit decode(Visit visit, long pivotDate) {
         try {
             byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());

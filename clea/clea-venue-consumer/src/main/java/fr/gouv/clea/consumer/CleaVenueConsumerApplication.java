@@ -1,9 +1,9 @@
-package fr.gouv.tacw;
+package fr.gouv.clea.consumer;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = "fr.gouv.tacw") // fixme remove scan
+@SpringBootApplication(scanBasePackages = "fr.gouv.clea.consumer")
 public class CleaVenueConsumerApplication {
 
     public static void main(String[] args) {
