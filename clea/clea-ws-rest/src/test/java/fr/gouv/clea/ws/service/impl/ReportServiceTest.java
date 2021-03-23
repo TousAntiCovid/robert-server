@@ -6,7 +6,11 @@ import fr.gouv.clea.ws.service.IProducerService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
-import fr.inria.clea.lsp.*;
+import fr.inria.clea.lsp.CleaEncodingException;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import fr.inria.clea.lsp.LocationSpecificPart;
+import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.LocationSpecificPartEncoder;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +25,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ReportServiceTest {
 

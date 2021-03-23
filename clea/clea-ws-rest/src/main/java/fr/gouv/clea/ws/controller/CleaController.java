@@ -9,7 +9,11 @@ import fr.gouv.clea.ws.vo.ReportRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -30,15 +34,16 @@ public class CleaController implements CleaWsRestAPI {
     @PostMapping(
             path = UriConstants.API_V1 + UriConstants.REPORT,
             consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    // TODO: Authorization should be mandatory. 
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    // TODO: Authorization should be mandatory.
     // TODO: Also we should switch from AuthorizationService to SpringSecurity using jwtDecoder
     public ReportResponse report(
             @RequestHeader(value = "Authorization", required = false) String jwtToken,
-            @RequestBody @Valid ReportRequest reportRequestVo) {
+            @RequestBody @Valid ReportRequest reportRequestVo
+    ) {
         List<DecodedVisit> reported = reportService.report(jwtToken, reportRequestVo);
-        String message = String.format("{} reports processed, {} rejected",
-                reported.size(), reportRequestVo.getVisits().size() - reported.size());
+        String message = String.format("%s reports processed, %s rejected", reported.size(), reportRequestVo.getVisits().size() - reported.size());
         log.info(message);
         return new ReportResponse(true, message);
     }

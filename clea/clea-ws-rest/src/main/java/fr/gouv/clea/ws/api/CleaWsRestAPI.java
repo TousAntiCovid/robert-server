@@ -2,7 +2,15 @@ package fr.gouv.clea.ws.api;
 
 import fr.gouv.clea.ws.dto.ReportResponse;
 import fr.gouv.clea.ws.vo.ReportRequest;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Example;
+import io.swagger.annotations.ExampleProperty;
 import org.springframework.http.MediaType;
 
 @Api(
