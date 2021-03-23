@@ -28,4 +28,4 @@ kafka:
     name: cleaQrCodes
 logging:
   level:
-    fr.gouv.clea.ws: WARN
+    fr.gouv.clea.ws: INFO
