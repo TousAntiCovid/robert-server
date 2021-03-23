@@ -1,3 +1,16 @@
+controller:
+  path:
+    prefix: /api/clea
+server:
+  port: 8088
+
+# Available endpoints for the monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${CLEA_SERVER_MONITORING_ENDPOINTS:health,metrics}
+
 clea:
   conf:
     duplicateScanThreshold: 10800
@@ -8,9 +21,11 @@ clea:
       report:
         checkAuthorization: false
         robertJwtPublicKey: TODO
+
 logging:
   level:
-    fr.gouv.tacw: DEBUG
+    fr.gouv.clea.ws: DEBUG
+
 spring:
   kafka:
     bootstrap-servers: "localhost:9092"
@@ -18,6 +33,7 @@ spring:
       group-id: group1
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: fr.gouv.tacw.utils.KafkaLSPSerializer
+      value-serializer: fr.gouv.clea.ws.utils.KafkaLSPSerializer
     template:
       default-topic: qrCodes
+
