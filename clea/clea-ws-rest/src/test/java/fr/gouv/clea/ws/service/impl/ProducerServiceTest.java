@@ -1,4 +1,4 @@
-package fr.gouv.clea.ws.services.impl;
+package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IProducerService;

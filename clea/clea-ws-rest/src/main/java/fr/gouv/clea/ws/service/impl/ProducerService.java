@@ -1,26 +1,24 @@
 package fr.gouv.clea.ws.service.impl;
 
-import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IProducerService;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
-import java.util.List;
+import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.ws.service.IProducerService;
 
 @Service
-@Slf4j
 public class ProducerService implements IProducerService {
 
     private final KafkaTemplate<String, DecodedVisit> kafkaTemplate;
 
     @Autowired
     public ProducerService(
-            KafkaTemplate<String, DecodedVisit> kafkaTemplate
-    ) {
+            KafkaTemplate<String, DecodedVisit> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 

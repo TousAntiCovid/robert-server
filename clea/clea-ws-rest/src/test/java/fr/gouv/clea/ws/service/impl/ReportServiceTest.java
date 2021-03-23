@@ -1,12 +1,12 @@
-package fr.gouv.clea.ws.services.impl;
+package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProducerService;
 import fr.gouv.clea.ws.service.IReportService;
-import fr.gouv.clea.ws.service.impl.ReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
+import fr.inria.clea.lsp.CleaEncodingException;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
@@ -30,11 +30,11 @@ import static org.mockito.Mockito.*;
 class ReportServiceTest {
 
     private final int retentionDuration = 14;
-    private final long duplicateScanThreshold = 10800L;
+    private final long duplicateScanThresholdInSeconds = 10800L;
     private final LocationSpecificPartDecoder decoder = mock(LocationSpecificPartDecoder.class);
     private final IProducerService processService = mock(IProducerService.class);
     private final IAuthorizationService authorizationService = mock(IAuthorizationService.class);
-    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThreshold, decoder, processService, authorizationService);
+    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, decoder, processService, authorizationService);
     private Instant now;
 
     @BeforeEach
@@ -49,7 +49,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test successful report with no rejection")
-    void report() {
+    void report() throws CleaEncodingException {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
@@ -68,7 +68,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with non valid qr codes")
-    void testWithNonValidReports() {
+    void testWithNonValidReports() throws CleaEncodingException {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
@@ -88,7 +88,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with outdated scans")
-    void testWithOutdatedReports() {
+    void testWithOutdatedReports() throws CleaEncodingException {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
@@ -111,7 +111,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with future scans")
-    void testWithFutureReports() {
+    void testWithFutureReports() throws CleaEncodingException {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         List<Visit> visits = List.of(
@@ -127,7 +127,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with duplicated qr codes")
-    void testWithDuplicates() {
+    void testWithDuplicates() throws CleaEncodingException {
         UUID uuidA = UUID.randomUUID();
         UUID uuidB = UUID.randomUUID();
         UUID uuidC = UUID.randomUUID();
@@ -153,7 +153,7 @@ class ReportServiceTest {
                 .build();
     }
 
-    private Visit newVisit(UUID uuid, Long qrCodeScanTime) {
+    private Visit newVisit(UUID uuid, Long qrCodeScanTime) throws CleaEncodingException {
         LocationSpecificPart lsp = LocationSpecificPart.builder()
                 .locationTemporaryPublicId(uuid)
                 .build();
