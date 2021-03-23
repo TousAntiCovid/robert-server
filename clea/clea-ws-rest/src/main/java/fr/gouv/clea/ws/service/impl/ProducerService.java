@@ -1,6 +1,6 @@
 package fr.gouv.clea.ws.service.impl;
 
-import fr.gouv.clea.ws.model.SerializableDecodedVisit;
+import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IProducerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,17 +15,17 @@ import java.util.List;
 @Slf4j
 public class ProducerService implements IProducerService {
 
-    private final KafkaTemplate<String, SerializableDecodedVisit> kafkaTemplate;
+    private final KafkaTemplate<String, DecodedVisit> kafkaTemplate;
 
     @Autowired
     public ProducerService(
-            KafkaTemplate<String, SerializableDecodedVisit> kafkaTemplate
+            KafkaTemplate<String, DecodedVisit> kafkaTemplate
     ) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
     @Override
-    public void produce(List<SerializableDecodedVisit> serializableDecodedVisits) {
+    public void produce(List<DecodedVisit> serializableDecodedVisits) {
         serializableDecodedVisits.forEach(
                 it -> kafkaTemplate.sendDefault(it).addCallback(
                         new ListenableFutureCallback<>() {
@@ -35,7 +35,7 @@ public class ProducerService implements IProducerService {
                             }
 
                             @Override
-                            public void onSuccess(SendResult<String, SerializableDecodedVisit> result) {
+                            public void onSuccess(SendResult<String, DecodedVisit> result) {
 
                             }
                         }

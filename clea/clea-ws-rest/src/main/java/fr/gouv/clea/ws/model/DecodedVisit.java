@@ -11,8 +11,9 @@ import java.util.UUID;
 @Getter
 @ToString
 public class DecodedVisit {
-    private Long qrCodeScanTime; // t_qrScan
-    private EncryptedLocationSpecificPart encryptedLocationSpecificPart;
+    private final Long qrCodeScanTime; // t_qrScan
+    private final EncryptedLocationSpecificPart encryptedLocationSpecificPart;
+    private final boolean isBackward;
 
     public UUID getLocationTemporaryPublicId() {
         return this.encryptedLocationSpecificPart.getLocationTemporaryPublicId();

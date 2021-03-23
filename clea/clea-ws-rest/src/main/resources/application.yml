@@ -16,8 +16,6 @@ clea:
     duplicateScanThreshold: 10800
     retentionDuration: 14
     security:
-      crypto:
-        manualCTAuthoritySecretKey: 3108f08b1485adb6f72cfba1b55c7484c906a2a3a0a027c78dcd991ca64c97bd
       report:
         checkAuthorization: false
         robertJwtPublicKey: TODO

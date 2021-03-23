@@ -6,22 +6,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import fr.gouv.clea.ws.model.SerializableDecodedVisit;
+import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.io.IOException;
 
-public class KafkaLSPSerializer implements Serializer<SerializableDecodedVisit> {
+public class KafkaLSPSerializer implements Serializer<DecodedVisit> {
 
     @Override
-    public byte[] serialize(String topic, SerializableDecodedVisit data) {
+    public byte[] serialize(String topic, DecodedVisit data) {
         if (data == null)
             return null;
         try {
             return new ObjectMapper()
-                    .registerModule(new SimpleModule().addSerializer(SerializableDecodedVisit.class, new JacksonLSPSerializer()))
+                    .registerModule(new SimpleModule().addSerializer(DecodedVisit.class, new JacksonLSPSerializer()))
                     .writeValueAsBytes(data);
         } catch (JsonProcessingException e) {
             throw new SerializationException("Error serializing JSON message", e);
@@ -29,24 +29,24 @@ public class KafkaLSPSerializer implements Serializer<SerializableDecodedVisit> 
     }
 }
 
-class JacksonLSPSerializer extends StdSerializer<SerializableDecodedVisit> {
+class JacksonLSPSerializer extends StdSerializer<DecodedVisit> {
 
     public JacksonLSPSerializer() {
         this(null);
     }
 
-    public JacksonLSPSerializer(Class<SerializableDecodedVisit> t) {
+    public JacksonLSPSerializer(Class<DecodedVisit> t) {
         super(t);
     }
 
     @Override
-    public void serialize(SerializableDecodedVisit value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+    public void serialize(DecodedVisit value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         Long getQrCodeScanTime = value.getQrCodeScanTime();
-        Long pivotDate = value.getPivotDate();
+        boolean isBackward = value.isBackward();
         EncryptedLocationSpecificPart enc = value.getEncryptedLocationSpecificPart();
         gen.writeStartObject();
         gen.writeNumberField("qrCodeScanTime", getQrCodeScanTime);
-        gen.writeNumberField("pivotDate", pivotDate);
+        gen.writeBooleanField("isBackward", isBackward);
         gen.writeNumberField("version", enc.getVersion());
         gen.writeNumberField("type", enc.getType());
         gen.writeStringField("locationTemporaryPublicId", enc.getLocationTemporaryPublicId().toString());

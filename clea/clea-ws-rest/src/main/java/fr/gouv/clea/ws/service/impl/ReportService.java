@@ -1,7 +1,6 @@
 package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.model.SerializableDecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProducerService;
 import fr.gouv.clea.ws.service.IReportService;
@@ -58,27 +57,20 @@ public class ReportService implements IReportService {
         List<DecodedVisit> verified = reportRequestVo.getVisits().stream()
                 .filter(visit -> !this.isOutdated(visit))
                 .filter(visit -> !this.isFuture(visit))
-                .map(this::decode)
+                .map(it -> this.decode(it, reportRequestVo.getPivotDate()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         List<DecodedVisit> pruned = this.pruneDuplicates(verified);
-        processService.produce(this.getSerializableDecodedVisits(reportRequestVo.getPivotDate(), pruned));
+        processService.produce(pruned);
         return pruned;
     }
 
-    private List<SerializableDecodedVisit> getSerializableDecodedVisits(Long pivotDate, List<DecodedVisit> pruned) {
-        return pruned.stream().map(it -> new SerializableDecodedVisit(
-                pivotDate,
-                it.getEncryptedLocationSpecificPart(),
-                it.getQrCodeScanTime()
-        )).collect(Collectors.toList());
-    }
 
-    private DecodedVisit decode(Visit visit) {
+    private DecodedVisit decode(Visit visit, long pivotDate) {
         try {
             byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
-            return new DecodedVisit(visit.getQrCodeScanTime(), encryptedLocationSpecificPart);
+            return new DecodedVisit(visit.getQrCodeScanTime(), encryptedLocationSpecificPart, visit.getQrCodeScanTime() < pivotDate);
         } catch (Exception e) {
             log.warn("report: {}... rejected: Invalid format", this.truncateQrCode(visit.getQrCode()));
             return null;
