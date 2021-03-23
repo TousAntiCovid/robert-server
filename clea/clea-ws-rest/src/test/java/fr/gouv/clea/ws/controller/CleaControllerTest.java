@@ -38,16 +38,6 @@ public class CleaControllerTest {
     private ReportService reportService;
 
     @Test
-    public void testReportEndPointIsReachable() {
-        List<Visit> visits = List.of();
-        HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, 0L), this.newJsonHeader());
-        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request,
-                String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-
-    @Test
     public void testInfectedUserCanReportHimselfAsInfected() {
         List<Visit> visits = List.of( new Visit("qrCode", 0L) );
         HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, 0L), this.newJsonHeader());
