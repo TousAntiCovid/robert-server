@@ -19,15 +19,15 @@ public class PersistService implements IPersistService {
 
     private final IExposedVisitRepository repository;
 
-    private final int retentionDuration;
+    private final int retentionDurationInDays;
 
     @Autowired
     public PersistService(
             IExposedVisitRepository repository,
-            @Value("${clea.conf.retentionDuration}") int retentionDuration
+            @Value("${clea.conf.retentionDurationInDays}") int retentionDurationInDays
     ) {
         this.repository = repository;
-        this.retentionDuration = retentionDuration;
+        this.retentionDurationInDays = retentionDurationInDays;
     }
 
     @Override
@@ -39,6 +39,6 @@ public class PersistService implements IPersistService {
     @Transactional
     @Scheduled(cron = "${clea.conf.scheduling.purge.cron}")
     public void deleteOutdatedExposedVisits() {
-        this.repository.deleteAllByQrCodeScanTimeBefore(Instant.now().minus(retentionDuration, ChronoUnit.DAYS));
+        this.repository.deleteAllByQrCodeScanTimeBefore(Instant.now().minus(retentionDurationInDays, ChronoUnit.DAYS));
     }
 }

@@ -7,7 +7,7 @@ management:
 
 clea:
   conf:
-    retentionDuration: 14
+    retentionDurationInDays: 14
     scheduling:
       purge:
         cron: "0 0 1 * * *"
