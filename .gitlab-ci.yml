@@ -229,34 +229,33 @@ integration_tests:
 
 deploy-robert-server:
   extends: .deploy_template
-  needs: ["test_robert-server"]
+  needs: ["build_robert-server"]
   variables:
     COMPONENT: "robert-server"
 
 deploy-robert-push-notif-server:
   extends: .deploy_template
-  needs: ["test_robert-push-notif-server"]
+  needs: ["build_robert-push-notif-server"]
   variables:
     COMPONENT: "robert-push-notif-server"
 
 deploy-submission-code-server:
   extends: .deploy_template
-  needs: ["test_submission-code-server"]
+  needs: ["build_submission-code-server"]
   variables:
     COMPONENT: "submission-code-server"
 
 deploy-tac-warning:
   extends: .deploy_template
-  needs: ["test_tac-warning"]
+  needs: ["build_tac-warning"]
   variables:
     COMPONENT: "tac-warning"
 
 deploy-clea:
   extends: .deploy_template
-  needs: ["test_clea"]
+  needs: ["build_clea"]
   variables:
     COMPONENT: "clea"
-
 deploy-analytics-server:
   extends: .deploy_template
   needs: ["test_analytics-server"]
