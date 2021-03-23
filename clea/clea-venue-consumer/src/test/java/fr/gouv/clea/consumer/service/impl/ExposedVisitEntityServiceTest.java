@@ -1,8 +1,8 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.consumer.data.ExposedVisit;
-import fr.gouv.clea.consumer.data.IExposedVisitRepository;
-import fr.gouv.clea.consumer.service.IPersistService;
+import fr.gouv.clea.consumer.model.ExposedVisitEntity;
+import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.gouv.clea.consumer.service.IExposedVisitEntityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,16 +16,16 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class PersistServiceTest {
+class ExposedVisitEntityServiceTest {
 
     @Autowired
     private IExposedVisitRepository repository;
 
     @Autowired
-    private IPersistService persistService;
+    private IExposedVisitEntityService exposedVisitEntityService;
 
-    private static ExposedVisit createExposedVisit() {
-        return new ExposedVisit(
+    private static ExposedVisitEntity createExposedVisit() {
+        return new ExposedVisitEntity(
                 null, // handled by db
                 UUID.randomUUID().toString(),
                 RandomUtils.nextInt(),
@@ -48,21 +48,23 @@ class PersistServiceTest {
 
     @Test
     @DisplayName("test that persist save to DB")
-    void persist() {
-        ExposedVisit exposedVisit = createExposedVisit();
-        ExposedVisit saved = persistService.persist(exposedVisit);
+    void testCanPersistAnExposedVisit() {
+        ExposedVisitEntity exposedVisitEntity = createExposedVisit();
+        
+        ExposedVisitEntity saved = exposedVisitEntityService.persist(exposedVisitEntity);
+        
         assertThat(repository.count()).isEqualTo(1);
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getId()).isInstanceOf(String.class);
-        assertThat(saved.getLocationTemporaryPublicId()).isEqualTo(exposedVisit.getLocationTemporaryPublicId());
-        assertThat(saved.getVenueType()).isEqualTo(exposedVisit.getVenueType());
-        assertThat(saved.getVenueCategory1()).isEqualTo(exposedVisit.getVenueCategory1());
-        assertThat(saved.getVenueCategory2()).isEqualTo(exposedVisit.getVenueCategory2());
-        assertThat(saved.getPeriodStart()).isEqualTo(exposedVisit.getPeriodStart());
-        assertThat(saved.getTimeSlot()).isEqualTo(exposedVisit.getTimeSlot());
-        assertThat(saved.getBackwardVisits()).isEqualTo(exposedVisit.getBackwardVisits());
-        assertThat(saved.getForwardVisits()).isEqualTo(exposedVisit.getForwardVisits());
-        assertThat(saved.getCreatedAt()).isEqualTo(exposedVisit.getCreatedAt());
+        assertThat(saved.getLocationTemporaryPublicId()).isEqualTo(exposedVisitEntity.getLocationTemporaryPublicId());
+        assertThat(saved.getVenueType()).isEqualTo(exposedVisitEntity.getVenueType());
+        assertThat(saved.getVenueCategory1()).isEqualTo(exposedVisitEntity.getVenueCategory1());
+        assertThat(saved.getVenueCategory2()).isEqualTo(exposedVisitEntity.getVenueCategory2());
+        assertThat(saved.getPeriodStart()).isEqualTo(exposedVisitEntity.getPeriodStart());
+        assertThat(saved.getTimeSlot()).isEqualTo(exposedVisitEntity.getTimeSlot());
+        assertThat(saved.getBackwardVisits()).isEqualTo(exposedVisitEntity.getBackwardVisits());
+        assertThat(saved.getForwardVisits()).isEqualTo(exposedVisitEntity.getForwardVisits());
+        assertThat(saved.getCreatedAt()).isEqualTo(exposedVisitEntity.getCreatedAt());
         assertThat(saved.getUpdatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isInstanceOf(Instant.class);
     }

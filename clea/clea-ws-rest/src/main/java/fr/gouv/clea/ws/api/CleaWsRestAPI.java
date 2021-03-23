@@ -50,7 +50,5 @@ public interface CleaWsRestAPI {
                     @ApiResponse(code = 500, message = "Internal Error")
             }
     )
-    ReportResponse report(
-            ReportRequest reportRequestVo
-    );
+    ReportResponse report(ReportRequest reportRequestVo);
 }

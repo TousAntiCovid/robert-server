@@ -14,8 +14,7 @@ public class SecurityConfiguration {
 
     @Autowired
     public SecurityConfiguration(
-            @Value("${clea.conf.security.crypto.manualCTAuthoritySecretKey}") String serverAuthoritySecretKey
-    ) {
+            @Value("${clea.conf.security.crypto.manualCTAuthoritySecretKey}") String serverAuthoritySecretKey) {
         this.serverAuthoritySecretKey = serverAuthoritySecretKey;
     }
 

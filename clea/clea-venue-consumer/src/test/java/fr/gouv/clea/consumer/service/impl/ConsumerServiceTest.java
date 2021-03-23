@@ -62,7 +62,7 @@ class ConsumerServiceTest {
 
     @Test
     @DisplayName("test that kafka listener triggers when something is sent to the queue")
-    void consume() {
+    void testCanConsumeMessageSentinDefaultQueue() {
         DecodedVisit decodedVisit = new DecodedVisit(
                 RandomUtils.nextLong(),
                 EncryptedLocationSpecificPart.builder()
@@ -75,6 +75,7 @@ class ConsumerServiceTest {
         );
         producer.send(new ProducerRecord<>(topicName, decodedVisit));
         producer.flush();
+        
         await().atMost(1, TimeUnit.MINUTES)
                 .untilAsserted(
                         () -> Mockito.verify(consumerService, Mockito.times(1))

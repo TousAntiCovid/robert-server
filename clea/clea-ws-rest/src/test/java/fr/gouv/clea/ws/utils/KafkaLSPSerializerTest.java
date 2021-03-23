@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaLSPSerializerTest {
 
     @Test
-    void serialize() {
+    void testCanSerializeAndDeserializeAVisit() {
         DecodedVisit decoded = new DecodedVisit(
                 RandomUtils.nextLong(),
                 EncryptedLocationSpecificPart.builder()
@@ -25,11 +25,15 @@ class KafkaLSPSerializerTest {
         );
         KafkaLSPSerializer serializer = new KafkaLSPSerializer();
         KafkaLSPDeserializer deserializer = new KafkaLSPDeserializer();
-        byte[] ser = serializer.serialize("", decoded);
-        DecodedVisit deSer = deserializer.deserialize("", ser);
-        assertThat(decoded.getQrCodeScanTime()).isEqualTo(deSer.getQrCodeScanTime());
-        assertThat(decoded.isBackward()).isEqualTo(deSer.isBackward());
-        assertThat(decoded.getEncryptedLocationSpecificPart()).isEqualTo(deSer.getEncryptedLocationSpecificPart());
+        
+        byte[] serializedVisit = serializer.serialize("", decoded);
+        DecodedVisit deserializedVisit = deserializer.deserialize("", serializedVisit);
+        
+        assertThat(decoded.getQrCodeScanTime()).isEqualTo(deserializedVisit.getQrCodeScanTime());
+        assertThat(decoded.isBackward()).isEqualTo(deserializedVisit.isBackward());
+        assertThat(decoded.getEncryptedLocationSpecificPart()).isEqualTo(deserializedVisit.getEncryptedLocationSpecificPart());
+        serializer.close();
+        deserializer.close();
     }
 
 }

@@ -1,7 +1,7 @@
 package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IProducerService;
+import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
@@ -32,7 +32,7 @@ class ReportServiceTest {
     private final int retentionDuration = 14;
     private final long duplicateScanThresholdInSeconds = 10800L;
     private final LocationSpecificPartDecoder decoder = mock(LocationSpecificPartDecoder.class);
-    private final IProducerService processService = mock(IProducerService.class);
+    private final IDecodedVisitProducerService processService = mock(IDecodedVisitProducerService.class);
     private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, decoder, processService);
     private Instant now;
 

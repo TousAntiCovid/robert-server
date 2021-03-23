@@ -36,14 +36,14 @@ class AuthorizationServiceTest {
 
     @Test
     @DisplayName("if auth is activated in conf, null header should throw CleaUnauthorizedException")
-    void authNullAuthActivated() {
+    void testGiventAuthActivatedAndNullTokenThenCleaUnauthorizedExpcetionThrown() {
         assertThatExceptionOfType(CleaUnauthorizedException.class)
                 .isThrownBy(() -> authorizationService.checkAuthorization(null));
     }
 
     @Test
     @DisplayName("if auth is deactivated in conf, null header should have no impact")
-    void authNullAuthDeactivated() {
+    void testGiventAuthDeactivatedAndNullTokenThenNoExceptionThrown() {
         try {
             disabledAuthorizationService.checkAuthorization(null);
         } catch (Exception e) {

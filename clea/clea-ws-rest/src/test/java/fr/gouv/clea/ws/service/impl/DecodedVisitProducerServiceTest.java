@@ -1,7 +1,7 @@
 package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IProducerService;
+import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
 import fr.gouv.clea.ws.utils.KafkaLSPDeserializer;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import org.apache.commons.lang3.RandomUtils;
@@ -36,10 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
 @TestPropertySource(properties = {"kafka.bootstrapAddress=localhost:9092"})
-class ProducerServiceTest {
+class DecodedVisitProducerServiceTest {
 
     @Autowired
-    private IProducerService producerService;
+    private IDecodedVisitProducerService decodedVisitProducerService;
 
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
@@ -48,19 +48,6 @@ class ProducerServiceTest {
 
     @Value("${spring.kafka.template.default-topic}")
     private String defaultTopic;
-
-    private static DecodedVisit createSerializableDecodedVisit(Long qrCodeScanTime, boolean isBackward, UUID locationTemporaryPublicId, byte[] encryptedLocationMessage) {
-        return new DecodedVisit(
-                qrCodeScanTime,
-                EncryptedLocationSpecificPart.builder()
-                        .version(RandomUtils.nextInt())
-                        .type(RandomUtils.nextInt())
-                        .locationTemporaryPublicId(locationTemporaryPublicId)
-                        .encryptedLocationMessage(encryptedLocationMessage)
-                        .build(),
-                isBackward
-        );
-    }
 
     @BeforeEach
     void init() {
@@ -94,7 +81,7 @@ class ProducerServiceTest {
                 createSerializableDecodedVisit(qrCodeScanTime3, isBackward3, uuid3, encryptedLocationMessage3)
         );
 
-        producerService.produce(decoded);
+        decodedVisitProducerService.produce(decoded);
 
         ConsumerRecords<String, DecodedVisit> records = KafkaTestUtils.getRecords(consumer);
         assertThat(records.count()).isEqualTo(3);
@@ -125,6 +112,19 @@ class ProducerServiceTest {
         assertThat(visit3.getEncryptedLocationSpecificPart().getEncryptedLocationMessage()).isEqualTo(encryptedLocationMessage3);
         assertThat(visit3.getQrCodeScanTime()).isEqualTo(qrCodeScanTime3);
         assertThat(visit3.isBackward()).isEqualTo(isBackward3);
+    }
+
+    private static DecodedVisit createSerializableDecodedVisit(Long qrCodeScanTime, boolean isBackward, UUID locationTemporaryPublicId, byte[] encryptedLocationMessage) {
+        return new DecodedVisit(
+                qrCodeScanTime,
+                EncryptedLocationSpecificPart.builder()
+                        .version(RandomUtils.nextInt())
+                        .type(RandomUtils.nextInt())
+                        .locationTemporaryPublicId(locationTemporaryPublicId)
+                        .encryptedLocationMessage(encryptedLocationMessage)
+                        .build(),
+                isBackward
+        );
     }
 
 }

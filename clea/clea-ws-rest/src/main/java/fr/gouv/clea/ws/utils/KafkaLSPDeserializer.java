@@ -22,7 +22,8 @@ public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
             return null;
         try {
             return new ObjectMapper()
-                    .registerModule(new SimpleModule().addDeserializer(DecodedVisit.class, new JacksonLSPDeserializer()))
+                    .registerModule(
+                            new SimpleModule().addDeserializer(DecodedVisit.class, new JacksonLSPDeserializer()))
                     .readValue(data, DecodedVisit.class);
         } catch (IOException e) {
             throw new SerializationException("Error deserializing JSON message", e);
@@ -31,6 +32,7 @@ public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
 }
 
 class JacksonLSPDeserializer extends StdDeserializer<DecodedVisit> {
+    private static final long serialVersionUID = 1L;
 
     public JacksonLSPDeserializer() {
         this(null);
@@ -41,23 +43,18 @@ class JacksonLSPDeserializer extends StdDeserializer<DecodedVisit> {
     }
 
     @Override
-    public DecodedVisit deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        JsonNode node = p.getCodec().readTree(p);
+    public DecodedVisit deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+        JsonNode node = parser.getCodec().readTree(parser);
         long qrCodeScanTime = node.get("qrCodeScanTime").asLong();
         boolean isBackward = node.get("isBackward").asBoolean();
         int version = node.get("version").asInt();
         int type = node.get("type").asInt();
         UUID locationTemporaryPublicId = UUID.fromString(node.get("locationTemporaryPublicId").asText());
         byte[] encryptedLocationMessage = node.get("encryptedLocationMessage").binaryValue();
-        return new DecodedVisit(
-                qrCodeScanTime,
-                EncryptedLocationSpecificPart.builder()
-                        .version(version)
-                        .type(type)
+        return new DecodedVisit(qrCodeScanTime,
+                EncryptedLocationSpecificPart.builder().version(version).type(type)
                         .locationTemporaryPublicId(locationTemporaryPublicId)
-                        .encryptedLocationMessage(encryptedLocationMessage)
-                        .build(),
-                isBackward
-        );
+                        .encryptedLocationMessage(encryptedLocationMessage).build(),
+                isBackward);
     }
 }

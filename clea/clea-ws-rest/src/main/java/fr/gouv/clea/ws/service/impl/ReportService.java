@@ -1,7 +1,7 @@
 package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IProducerService;
+import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
@@ -31,15 +31,14 @@ public class ReportService implements IReportService {
 
     private final LocationSpecificPartDecoder decoder;
 
-    private final IProducerService processService;
+    private final IDecodedVisitProducerService processService;
 
     @Autowired
     public ReportService(
             @Value("${clea.conf.retentionDurationInDays}") int retentionDuration,
             @Value("${clea.conf.duplicateScanThresholdInSeconds}") long duplicateScanThreshold,
             LocationSpecificPartDecoder decoder,
-            IProducerService processService
-    ) {
+            IDecodedVisitProducerService processService) {
         this.retentionDurationInDays = retentionDuration;
         this.duplicateScanThresholdInSeconds = duplicateScanThreshold;
         this.decoder = decoder;

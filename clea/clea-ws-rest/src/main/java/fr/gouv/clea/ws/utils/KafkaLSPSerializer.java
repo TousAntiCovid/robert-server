@@ -30,6 +30,7 @@ public class KafkaLSPSerializer implements Serializer<DecodedVisit> {
 }
 
 class JacksonLSPSerializer extends StdSerializer<DecodedVisit> {
+    private static final long serialVersionUID = 1L;
 
     public JacksonLSPSerializer() {
         this(null);

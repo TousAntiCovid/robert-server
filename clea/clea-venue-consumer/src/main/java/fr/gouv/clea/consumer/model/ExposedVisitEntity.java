@@ -1,4 +1,4 @@
-package fr.gouv.clea.consumer.data;
+package fr.gouv.clea.consumer.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,7 +18,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Entity
 @Table(name = "EXPOSED_VISITS")
-public class ExposedVisit {
+public class ExposedVisitEntity {
 
     @Id
     @GeneratedValue(generator = "uuid")

@@ -4,7 +4,7 @@ import fr.gouv.clea.ws.model.DecodedVisit;
 
 import java.util.List;
 
-public interface IProducerService {
+public interface IDecodedVisitProducerService {
 
     void produce(List<DecodedVisit> decodedVisits);
 }

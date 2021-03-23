@@ -48,9 +48,7 @@ public class CleaController implements CleaWsRestAPI {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     // TODO: Also we should switch from AuthorizationService to SpringSecurity using jwtDecoder
-    public ReportResponse report(
-            @RequestBody @Valid ReportRequest reportRequestVo
-    ) {
+    public ReportResponse report(@RequestBody @Valid ReportRequest reportRequestVo) {
         String auth = request.getHeader("Authorization");
         this.authorizationService.checkAuthorization(auth);
         List<DecodedVisit> reported = reportService.report(reportRequestVo);

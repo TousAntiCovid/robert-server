@@ -1,7 +1,8 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.consumer.data.ExposedVisit;
-import fr.gouv.clea.consumer.data.IExposedVisitRepository;
+import fr.gouv.clea.consumer.model.ExposedVisitEntity;
+import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,7 @@ import static org.awaitility.Awaitility.await;
                 "clea.conf.scheduling.purge.enabled=true"
         }
 )
-class PersistServiceSchedulingTest {
+class ExposedVisitEnityServiceSchedulingTest {
 
     @Value("${clea.conf.scheduling.purge.cron}")
     private String cronValue;
@@ -42,8 +43,8 @@ class PersistServiceSchedulingTest {
     @Autowired
     private ScheduledTaskHolder scheduledTaskHolder;
 
-    private static ExposedVisit createExposedVisit(Instant qrCodeScanTime) {
-        return new ExposedVisit(
+    private static ExposedVisitEntity createExposedVisit(Instant qrCodeScanTime) {
+        return new ExposedVisitEntity(
                 null, // handled by db
                 UUID.randomUUID().toString(),
                 RandomUtils.nextInt(),
@@ -73,8 +74,9 @@ class PersistServiceSchedulingTest {
                 .filter(scheduledTask -> scheduledTask.getTask() instanceof CronTask)
                 .map(scheduledTask -> (CronTask) scheduledTask.getTask())
                 .filter(cronTask -> cronTask.getExpression().equals(cronValue)
-                        && cronTask.toString().equals("fr.gouv.clea.consumer.service.impl.PersistService.deleteOutdatedExposedVisits"))
+                        && cronTask.toString().equals("fr.gouv.clea.consumer.service.impl.ExposedVisitEntityService.deleteOutdatedExposedVisits"))
                 .count();
+        
         assertThat(count).isEqualTo(1L);
     }
 
@@ -93,8 +95,10 @@ class PersistServiceSchedulingTest {
                 )
         );
         assertThat(repository.count()).isEqualTo(3);
+        
         await().atMost(30, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(repository.count()).isEqualTo(1));
+        
         assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(yesterday))).isTrue();
         assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(_14DaysAgo))).isFalse();
         assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(_15DaysAgo))).isFalse();

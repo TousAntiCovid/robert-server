@@ -1,37 +1,35 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.consumer.data.ExposedVisit;
-import fr.gouv.clea.consumer.model.DecodedVisit;
-import fr.gouv.clea.consumer.service.IConsumerService;
-import fr.gouv.clea.consumer.service.IPersistService;
-import fr.gouv.clea.consumer.service.IVerificationService;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
+import fr.gouv.clea.consumer.model.DecodedVisit;
+import fr.gouv.clea.consumer.model.ExposedVisitEntity;
+import fr.gouv.clea.consumer.service.IConsumerService;
+import fr.gouv.clea.consumer.service.IExposedVisitEntityService;
+import fr.gouv.clea.consumer.service.IDecodedVisitService;
 
 @Component
-@Slf4j
 public class ConsumerService implements IConsumerService {
 
-    private final IVerificationService verificationService;
-    private final IPersistService persistService;
+    private final IDecodedVisitService decodedVisitService;
+    private final IExposedVisitEntityService exposedVisitEntityService;
 
     @Autowired
     public ConsumerService(
-            IVerificationService verificationService,
-            IPersistService persistService
-    ) {
-        this.verificationService = verificationService;
-        this.persistService = persistService;
+            IDecodedVisitService decodedVisitService,
+            IExposedVisitEntityService exposedVisitEntityService) {
+        this.decodedVisitService = decodedVisitService;
+        this.exposedVisitEntityService = exposedVisitEntityService;
     }
 
     @Override
     @KafkaListener(topics = "${spring.kafka.template.default-topic}")
     public void consume(DecodedVisit decodedVisit) {
-        Optional<ExposedVisit> exposedVisit = verificationService.decryptAndValidate(decodedVisit);
-        exposedVisit.ifPresent(persistService::persist);
+        Optional<ExposedVisitEntity> exposedVisitEntity = decodedVisitService.decryptAndValidate(decodedVisit);
+        exposedVisitEntity.ifPresent(exposedVisitEntityService::persist);
     }
 }
