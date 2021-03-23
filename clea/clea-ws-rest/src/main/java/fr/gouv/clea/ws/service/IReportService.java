@@ -6,5 +6,5 @@ import fr.gouv.clea.ws.vo.ReportRequest;
 import java.util.List;
 
 public interface IReportService {
-    List<DecodedVisit> report(String jwtToken, ReportRequest reportRequestVo);
+    List<DecodedVisit> report(ReportRequest reportRequestVo);
 }

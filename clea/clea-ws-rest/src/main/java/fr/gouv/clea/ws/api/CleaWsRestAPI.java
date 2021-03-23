@@ -3,10 +3,7 @@ package fr.gouv.clea.ws.api;
 import fr.gouv.clea.ws.dto.ReportResponse;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Example;
@@ -20,6 +17,7 @@ import org.springframework.http.MediaType;
         produces = MediaType.APPLICATION_JSON_VALUE
 )
 public interface CleaWsRestAPI {
+
     @ApiOperation(
             value = "Upload locations history",
             notes = "" +
@@ -30,15 +28,6 @@ public interface CleaWsRestAPI {
             httpMethod = "POST",
             response = ReportResponse.class,
             protocols = "https"
-    )
-    @ApiImplicitParams(
-            @ApiImplicitParam(
-                    name = "Authorization",
-                    value = "JWT Bearer Token for authorization (provided by the Robert Server Report answer",
-                    required = false,
-                    paramType = "header",
-                    dataTypeClass = String.class
-            )
     )
     @ApiResponses(
             value = {
@@ -62,11 +51,6 @@ public interface CleaWsRestAPI {
             }
     )
     ReportResponse report(
-            @ApiParam(
-                    value = "JWT Bearer Token for authorization (provided by the Robert Server /report answer)",
-                    required = true
-            ) String jwtToken,
             ReportRequest reportRequestVo
-
     );
 }

@@ -1,7 +1,6 @@
 package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProducerService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
@@ -34,26 +33,21 @@ public class ReportService implements IReportService {
 
     private final IProducerService processService;
 
-    private final IAuthorizationService authorizationService;
-
     @Autowired
     public ReportService(
             @Value("${clea.conf.retentionDurationInDays}") int retentionDuration,
             @Value("${clea.conf.duplicateScanThresholdInSeconds}") long duplicateScanThreshold,
             LocationSpecificPartDecoder decoder,
-            IProducerService processService,
-            IAuthorizationService authorizationService) {
+            IProducerService processService
+    ) {
         this.retentionDurationInDays = retentionDuration;
         this.duplicateScanThresholdInSeconds = duplicateScanThreshold;
         this.decoder = decoder;
         this.processService = processService;
-        this.authorizationService = authorizationService;
     }
 
     @Override
-    public List<DecodedVisit> report(String jwtToken, ReportRequest reportRequestVo) {
-        this.authorizationService.checkAuthorization(jwtToken);
-
+    public List<DecodedVisit> report(ReportRequest reportRequestVo) {
         List<DecodedVisit> verified = reportRequestVo.getVisits().stream()
                 .filter(visit -> !this.isOutdated(visit))
                 .filter(visit -> !this.isFuture(visit))

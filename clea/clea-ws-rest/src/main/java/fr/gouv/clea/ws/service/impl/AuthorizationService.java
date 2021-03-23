@@ -31,8 +31,10 @@ public class AuthorizationService implements IAuthorizationService {
     }
 
     public boolean checkAuthorization(String jwtToken) throws CleaUnauthorizedException {
-        jwtToken = jwtToken.replace("Bearer ", "");
         if (this.checkAuthorization) {
+            if (jwtToken == null) {
+                throw new CleaUnauthorizedException();
+            }
             jwtToken = jwtToken.replace("Bearer ", "");
             this.verifyJWT(jwtToken);
         }

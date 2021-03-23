@@ -6,7 +6,6 @@ import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +26,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class CleaControllerTest {
+
     @Value("${controller.path.prefix}" + UriConstants.API_V1)
     private String pathPrefix;
 
@@ -36,20 +36,24 @@ public class CleaControllerTest {
     @MockBean
     private ReportService reportService;
 
+    public static HttpHeaders newJsonHeader() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+
     @Test
     public void testInfectedUserCanReportHimselfAsInfected() {
         List<Visit> visits = List.of(new Visit("qrCode", 0L));
-        HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, 0L), this.newJsonHeader());
-        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request,
-                String.class);
+        HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, 0L), newJsonHeader());
+        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     public void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
-        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, "foo",
-                String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, "foo", String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
         verifyNoMoreInteractions(reportService);
@@ -57,9 +61,8 @@ public class CleaControllerTest {
 
     @Test
     public void testWhenReportRequestWithNullVisitListThenGetBadRequest() {
-        HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(null, 0L), this.newJsonHeader());
-        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request,
-                String.class);
+        HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(null, 0L), newJsonHeader());
+        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(reportService);
@@ -71,41 +74,11 @@ public class CleaControllerTest {
         jsonObject.put("id", 1);
         ResponseEntity<String> response = restTemplate.postForEntity(
                 pathPrefix + UriConstants.REPORT,
-                new HttpEntity<String>(jsonObject.toString(), this.newJsonHeader()),
-                String.class);
+                new HttpEntity<>(jsonObject.toString(), newJsonHeader()),
+                String.class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(reportService);
-    }
-
-    @Disabled(value = "Enable this test when JWT ready to be tested")
-    @Test
-    public void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
-        List<Visit> visits = List.of();
-        HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, 0L), this.newJsonHeader());
-        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request,
-                String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-
-    @Disabled(value = "Enable this test when JWT ready to be tested")
-    @Test
-    public void testWhenReportRequestWithNonValidAuthenticationThenGetUnauthorized() {
-        List<Visit> visits = List.of();
-        HttpHeaders headers = this.newJsonHeader();
-        headers.setBearerAuth("invalid JWT token");
-        HttpEntity<ReportRequest> reportEntity = new HttpEntity<>(new ReportRequest(visits, 0L), headers);
-
-        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, reportEntity,
-                String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-    public HttpHeaders newJsonHeader() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return headers;
     }
 }
