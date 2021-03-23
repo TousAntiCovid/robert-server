@@ -1,0 +1,31 @@
+controller:
+  path:
+    prefix: /api/clea
+server:
+  port: 8088
+
+    
+# Available endpoints for the monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${CLEA_SERVER_MONITORING_ENDPOINTS:health,metrics}
+
+clea:
+  conf:
+    duplicateScanThresholdInSeconds: 10800
+    retentionDurationInDays: 14
+    security:
+      crypto:
+        manualCTAuthoritySecretKey: 536efbdc5d8668d4a16e89059f15849fa979caf988841394eab1308f82d4e8e4
+      report:
+        checkAuthorization: true
+        robertJwtPublicKey: TODO
+kafka:
+  bootstrapAddress: localhost:8080
+  topic:
+    name: cleaQrCodes
+logging:
+  level:
+    fr.gouv.clea.ws: INFO

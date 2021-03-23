@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: clea-server
+  cloud:
+    consul:
+      enabled: ${CONSUL_ENABLED:false}
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      token: ${CLEA_SERVER_CONSUL_ACL_TOKEN:token}
+      scheme: ${CONSUL_SCHEME:http}
+      config:
+        enabled: ${CONSUL_CONFIG_ENABLED:false}
+    vault:
+      enabled: ${VAULT_ENABLED:false}
+      host: ${VAULT_HOST:localhost}
+      port: ${VAULT_PORT:8200}
+      token: ${VAULT_TOKEN:token}
+      scheme: ${VAULT_SCHEME:http}
