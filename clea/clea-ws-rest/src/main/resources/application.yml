@@ -1,20 +1,23 @@
 clea:
   conf:
-    duplicateScanThreshold: 10800 # in seconds
-    retentionDuration: 14 # in days
+    duplicateScanThreshold: 10800
+    retentionDuration: 14
     security:
       crypto:
-        manualCTAuthoritySecretKey: 536efbdc5d8668d4a16e89059f15849fa979caf988841394eab1308f82d4e8e4
+        manualCTAuthoritySecretKey: 3108f08b1485adb6f72cfba1b55c7484c906a2a3a0a027c78dcd991ca64c97bd
       report:
-        checkAuthorization: true
+        checkAuthorization: false
         robertJwtPublicKey: TODO
-kafka:
-  bootstrapAddress: localhost:8080
-  producer:
-    topic:
-      name: qrCodes
-      numPartitions: 1
-      replicationFactor: 1
 logging:
   level:
     fr.gouv.tacw: DEBUG
+spring:
+  kafka:
+    bootstrap-servers: "localhost:9092"
+    consumer:
+      group-id: group1
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: fr.gouv.tacw.utils.KafkaLSPSerializer
+    template:
+      default-topic: qrCodes

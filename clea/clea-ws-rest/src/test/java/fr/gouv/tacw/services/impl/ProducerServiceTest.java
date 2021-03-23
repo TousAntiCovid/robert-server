@@ -1,11 +1,10 @@
 package fr.gouv.tacw.services.impl;
 
-import fr.gouv.tacw.data.DecodedLocationSpecificPart;
+import fr.gouv.tacw.dtos.DecodedLocationSpecificPart;
 import fr.gouv.tacw.services.IProducerService;
 import fr.gouv.tacw.utils.KafkaLSPDeserializer;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -15,10 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
@@ -33,46 +30,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
-@TestPropertySource(properties = {"kafka.bootstrapAddress=localhost:9092", "kafka.consumer.group.id:group1"})
-@Import(ProcessServiceTestConfiguration.class)
+@TestPropertySource(properties = {"kafka.bootstrapAddress=localhost:9092"})
 class ProducerServiceTest {
 
     @Autowired
     private IProducerService processService;
 
     @Autowired
+    private EmbeddedKafkaBroker embeddedKafkaBroker;
+
     private Consumer<String, DecodedLocationSpecificPart> consumer;
 
-    private static DecodedLocationSpecificPart createDecodedLocationSpecificPart(
-            String qrCode,
-            UUID locationTemporaryPublicId,
-            byte[] locationTemporarySecretKey,
-            byte[] encryptedLocationContactMessage
-    ) {
-        return new DecodedLocationSpecificPart(
-                0,
-                0,
-                0,
-                false,
-                locationTemporaryPublicId,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                locationTemporarySecretKey,
-                encryptedLocationContactMessage,
-                0,
-                qrCode
-        );
-    }
+    @Value("${spring.kafka.template.default-topic}")
+    private String defaultTopic;
 
     @BeforeEach
     void init() {
-        assertThat(processService).isNotNull();
-        assertThat(consumer).isNotNull();
+        Map<String, Object> configs = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "false", embeddedKafkaBroker));
+        consumer = new DefaultKafkaConsumerFactory<>(configs, new StringDeserializer(), new KafkaLSPDeserializer()).createConsumer();
+        consumer.subscribe(Collections.singleton(defaultTopic));
     }
 
     @Test
@@ -91,9 +67,9 @@ class ProducerServiceTest {
         byte[] encryptedLocationContactMessage3 = RandomUtils.nextBytes(23);
 
         List<DecodedLocationSpecificPart> decoded = List.of(
-                createDecodedLocationSpecificPart("qr1", uuid1, locationTemporarySecretKey1, encryptedLocationContactMessage1),
-                createDecodedLocationSpecificPart("qr2", uuid2, locationTemporarySecretKey2, encryptedLocationContactMessage2),
-                createDecodedLocationSpecificPart("qr3", uuid3, locationTemporarySecretKey3, encryptedLocationContactMessage3)
+                DecodedLocationSpecificPart.createDecodedLocationSpecificPart("qr1", uuid1, locationTemporarySecretKey1, encryptedLocationContactMessage1),
+                DecodedLocationSpecificPart.createDecodedLocationSpecificPart("qr2", uuid2, locationTemporarySecretKey2, encryptedLocationContactMessage2),
+                DecodedLocationSpecificPart.createDecodedLocationSpecificPart("qr3", uuid3, locationTemporarySecretKey3, encryptedLocationContactMessage3)
         );
 
         processService.produce(decoded);
@@ -129,34 +105,4 @@ class ProducerServiceTest {
         assertThat(dlsp3.getEncryptedLocationContactMessage()).isEqualTo(encryptedLocationContactMessage3);
     }
 
-}
-
-@TestConfiguration
-class ProcessServiceTestConfiguration {
-
-    private final String bootstrapAddress;
-
-    private final String groupId;
-
-    @Autowired
-    public ProcessServiceTestConfiguration(
-            @Value("${kafka.bootstrapAddress}") String bootstrapAddress,
-            @Value("${kafka.consumer.group.id}") String groupId
-    ) {
-        this.bootstrapAddress = bootstrapAddress;
-        this.groupId = groupId;
-    }
-
-    @Bean
-    public Consumer<String, DecodedLocationSpecificPart> consumer() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaLSPDeserializer.class);
-        Consumer<String, DecodedLocationSpecificPart> consumer = new DefaultKafkaConsumerFactory<String, DecodedLocationSpecificPart>(props).createConsumer();
-        consumer.subscribe(Collections.singleton("qrCodes"));
-        consumer.poll(0);
-        return consumer;
-    }
 }

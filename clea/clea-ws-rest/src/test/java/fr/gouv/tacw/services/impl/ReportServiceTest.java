@@ -1,6 +1,6 @@
 package fr.gouv.tacw.services.impl;
 
-import fr.gouv.tacw.data.DecodedLocationSpecificPart;
+import fr.gouv.tacw.dtos.DecodedLocationSpecificPart;
 import fr.gouv.tacw.dtos.Report;
 import fr.gouv.tacw.dtos.Reports;
 import fr.gouv.tacw.services.IAuthorizationService;
@@ -41,9 +41,6 @@ class ReportServiceTest {
     @BeforeEach
     void init() {
         now = Instant.now();
-        assertThat(decoder).isNotNull();
-        assertThat(processService).isNotNull();
-        assertThat(reportService).isNotNull();
         doNothing().when(processService).produce(anyList());
         when(authorizationService.checkAuthorization(any())).thenReturn(true);
     }

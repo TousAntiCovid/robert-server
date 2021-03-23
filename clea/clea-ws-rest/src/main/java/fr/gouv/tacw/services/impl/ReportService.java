@@ -1,6 +1,6 @@
 package fr.gouv.tacw.services.impl;
 
-import fr.gouv.tacw.data.DecodedLocationSpecificPart;
+import fr.gouv.tacw.dtos.DecodedLocationSpecificPart;
 import fr.gouv.tacw.dtos.Report;
 import fr.gouv.tacw.dtos.Reports;
 import fr.gouv.tacw.services.IAuthorizationService;
@@ -52,31 +52,31 @@ public class ReportService implements IReportService {
     @Override
     public List<DecodedLocationSpecificPart> report(String jwtToken, Reports body) {
         this.authorizationService.checkAuthorization(jwtToken);
-
         List<DecodedLocationSpecificPart> verified = body.getReports().stream()
                 .map(this::verify)
-                .filter(Objects::nonNull)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
         List<DecodedLocationSpecificPart> pruned = this.pruneDuplicates(verified);
-        processService.produce(List.of());
+        processService.produce(pruned);
         return pruned;
     }
 
-    private DecodedLocationSpecificPart verify(Report report) {
+    private Optional<DecodedLocationSpecificPart> verify(Report report) {
         try {
             LocationSpecificPart lsp = decoder.decrypt(report.getQrCode());
             if (!this.isCurrent(report)) {
                 log.warn("report: " + this.truncateQrCode(report.getQrCode()) + "... rejected: Outdated");
-                return null;
+                return Optional.empty();
             } else if (this.isFuture(report)) {
                 log.warn("report: " + this.truncateQrCode(report.getQrCode()) + "... rejected: In future");
-                return null;
+                return Optional.empty();
             } else {
-                return DecodedLocationSpecificPart.fromLocationSpecificPart(lsp, report.getQrCodeScanTime(), report.getQrCode());
+                return Optional.of(DecodedLocationSpecificPart.fromLocationSpecificPart(lsp, report.getQrCodeScanTime(), report.getQrCode()));
             }
-        } catch (CleaEncryptionException e) {
+        } catch (ArrayIndexOutOfBoundsException | CleaEncryptionException e) {
             log.warn("report: " + this.truncateQrCode(report.getQrCode()) + "... rejected: Invalid format");
-            return null;
+            return Optional.empty();
         }
     }
 

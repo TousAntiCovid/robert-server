@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import fr.gouv.tacw.dtos.DecodedLocationSpecificPart;
+import fr.gouv.tacw.dto.DecodedLocationSpecificPart;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 
@@ -72,8 +72,7 @@ class JacksonLSPDeserializer extends StdDeserializer<DecodedLocationSpecificPart
                 qrCodeValidityStartTime,
                 locationTemporarySecretKey,
                 encryptedLocationContactMessage,
-                qrCodeScanTime,
-                null
+                qrCodeScanTime
         );
     }
 }

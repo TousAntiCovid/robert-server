@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import fr.gouv.tacw.dtos.DecodedLocationSpecificPart;
+import fr.gouv.tacw.dto.DecodedLocationSpecificPart;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -54,8 +54,7 @@ class JacksonLSPSerializer extends StdSerializer<DecodedLocationSpecificPart> {
         gen.writeNumberField("compressedPeriodStartTime", value.getCompressedPeriodStartTime());
         gen.writeNumberField("qrCodeValidityStartTime", value.getQrCodeValidityStartTime());
         gen.writeBinaryField("locationTemporarySecretKey", value.getLocationTemporarySecretKey());
-        if (value.getEncryptedLocationContactMessage() != null)
-            gen.writeBinaryField("encryptedLocationContactMessage", value.getEncryptedLocationContactMessage());
+        gen.writeBinaryField("encryptedLocationContactMessage", value.getEncryptedLocationContactMessage());
         gen.writeNumberField("qrCodeScanTime", value.getQrCodeScanTime());
         gen.writeEndObject();
     }

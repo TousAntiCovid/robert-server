@@ -24,6 +24,15 @@ public interface TacWarningDynamicAPI {
             response = ReportResponse.class,
             protocols = "https"
     )
+    @ApiImplicitParams(
+            @ApiImplicitParam(
+                    name = "Authorization",
+                    value = "JWT Bearer Token for authorization (provided by the Robert Server Report answer",
+                    required = false,
+                    paramType = "header",
+                    dataTypeClass = String.class
+            )
+    )
     @ApiResponses(
             value = {
                     @ApiResponse(
@@ -46,11 +55,7 @@ public interface TacWarningDynamicAPI {
             }
     )
     ReportResponse report(
-            @ApiParam(
-                    value = "JWT Bearer Token for authorization (provided by the Robert Server Report answer)",
-                    required = true
-            ) String jwtToken,
-
+            String authorization,
             Reports body
     );
 }

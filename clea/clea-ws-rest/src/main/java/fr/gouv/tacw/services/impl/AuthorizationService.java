@@ -32,8 +32,8 @@ public class AuthorizationService implements IAuthorizationService {
     }
 
     public boolean checkAuthorization(String jwtToken) throws TacWarningUnauthorizedException {
-        jwtToken = jwtToken.replace("Bearer ", "");
         if (this.checkAuthorization) {
+            jwtToken = jwtToken.replace("Bearer ", "");
             this.verifyJWT(jwtToken);
         }
         return true;

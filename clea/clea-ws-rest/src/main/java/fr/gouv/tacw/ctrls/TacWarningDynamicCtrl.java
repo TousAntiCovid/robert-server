@@ -1,7 +1,7 @@
 package fr.gouv.tacw.ctrls;
 
 import fr.gouv.tacw.apis.TacWarningDynamicAPI;
-import fr.gouv.tacw.data.DecodedLocationSpecificPart;
+import fr.gouv.tacw.dtos.DecodedLocationSpecificPart;
 import fr.gouv.tacw.dtos.ReportResponse;
 import fr.gouv.tacw.dtos.Reports;
 import fr.gouv.tacw.services.IReportService;
@@ -31,11 +31,11 @@ public class TacWarningDynamicCtrl implements TacWarningDynamicAPI {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ReportResponse report(
-            @RequestHeader(value = "Authorization", required = false) String jwtToken,
+            @RequestHeader(name = "Authorization", required = false) String authorization,
             @RequestBody Reports body
     ) {
-        List<DecodedLocationSpecificPart> reported = reportService.report(jwtToken, body);
-        String message = body.getReports().size() - reported.size() + " reports processed, " + reported.size() + " rejected";
+        List<DecodedLocationSpecificPart> reported = reportService.report(authorization, body);
+        String message = reported.size() + " reports processed, " + (body.getReports().size() - reported.size()) + " rejected";
         log.info(message);
         return new ReportResponse(true, message);
     }

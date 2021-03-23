@@ -1,8 +1,9 @@
-package fr.gouv.tacw.data;
+package fr.gouv.tacw.dtos;
 
 import fr.inria.clea.lsp.LocationSpecificPart;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
@@ -10,6 +11,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = "qrCode")
 public class DecodedLocationSpecificPart {
 
     private int version;
@@ -30,7 +32,11 @@ public class DecodedLocationSpecificPart {
 
     private String qrCode; // FIXME need it for logs
 
-    public static DecodedLocationSpecificPart fromLocationSpecificPart(LocationSpecificPart locationSpecificPart, long qrCodeScanTime, String qrCode) {
+    public static DecodedLocationSpecificPart fromLocationSpecificPart(
+            LocationSpecificPart locationSpecificPart,
+            long qrCodeScanTime,
+            String qrCode
+    ) {
         return new DecodedLocationSpecificPart(
                 locationSpecificPart.getVersion(),
                 locationSpecificPart.getType(),
@@ -47,6 +53,32 @@ public class DecodedLocationSpecificPart {
                 locationSpecificPart.getLocationTemporarySecretKey(),
                 locationSpecificPart.getEncryptedLocationContactMessage(),
                 qrCodeScanTime,
+                qrCode
+        );
+    }
+
+    public static DecodedLocationSpecificPart createDecodedLocationSpecificPart(
+            String qrCode,
+            UUID locationTemporaryPublicId,
+            byte[] locationTemporarySecretKey,
+            byte[] encryptedLocationContactMessage
+    ) {
+        return new DecodedLocationSpecificPart(
+                0,
+                0,
+                0,
+                false,
+                locationTemporaryPublicId,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                locationTemporarySecretKey,
+                encryptedLocationContactMessage,
+                0,
                 qrCode
         );
     }

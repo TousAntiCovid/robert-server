@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    password: "${PASSWORD}"
+    url: "jdbc:postgresql://postgres:5432/cleadb"
+    username: "${USER}"
+  h2:
+    console:
+      enabled: false
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create
+  kafka:
+    bootstrap-servers: "kafka:29092"
