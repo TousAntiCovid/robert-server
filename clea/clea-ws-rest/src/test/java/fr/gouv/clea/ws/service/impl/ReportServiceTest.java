@@ -1,10 +1,9 @@
-package fr.gouv.clea.ws.services.impl;
+package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProducerService;
 import fr.gouv.clea.ws.service.IReportService;
-import fr.gouv.clea.ws.service.impl.ReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
 import fr.inria.clea.lsp.*;
@@ -27,11 +26,11 @@ import static org.mockito.Mockito.*;
 class ReportServiceTest {
 
     private final int retentionDuration = 14;
-    private final long duplicateScanThreshold = 10800L;
+    private final long duplicateScanThresholdInSeconds = 10800L;
     private final LocationSpecificPartDecoder decoder = mock(LocationSpecificPartDecoder.class);
     private final IProducerService processService = mock(IProducerService.class);
     private final IAuthorizationService authorizationService = mock(IAuthorizationService.class);
-    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThreshold, decoder, processService, authorizationService);
+    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, decoder, processService, authorizationService);
     private Instant now;
 
     @BeforeEach

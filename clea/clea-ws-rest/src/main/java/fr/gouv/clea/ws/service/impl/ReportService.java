@@ -26,9 +26,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ReportService implements IReportService {
 
-    private final int retentionDuration;
+    private final int retentionDurationInDays;
 
-    private final long duplicateScanThreshold;
+    private final long duplicateScanThresholdInSeconds;
 
     private final LocationSpecificPartDecoder decoder;
 
@@ -38,13 +38,13 @@ public class ReportService implements IReportService {
 
     @Autowired
     public ReportService(
-            @Value("${clea.conf.retentionDuration}") int retentionDuration,
-            @Value("${clea.conf.duplicateScanThreshold}") long duplicateScanThreshold,
+            @Value("${clea.conf.retentionDurationInDays}") int retentionDuration,
+            @Value("${clea.conf.duplicateScanThresholdInSeconds}") long duplicateScanThreshold,
             LocationSpecificPartDecoder decoder,
             IProducerService processService,
             IAuthorizationService authorizationService) {
-        this.retentionDuration = retentionDuration;
-        this.duplicateScanThreshold = duplicateScanThreshold;
+        this.retentionDurationInDays = retentionDuration;
+        this.duplicateScanThresholdInSeconds = duplicateScanThreshold;
         this.decoder = decoder;
         this.processService = processService;
         this.authorizationService = authorizationService;
@@ -57,7 +57,7 @@ public class ReportService implements IReportService {
         List<DecodedVisit> verified = reportRequestVo.getVisits().stream()
                 .filter(visit -> !this.isOutdated(visit))
                 .filter(visit -> !this.isFuture(visit))
-                .map(it -> this.decode(it, reportRequestVo.getPivotDate()))
+                .map(it -> this.decode(it, reportRequestVo.getPivotDateAsNtpTimestamp()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         List<DecodedVisit> pruned = this.pruneDuplicates(verified);
@@ -69,7 +69,7 @@ public class ReportService implements IReportService {
         try {
             byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
-            return new DecodedVisit(visit.getQrCodeScanTime(), encryptedLocationSpecificPart, visit.getQrCodeScanTime() < pivotDate);
+            return new DecodedVisit(visit.getQrCodeScanTimeAsNtpTimestamp(), encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);
         } catch (Exception e) {
             log.warn("report: {}... rejected: Invalid format", this.truncateQrCode(visit.getQrCode()));
             return null;
@@ -77,7 +77,7 @@ public class ReportService implements IReportService {
     }
 
     private boolean isOutdated(Visit visit) {
-        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTime()), Instant.now()) > retentionDuration; // FIXME < OR <=
+        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), Instant.now()) > retentionDurationInDays; // FIXME < OR <=
         if (outdated) {
             log.warn("report: {} ... rejected: Outdated", this.truncateQrCode(visit.getQrCode()));
         }
@@ -85,7 +85,7 @@ public class ReportService implements IReportService {
     }
 
     private boolean isFuture(Visit visit) {
-        boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTime()).isAfter(Instant.now());
+        boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()).isAfter(Instant.now());
         if (future) {
             log.warn("report: {} ... rejected: In future", this.truncateQrCode(visit.getQrCode()));
         }
@@ -101,7 +101,7 @@ public class ReportService implements IReportService {
             return false;
         }
 
-        if (Math.abs(one.getQrCodeScanTime() - other.getQrCodeScanTime()) <= duplicateScanThreshold) { // FIXME < OR <=
+        if (Math.abs(one.getQrCodeScanTime() - other.getQrCodeScanTime()) <= duplicateScanThresholdInSeconds) { // FIXME < OR <=
             log.warn("report: {} {} rejected: Duplicate", one.getLocationTemporaryPublicId(), one.getQrCodeScanTime());
             return true;
         }
