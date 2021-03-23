@@ -1,6 +1,7 @@
 package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.ws.model.SerializableDecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IProducerService;
 import fr.gouv.clea.ws.service.IReportService;
@@ -61,8 +62,16 @@ public class ReportService implements IReportService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         List<DecodedVisit> pruned = this.pruneDuplicates(verified);
-        processService.produce(pruned);
+        processService.produce(this.getSerializableDecodedVisits(reportRequestVo.getPivotDate(), pruned));
         return pruned;
+    }
+
+    private List<SerializableDecodedVisit> getSerializableDecodedVisits(Long pivotDate, List<DecodedVisit> pruned) {
+        return pruned.stream().map(it -> new SerializableDecodedVisit(
+                pivotDate,
+                it.getEncryptedLocationSpecificPart(),
+                it.getQrCodeScanTime()
+        )).collect(Collectors.toList());
     }
 
     private DecodedVisit decode(Visit visit) {

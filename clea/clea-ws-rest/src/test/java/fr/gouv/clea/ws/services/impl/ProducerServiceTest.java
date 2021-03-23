@@ -1,6 +1,6 @@
 package fr.gouv.clea.ws.services.impl;
 
-import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.ws.model.SerializableDecodedVisit;
 import fr.gouv.clea.ws.service.IProducerService;
 import fr.gouv.clea.ws.utils.KafkaLSPDeserializer;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
@@ -40,20 +40,21 @@ class ProducerServiceTest {
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-    private Consumer<String, DecodedVisit> consumer;
+    private Consumer<String, SerializableDecodedVisit> consumer;
 
     @Value("${spring.kafka.template.default-topic}")
     private String defaultTopic;
 
-    private static DecodedVisit createDecodedVisit(UUID locationTemporaryPublicId, byte[] encryptedLocationMessage) {
-        return new DecodedVisit(
-                RandomUtils.nextLong(),
+    private static SerializableDecodedVisit createSerializableDecodedVisit(Long qrCodeScanTime, Long pivotDate, UUID locationTemporaryPublicId, byte[] encryptedLocationMessage) {
+        return new SerializableDecodedVisit(
+                qrCodeScanTime,
                 EncryptedLocationSpecificPart.builder()
                         .version(RandomUtils.nextInt())
                         .type(RandomUtils.nextInt())
                         .locationTemporaryPublicId(locationTemporaryPublicId)
                         .encryptedLocationMessage(encryptedLocationMessage)
-                        .build()
+                        .build(),
+                pivotDate
         );
     }
 
@@ -75,37 +76,51 @@ class ProducerServiceTest {
         byte[] encryptedLocationMessage2 = RandomUtils.nextBytes(22);
         byte[] encryptedLocationMessage3 = RandomUtils.nextBytes(23);
 
-        List<DecodedVisit> decoded = List.of(
-                createDecodedVisit(uuid1, encryptedLocationMessage1),
-                createDecodedVisit(uuid2, encryptedLocationMessage2),
-                createDecodedVisit(uuid3, encryptedLocationMessage3)
+        Long pivotDate1 = RandomUtils.nextLong();
+        Long pivotDate2 = RandomUtils.nextLong();
+        Long pivotDate3 = RandomUtils.nextLong();
+
+        Long qrCodeScanTime1 = RandomUtils.nextLong();
+        Long qrCodeScanTime2 = RandomUtils.nextLong();
+        Long qrCodeScanTime3 = RandomUtils.nextLong();
+
+        List<SerializableDecodedVisit> decoded = List.of(
+                createSerializableDecodedVisit(qrCodeScanTime1, pivotDate1, uuid1, encryptedLocationMessage1),
+                createSerializableDecodedVisit(qrCodeScanTime2, pivotDate2, uuid2, encryptedLocationMessage2),
+                createSerializableDecodedVisit(qrCodeScanTime3, pivotDate3, uuid3, encryptedLocationMessage3)
         );
 
         producerService.produce(decoded);
 
-        ConsumerRecords<String, DecodedVisit> records = KafkaTestUtils.getRecords(consumer);
+        ConsumerRecords<String, SerializableDecodedVisit> records = KafkaTestUtils.getRecords(consumer);
         assertThat(records.count()).isEqualTo(3);
 
-        List<DecodedVisit> extracted = StreamSupport
+        List<SerializableDecodedVisit> extracted = StreamSupport
                 .stream(records.spliterator(), true)
                 .map(ConsumerRecord::value)
                 .collect(Collectors.toList());
         assertThat(extracted.size()).isEqualTo(3);
 
-        DecodedVisit visit1 = extracted.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findFirst().orElse(null);
+        SerializableDecodedVisit visit1 = extracted.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid1)).findFirst().orElse(null);
         assertThat(visit1).isNotNull();
         assertThat(visit1.getLocationTemporaryPublicId()).isEqualTo(uuid1);
         assertThat(visit1.getEncryptedLocationSpecificPart().getEncryptedLocationMessage()).isEqualTo(encryptedLocationMessage1);
+        assertThat(visit1.getQrCodeScanTime()).isEqualTo(qrCodeScanTime1);
+        assertThat(visit1.getPivotDate()).isEqualTo(pivotDate1);
 
-        DecodedVisit visit2 = extracted.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid2)).findFirst().orElse(null);
+        SerializableDecodedVisit visit2 = extracted.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid2)).findFirst().orElse(null);
         assertThat(visit2).isNotNull();
         assertThat(visit2.getLocationTemporaryPublicId()).isEqualTo(uuid2);
         assertThat(visit2.getEncryptedLocationSpecificPart().getEncryptedLocationMessage()).isEqualTo(encryptedLocationMessage2);
+        assertThat(visit2.getQrCodeScanTime()).isEqualTo(qrCodeScanTime2);
+        assertThat(visit2.getPivotDate()).isEqualTo(pivotDate2);
 
-        DecodedVisit visit3 = extracted.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid3)).findFirst().orElse(null);
+        SerializableDecodedVisit visit3 = extracted.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuid3)).findFirst().orElse(null);
         assertThat(visit3).isNotNull();
         assertThat(visit3.getLocationTemporaryPublicId()).isEqualTo(uuid3);
         assertThat(visit3.getEncryptedLocationSpecificPart().getEncryptedLocationMessage()).isEqualTo(encryptedLocationMessage3);
+        assertThat(visit3.getQrCodeScanTime()).isEqualTo(qrCodeScanTime3);
+        assertThat(visit3.getPivotDate()).isEqualTo(pivotDate3);
     }
 
 }

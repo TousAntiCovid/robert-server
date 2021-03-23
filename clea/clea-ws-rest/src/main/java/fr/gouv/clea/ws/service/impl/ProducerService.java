@@ -1,6 +1,6 @@
 package fr.gouv.clea.ws.service.impl;
 
-import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.ws.model.SerializableDecodedVisit;
 import fr.gouv.clea.ws.service.IProducerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,33 +15,31 @@ import java.util.List;
 @Slf4j
 public class ProducerService implements IProducerService {
 
-    private final KafkaTemplate<String, DecodedVisit> kafkaTemplate;
+    private final KafkaTemplate<String, SerializableDecodedVisit> kafkaTemplate;
 
     @Autowired
     public ProducerService(
-            KafkaTemplate<String, DecodedVisit> kafkaTemplate
+            KafkaTemplate<String, SerializableDecodedVisit> kafkaTemplate
     ) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
     @Override
-    public void produce(List<DecodedVisit> decodedVisits) {
-        decodedVisits.forEach(
-                it -> kafkaTemplate.sendDefault(it)
-                        .addCallback(
-                                new ListenableFutureCallback<>() {
+    public void produce(List<SerializableDecodedVisit> serializableDecodedVisits) {
+        serializableDecodedVisits.forEach(
+                it -> kafkaTemplate.sendDefault(it).addCallback(
+                        new ListenableFutureCallback<>() {
+                            @Override
+                            public void onFailure(Throwable ex) {
 
-                                    @Override
-                                    public void onFailure(Throwable ex) {
+                            }
 
-                                    }
+                            @Override
+                            public void onSuccess(SendResult<String, SerializableDecodedVisit> result) {
 
-                                    @Override
-                                    public void onSuccess(SendResult<String, DecodedVisit> result) {
-
-                                    }
-                                }
-                        )
+                            }
+                        }
+                )
         );
     }
 }

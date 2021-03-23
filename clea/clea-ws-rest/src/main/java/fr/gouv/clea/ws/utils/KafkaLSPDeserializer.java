@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.ws.model.SerializableDecodedVisit;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -14,23 +15,23 @@ import org.apache.kafka.common.serialization.Deserializer;
 import java.io.IOException;
 import java.util.UUID;
 
-public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
+public class KafkaLSPDeserializer implements Deserializer<SerializableDecodedVisit> {
 
     @Override
-    public DecodedVisit deserialize(String topic, byte[] data) {
+    public SerializableDecodedVisit deserialize(String topic, byte[] data) {
         if (data == null)
             return null;
         try {
             return new ObjectMapper()
-                    .registerModule(new SimpleModule().addDeserializer(DecodedVisit.class, new JacksonLSPDeserializer()))
-                    .readValue(data, DecodedVisit.class);
+                    .registerModule(new SimpleModule().addDeserializer(SerializableDecodedVisit.class, new JacksonLSPDeserializer()))
+                    .readValue(data, SerializableDecodedVisit.class);
         } catch (IOException e) {
             throw new SerializationException("Error deserializing JSON message", e);
         }
     }
 }
 
-class JacksonLSPDeserializer extends StdDeserializer<DecodedVisit> {
+class JacksonLSPDeserializer extends StdDeserializer<SerializableDecodedVisit> {
 
     public JacksonLSPDeserializer() {
         this(null);
@@ -41,21 +42,23 @@ class JacksonLSPDeserializer extends StdDeserializer<DecodedVisit> {
     }
 
     @Override
-    public DecodedVisit deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public SerializableDecodedVisit deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonNode node = p.getCodec().readTree(p);
         long qrCodeScanTime = node.get("qrCodeScanTime").asLong();
+        long pivotDate = node.get("pivotDate").asLong();
         int version = node.get("version").asInt();
         int type = node.get("type").asInt();
         UUID locationTemporaryPublicId = UUID.fromString(node.get("locationTemporaryPublicId").asText());
         byte[] encryptedLocationMessage = node.get("encryptedLocationMessage").binaryValue();
-        return new DecodedVisit(
+        return new SerializableDecodedVisit(
                 qrCodeScanTime,
                 EncryptedLocationSpecificPart.builder()
                         .version(version)
                         .type(type)
                         .locationTemporaryPublicId(locationTemporaryPublicId)
                         .encryptedLocationMessage(encryptedLocationMessage)
-                        .build()
+                        .build(),
+                pivotDate
         );
     }
 }
