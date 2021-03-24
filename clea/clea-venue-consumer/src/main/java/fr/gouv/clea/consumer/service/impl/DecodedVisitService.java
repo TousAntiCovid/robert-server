@@ -1,11 +1,5 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
@@ -16,6 +10,12 @@ import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -23,9 +23,23 @@ public class DecodedVisitService implements IDecodedVisitService {
 
     private final LocationSpecificPartDecoder decoder;
 
+    private final CleaEciesEncoder cleaEciesEncoder;
+
+    private final int driftBetweenDeviceAndOfficialTimeInSecs;
+
+    private final int cleaClockDriftInSecs;
+
     @Autowired
-    public DecodedVisitService(LocationSpecificPartDecoder decoder) {
+    public DecodedVisitService(
+            LocationSpecificPartDecoder decoder,
+            CleaEciesEncoder cleaEciesEncoder,
+            @Value("${clea.conf.driftBetweenDeviceAndOfficialTimeInSecs}") int driftBetweenDeviceAndOfficialTimeInSecs,
+            @Value("${clea.conf.cleaClockDriftInSecs}") int cleaClockDriftInSecs
+    ) {
         this.decoder = decoder;
+        this.cleaEciesEncoder = cleaEciesEncoder;
+        this.driftBetweenDeviceAndOfficialTimeInSecs = driftBetweenDeviceAndOfficialTimeInSecs;
+        this.cleaClockDriftInSecs = cleaClockDriftInSecs;
     }
 
     @Override
@@ -45,7 +59,6 @@ public class DecodedVisitService implements IDecodedVisitService {
             log.warn("");  // FIXME
             return Optional.empty();
         } else if (!this.hasValidTemporaryLocationPublicId(visit)) {
-            log.warn("");  // FIXME
             return Optional.empty();
         }
         log.info("");  // FIXME
@@ -54,7 +67,7 @@ public class DecodedVisitService implements IDecodedVisitService {
 
     private boolean hasValidTemporaryLocationPublicId(Visit visit) {
         try {
-            UUID computed = new CleaEciesEncoder().computeLocationTemporaryPublicId(visit.getLocationTemporarySecretKey());
+            UUID computed = cleaEciesEncoder.computeLocationTemporaryPublicId(visit.getLocationTemporarySecretKey());
             return computed.equals(visit.getLocationTemporaryPublicId());
         } catch (CleaEncryptionException e) {
             log.debug("Cannot check TemporaryLocationPublicId", e);
@@ -67,7 +80,7 @@ public class DecodedVisitService implements IDecodedVisitService {
                 ? 0 : Math.pow(2, visit.getQrCodeRenewalIntervalExponentCompact());
         if (qrCodeRenewalInterval <= 0)
             return true;
-        return Math.abs(TimeUtils.ntpTimestampFromInstant(visit.getQrCodeScanTime()) - visit.getQrCodeValidityStartTime()) < (qrCodeRenewalInterval + 300 + 300);
+        return Math.abs(TimeUtils.ntpTimestampFromInstant(visit.getQrCodeScanTime()) - visit.getQrCodeValidityStartTime()) < (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
     }
 
     private Visit setExposureTime(Visit visit) {

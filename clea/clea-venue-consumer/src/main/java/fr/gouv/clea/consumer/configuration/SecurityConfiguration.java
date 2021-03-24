@@ -1,5 +1,6 @@
 package fr.gouv.clea.consumer.configuration;
 
+import fr.inria.clea.lsp.CleaEciesEncoder;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,5 +23,11 @@ public class SecurityConfiguration {
     @RequestScope
     public LocationSpecificPartDecoder getLocationSpecificPartDecoder() {
         return new LocationSpecificPartDecoder(serverAuthoritySecretKey);
+    }
+
+    @Bean
+    @RequestScope
+    public CleaEciesEncoder getCleaEciesEncoder() {
+        return new CleaEciesEncoder();
     }
 }
