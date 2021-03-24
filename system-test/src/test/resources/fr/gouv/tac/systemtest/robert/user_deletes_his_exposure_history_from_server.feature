@@ -1,4 +1,4 @@
-@beforeEmptyBase
+@dropIdTableCollection
 Feature: One person deletes her exposure history from TAC
 
   Scenario: Hugo deletes his exposure history from TAC

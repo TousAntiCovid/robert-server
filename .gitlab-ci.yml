@@ -256,8 +256,9 @@ deploy-clea:
   needs: ["build_clea"]
   variables:
     COMPONENT: "clea"
+
 deploy-analytics-server:
   extends: .deploy_template
-  needs: ["test_analytics-server"]
+  needs: ["build_analytics-server"]
   variables:
     COMPONENT: "analytics-server"

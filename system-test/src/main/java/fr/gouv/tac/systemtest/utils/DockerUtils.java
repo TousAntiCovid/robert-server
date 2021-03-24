@@ -44,7 +44,7 @@ public class DockerUtils {
         envVarMap.put(ROBERT_SCORING_BATCH_MODE_KEY, batchMode.name());
 
         if (isDebug) {
-            envVarMap.put("JAVA_OPTS","-Xrunjdwp:transport=dt_socket,address=19091,server=y,suspend=y");
+            envVarMap.put("JAVA_OPTS","-Xrunjdwp:transport=dt_socket,address=*:19091,server=y,suspend=y");
         }
 
         Map<String, String> portBindingMap =  new HashMap<>();

@@ -1,4 +1,4 @@
-@beforeEmptyBase
+@dropIdTableCollection
 Feature: One person unregisters from TAC
 
   Scenario: Hugo unregisters from TAC

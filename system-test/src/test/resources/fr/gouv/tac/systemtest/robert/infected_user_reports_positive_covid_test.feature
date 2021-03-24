@@ -1,4 +1,4 @@
-@beforeEmptyBase
+@dropIdTableCollection
 Feature: One sick person reports positive covid test
 
   Scenario: Hugo meets Stephanie enough time to infect her

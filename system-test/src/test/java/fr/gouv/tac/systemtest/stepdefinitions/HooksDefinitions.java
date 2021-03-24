@@ -10,7 +10,7 @@ import static fr.gouv.tac.systemtest.config.MongoConfig.ROBERT_DATABASE_NAME;
 
 public class HooksDefinitions {
 
-    @Before("@beforeEmptyBase")
+    @Before("@dropIdTableCollection")
     public void emptyBase() {
         final MongoClient mongoClient = new MongoClient("localhost", 27017);
         final MongoCollection<Document> collection = mongoClient.getDatabase(ROBERT_DATABASE_NAME).getCollection(ID_TABLE_COLLECTION_NAME);

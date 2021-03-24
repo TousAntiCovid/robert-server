@@ -1,16 +1,16 @@
 package fr.gouv.tac.systemtest.model;
 
-import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
-import fr.gouv.tac.systemtest.User;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Visitors {
+import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
+import fr.gouv.tac.systemtest.User;
+import lombok.Getter;
+import lombok.Setter;
+
+public class Users {
 
     @Getter
     @Setter

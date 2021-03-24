@@ -1,12 +1,24 @@
 package fr.gouv.tac.systemtest.stepdefinitions.tacw;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import javax.inject.Inject;
+
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.robert.ApiException;
 import fr.gouv.tac.systemtest.ScenarioAppContext;
 import fr.gouv.tac.systemtest.User;
 import fr.gouv.tac.systemtest.model.Place;
 import fr.gouv.tac.systemtest.model.Places;
-import fr.gouv.tac.systemtest.model.Visitors;
+import fr.gouv.tac.systemtest.model.Users;
 import fr.gouv.tac.systemtest.stepdefinitions.RiskLevel;
 import fr.gouv.tac.systemtest.utils.TimeUtil;
 import fr.gouv.tac.systemtest.utils.WhoWhereWhenHow;
@@ -15,20 +27,9 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
-import javax.inject.Inject;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public class StepDefinitions {
 
-    Visitors visitors = new Visitors();
+    Users users = new Users();
     Places places = new Places();
     List<WhoWhereWhenHow> steps;
 
@@ -60,7 +61,7 @@ public class StepDefinitions {
         User currentUser;
         Place currentPlace;
         for (WhoWhereWhenHow step : steps){
-            currentUser = visitors.getUserByName(step.getWho());
+            currentUser = users.getUserByName(step.getWho());
             currentUser.setCovidStatus(step.getCovidStatus());
             currentUser.setOutcome(step.getOutcome());
             currentPlace = places.getPlaceByName(step.getWhere());
@@ -79,14 +80,14 @@ public class StepDefinitions {
 
     @Then("Covid- person status from TAC-W is not at risk")
     public void covid_person_status_from_tac_w_is_not_at_risk() {
-      for (User user : visitors.getList()){
+      for (User user : users.getList()){
           assertEquals(RiskLevel.NONE.getValue(), user.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
       }
     }
 
     @When("Covid+ person report to TAC and TAC-W")
     public void covid_person_report_to_tac_and_tac_w() throws ApiException {
-        for (User user : visitors.getList()){
+        for (User user : users.getList()){
         	if(user.getCovidStatus()) {
         		assertTrue(user.sendRobertReportBatch("string", scenarioAppContext.getRobertApiInstance()).getSuccess());
             	assertTrue(user.sendTacWarningReport(scenarioAppContext.getTacwApiInstance()));
@@ -96,7 +97,7 @@ public class StepDefinitions {
 
     @Then("Covid- person status from TAC-W is at high level risk")
     public void covid_person_status_from_tac_w_is_at_high_level_risk() {
-        for (User user : visitors.getList()){
+        for (User user : users.getList()){
                 assertEquals(RiskLevel.HIGH.getValue(), user.sendTacWarningStatus(scenarioAppContext.getTacwApiInstance()));
         }
     }
