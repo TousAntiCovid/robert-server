@@ -32,7 +32,7 @@ spring:
       auto-offset-reset: earliest
       group-id: group1
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: fr.gouv.clea.consumer.utils.KafkaLSPDeserializer
+      value-deserializer: fr.gouv.clea.consumer.utils.KafkaDeserializer
     template:
       default-topic: cleaQrCodes
   main:

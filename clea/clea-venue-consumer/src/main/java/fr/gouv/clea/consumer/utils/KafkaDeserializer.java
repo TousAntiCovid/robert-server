@@ -1,12 +1,4 @@
-package fr.gouv.clea.ws.utils;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
-
-import org.apache.kafka.common.errors.SerializationException;
-import org.apache.kafka.common.serialization.Deserializer;
+package fr.gouv.clea.consumer.utils;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -14,11 +6,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
-import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.serialization.Deserializer;
 
-public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+
+public class KafkaDeserializer implements Deserializer<DecodedVisit> {
 
     @Override
     public DecodedVisit deserialize(String topic, byte[] data) {
@@ -26,7 +24,7 @@ public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
             return null;
         try {
             return new ObjectMapper()
-                    .registerModule(new SimpleModule().addDeserializer(DecodedVisit.class, new JacksonLSPDeserializer()))
+                    .registerModule(new SimpleModule().addDeserializer(DecodedVisit.class, new CustomJacksonDeserializer()))
                     .readValue(data, DecodedVisit.class);
         } catch (IOException e) {
             throw new SerializationException("Error deserializing JSON message", e);
@@ -34,15 +32,15 @@ public class KafkaLSPDeserializer implements Deserializer<DecodedVisit> {
     }
 }
 
-class JacksonLSPDeserializer extends StdDeserializer<DecodedVisit> {
+class CustomJacksonDeserializer extends StdDeserializer<DecodedVisit> {
 
     private static final long serialVersionUID = 1L;
 
-    public JacksonLSPDeserializer() {
+    public CustomJacksonDeserializer() {
         this(null);
     }
 
-    public JacksonLSPDeserializer(Class<DecodedVisit> t) {
+    public CustomJacksonDeserializer(Class<DecodedVisit> t) {
         super(t);
     }
 

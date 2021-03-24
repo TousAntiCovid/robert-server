@@ -1,5 +1,19 @@
 package fr.gouv.clea.ws.service.impl;
 
+import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
+import fr.gouv.clea.ws.service.IReportService;
+import fr.gouv.clea.ws.utils.MessageFormatter;
+import fr.gouv.clea.ws.vo.ReportRequest;
+import fr.gouv.clea.ws.vo.Visit;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -8,20 +22,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
-import fr.gouv.clea.ws.service.IReportService;
-import fr.gouv.clea.ws.vo.ReportRequest;
-import fr.gouv.clea.ws.vo.Visit;
-import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
-import fr.inria.clea.lsp.LocationSpecificPartDecoder;
-import fr.inria.clea.lsp.utils.TimeUtils;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -67,15 +67,15 @@ public class ReportService implements IReportService {
             Instant qrCodeScanTime = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp());
             return new DecodedVisit(qrCodeScanTime, encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);
         } catch (Exception e) {
-            log.warn("report: {}... rejected: Invalid format", this.truncateQrCode(visit.getQrCode()));
+            log.warn("report: {} rejected: Invalid format", MessageFormatter.truncateQrCode(visit.getQrCode()));
             return null;
         }
     }
 
     private boolean isOutdated(Visit visit) {
-        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), Instant.now()) > retentionDurationInDays; // FIXME < OR <=
+        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), Instant.now()) > retentionDurationInDays;
         if (outdated) {
-            log.warn("report: {} ... rejected: Outdated", this.truncateQrCode(visit.getQrCode()));
+            log.warn("report: {} rejected: Outdated", MessageFormatter.truncateQrCode(visit.getQrCode()));
         }
         return outdated;
     }
@@ -83,7 +83,7 @@ public class ReportService implements IReportService {
     private boolean isFuture(Visit visit) {
         boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()).isAfter(Instant.now());
         if (future) {
-            log.warn("report: {} ... rejected: In future", this.truncateQrCode(visit.getQrCode()));
+            log.warn("report: {} rejected: In future", MessageFormatter.truncateQrCode(visit.getQrCode()));
         }
         return future;
     }
@@ -98,8 +98,8 @@ public class ReportService implements IReportService {
         }
 
         long secondsBetweenScans = Duration.between(one.getQrCodeScanTime(), other.getQrCodeScanTime()).abs().toSeconds();
-        if (secondsBetweenScans <= duplicateScanThresholdInSeconds) { // FIXME < OR <=
-            log.warn("report: {} {} rejected: Duplicate", one.getLocationTemporaryPublicId(), one.getQrCodeScanTime());
+        if (secondsBetweenScans <= duplicateScanThresholdInSeconds) {
+            log.warn("report: {} {} rejected: Duplicate", MessageFormatter.truncateUUID(one.getStringLocationTemporaryPublicId()), one.getQrCodeScanTime());
             return true;
         }
         return false;
@@ -113,9 +113,5 @@ public class ReportService implements IReportService {
             }
         });
         return cleaned;
-    }
-
-    private String truncateQrCode(String qrCode) {
-        return qrCode.substring(0, Math.min(qrCode.length(), 25));
     }
 }

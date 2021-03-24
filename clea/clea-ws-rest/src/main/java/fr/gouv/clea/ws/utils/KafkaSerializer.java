@@ -1,21 +1,19 @@
 package fr.gouv.clea.ws.utils;
 
-import java.io.IOException;
-
-import org.apache.kafka.common.errors.SerializationException;
-import org.apache.kafka.common.serialization.Serializer;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.serialization.Serializer;
 
-public class KafkaLSPSerializer implements Serializer<DecodedVisit> {
+import java.io.IOException;
+
+public class KafkaSerializer implements Serializer<DecodedVisit> {
 
     @Override
     public byte[] serialize(String topic, DecodedVisit data) {
@@ -23,7 +21,7 @@ public class KafkaLSPSerializer implements Serializer<DecodedVisit> {
             return null;
         try {
             return new ObjectMapper()
-                    .registerModule(new SimpleModule().addSerializer(DecodedVisit.class, new JacksonLSPSerializer()))
+                    .registerModule(new SimpleModule().addSerializer(DecodedVisit.class, new CustomJacksonSerializer()))
                     .writeValueAsBytes(data);
         } catch (JsonProcessingException e) {
             throw new SerializationException("Error serializing JSON message", e);
@@ -31,15 +29,15 @@ public class KafkaLSPSerializer implements Serializer<DecodedVisit> {
     }
 }
 
-class JacksonLSPSerializer extends StdSerializer<DecodedVisit> {
+class CustomJacksonSerializer extends StdSerializer<DecodedVisit> {
 
     private static final long serialVersionUID = 1L;
 
-    public JacksonLSPSerializer() {
+    public CustomJacksonSerializer() {
         this(null);
     }
 
-    public JacksonLSPSerializer(Class<DecodedVisit> t) {
+    public CustomJacksonSerializer(Class<DecodedVisit> t) {
         super(t);
     }
 

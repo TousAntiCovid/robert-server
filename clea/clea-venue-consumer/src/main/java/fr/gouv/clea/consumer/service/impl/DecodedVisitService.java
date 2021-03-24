@@ -3,6 +3,7 @@ package fr.gouv.clea.consumer.service.impl;
 import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
+import fr.gouv.clea.consumer.utils.MessageFormatter;
 import fr.inria.clea.lsp.CleaEciesEncoder;
 import fr.inria.clea.lsp.CleaEncodingException;
 import fr.inria.clea.lsp.CleaEncryptionException;
@@ -49,19 +50,18 @@ public class DecodedVisitService implements IDecodedVisitService {
             Visit visit = Visit.from(lsp, decodedVisit);
             return this.verify(visit);
         } catch (CleaEncryptionException | CleaEncodingException e) {
-            log.error("Cannot decrypt visit", e);
+            log.warn("error decrypting [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(decodedVisit.getStringLocationTemporaryPublicId()), decodedVisit.getQrCodeScanTime());
             return Optional.empty();
         }
     }
 
     private Optional<Visit> verify(Visit visit) {
         if (!this.isFresh(visit)) {
-            log.warn("");  // FIXME
+            log.warn("drift check failed for [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(visit.getStringLocationTemporaryPublicId()), visit.getQrCodeScanTime());
             return Optional.empty();
         } else if (!this.hasValidTemporaryLocationPublicId(visit)) {
             return Optional.empty();
         }
-        log.info("");  // FIXME
         return Optional.of(this.setExposureTime(visit));
     }
 
@@ -70,7 +70,7 @@ public class DecodedVisitService implements IDecodedVisitService {
             UUID computed = cleaEciesEncoder.computeLocationTemporaryPublicId(visit.getLocationTemporarySecretKey());
             return computed.equals(visit.getLocationTemporaryPublicId());
         } catch (CleaEncryptionException e) {
-            log.debug("Cannot check TemporaryLocationPublicId", e);
+            log.warn("locationTemporaryPublicId check failed for [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(visit.getStringLocationTemporaryPublicId()), visit.getQrCodeScanTime());
             return false;
         }
     }

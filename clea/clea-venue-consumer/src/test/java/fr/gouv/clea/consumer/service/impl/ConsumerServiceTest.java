@@ -1,13 +1,10 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import static org.awaitility.Awaitility.await;
-
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
+import fr.gouv.clea.consumer.CleaVenueConsumerApplication;
+import fr.gouv.clea.consumer.model.DecodedVisit;
+import fr.gouv.clea.consumer.service.IConsumerService;
+import fr.gouv.clea.consumer.utils.KafkaSerializer;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -28,11 +25,13 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
-import fr.gouv.clea.consumer.CleaVenueConsumerApplication;
-import fr.gouv.clea.consumer.model.DecodedVisit;
-import fr.gouv.clea.consumer.service.IConsumerService;
-import fr.gouv.clea.consumer.utils.KafkaLSPSerializer;
-import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
 
 @SpringBootTest(classes = CleaVenueConsumerApplication.class)
 @DirtiesContext
@@ -54,7 +53,7 @@ class ConsumerServiceTest {
     @BeforeEach
     void init() {
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
-        producer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new KafkaLSPSerializer()).createProducer();
+        producer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new KafkaSerializer()).createProducer();
     }
 
     @AfterEach
@@ -77,7 +76,7 @@ class ConsumerServiceTest {
         );
         producer.send(new ProducerRecord<>(topicName, decodedVisit));
         producer.flush();
-        
+
         await().atMost(1, TimeUnit.MINUTES)
                 .untilAsserted(
                         () -> Mockito.verify(consumerService, Mockito.times(1))
