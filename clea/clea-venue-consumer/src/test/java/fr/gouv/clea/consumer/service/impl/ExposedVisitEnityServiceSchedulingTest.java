@@ -2,7 +2,7 @@ package fr.gouv.clea.consumer.service.impl;
 
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
-
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,7 +13,6 @@ import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
 import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.shaded.org.apache.commons.lang.math.RandomUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -76,7 +75,7 @@ class ExposedVisitEnityServiceSchedulingTest {
                 .filter(cronTask -> cronTask.getExpression().equals(cronValue)
                         && cronTask.toString().equals("fr.gouv.clea.consumer.service.impl.ExposedVisitEntityService.deleteOutdatedExposedVisits"))
                 .count();
-        
+
         assertThat(count).isEqualTo(1L);
     }
 
@@ -95,10 +94,10 @@ class ExposedVisitEnityServiceSchedulingTest {
                 )
         );
         assertThat(repository.count()).isEqualTo(3);
-        
+
         await().atMost(30, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(repository.count()).isEqualTo(1));
-        
+
         assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(yesterday))).isTrue();
         assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(_14DaysAgo))).isFalse();
         assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(_15DaysAgo))).isFalse();
