@@ -1,6 +1,6 @@
 spring:
   application:
-    name: clea-ws-rest-app
+    name: clea-venue-consumer
   cloud:
     consul:
       enabled: ${CONSUL_ENABLED:false}
