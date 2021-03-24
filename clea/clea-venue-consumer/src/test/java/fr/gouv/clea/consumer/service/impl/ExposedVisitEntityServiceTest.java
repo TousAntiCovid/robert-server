@@ -3,12 +3,12 @@ package fr.gouv.clea.consumer.service.impl;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IExposedVisitEntityService;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.testcontainers.shaded.org.apache.commons.lang.math.RandomUtils;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -50,9 +50,9 @@ class ExposedVisitEntityServiceTest {
     @DisplayName("test that persist save to DB")
     void testCanPersistAnExposedVisit() {
         ExposedVisitEntity exposedVisitEntity = createExposedVisit();
-        
+
         ExposedVisitEntity saved = exposedVisitEntityService.persist(exposedVisitEntity);
-        
+
         assertThat(repository.count()).isEqualTo(1);
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getId()).isInstanceOf(String.class);

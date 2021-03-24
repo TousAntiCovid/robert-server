@@ -3,6 +3,8 @@ package fr.gouv.clea.ws.controller;
 import fr.gouv.clea.ws.utils.UriConstants;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +33,11 @@ public class CleaControllerAuthEnabledTest {
 
     @Test
     public void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
-        List<Visit> visits = List.of();
+        List<Visit> visits = List.of(
+                new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()),
+                new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()),
+                new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong())
+        );
         HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, 0L), CleaControllerTest.newJsonHeader());
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
 
@@ -40,7 +46,11 @@ public class CleaControllerAuthEnabledTest {
 
     @Test
     public void testWhenReportRequestWithNonValidAuthenticationThenGetUnauthorized() {
-        List<Visit> visits = List.of();
+        List<Visit> visits = List.of(
+                new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()),
+                new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()),
+                new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong())
+        );
         HttpHeaders headers = CleaControllerTest.newJsonHeader();
         headers.setBearerAuth("invalid JWT token");
         HttpEntity<ReportRequest> reportEntity = new HttpEntity<>(new ReportRequest(visits, 0L), headers);

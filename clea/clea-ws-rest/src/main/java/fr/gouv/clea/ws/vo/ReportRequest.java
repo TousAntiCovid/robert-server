@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -15,8 +16,10 @@ import java.util.List;
 @Valid
 public class ReportRequest {
     @NotNull
+    @NotEmpty
     private List<Visit> visits;
 
+    @NotNull
     @JsonProperty("pivotDate")
     private Long pivotDateAsNtpTimestamp;
 }

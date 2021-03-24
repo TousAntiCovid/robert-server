@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.context.annotation.RequestScope;
 
 @Configuration
 public class SecurityConfiguration {
@@ -20,13 +19,11 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    @RequestScope
     public LocationSpecificPartDecoder getLocationSpecificPartDecoder() {
         return new LocationSpecificPartDecoder(serverAuthoritySecretKey);
     }
 
     @Bean
-    @RequestScope
     public CleaEciesEncoder getCleaEciesEncoder() {
         return new CleaEciesEncoder();
     }
