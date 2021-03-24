@@ -1,12 +1,14 @@
 package fr.gouv.clea.consumer.repository;
 
+import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import fr.gouv.clea.consumer.model.ExposedVisitEntity;
-
 import java.time.Instant;
+import java.util.List;
 
 public interface IExposedVisitRepository extends JpaRepository<ExposedVisitEntity, String> {
 
     void deleteAllByQrCodeScanTimeBefore(Instant qrCodeScanTime);
+
+    List<ExposedVisitEntity> findAllByLocationTemporaryPublicIdAndPeriodStartAndTimeSlot(String locationTemporaryPublicId, long periodStart, int timeSlot);
 }

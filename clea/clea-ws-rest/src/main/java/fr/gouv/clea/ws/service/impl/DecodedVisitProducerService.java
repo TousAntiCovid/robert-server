@@ -1,16 +1,16 @@
 package fr.gouv.clea.ws.service.impl;
 
-import java.util.List;
-
+import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
+import fr.gouv.clea.ws.utils.MessageFormatter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
-import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -32,12 +32,12 @@ public class DecodedVisitProducerService implements IDecodedVisitProducerService
                             @Override
                             public void onFailure(Throwable ex) {
                                 // TODO: Do we want a mechanism to do not loose the message (e.g. spring retry)?
-                                log.error("Cannot send Message!", ex);
+                                log.error("error sending [locationTemporaryPublicId: {}, qrCodeScanTime: {}] to queue. message: {}", MessageFormatter.truncateUUID(it.getStringLocationTemporaryPublicId()), it.getQrCodeScanTime(), ex.getLocalizedMessage());
                             }
 
                             @Override
                             public void onSuccess(SendResult<String, DecodedVisit> result) {
-                                // Nothing to do
+                                log.info("[locationTemporaryPublicId: {}, qrCodeScanTime: {}] sent to queue", MessageFormatter.truncateUUID(it.getStringLocationTemporaryPublicId()), it.getQrCodeScanTime());
                             }
                         }
                 )

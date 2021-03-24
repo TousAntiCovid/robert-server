@@ -33,6 +33,7 @@ public class AuthorizationService implements IAuthorizationService {
     public boolean checkAuthorization(String jwtToken) throws CleaUnauthorizedException {
         if (this.checkAuthorization) {
             if (jwtToken == null) {
+                log.warn("Missing Authorisation header!");
                 throw new CleaUnauthorizedException("Missing Authorisation header!");
             }
             jwtToken = jwtToken.replace("Bearer ", "");

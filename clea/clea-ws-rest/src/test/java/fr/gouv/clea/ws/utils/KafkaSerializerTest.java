@@ -11,7 +11,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class KafkaLSPSerializerTest {
+class KafkaSerializerTest {
 
     @Test
     void testCanSerializeAndDeserializeAVisit() {
@@ -25,8 +25,8 @@ class KafkaLSPSerializerTest {
                         .build(),
                 RandomUtils.nextBoolean()
         );
-        KafkaLSPSerializer serializer = new KafkaLSPSerializer();
-        KafkaLSPDeserializer deserializer = new KafkaLSPDeserializer();
+        KafkaSerializer serializer = new KafkaSerializer();
+        KafkaDeserializer deserializer = new KafkaDeserializer();
 
         byte[] serializedVisit = serializer.serialize("", decoded);
         DecodedVisit deserializedVisit = deserializer.deserialize("", serializedVisit);

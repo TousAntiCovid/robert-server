@@ -2,7 +2,7 @@ package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
-import fr.gouv.clea.ws.utils.KafkaLSPDeserializer;
+import fr.gouv.clea.ws.utils.KafkaDeserializer;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -50,10 +50,23 @@ class DecodedVisitProducerServiceTest {
     @Value("${spring.kafka.template.default-topic}")
     private String defaultTopic;
 
+    private static DecodedVisit createSerializableDecodedVisit(Instant qrCodeScanTime, boolean isBackward, UUID locationTemporaryPublicId, byte[] encryptedLocationMessage) {
+        return new DecodedVisit(
+                qrCodeScanTime,
+                EncryptedLocationSpecificPart.builder()
+                        .version(RandomUtils.nextInt())
+                        .type(RandomUtils.nextInt())
+                        .locationTemporaryPublicId(locationTemporaryPublicId)
+                        .encryptedLocationMessage(encryptedLocationMessage)
+                        .build(),
+                isBackward
+        );
+    }
+
     @BeforeEach
     void init() {
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "false", embeddedKafkaBroker));
-        consumer = new DefaultKafkaConsumerFactory<>(configs, new StringDeserializer(), new KafkaLSPDeserializer()).createConsumer();
+        consumer = new DefaultKafkaConsumerFactory<>(configs, new StringDeserializer(), new KafkaDeserializer()).createConsumer();
         consumer.subscribe(Collections.singleton(defaultTopic));
     }
 
@@ -117,19 +130,6 @@ class DecodedVisitProducerServiceTest {
 
     protected Instant newRandomInstant() {
         return Instant.ofEpochSecond(RandomUtils.nextLong(0, Instant.now().getEpochSecond()));
-    }
-
-    private static DecodedVisit createSerializableDecodedVisit(Instant qrCodeScanTime, boolean isBackward, UUID locationTemporaryPublicId, byte[] encryptedLocationMessage) {
-        return new DecodedVisit(
-                qrCodeScanTime,
-                EncryptedLocationSpecificPart.builder()
-                        .version(RandomUtils.nextInt())
-                        .type(RandomUtils.nextInt())
-                        .locationTemporaryPublicId(locationTemporaryPublicId)
-                        .encryptedLocationMessage(encryptedLocationMessage)
-                        .build(),
-                isBackward
-        );
     }
 
 }
