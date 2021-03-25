@@ -9,10 +9,9 @@
         <artifactId>clea-server</artifactId>
         <version>0.1-SNAPSHOT</version>
     </parent>
-
+    
     <artifactId>clea-venue-consumer</artifactId>
     <name>clea-venue-consumer</name>
-    <version>0.1-SNAPSHOT</version>
     <description>Clea (Cluster Exposure Verification) Venue consumer used to decode, verify and store infected visits.
     </description>
 

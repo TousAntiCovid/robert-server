@@ -6,6 +6,7 @@ import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.utils.MessageFormatter;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
+import fr.inria.clea.lsp.CleaEncodingException;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.utils.TimeUtils;
@@ -66,7 +67,7 @@ public class ReportService implements IReportService {
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
             Instant qrCodeScanTime = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp());
             return new DecodedVisit(qrCodeScanTime, encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);
-        } catch (Exception e) {
+        } catch (CleaEncodingException e) {
             log.warn("report: {} rejected: Invalid format", MessageFormatter.truncateQrCode(visit.getQrCode()));
             return null;
         }
