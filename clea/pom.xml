@@ -28,6 +28,7 @@
     <modules>
         <module>clea-ws-rest</module>
         <module>clea-venue-consumer</module>
+        <module>clea-qr-simulator</module>
     </modules>
 
     <properties>
