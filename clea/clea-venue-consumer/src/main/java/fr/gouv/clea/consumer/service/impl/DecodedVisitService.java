@@ -48,7 +48,6 @@ public class DecodedVisitService implements IDecodedVisitService {
             Visit visit = Visit.from(lsp, decodedVisit);
             return this.verify(visit);
         } catch (Exception e) {
-            e.printStackTrace();
             log.warn("error decrypting [locationTemporaryPublicId: {}, qrCodeScanTime: {}, message: {}]", MessageFormatter.truncateUUID(decodedVisit.getStringLocationTemporaryPublicId()), decodedVisit.getQrCodeScanTime(), e.getLocalizedMessage());
             return Optional.empty();
         }
