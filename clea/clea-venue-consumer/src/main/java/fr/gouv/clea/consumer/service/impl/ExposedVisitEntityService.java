@@ -47,10 +47,8 @@ public class ExposedVisitEntityService implements IExposedVisitEntityService {
     @Scheduled(cron = "${clea.conf.scheduling.purge.cron}")
     public void deleteOutdatedExposedVisits() {
         try {
-            long beforeCount = repository.count();
-            this.repository.deleteAllByQrCodeScanTimeBefore(Instant.now().minus(retentionDurationInDays, ChronoUnit.DAYS));
-            long afterCount = repository.count();
-            log.info("successfully purged {} entries from DB", beforeCount - afterCount);
+            int count = this.repository.deleteAllByQrCodeScanTimeBefore(Instant.now().minus(retentionDurationInDays, ChronoUnit.DAYS));
+            log.info("successfully purged {} entries from DB", count);
         } catch (Exception e) {
             log.error("error during purge");
             throw e;
