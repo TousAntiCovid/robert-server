@@ -2,12 +2,12 @@ package fr.gouv.clea.client.model;
 
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 @Data
@@ -20,21 +20,26 @@ public class ScannedQrCode {
     private long scanTime;
 
     @JsonIgnore
-    private String locationTemporaryId; //LTId
+    private Optional<String> locationTemporaryId; //LTId
 
     public ScannedQrCode(String qrCode, long scanTime){
         this.qrCode = qrCode;
         this.scanTime = scanTime;
-        this.extractLocationTemporaryId();
+        this.locationTemporaryId = Optional.empty();
     }
 
-    private void extractLocationTemporaryId(){
+    public String getLocationTemporaryId() {
+        return locationTemporaryId.orElse(this.decodeLocationTemporaryId());
+    }
+    
+    private String decodeLocationTemporaryId() {
         byte[] tlIdByte = Arrays.copyOfRange(Base64.getDecoder().decode(qrCode), 1, 17) ;
-        this.locationTemporaryId = Base64.getEncoder().encodeToString(tlIdByte);
+        locationTemporaryId = Optional.of(Base64.getEncoder().encodeToString(tlIdByte));
+        return locationTemporaryId.get();
     }
 
     public boolean startWithPrefix(String prefix){
-        return locationTemporaryId.startsWith(prefix);
+        return this.getLocationTemporaryId().startsWith(prefix);
     }
-
+    
 }

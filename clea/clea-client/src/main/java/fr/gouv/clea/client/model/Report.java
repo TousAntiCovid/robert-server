@@ -14,13 +14,11 @@ public class Report {
         this.visits = new ArrayList<>();
     }
 
-    public void addVisit(ScannedQrCode qr){
-        this.visits.add(new Visit(qr.getLocationTemporaryId(), qr.getScanTime()));
+    public void addVisit(ScannedQrCode scannedQr){
+        this.visits.add(new Visit(scannedQr.getQrCode(), scannedQr.getScanTime()));
     }
 
     public void addAllVisits(List<ScannedQrCode> localList) {
-        for (ScannedQrCode qr : localList) {
-            this.addVisit(qr);
-        }
+        localList.forEach(this::addVisit);
     }
 }

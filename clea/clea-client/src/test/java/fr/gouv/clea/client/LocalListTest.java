@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import fr.gouv.clea.client.model.ScannedQrCode;
-import fr.gouv.clea.client.service.LocalListService;
+import fr.gouv.clea.client.service.CleaClient;
 
 /**
  * Basic Unit Test for Client
@@ -27,11 +27,11 @@ public class LocalListTest
     @Test
     public void shouldAddScannedQrCode()
     {
-        LocalListService localListService = new LocalListService();
+        CleaClient cleaClient = new CleaClient();
         
-        localListService.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
+        cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
         
-        List<ScannedQrCode> localList = localListService.getLocalList();
+        List<ScannedQrCode> localList = cleaClient.getLocalList();
         assertThat(localList.size()).isEqualTo(1);
         ScannedQrCode scanned = localList.get(0);
         assertThat(scanned.getQrCode()).isEqualTo(qrCode);
@@ -44,12 +44,12 @@ public class LocalListTest
      */
     @Test
     public void shouldNotAddTwice(){
-        LocalListService localListService = new LocalListService();
+        CleaClient cleaClient = new CleaClient();
         
-        localListService.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
-        localListService.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(3600).getEpochSecond());
+        cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
+        cleaClient.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(3600).getEpochSecond());
         
-        List<ScannedQrCode> localList = localListService.getLocalList();
+        List<ScannedQrCode> localList = cleaClient.getLocalList();
         assertThat(localList.size()).isEqualTo(1);
     }
 
@@ -58,12 +58,12 @@ public class LocalListTest
      */
     @Test
     public void shouldAddTwice(){
-        LocalListService localListService = new LocalListService();
+        CleaClient cleaClient = new CleaClient();
         
-        localListService.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
-        localListService.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(4*3600).getEpochSecond());
+        cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
+        cleaClient.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(4*3600).getEpochSecond());
         
-        List<ScannedQrCode> localList = localListService.getLocalList();
+        List<ScannedQrCode> localList = cleaClient.getLocalList();
         assertThat(localList.size()).isEqualTo(2);
     }
 }

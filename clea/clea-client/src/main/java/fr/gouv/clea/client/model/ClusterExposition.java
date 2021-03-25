@@ -22,7 +22,8 @@ public class ClusterExposition {
     @JsonProperty("r")
     private float risk;
 
-    public boolean isInExposition(long timestamp) throws IOException{
-        return ((timestamp >= startTime) && (timestamp <= startTime + duration * CleaClientConfiguration.getInstance().getDurationUnit())); 
+    public boolean isInExposition(long timestamp) throws IOException {
+        return ((timestamp >= startTime) 
+                && (timestamp <= startTime + duration * CleaClientConfiguration.getInstance().getDurationUnit())); 
     }
 }
