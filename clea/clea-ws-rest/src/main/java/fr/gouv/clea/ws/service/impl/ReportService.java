@@ -71,7 +71,7 @@ public class ReportService implements IReportService {
         try {
             byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
-            return new DecodedVisit(visit.getQrCodeScanTime(), encryptedLocationSpecificPart);
+            return new DecodedVisit(visit.getQrCodeScanTimeAsNtpTimestamp(), encryptedLocationSpecificPart);
         } catch (CleaEncodingException e) {
             log.warn("report: {}... rejected: Invalid format", this.truncateQrCode(visit.getQrCode()));
             return null;
@@ -79,7 +79,7 @@ public class ReportService implements IReportService {
     }
 
     private boolean isOutdated(Visit visit) {
-        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTime()), Instant.now()) > retentionDurationInDays; // FIXME < OR <=
+        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), Instant.now()) > retentionDurationInDays; // FIXME < OR <=
         if (outdated) {
             log.warn("report: {} ... rejected: Outdated", this.truncateQrCode(visit.getQrCode()));
         }
@@ -87,7 +87,7 @@ public class ReportService implements IReportService {
     }
 
     private boolean isFuture(Visit visit) {
-        boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTime()).isAfter(Instant.now());
+        boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()).isAfter(Instant.now());
         if (future) {
             log.warn("report: {} ... rejected: In future", this.truncateQrCode(visit.getQrCode()));
         }
