@@ -53,10 +53,11 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
                                 )
                 );
 
-        if (!toPersist.isEmpty()) {
+        List<ExposedVisitEntity> merged = Stream.concat(toUpdate.stream(), toPersist.stream()).collect(Collectors.toList());
+        if (!merged.isEmpty()) {
             log.info("Persisting {} new visits!", toPersist.size());
-            log.info("Updating {} exsisting visits!", toUpdate.size());
-            repository.saveAll(Stream.concat(toUpdate.stream(), toPersist.stream()).collect(Collectors.toList()));
+            log.info("Updating {} existing visits!", toUpdate.size());
+            repository.saveAll(merged);
         }
     }
 
