@@ -5,7 +5,6 @@ import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
 import fr.gouv.clea.consumer.utils.MessageFormatter;
 import fr.inria.clea.lsp.CleaEciesEncoder;
-import fr.inria.clea.lsp.CleaEncodingException;
 import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
@@ -48,8 +47,9 @@ public class DecodedVisitService implements IDecodedVisitService {
             LocationSpecificPart lsp = this.decoder.decrypt(decodedVisit.getEncryptedLocationSpecificPart());
             Visit visit = Visit.from(lsp, decodedVisit);
             return this.verify(visit);
-        } catch (CleaEncryptionException | CleaEncodingException e) {
-            log.warn("error decrypting [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(decodedVisit.getStringLocationTemporaryPublicId()), decodedVisit.getQrCodeScanTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("error decrypting [locationTemporaryPublicId: {}, qrCodeScanTime: {}, message: {}]", MessageFormatter.truncateUUID(decodedVisit.getStringLocationTemporaryPublicId()), decodedVisit.getQrCodeScanTime(), e.getLocalizedMessage());
             return Optional.empty();
         }
     }

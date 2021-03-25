@@ -1,6 +1,5 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.consumer.CleaVenueConsumerApplication;
 import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.service.IConsumerService;
 import fr.gouv.clea.consumer.utils.KafkaSerializer;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,8 +30,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-@SpringBootTest(classes = CleaVenueConsumerApplication.class)
+@SpringBootTest
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
 @TestPropertySource(properties = {"kafka.bootstrapAddress=localhost:9092"})
@@ -42,11 +43,11 @@ class ConsumerServiceTest {
     @Value("${spring.kafka.template.default-topic}")
     private String topicName;
 
-    @SpyBean
-    private IConsumerService consumerService;
-
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
+
+    @SpyBean
+    private IConsumerService consumerService;
 
     private Producer<String, DecodedVisit> producer;
 
@@ -74,13 +75,14 @@ class ConsumerServiceTest {
                         .build(),
                 RandomUtils.nextBoolean()
         );
+
         producer.send(new ProducerRecord<>(topicName, decodedVisit));
         producer.flush();
 
-        await().atMost(1, TimeUnit.MINUTES)
+        await().atMost(30, TimeUnit.SECONDS)
                 .untilAsserted(
-                        () -> Mockito.verify(consumerService, Mockito.times(1))
-                                .consume(Mockito.any(DecodedVisit.class))
+                        () -> verify(consumerService, times(1))
+                                .consume(any(DecodedVisit.class))
                 );
     }
 }

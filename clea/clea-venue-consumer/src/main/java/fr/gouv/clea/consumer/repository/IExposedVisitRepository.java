@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface IExposedVisitRepository extends JpaRepository<ExposedVisitEntity, String> {
 
-    void deleteAllByQrCodeScanTimeBefore(Instant qrCodeScanTime);
+    int deleteAllByQrCodeScanTimeBefore(Instant qrCodeScanTime);
 
     List<ExposedVisitEntity> findAllByLocationTemporaryPublicIdAndPeriodStartAndTimeSlot(String locationTemporaryPublicId, long periodStart, int timeSlot);
 }

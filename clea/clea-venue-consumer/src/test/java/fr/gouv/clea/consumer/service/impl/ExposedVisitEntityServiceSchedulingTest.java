@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.Instant;
@@ -25,13 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
-@TestPropertySource(
-        properties = {
-                "clea.conf.scheduling.purge.cron=*/10 * * * * *",
-                "clea.conf.scheduling.purge.enabled=true"
-        }
-)
-class ExposedVisitEnityServiceSchedulingTest {
+@DirtiesContext
+@TestPropertySource(properties = {"clea.conf.scheduling.purge.cron=*/10 * * * * *", "clea.conf.scheduling.purge.enabled=true"})
+class ExposedVisitEntityServiceSchedulingTest {
 
     @Value("${clea.conf.scheduling.purge.cron}")
     private String cronValue;

@@ -1,7 +1,6 @@
 package fr.gouv.clea.consumer.service.impl;
 
 import fr.gouv.clea.consumer.model.DecodedVisit;
-import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IConsumerService;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
@@ -40,7 +39,8 @@ public class ConsumerService implements IConsumerService {
         //   + --> check in DB if there is already an entry with the same LTid, periodStart, timeSlot
         //         - if so, update the record
         //         - else add a new entry
-        ExposedVisitEntity exposedVisitEntity = null;
-        exposedVisitEntityService.persist(exposedVisitEntity);
+        if (exposedVisit.isPresent())
+            exposedVisitEntityService.persist(null);
+
     }
 }
