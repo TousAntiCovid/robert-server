@@ -60,7 +60,7 @@ public class DecodedVisitService implements IDecodedVisitService {
         } else if (!this.hasValidTemporaryLocationPublicId(visit)) {
             return Optional.empty();
         }
-        return Optional.of(this.setExposureTime(visit));
+        return Optional.of(visit);
     }
 
     private boolean hasValidTemporaryLocationPublicId(Visit visit) {
@@ -82,10 +82,5 @@ public class DecodedVisitService implements IDecodedVisitService {
             return true;
         return Math.abs(TimeUtils.ntpTimestampFromInstant(visit.getQrCodeScanTime()) - visit.getQrCodeValidityStartTime()) < (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
          */
-    }
-
-    private Visit setExposureTime(Visit visit) {
-        // FIXME implement when specs are precise
-        return visit;
     }
 }

@@ -16,7 +16,7 @@ clea:
         enabled: false
     security:
       crypto:
-        manualCTAuthoritySecretKey: 123
+        manualCTAuthoritySecretKey: "f55d39487b91c00ad24d4fc70f54511539ed308e954ab859734598d16d047bdf"
 
 logging:
   level:

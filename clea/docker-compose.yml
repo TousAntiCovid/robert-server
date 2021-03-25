@@ -99,6 +99,8 @@ services:
     networks:
       - clea-network
     restart: always
+    logging:
+      driver: none
 
 networks:
   clea-network:

@@ -5,15 +5,20 @@ import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
 import fr.inria.clea.lsp.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Component
+@Slf4j
 public class VisitExpositionAggregatorService implements IVisitExpositionAggregatorService {
 
     private final static long EXPOSURE_TIME_UNIT = TimeUtils.NB_SECONDS_PER_HOUR;
@@ -34,34 +39,44 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
 
         List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId().toString(), periodStartInstant.toEpochMilli());
 
-        IntStream.rangeClosed(firstExposedSlot, lastExposedSlot)
-                .forEach(slotIndex -> exposedVisits.stream()
-                        .filter(exposedVisit -> exposedVisit.getTimeSlot() == slotIndex)
-                        .findFirst()
-                        .ifPresentOrElse(
-                                exposedVisit -> this.updateExposureCount(visit, exposedVisit),
-                                () -> this.newExposureCount(visit, slotIndex, exposedVisits)
-                        )
+        List<ExposedVisitEntity> toUpdate = new ArrayList<>();
+        List<ExposedVisitEntity> toPersist = new ArrayList<>();
+
+        IntStream.rangeClosed(Math.min(firstExposedSlot, lastExposedSlot), Math.max(firstExposedSlot, lastExposedSlot))
+                .forEach(slotIndex ->
+                        exposedVisits.stream()
+                                .filter(exposedVisit -> exposedVisit.getTimeSlot() == slotIndex)
+                                .findFirst()
+                                .ifPresentOrElse(
+                                        exposedVisit -> toUpdate.add(this.updateExposureCount(visit, exposedVisit)),
+                                        () -> toPersist.add(this.newExposureCount(visit, slotIndex))
+                                )
                 );
-        repository.saveAll(exposedVisits);
+
+        if (!toPersist.isEmpty()) {
+            log.info("Persisting {} new visits!", toPersist.size());
+            log.info("Updating {} exsisting visits!", toUpdate.size());
+            repository.saveAll(Stream.concat(toUpdate.stream(), toPersist.stream()).collect(Collectors.toList()));
+        }
     }
 
     protected Instant periodStartInstant(Visit visit) {
         return TimeUtils.instantFromTimestamp((long) visit.getCompressedPeriodStartTime() * TimeUtils.NB_SECONDS_PER_HOUR);
     }
 
-    protected void updateExposureCount(Visit visit, ExposedVisitEntity exposedVisit) {
+    protected ExposedVisitEntity updateExposureCount(Visit visit, ExposedVisitEntity exposedVisit) {
         if (visit.isBackward()) {
             exposedVisit.setBackwardVisits(exposedVisit.getBackwardVisits() + 1);
         } else {
             exposedVisit.setForwardVisits(exposedVisit.getForwardVisits() + 1);
         }
+        return exposedVisit;
     }
 
-    protected void newExposureCount(Visit visit, int slotIndex, List<ExposedVisitEntity> exposedVisits) {
+    protected ExposedVisitEntity newExposureCount(Visit visit, int slotIndex) {
         // TODO: visit.getPeriodStart returning an Instant
         long periodStart = this.periodStartInstant(visit).toEpochMilli();
-        ExposedVisitEntity exposedVisit = ExposedVisitEntity.builder()
+        return ExposedVisitEntity.builder()
                 .locationTemporaryPublicId(visit.getStringLocationTemporaryPublicId())
                 .venueType(visit.getVenueType())
                 .venueCategory1(visit.getVenueCategory1())
@@ -72,7 +87,6 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
                 .forwardVisits(visit.isBackward() ? 0 : 1)
                 .qrCodeScanTime(visit.getQrCodeScanTime())
                 .build();
-        exposedVisits.add(exposedVisit);
     }
 
     /**
