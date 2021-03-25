@@ -32,7 +32,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
     @Override
     public void updateExposureCount(Visit visit) {
         Instant periodStartInstant = periodStartInstant(visit);
-        long scanTimeSlot = Duration.between(visit.getQrCodeScanTime(), periodStartInstant).toSeconds() / EXPOSURE_TIME_UNIT;
+        long scanTimeSlot = Duration.between(periodStartInstant, visit.getQrCodeScanTime()).toSeconds() / EXPOSURE_TIME_UNIT;
         int exposureTime = this.getExposureTime(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(visit.getPeriodDuration(), (int) scanTimeSlot + exposureTime);
