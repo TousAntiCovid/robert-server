@@ -5,8 +5,6 @@ services:
     build: ./clea-ws-rest/
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      USER: user
-      PASSWORD: pass
     depends_on:
       - kafka
     ports:
