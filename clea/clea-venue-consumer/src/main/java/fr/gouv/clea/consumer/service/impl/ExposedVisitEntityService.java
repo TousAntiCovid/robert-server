@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import javax.transaction.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -40,6 +41,11 @@ public class ExposedVisitEntityService implements IExposedVisitEntityService {
             log.error("error persisting [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(exposedVisitEntity.getLocationTemporaryPublicId()), exposedVisitEntity.getQrCodeScanTime());
             throw e;
         }
+    }
+
+    @Override
+    public List<ExposedVisitEntity> persistMany(List<ExposedVisitEntity> exposedVisitEntities) {
+        return repository.saveAll(exposedVisitEntities);
     }
 
     @Override
