@@ -58,6 +58,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>fr.inria.clea</groupId>
+                <artifactId>clea-crypto</artifactId>
+                <version>${clea-crypto.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
