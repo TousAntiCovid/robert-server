@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <licenses>
@@ -15,7 +15,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.4.3</version>
-        <relativePath /> <!-- lookup parent from repository -->
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>fr.gouv.clea</groupId>
@@ -39,10 +39,21 @@
         <clea-crypto.version>0.0.1-SNAPSHOT</clea-crypto.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <postgresql.version>42.2.19</postgresql.version>
-        <io.jsonwebtoken.version>0.11.2</io.jsonwebtoken.version>
         <spring-cloud.version>2020.0.1</spring-cloud.version>
-        <!--  inherited frpm spring-cloud-dependencies 
-          <spring-kafka.version>2.6.6</spring-kafka.version> -->
+        <!--
+            inherited from spring-cloud-dependencies
+            <spring-kafka.version>2.6.6</spring-kafka.version>
+        -->
+        <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
+        <mockito-core.version>3.8.0</mockito-core.version>
+        <assertj-core.version>3.19.0</assertj-core.version>
+        <awaitility.version>4.0.3</awaitility.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <kafka-embedded.version>1.15.2</kafka-embedded.version>
+        <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
+        <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
+        <maven-site-plugin.version>3.7.1</maven-site-plugin.version>
+        <maven-jxr-plugin.version>2.1</maven-jxr-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -64,16 +75,49 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>fr.inria.clea</groupId>
+                <artifactId>clea-crypto</artifactId>
+                <version>${clea-crypto.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito-core.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj-core.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>kafka</artifactId>
+                <version>${kafka-embedded.version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
-
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <version>${maven-surefire-plugin.version}</version>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -93,6 +137,7 @@
             </plugins>
         </pluginManagement>
     </build>
+
     <profiles>
         <profile>
             <id>report</id>
@@ -104,17 +149,17 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.6</version>
+                        <version>${jacoco-maven-plugin.version}</version>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-site-plugin</artifactId>
-                        <version>3.7.1</version>
+                        <version>${maven-site-plugin.version}</version>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.0.0-M5</version>
+                        <version>${maven-surefire-plugin.version}</version>
                     </plugin>
                 </plugins>
             </build>
@@ -130,7 +175,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jxr-plugin</artifactId>
-                        <version>2.1</version>
+                        <version>${maven-jxr-plugin.version}</version>
                     </plugin>
                     <plugin>
                         <groupId>org.jacoco</groupId>
@@ -161,7 +206,6 @@
             <url>${env.CI_SERVER_URL}/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
         </snapshotRepository>
     </distributionManagement>
-
 
     <scm>
         <connection>scm:git:${gitRepositoryUrl}</connection>

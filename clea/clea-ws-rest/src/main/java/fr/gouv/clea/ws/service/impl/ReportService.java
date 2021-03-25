@@ -1,5 +1,6 @@
 package fr.gouv.clea.ws.service.impl;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -13,9 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IAuthorizationService;
-import fr.gouv.clea.ws.service.IProcessService;
+import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
 import fr.gouv.clea.ws.service.IReportService;
+import fr.gouv.clea.ws.utils.MessageFormatter;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
 import fr.inria.clea.lsp.CleaEncodingException;
@@ -34,54 +35,49 @@ public class ReportService implements IReportService {
 
     private final LocationSpecificPartDecoder decoder;
 
-    private final IProcessService processService;
-
-    private final IAuthorizationService authorizationService;
+    private final IDecodedVisitProducerService processService;
 
     @Autowired
     public ReportService(
             @Value("${clea.conf.retentionDurationInDays}") int retentionDuration,
             @Value("${clea.conf.duplicateScanThresholdInSeconds}") long duplicateScanThreshold,
             LocationSpecificPartDecoder decoder,
-            IProcessService processService,
-            IAuthorizationService authorizationService) {
+            IDecodedVisitProducerService processService) {
         this.retentionDurationInDays = retentionDuration;
         this.duplicateScanThresholdInSeconds = duplicateScanThreshold;
         this.decoder = decoder;
         this.processService = processService;
-        this.authorizationService = authorizationService;
     }
 
     @Override
-    public List<DecodedVisit> report(String jwtToken, ReportRequest reportRequestVo) {
-        this.authorizationService.checkAuthorization(jwtToken);
-
+    public List<DecodedVisit> report(ReportRequest reportRequestVo) {
         List<DecodedVisit> verified = reportRequestVo.getVisits().stream()
-                .filter(visit -> ! this.isOutdated(visit))
-                .filter(visit -> ! this.isFuture(visit))
-                .map(this::decode)
+                .filter(visit -> !this.isOutdated(visit))
+                .filter(visit -> !this.isFuture(visit))
+                .map(it -> this.decode(it, reportRequestVo.getPivotDateAsNtpTimestamp()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         List<DecodedVisit> pruned = this.pruneDuplicates(verified);
-        processService.process(pruned);
+        processService.produce(pruned);
         return pruned;
     }
 
-    private DecodedVisit decode(Visit visit) {
+    private DecodedVisit decode(Visit visit, long pivotDate) {
         try {
             byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
-            return new DecodedVisit(visit.getQrCodeScanTimeAsNtpTimestamp(), encryptedLocationSpecificPart);
+            Instant qrCodeScanTime = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp());
+            return new DecodedVisit(qrCodeScanTime, encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);
         } catch (CleaEncodingException e) {
-            log.warn("report: {}... rejected: Invalid format", this.truncateQrCode(visit.getQrCode()));
+            log.warn("report: {} rejected: Invalid format", MessageFormatter.truncateQrCode(visit.getQrCode()));
             return null;
         }
     }
 
     private boolean isOutdated(Visit visit) {
-        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), Instant.now()) > retentionDurationInDays; // FIXME < OR <=
+        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), Instant.now()) > retentionDurationInDays;
         if (outdated) {
-            log.warn("report: {} ... rejected: Outdated", this.truncateQrCode(visit.getQrCode()));
+            log.warn("report: {} rejected: Outdated", MessageFormatter.truncateQrCode(visit.getQrCode()));
         }
         return outdated;
     }
@@ -89,11 +85,11 @@ public class ReportService implements IReportService {
     private boolean isFuture(Visit visit) {
         boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()).isAfter(Instant.now());
         if (future) {
-            log.warn("report: {} ... rejected: In future", this.truncateQrCode(visit.getQrCode()));
+            log.warn("report: {} rejected: In future", MessageFormatter.truncateQrCode(visit.getQrCode()));
         }
         return future;
     }
-    
+
     private boolean isDuplicatedScan(DecodedVisit lsp, List<DecodedVisit> cleaned) {
         return cleaned.stream().anyMatch(cleanedLsp -> this.isDuplicatedScan(lsp, cleanedLsp));
     }
@@ -102,25 +98,22 @@ public class ReportService implements IReportService {
         if (one.getLocationTemporaryPublicId() != other.getLocationTemporaryPublicId()) {
             return false;
         }
-        
-        if (Math.abs(one.getQrCodeScanTime() - other.getQrCodeScanTime()) <= duplicateScanThresholdInSeconds) { // FIXME < OR <=
-            log.warn("report: {} {} rejected: Duplicate", one.getLocationTemporaryPublicId(), one.getQrCodeScanTime());
+
+        long secondsBetweenScans = Duration.between(one.getQrCodeScanTime(), other.getQrCodeScanTime()).abs().toSeconds();
+        if (secondsBetweenScans <= duplicateScanThresholdInSeconds) {
+            log.warn("report: {} {} rejected: Duplicate", MessageFormatter.truncateUUID(one.getStringLocationTemporaryPublicId()), one.getQrCodeScanTime());
             return true;
         }
         return false;
     }
-    
+
     private List<DecodedVisit> pruneDuplicates(List<DecodedVisit> locationSpecificParts) {
         List<DecodedVisit> cleaned = new ArrayList<>();
         locationSpecificParts.forEach(it -> {
-            if ( !this.isDuplicatedScan(it, cleaned) ) {
+            if (!this.isDuplicatedScan(it, cleaned)) {
                 cleaned.add(it);
             }
         });
         return cleaned;
-    }
-
-    private String truncateQrCode(String qrCode) {
-        return qrCode.substring(0, Math.min(qrCode.length(), 25));
     }
 }

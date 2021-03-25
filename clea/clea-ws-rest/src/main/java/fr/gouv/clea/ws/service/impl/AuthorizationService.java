@@ -1,5 +1,7 @@
 package fr.gouv.clea.ws.service.impl;
 
+import fr.gouv.clea.ws.exception.CleaUnauthorizedException;
+import fr.gouv.clea.ws.service.IAuthorizationService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -7,9 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import fr.gouv.clea.ws.exception.CleaUnauthorizedException;
-import fr.gouv.clea.ws.service.IAuthorizationService;
 
 import java.security.KeyFactory;
 import java.security.PublicKey;
@@ -32,8 +31,12 @@ public class AuthorizationService implements IAuthorizationService {
     }
 
     public boolean checkAuthorization(String jwtToken) throws CleaUnauthorizedException {
-        jwtToken = jwtToken.replace("Bearer ", "");
         if (this.checkAuthorization) {
+            if (jwtToken == null) {
+                log.warn("Missing Authorisation header!");
+                throw new CleaUnauthorizedException("Missing Authorisation header!");
+            }
+            jwtToken = jwtToken.replace("Bearer ", "");
             this.verifyJWT(jwtToken);
         }
         return true;

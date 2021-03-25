@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: TACW Dynamic
-  description: "#TOUSANTICOVID, TAC Warning Dynamic API"
+  title: Tous AntiCovid Cluster Exposure Verification (Cléa)
+  description: "#TOUSANTICOVID, Cléa API"
   contact:
     email: stopcovid@inria.fr
   license:
@@ -9,35 +9,27 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8088
     description: Inferred Url
 tags:
-  - name: tacw
-    description: APIs for TACW Dynamic
+  - name: clea
+    description: Clea API
 paths:
-  "/api/v1/report":
+  "/api/clea/v1/wreport":
     post:
       tags:
-        - tacw
+        - clea
       summary: Upload locations history
       description: |
         Upload a list of {qrCode, timestamp} tuples where :
         * **qrCode**: QR code content encoded in Base64
         * **qrCodeScanTime**: NTP timestamp when a user terminal scans a given QR code
       operationId: reportUsingPOST
-      parameters:
-        - name: Authorization
-          in: header
-          description: JWT Bearer Token for authorization (provided by the Robert Server
-            Report answer)
-          required: true
-          schema:
-            type: string
       requestBody:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/Reports"
+              "$ref": "#/components/schemas/ReportRequest"
       responses:
         '200':
           description: Successful Operation
@@ -58,17 +50,24 @@ paths:
           description: Invalid Authentication
         '500':
           description: Internal Error
+      security:
+        - Authorization:
+            - global
 components:
   schemas:
-    Report:
-      title: Report
+    ReportRequest:
+      title: ReportRequest
+      required:
+        - visits
       type: object
       properties:
-        qrCode:
-          type: string
-        qrCodeScanTime:
+        pivotDate:
           type: integer
           format: int64
+        visits:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Visit"
     ReportResponse:
       title: ReportResponse
       type: object
@@ -77,11 +76,20 @@ components:
           type: string
         success:
           type: boolean
-    Reports:
-      title: Reports
+    Visit:
+      title: Visit
+      required:
+        - qrCode
+        - qrCodeScanTime
       type: object
       properties:
-        reports:
-          type: array
-          items:
-            "$ref": "#/components/schemas/Report"
+        qrCode:
+          type: string
+        qrCodeScanTime:
+          type: integer
+          format: int64
+  securitySchemes:
+    Authorization:
+      type: apiKey
+      name: Authorization
+      in: header

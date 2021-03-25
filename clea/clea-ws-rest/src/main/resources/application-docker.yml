@@ -1,0 +1,9 @@
+clea:
+  conf:
+    security:
+      report:
+        checkAuthorization: false
+
+spring:
+  kafka:
+    bootstrap-servers: "kafka:29092"

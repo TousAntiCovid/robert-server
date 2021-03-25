@@ -1,0 +1,42 @@
+# Available endpoints for the monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${CLEA_SERVER_MONITORING_ENDPOINTS:health,metrics}
+
+clea:
+  conf:
+    retentionDurationInDays: 14
+    driftBetweenDeviceAndOfficialTimeInSecs: 300
+    cleaClockDriftInSecs: 300
+    scheduling:
+      purge:
+        cron: "0 0 1 * * *"
+        enabled: false
+    security:
+      crypto:
+        manualCTAuthoritySecretKey: 123
+
+logging:
+  level:
+    fr.gouv.clea.consumer: INFO
+
+spring:
+  jpa:
+    generate-ddl: true
+    open-in-view: false
+  kafka:
+    bootstrap-servers: "localhost:9092"
+    consumer:
+      auto-offset-reset: earliest
+      group-id: group1
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: fr.gouv.clea.consumer.utils.KafkaDeserializer
+    template:
+      default-topic: cleaQrCodes
+  main:
+    web-application-type: none
+  output:
+    ansi:
+      enabled: ALWAYS

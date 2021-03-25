@@ -1,0 +1,108 @@
+services:
+
+  clea-ws-rest:
+    container_name: clea-ws-rest
+    build: ./clea-ws-rest/
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    networks:
+      - clea-network
+    restart: always
+
+  clea-venue-consumer:
+    container_name: clea-venue-consumer
+    build: ./clea-venue-consumer/
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      USER: user
+      PASSWORD: pass
+    depends_on:
+      - postgres
+      - kafka
+    ports:
+      - "7070:8080"
+    networks:
+      - clea-network
+    restart: always
+
+  kafka:
+    container_name: kafka
+    image: "wurstmeister/kafka:latest"
+    environment:
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - clea-network
+    restart: always
+
+  zookeeper:
+    container_name: zookeeper
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+    networks:
+      - clea-network
+    restart: always
+
+  kafdrop:
+    container_name: kafdrop
+    image: "obsidiandynamics/kafdrop:latest"
+    environment:
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+      KAFKA_BROKERCONNECT: "kafka:29092"
+    depends_on:
+      - kafka
+    ports:
+      - "9000:9000"
+    networks:
+      - clea-network
+    restart: always
+
+  postgres:
+    container_name: postgres
+    image: "postgres:latest"
+    environment:
+      POSTGRES_DB: cleadb
+      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: user
+    ports:
+      - "5432:5432"
+    networks:
+      - clea-network
+    restart: always
+
+  pgadmin:
+    container_name: pgadmin
+    image: "dpage/pgadmin4:latest"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user
+      PGADMIN_DEFAULT_PASSWORD: pass
+      PGADMIN_LISTEN_PORT: 80
+    logging:
+      driver: none
+    depends_on:
+      - postgres
+    ports:
+      - "8081:80"
+    networks:
+      - clea-network
+    restart: always
+
+networks:
+  clea-network:
+    driver: bridge
+    name: clea-network

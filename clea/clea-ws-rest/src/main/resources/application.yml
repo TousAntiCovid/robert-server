@@ -4,7 +4,6 @@ controller:
 server:
   port: 8088
 
-    
 # Available endpoints for the monitoring
 management:
   endpoints:
@@ -17,15 +16,22 @@ clea:
     duplicateScanThresholdInSeconds: 10800
     retentionDurationInDays: 14
     security:
-      crypto:
-        manualCTAuthoritySecretKey: 536efbdc5d8668d4a16e89059f15849fa979caf988841394eab1308f82d4e8e4
       report:
-        checkAuthorization: true
+        checkAuthorization: false
         robertJwtPublicKey: TODO
-kafka:
-  bootstrapAddress: localhost:8080
-  topic:
-    name: cleaQrCodes
+
 logging:
   level:
     fr.gouv.clea.ws: INFO
+
+spring:
+  kafka:
+    bootstrap-servers: "localhost:9092"
+    consumer:
+      group-id: group1
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: fr.gouv.clea.ws.utils.KafkaSerializer
+    template:
+      default-topic: cleaQrCodes
+
