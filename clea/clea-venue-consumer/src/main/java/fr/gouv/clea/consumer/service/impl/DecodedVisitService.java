@@ -9,7 +9,6 @@ import fr.inria.clea.lsp.CleaEncodingException;
 import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
-import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,11 +75,14 @@ public class DecodedVisitService implements IDecodedVisitService {
     }
 
     private boolean isFresh(Visit visit) {
+        return true;
+        /*
         double qrCodeRenewalInterval = (visit.getQrCodeRenewalIntervalExponentCompact() == 0x1F)
                 ? 0 : Math.pow(2, visit.getQrCodeRenewalIntervalExponentCompact());
-        if (qrCodeRenewalInterval <= 0)
+        if (qrCodeRenewalInterval == 0)
             return true;
         return Math.abs(TimeUtils.ntpTimestampFromInstant(visit.getQrCodeScanTime()) - visit.getQrCodeValidityStartTime()) < (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
+         */
     }
 
     private Visit setExposureTime(Visit visit) {
