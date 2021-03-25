@@ -1,19 +1,5 @@
 package fr.gouv.clea.ws.service.impl;
 
-import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
-import fr.gouv.clea.ws.service.IReportService;
-import fr.gouv.clea.ws.utils.MessageFormatter;
-import fr.gouv.clea.ws.vo.ReportRequest;
-import fr.gouv.clea.ws.vo.Visit;
-import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
-import fr.inria.clea.lsp.LocationSpecificPartDecoder;
-import fr.inria.clea.lsp.utils.TimeUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -22,6 +8,22 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import fr.gouv.clea.ws.model.DecodedVisit;
+import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
+import fr.gouv.clea.ws.service.IReportService;
+import fr.gouv.clea.ws.utils.MessageFormatter;
+import fr.gouv.clea.ws.vo.ReportRequest;
+import fr.gouv.clea.ws.vo.Visit;
+import fr.inria.clea.lsp.CleaEncodingException;
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -66,7 +68,7 @@ public class ReportService implements IReportService {
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
             Instant qrCodeScanTime = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp());
             return new DecodedVisit(qrCodeScanTime, encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);
-        } catch (Exception e) {
+        } catch (CleaEncodingException e) {
             log.warn("report: {} rejected: Invalid format", MessageFormatter.truncateQrCode(visit.getQrCode()));
             return null;
         }
