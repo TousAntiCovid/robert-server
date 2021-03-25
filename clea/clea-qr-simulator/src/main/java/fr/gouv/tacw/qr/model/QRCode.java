@@ -1,4 +1,4 @@
-package fr.gouv.tacw.qr.models;
+package fr.gouv.tacw.qr.model;
 
 import java.util.Arrays;
 import java.util.Base64;

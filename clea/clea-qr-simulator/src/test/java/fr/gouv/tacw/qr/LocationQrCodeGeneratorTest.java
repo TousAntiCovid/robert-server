@@ -5,9 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 
-import fr.gouv.tacw.qr.models.QRCode;
+import fr.gouv.tacw.qr.model.QRCode;
+
+import org.junit.jupiter.api.BeforeEach;
 
 public class LocationQrCodeGeneratorTest {
     
@@ -17,7 +18,6 @@ public class LocationQrCodeGeneratorTest {
     private static final Instant now = Instant.now();
     private LocationQrCodeGenerator staticGenerator;
     private LocationQrCodeGenerator dynamicGenerator;
-    private long periodStart;
 
     @BeforeEach
     public void setUp() throws Exception{
@@ -64,6 +64,7 @@ public class LocationQrCodeGeneratorTest {
         QRCode qr = staticGenerator.getQrCodeAt(staticGenerator.getPeriodStart());
         QRCode qr2 = staticGenerator.getQrCodeAt(staticGenerator.getPeriodStart()+600);
         assertThat(qr2).isEqualTo(qr);
+        
         qr = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart());
         qr2 = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart()+600);
         assertThat(qr2).isEqualTo(qr);
@@ -74,7 +75,6 @@ public class LocationQrCodeGeneratorTest {
         QRCode qr = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart());
         QRCode qr2 = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart()+3600);
 
-        //extract TLIds
         assertThat(qr.getLocationTemporaryPublicID()).isEqualTo(qr2.getLocationTemporaryPublicID());
 
     }
