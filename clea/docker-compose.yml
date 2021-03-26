@@ -2,6 +2,7 @@ services:
 
   clea-ws-rest:
     container_name: clea-ws-rest
+    image: clea-ws-rest:latest
     build: ./clea-ws-rest/
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -16,6 +17,7 @@ services:
 
   clea-venue-consumer:
     container_name: clea-venue-consumer
+    image: clea-venue-consumer:latest
     build: ./clea-venue-consumer/
     environment:
       SPRING_PROFILES_ACTIVE: docker
