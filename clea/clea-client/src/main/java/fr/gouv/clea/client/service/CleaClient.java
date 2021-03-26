@@ -67,4 +67,8 @@ public class CleaClient {
             scanQrCode(qrcode.getValue(),qrcode.getKey());
         }
     }
+
+    public float getStatus() throws IOException {
+        return new StatusService().status(localList);
+    }
 }
