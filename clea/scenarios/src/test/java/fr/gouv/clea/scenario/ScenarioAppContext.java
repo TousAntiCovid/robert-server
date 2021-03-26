@@ -1,14 +1,26 @@
 package fr.gouv.clea.scenario;
 
+import fr.gouv.clea.client.service.CleaClient;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 public class ScenarioAppContext {
+    private Map<String, CleaClient> visitors;
+
+    public ScenarioAppContext() {
+        visitors = new HashMap<String, CleaClient>(10);
+    }
+
     public CleaClient getOrCreateVisitor(String name) {
-        CleaClient result = visitorMap.get(name);
-        if ( result == null) {
-            logger.info("Creating visitor " + name);
-            result = new CleaClient(name);
-            visitorMap.put(name, result);
-        }
-        return result;
+        return visitors.computeIfAbsent(name, newName -> this.createVisitor(newName));
+    }
+
+    private CleaClient createVisitor(String name) {
+        log.info("Creating visitor " + name);
+        return new CleaClient(name);
     }
 /*
     public Place getOrCreatePlace(String name) {
