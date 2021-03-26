@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class ClusterIndex {
     @JsonProperty("i")
     private int iteration;
+    
     @JsonProperty("c")
     private List<String> prefixes;
 }

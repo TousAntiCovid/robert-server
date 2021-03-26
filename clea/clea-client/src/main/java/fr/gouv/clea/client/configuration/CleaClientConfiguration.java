@@ -54,7 +54,7 @@ public class CleaClientConfiguration {
     }
 
 
-    public int getDurationUnit(){
+    public int getDurationUnitInSeconds(){
         try{
             return Integer.parseInt(this.config.getProperty("duration_unit", ""));
         }catch(NumberFormatException e){
