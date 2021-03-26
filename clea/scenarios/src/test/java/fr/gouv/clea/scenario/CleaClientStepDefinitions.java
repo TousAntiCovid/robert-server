@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.Duration;
 import java.util.Objects;
 
+import fr.gouv.clea.client.service.CleaClient;
 import fr.gouv.tacw.qr.LocationQrCodeGenerator;
 import fr.gouv.tacw.qr.model.QRCode;
 import io.cucumber.java8.En;
@@ -38,6 +39,11 @@ public class CleaClientStepDefinitions implements En {
         Then("^Exposure status should reports \"([^\"]*)\" as not being at risk$", (String visitorName) -> {
             float riskLevel = this.scenarioAppContext.getOrCreateVisitor(visitorName).getStatus();
             assertThat(riskLevel).isEqualTo(0);
+        });
+
+        Then("^Exposure status request for \"([^\"]*)\" should include only \"(\\d+)\" visit(s) to \"([^\"]*)\" at \"([^\"]*)\"", (String visitorName, Integer nbVisits, String locationName, String qrScanTime) -> {
+            CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
+            assertThat(visitor.getLocalList().size()).isEqualTo(nbVisits);
         });
     }
 }

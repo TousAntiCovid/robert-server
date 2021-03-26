@@ -77,4 +77,12 @@ public class ScenarioAppContext {
         
         return (locations.containsKey(locationName) ? locations.get(locationName) : this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCapacity, qrCodeRenewalInterval));
     }
+
+    public LocationQrCodeGenerator getLocation(String locationName){
+        return locations.get(locationName);
+    }
+
+    public CleaClient getVisitor(String visitorName){
+        return visitors.get(visitorName);
+    }
 }
