@@ -1,6 +1,7 @@
 package fr.gouv.clea.scenario;
 
 import fr.gouv.clea.client.service.CleaClient;
+import fr.gouv.tacw.qr.LocationQrCodeGenerator;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -21,6 +22,10 @@ public class ScenarioAppContext {
     private CleaClient createVisitor(String name) {
         log.info("Creating visitor " + name);
         return new CleaClient(name);
+    }
+
+    public LocationQrCodeGenerator getOrCreatelocation(String locationName,String venueType,String venueCategory1,int venueCapacity, String qrCodeRenewalInterval){
+        return null;
     }
 /*
     public Place getOrCreatePlace(String name) {

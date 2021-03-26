@@ -3,12 +3,12 @@ import fr.gouv.tacw.qr.LocationQrCodeGenerator;
 import fr.gouv.tacw.qr.model.QRCode;
 
 import java.time.Instant;
+import java.time.Duration;
 import java.util.Objects;
 import io.cucumber.java8.En;
 
 public class CleaClientStepDefinitions implements En {
     private final ScenarioAppContext scenarioAppContext;
-
     public CleaClientStepDefinitions(ScenarioAppContext scenarioAppContext) {
         this.scenarioAppContext = Objects.requireNonNull(scenarioAppContext, "scenarioAppContext must not be null");
 
