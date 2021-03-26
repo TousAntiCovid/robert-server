@@ -12,7 +12,6 @@
 
     <artifactId>clea-ws-rest</artifactId>
     <name>clea-ws-rest</name>
-    <version>0.1-SNAPSHOT</version>
     <description>ReST API module for Clea (Cluster Exposure Verification)</description>
 
     <properties>
@@ -130,5 +129,12 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
