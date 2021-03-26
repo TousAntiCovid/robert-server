@@ -9,4 +9,4 @@ clea:
 
 spring:
   kafka:
-    bootstrap-servers: "kafka:29092"
+    bootstrap-servers: "${KAFKA_URL:kafka:29092}"
