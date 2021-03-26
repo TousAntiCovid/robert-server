@@ -20,8 +20,8 @@ public class StatusServiceTest {
 
     @BeforeEach
     public void setup(){
-        qr = new ScannedQrCode(qrCode, now.getEpochSecond());
-        qr2 = new ScannedQrCode(qrCode2, now.getEpochSecond());
+        qr = new ScannedQrCode(qrCode, now);
+        qr2 = new ScannedQrCode(qrCode2, now);
     }
     
     @Test

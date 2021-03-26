@@ -15,7 +15,7 @@ public class Report {
     }
 
     public void addVisit(ScannedQrCode scannedQr){
-        this.visits.add(new Visit(scannedQr.getQrCode(), scannedQr.getScanTime()));
+        this.visits.add(new Visit(scannedQr.getQrCode(), scannedQr.getScanTimeAsNtpTimestamp()));
     }
 
     public void addAllVisits(List<ScannedQrCode> localList) {

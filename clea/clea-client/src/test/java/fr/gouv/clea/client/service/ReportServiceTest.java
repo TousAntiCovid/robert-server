@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,8 +38,8 @@ public class ReportServiceTest {
 
     @Test
     public void testCanReportInfectedVisits() throws Exception {
-        localList.add(new ScannedQrCode(qrCode, now.getEpochSecond() - 200));
-        localList.add(new ScannedQrCode(qrCode2, now.getEpochSecond()));
+        localList.add(new ScannedQrCode(qrCode, now.minus(200, ChronoUnit.SECONDS)));
+        localList.add(new ScannedQrCode(qrCode2, now));
 
         ReportResponse response = backend.report(localList);
 
