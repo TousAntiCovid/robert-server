@@ -2,12 +2,14 @@ package fr.gouv.clea.consumer.model;
 
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
 import java.time.Instant;
 
 @AllArgsConstructor
+@Builder
 @Getter
 @ToString
 public class DecodedVisit {
