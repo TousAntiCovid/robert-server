@@ -10,5 +10,5 @@ public interface IExposedVisitRepository extends JpaRepository<ExposedVisitEntit
 
     int deleteAllByQrCodeScanTimeBefore(Instant qrCodeScanTime);
 
-    List<ExposedVisitEntity> findAllByLocationTemporaryPublicIdAndPeriodStartAndTimeSlot(String locationTemporaryPublicId, long periodStart, int timeSlot);
+    List<ExposedVisitEntity> findAllByLocationTemporaryPublicIdAndPeriodStart(String locationTemporaryPublicId, long periodStart);
 }

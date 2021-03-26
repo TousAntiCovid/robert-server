@@ -76,11 +76,6 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>fr.inria.clea</groupId>
-                <artifactId>clea-crypto</artifactId>
-                <version>${clea-crypto.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
                 <version>${mockito-core.version}</version>

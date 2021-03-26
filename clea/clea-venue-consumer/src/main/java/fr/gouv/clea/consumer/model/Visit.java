@@ -2,6 +2,7 @@ package fr.gouv.clea.consumer.model;
 
 import fr.inria.clea.lsp.LocationSpecificPart;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
@@ -9,6 +10,7 @@ import java.time.Instant;
 
 @SuperBuilder
 @Getter
+@Setter
 @ToString
 public class Visit extends LocationSpecificPart {
 

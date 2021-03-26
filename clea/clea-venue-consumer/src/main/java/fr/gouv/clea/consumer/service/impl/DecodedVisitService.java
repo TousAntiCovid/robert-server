@@ -48,7 +48,6 @@ public class DecodedVisitService implements IDecodedVisitService {
             Visit visit = Visit.from(lsp, decodedVisit);
             return this.verify(visit);
         } catch (Exception e) {
-            e.printStackTrace();
             log.warn("error decrypting [locationTemporaryPublicId: {}, qrCodeScanTime: {}, message: {}]", MessageFormatter.truncateUUID(decodedVisit.getStringLocationTemporaryPublicId()), decodedVisit.getQrCodeScanTime(), e.getLocalizedMessage());
             return Optional.empty();
         }
@@ -59,9 +58,10 @@ public class DecodedVisitService implements IDecodedVisitService {
             log.warn("drift check failed for [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(visit.getStringLocationTemporaryPublicId()), visit.getQrCodeScanTime());
             return Optional.empty();
         } else if (!this.hasValidTemporaryLocationPublicId(visit)) {
+            log.warn("locationTemporaryPublicId check failed for [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(visit.getStringLocationTemporaryPublicId()), visit.getQrCodeScanTime());
             return Optional.empty();
         }
-        return Optional.of(this.setExposureTime(visit));
+        return Optional.of(visit);
     }
 
     private boolean hasValidTemporaryLocationPublicId(Visit visit) {
@@ -83,10 +83,5 @@ public class DecodedVisitService implements IDecodedVisitService {
             return true;
         return Math.abs(TimeUtils.ntpTimestampFromInstant(visit.getQrCodeScanTime()) - visit.getQrCodeValidityStartTime()) < (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
          */
-    }
-
-    private Visit setExposureTime(Visit visit) {
-        // FIXME implement when specs are precise
-        return visit;
     }
 }
