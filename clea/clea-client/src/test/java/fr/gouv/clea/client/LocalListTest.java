@@ -35,7 +35,7 @@ public class LocalListTest
         assertThat(localList.size()).isEqualTo(1);
         ScannedQrCode scanned = localList.get(0);
         assertThat(scanned.getQrCode()).isEqualTo(qrCode);
-        assertThat(scanned.getScanTime()).isEqualTo(now.getEpochSecond());
+        assertThat(scanned.getScanTime()).isEqualTo(now);
         assertThat(scanned.getLocationTemporaryId()).isEqualTo(tlId);
     }
 
