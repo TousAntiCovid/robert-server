@@ -1,10 +1,10 @@
+package fr.gouv.clea.scenario;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.Duration;
 import java.util.Objects;
 
-import fr.gouv.clea.scenario.ScenarioAppContext;
 import fr.gouv.tacw.qr.LocationQrCodeGenerator;
 import fr.gouv.tacw.qr.model.QRCode;
 import io.cucumber.java8.En;
