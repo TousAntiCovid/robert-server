@@ -24,8 +24,8 @@ public class ScenarioAppContext {
         return new CleaClient(name);
     }
 
-    public LocationQrCodeGenerator getOrCreatelocation(String locationName,String venueType,String venueCategory1,int venueCapacity, String qrCodeRenewalInterval){
-        return null;
+    public LocationQrCodeGenerator getOrCreatelocation(String locationName, Instant periodStartTime, String venueType,String venueCategory1,int venueCapacity, String qrCodeRenewalInterval){
+        
     }
 /*
     public Place getOrCreatePlace(String name) {

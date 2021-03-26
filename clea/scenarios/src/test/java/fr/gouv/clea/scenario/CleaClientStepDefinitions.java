@@ -20,9 +20,10 @@ public class CleaClientStepDefinitions implements En {
         });
         Given("^\"([^\"]*)\" created a QRCode \"([^\"]*)\" as a \"([^\"]*)\" at \"([^\"]*)\" with a capacity of (\\d+) and category \"([^\"]*)\" and with a renewal time of \"([^\"]*)\"$",
                 (String locationName, String qrCodeId, String venueType, String periodStartTime, Integer venueCapacity, String venueCategory1, String qrCodeRenewalInterval) -> {
-            LocationQrCodeGenerator location = this.scenarioAppContext.getOrCreateLocation(locationName, venueType, venueCategory1, venueCapacity, qrCodeRenewalInterval);
+            Instant periodStartTimeInstant = Instant.parse(periodStartTime);
+            LocationQrCodeGenerator location = this.scenarioAppContext.getOrCreateLocation(locationName, periodStartTimeInstant, venueType, venueCategory1, venueCapacity, qrCodeRenewalInterval);
             // TODO: add QR id
-            location.startNewPeriod(Instant.parse(periodStartTime));
+            location.startNewPeriod();
         });
         Given("^\"([^\"]*)\" recorded a visit to \"([^\"]*)\" at \"([^\"]*)\" withQRCode \"([^\"]*)\"$",
                 (String visitorName, String locationName, String qrCodeScanTime, String qrCodeId) -> {
