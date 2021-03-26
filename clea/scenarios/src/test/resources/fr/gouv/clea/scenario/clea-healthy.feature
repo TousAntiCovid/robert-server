@@ -7,7 +7,7 @@ Feature: Several healthy visitors visit different places
     Given "Hugo" registered on TAC
     Given "Heather" registered on TAC
     Given "Henry" registered on TAC
-    Given "Chez Gusto" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
+    Given "Chez Gusto" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of 15 "minutes"
     Given "Chez Gusto" created a QRCode "LunchService2" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
     Given "La fontaine aux perles" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
     Given "La fontaine aux perles" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"

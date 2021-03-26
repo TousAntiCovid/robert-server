@@ -22,13 +22,14 @@ public class ScenarioAppContext {
 
     public ScenarioAppContext() {
         visitors = new HashMap<String, CleaClient>(10);
+        locations = new HashMap<String, LocationQrCodeGenerator>(10);
         manualContactTracingAuthorityPublicKey = "TBD";
         serverAuthorityPublicKey = "TBD";
         permanentLocationSecretKey = "TBD";
-        venueCategories = new HashMap<>();
-        venueCategories.put("restaurant", 1);
-        venueTypes = new HashMap<>();
-        venueTypes.put("NUMBER_1", 1);
+        venueTypes = new HashMap<String, Integer> (
+                Map.of("restaurant", 1));
+        venueCategories = new HashMap<String, Integer> (
+                Map.of("NUMBER_1", 1));
 
     }
 
@@ -40,16 +41,6 @@ public class ScenarioAppContext {
         log.info("Creating visitor " + name);
         return new CleaClient(name);
     }
-/*
-    public Place getOrCreatePlace(String name) {
-        Place result =placeMap.get(name);
-        if ( result == null) {
-            logger.info("Creating place " + name);
-            result = new Place(name);
-            placeMap.put(name, result);
-        }
-        return result;
-    } */
 
     private LocationQrCodeGenerator createLocation(String locationName, Instant periodStartTime,
     String venueType, String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaEncryptionException{
@@ -74,8 +65,9 @@ public class ScenarioAppContext {
 
     public LocationQrCodeGenerator getOrCreateLocation(String locationName, Instant periodStartTime,
             String venueType, String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaEncryptionException {
-        
-        return (locations.containsKey(locationName) ? locations.get(locationName) : this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCapacity, qrCodeRenewalInterval));
+        return (locations.containsKey(locationName) ?
+                locations.get(locationName) :
+                this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCapacity, qrCodeRenewalInterval));
     }
 
     public LocationQrCodeGenerator getLocation(String locationName){
