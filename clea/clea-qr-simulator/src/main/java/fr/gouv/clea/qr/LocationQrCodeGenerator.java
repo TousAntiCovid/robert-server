@@ -1,11 +1,11 @@
-package fr.gouv.tacw.qr;
+package fr.gouv.clea.qr;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import fr.gouv.tacw.qr.model.QRCode;
+import fr.gouv.clea.qr.model.QRCode;
 import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.Location;
 import fr.inria.clea.lsp.LocationContact;

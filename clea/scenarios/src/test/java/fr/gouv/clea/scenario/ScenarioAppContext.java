@@ -1,7 +1,7 @@
 package fr.gouv.clea.scenario;
 
 import fr.gouv.clea.client.service.CleaClient;
-import fr.gouv.tacw.qr.LocationQrCodeGenerator;
+import fr.gouv.clea.qr.LocationQrCodeGenerator;
 import fr.inria.clea.lsp.CleaEciesEncoder;
 import fr.inria.clea.lsp.CleaEncryptionException;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class ScenarioAppContext {
         this.serverAuthorityPublicKey = serverAuthorityKeyPair[1];
         System.out.println("Server Authority Private Key: " + serverAuthorityKeyPair[0]);
         System.out.println("Server Authority Public Key : " + this.serverAuthorityPublicKey);
-        
+
         String[] manualContactTracingAuthorityKeyPair = cleaEciesEncoder.genKeysPair(true);
         this.manualContactTracingAuthorityPublicKey = serverAuthorityKeyPair[1];
         System.out.println("Server Authority Private Key: " + serverAuthorityKeyPair[0]);

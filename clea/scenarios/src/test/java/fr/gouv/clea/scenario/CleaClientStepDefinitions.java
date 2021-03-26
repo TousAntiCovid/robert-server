@@ -7,8 +7,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 import fr.gouv.clea.client.service.CleaClient;
-import fr.gouv.tacw.qr.LocationQrCodeGenerator;
-import fr.gouv.tacw.qr.model.QRCode;
+import fr.gouv.clea.qr.LocationQrCodeGenerator;
+import fr.gouv.clea.qr.model.QRCode;
 import io.cucumber.java8.En;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 

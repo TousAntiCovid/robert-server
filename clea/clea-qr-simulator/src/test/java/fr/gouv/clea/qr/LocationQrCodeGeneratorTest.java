@@ -1,4 +1,4 @@
-package fr.gouv.tacw.qr;
+package fr.gouv.clea.qr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -6,7 +6,8 @@ import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
-import fr.gouv.tacw.qr.model.QRCode;
+import fr.gouv.clea.qr.LocationQrCodeGenerator;
+import fr.gouv.clea.qr.model.QRCode;
 
 import org.junit.jupiter.api.BeforeEach;
 
