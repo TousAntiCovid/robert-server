@@ -28,7 +28,7 @@ public class CleaClientStepDefinitions implements En {
         });
         Given("^\"([^\"]*)\" recorded a visit to \"([^\"]*)\" at \"([^\"]*)\" withQRCode \"([^\"]*)\"$",
                 (String visitorName, String locationName, String qrCodeScanTime, String qrCodeId) -> {
-            LocationQrCodeGenerator location = null;//this.scenarioAppContext.getLocation(locationName);
+            LocationQrCodeGenerator location = this.scenarioAppContext.getLocation(locationName);
             Instant qrCodeScanTimeInstant = Instant.parse(qrCodeScanTime);
             QRCode qr = location.getQrCodeAt(Instant.parse(qrCodeScanTime));
             this.scenarioAppContext.getOrCreateVisitor(visitorName).scanQrCode(qr.getQrCode(), qrCodeScanTimeInstant);
