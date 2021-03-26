@@ -39,7 +39,7 @@ public class StatusService {
 
     /**
      * Retrieve the cluster list and compare it to the local list to compute the
-     * risk score, returning true if at risk, false otherwise.
+     * risk score, returning the risk Level.
      * 
      * @param localList : LocalList of the simulated device, containing all the
      *                  scanned QR code

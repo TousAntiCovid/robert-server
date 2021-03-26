@@ -14,16 +14,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ClusterExposition {
     @JsonProperty("s")
-    private long startTime;
+    private long startTimeAsNtpTimestamp;
     
     @JsonProperty("d")
-    private int duration;
+    private int nbDurationUnit;
 
     @JsonProperty("r")
     private float risk;
 
-    public boolean isInExposition(long timestamp) throws IOException {
-        return ((timestamp >= startTime) 
-                && (timestamp <= startTime + duration * CleaClientConfiguration.getInstance().getDurationUnit())); 
+    public boolean isInExposition(long ntpTimestamp) throws IOException {
+        return ((ntpTimestamp >= startTimeAsNtpTimestamp) 
+                && (ntpTimestamp <= startTimeAsNtpTimestamp + nbDurationUnit * CleaClientConfiguration.getInstance().getDurationUnitInSeconds())); 
     }
 }
