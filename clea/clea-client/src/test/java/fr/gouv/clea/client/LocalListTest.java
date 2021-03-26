@@ -27,7 +27,7 @@ public class LocalListTest
     @Test
     public void shouldAddScannedQrCode()
     {
-        CleaClient cleaClient = new CleaClient();
+        CleaClient cleaClient = new CleaClient("alice");
         
         cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
         
@@ -44,7 +44,7 @@ public class LocalListTest
      */
     @Test
     public void shouldNotAddTwice(){
-        CleaClient cleaClient = new CleaClient();
+        CleaClient cleaClient = new CleaClient("bob");
         
         cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
         cleaClient.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(3600).getEpochSecond());
@@ -58,7 +58,7 @@ public class LocalListTest
      */
     @Test
     public void shouldAddTwice(){
-        CleaClient cleaClient = new CleaClient();
+        CleaClient cleaClient = new CleaClient("alice");
         
         cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
         cleaClient.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(4*3600).getEpochSecond());

@@ -8,13 +8,17 @@ import java.util.Map.Entry;
 
 import fr.gouv.clea.client.configuration.CleaClientConfiguration;
 import fr.gouv.clea.client.model.ScannedQrCode;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@ToString
 public class CleaClient {
+    private String name;
     private List<ScannedQrCode> localList;
 
-    public CleaClient() {
+    public CleaClient(String name) {
+        this.name = name;
         this.localList = new ArrayList<>();
     }
 
