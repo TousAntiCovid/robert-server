@@ -2,8 +2,6 @@ package fr.gouv.clea.client.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -13,10 +11,10 @@ import fr.gouv.clea.client.model.ScannedQrCode;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LocalListService {
+public class CleaClient {
     private List<ScannedQrCode> localList;
 
-    public LocalListService() {
+    public CleaClient() {
         this.localList = new ArrayList<>();
     }
 

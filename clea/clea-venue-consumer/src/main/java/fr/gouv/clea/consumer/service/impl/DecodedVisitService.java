@@ -58,6 +58,7 @@ public class DecodedVisitService implements IDecodedVisitService {
             log.warn("drift check failed for [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(visit.getStringLocationTemporaryPublicId()), visit.getQrCodeScanTime());
             return Optional.empty();
         } else if (!this.hasValidTemporaryLocationPublicId(visit)) {
+            log.warn("locationTemporaryPublicId check failed for [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(visit.getStringLocationTemporaryPublicId()), visit.getQrCodeScanTime());
             return Optional.empty();
         }
         return Optional.of(visit);

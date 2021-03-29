@@ -49,8 +49,8 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
                                 .filter(exposedVisit -> exposedVisit.getTimeSlot() == slotIndex)
                                 .findFirst()
                                 .ifPresentOrElse(
-                                        exposedVisit -> toUpdate.add(this.updateExposureCount(visit, exposedVisit)),
-                                        () -> toPersist.add(this.newExposureCount(visit, slotIndex))
+                                        exposedVisit -> toUpdate.add(this.updateExposedVisit(visit, exposedVisit)),
+                                        () -> toPersist.add(this.newExposedVisit(visit, slotIndex))
                                 )
                 );
 
@@ -66,7 +66,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         return TimeUtils.instantFromTimestamp((long) visit.getCompressedPeriodStartTime() * TimeUtils.NB_SECONDS_PER_HOUR);
     }
 
-    protected ExposedVisitEntity updateExposureCount(Visit visit, ExposedVisitEntity exposedVisit) {
+    protected ExposedVisitEntity updateExposedVisit(Visit visit, ExposedVisitEntity exposedVisit) {
         if (visit.isBackward()) {
             exposedVisit.setBackwardVisits(exposedVisit.getBackwardVisits() + 1);
         } else {
@@ -75,7 +75,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         return exposedVisit;
     }
 
-    protected ExposedVisitEntity newExposureCount(Visit visit, int slotIndex) {
+    protected ExposedVisitEntity newExposedVisit(Visit visit, int slotIndex) {
         // TODO: visit.getPeriodStart returning an Instant
         long periodStart = this.periodStartInstant(visit).toEpochMilli();
         return ExposedVisitEntity.builder()
