@@ -844,9 +844,8 @@ public class StatusControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(currentEpoch, reg.getLastStatusRequestEpoch());
         assertEquals(RiskLevel.NONE, response.getBody().getRiskLevel());
-        assertEquals(Long.toString(TimeUtils.dayTruncatedTimestamp(lastContactTimestamp)), response.getBody().getLastContactDate());
-        assertNotNull(response.getBody().getLastRiskScoringDate());
-        assertTrue(Long.parseLong(response.getBody().getLastRiskScoringDate()) > 0);
+        assertNull(response.getBody().getLastRiskScoringDate());
+        assertNull(response.getBody().getLastContactDate());
         assertNotNull(response.getBody().getTuples());
         assertFalse(reg.isAtRisk());
         assertTrue(reg.isNotified());
