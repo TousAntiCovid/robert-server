@@ -22,7 +22,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>runtime</scope><!--  change to runtime to use h2 db (with local profile) -->
+            <scope>test</scope><!--  change to runtime to use h2 db (with local profile) -->
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>

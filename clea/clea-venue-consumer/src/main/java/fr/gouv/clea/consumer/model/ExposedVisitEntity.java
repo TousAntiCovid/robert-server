@@ -37,17 +37,6 @@ public class ExposedVisitEntity {
     @Type(type="pg-uuid")
     private UUID locationTemporaryPublicId;
     
-//    public String getLocationTemporaryPublicId() {
-//    	return Optional.ofNullable(ltId).map(UUID::toString).orElse(null);
-//    };
-//    public void setLocationTemporaryPublicId(String locId) {
-//    	this.ltId=UUID.fromString(locId);
-//    }
-//    public ExposedVisitEntity locationTemporaryPublicId(String locId) {
-//    	this.ltId=UUID.fromString(locId);
-//    	return this;
-//    }
-    
     private int venueType;
     private int venueCategory1;
     private int venueCategory2;
