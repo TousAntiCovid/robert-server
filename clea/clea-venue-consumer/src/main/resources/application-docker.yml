@@ -4,15 +4,20 @@ server:
 spring:
   datasource:
     driverClassName: org.postgresql.Driver
-    password: "${PASSWORD}"
-    url: "jdbc:postgresql://postgres:5432/cleadb"
-    username: "${USER}"
+    url: "${DB_URL:jdbc:postgresql://postgres:5432/cleadb}"
+    username: "${DB_USER:user}"
+    password: "${DB_PASSWORD:pass}"
   h2:
     console:
       enabled: false
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: ${JPA_DDL_AUTO:create}
   kafka:
-    bootstrap-servers: "kafka:29092"
+    bootstrap-servers: "${KAFKA_URL:kafka:29092}"
+
+clea:
+  conf:
+    security:
+      crypto:
+        manualCTAuthoritySecretKey: ${CLEA_CRYPTO_AUTHORITY_SECRET:f55d39487b91c00ad24d4fc70f54511539ed308e954ab859734598d16d047bdf}

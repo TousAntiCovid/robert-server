@@ -42,7 +42,7 @@ class ExposedVisitEntityServiceSchedulingTest {
     private static ExposedVisitEntity createExposedVisit(Instant qrCodeScanTime) {
         return new ExposedVisitEntity(
                 null, // handled by db
-                UUID.randomUUID().toString(),
+                UUID.randomUUID(),
                 RandomUtils.nextInt(),
                 RandomUtils.nextInt(),
                 RandomUtils.nextInt(),

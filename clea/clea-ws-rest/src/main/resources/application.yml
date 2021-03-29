@@ -17,8 +17,8 @@ clea:
     retentionDurationInDays: 14
     security:
       report:
-        checkAuthorization: false
-        robertJwtPublicKey: TODO
+        checkAuthorization: true # secured by default
+        robertJwtPublicKey: ${CLEA_SECURITY_JWT_KEY:TODO}
 
 logging:
   level:
@@ -26,12 +26,12 @@ logging:
 
 spring:
   kafka:
-    bootstrap-servers: "localhost:9092"
+    bootstrap-servers: "${KAFKA_URL:localhost:9092}"
     consumer:
-      group-id: group1
+      group-id: ${KAFKA_GROUPID:group1}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: fr.gouv.clea.ws.utils.KafkaSerializer
     template:
-      default-topic: cleaQrCodes
+      default-topic: ${KAFKA_TOPIC:cleaQrCodes}
 

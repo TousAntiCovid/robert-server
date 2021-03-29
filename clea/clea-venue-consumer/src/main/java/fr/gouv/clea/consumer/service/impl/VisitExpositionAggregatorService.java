@@ -1,14 +1,5 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.consumer.model.ExposedVisitEntity;
-import fr.gouv.clea.consumer.model.Visit;
-import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
-import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
-import fr.inria.clea.lsp.utils.TimeUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -16,6 +7,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import fr.gouv.clea.consumer.model.ExposedVisitEntity;
+import fr.gouv.clea.consumer.model.Visit;
+import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
+import fr.inria.clea.lsp.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -37,7 +38,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(visit.getPeriodDuration(), (int) scanTimeSlot + exposureTime);
 
-        List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId().toString(), periodStartInstant.toEpochMilli());
+        List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), periodStartInstant.toEpochMilli());
 
         List<ExposedVisitEntity> toUpdate = new ArrayList<>();
         List<ExposedVisitEntity> toPersist = new ArrayList<>();
@@ -78,7 +79,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         // TODO: visit.getPeriodStart returning an Instant
         long periodStart = this.periodStartInstant(visit).toEpochMilli();
         return ExposedVisitEntity.builder()
-                .locationTemporaryPublicId(visit.getStringLocationTemporaryPublicId())
+                .locationTemporaryPublicId(visit.getLocationTemporaryPublicId())
                 .venueType(visit.getVenueType())
                 .venueCategory1(visit.getVenueCategory1())
                 .venueCategory2(visit.getVenueCategory2())

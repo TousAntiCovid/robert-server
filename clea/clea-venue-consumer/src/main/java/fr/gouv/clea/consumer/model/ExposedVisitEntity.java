@@ -1,7 +1,9 @@
 package fr.gouv.clea.consumer.model;
 
 import java.time.Instant;
+import java.util.UUID;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -9,6 +11,7 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import lombok.AllArgsConstructor;
@@ -29,11 +32,15 @@ public class ExposedVisitEntity {
     @GenericGenerator(name = "uuid", strategy = "org.hibernate.id.UUIDGenerator")
     private String id;
 
-    private String locationTemporaryPublicId;
+    @Column(name="LTId")
+    @Type(type="pg-uuid")
+    private UUID locationTemporaryPublicId;
+    
     private int venueType;
     private int venueCategory1;
     private int venueCategory2;
     private long periodStart;
+    @Column(name="timeslot")
     private int timeSlot;
     private long backwardVisits;
     private long forwardVisits;
