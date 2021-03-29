@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV5;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
@@ -25,6 +26,10 @@ public interface IStatusController {
             throws RobertServerException;
 
     @PostMapping(path = UriConstants.API_V5 + UriConstants.STATUS)
+    ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid @RequestBody(required = true) StatusVo statusVo)
+            throws RobertServerException;
+
+    @PostMapping(path = UriConstants.API_V6 + UriConstants.STATUS)
     ResponseEntity<StatusResponseDto> getStatus(@Valid @RequestBody(required = true) StatusVo statusVo)
             throws RobertServerException;
 

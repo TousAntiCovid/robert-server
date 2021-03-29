@@ -15,7 +15,7 @@ import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 
 @RestController
-@RequestMapping(value = {"${controller.path.prefix}" + UriConstants.API_V4, "${controller.path.prefix}" + UriConstants.API_V5 },
+@RequestMapping(value = {"${controller.path.prefix}" + UriConstants.API_V4, "${controller.path.prefix}" + UriConstants.API_V5, "${controller.path.prefix}" + UriConstants.API_V6 },
 		consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 public interface IReportControllerV4 {
 

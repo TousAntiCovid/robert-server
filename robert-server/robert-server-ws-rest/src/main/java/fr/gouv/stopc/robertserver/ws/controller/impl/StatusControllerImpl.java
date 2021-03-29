@@ -1,5 +1,19 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -13,6 +27,7 @@ import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV5;
 import fr.gouv.stopc.robertserver.ws.dto.declaration.GenerateDeclarationTokenRequest;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
@@ -22,18 +37,6 @@ import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -96,7 +99,32 @@ public class StatusControllerImpl implements IStatusController {
 	            .tuples(status.getTuples())
 	            .build());
 	}
-    
+
+	@Override
+	public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) throws RobertServerException {
+		ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
+		if (Objects.isNull(statusResponse) || Objects.isNull(statusResponse.getStatusCode())) {
+			log.error("The response of the status must not be null");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+
+		if (statusResponse.getStatusCode().isError()) {
+			log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCode());
+			return ResponseEntity.status(statusResponse.getStatusCode()).build();
+		}
+
+		StatusResponseDto status = statusResponse.getBody();
+		return ResponseEntity.ok(
+				StatusResponseDtoV5.builder()
+						.riskLevel(status.getRiskLevel())
+						.config(status.getConfig())
+						.tuples(status.getTuples())
+						.declarationToken(status.getDeclarationToken())
+						.lastContactDate(status.getLastContactDate())
+						.lastRiskScoringDate(status.getLastRiskScoringDate())
+						.build());
+	}
+
     @Override
     public ResponseEntity<StatusResponseDto> getStatus(StatusVo statusVo) {
 		AuthRequestValidationService.ValidationResult<GetIdFromStatusResponse> validationResult =
