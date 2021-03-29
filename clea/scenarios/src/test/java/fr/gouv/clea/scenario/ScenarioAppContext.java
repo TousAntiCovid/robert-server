@@ -3,7 +3,7 @@ package fr.gouv.clea.scenario;
 import fr.gouv.clea.client.service.CleaClient;
 import fr.gouv.clea.qr.LocationQrCodeGenerator;
 import fr.inria.clea.lsp.CleaEciesEncoder;
-import fr.inria.clea.lsp.CleaEncryptionException;
+import fr.inria.clea.lsp.exception.CleaEncryptionException;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 

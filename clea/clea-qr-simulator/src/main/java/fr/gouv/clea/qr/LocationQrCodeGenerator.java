@@ -10,6 +10,7 @@ import fr.inria.clea.lsp.Location;
 import fr.inria.clea.lsp.LocationContact;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.Location.LocationBuilder;
+import fr.inria.clea.lsp.exception.CleaEncryptionException;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.Builder;
 
