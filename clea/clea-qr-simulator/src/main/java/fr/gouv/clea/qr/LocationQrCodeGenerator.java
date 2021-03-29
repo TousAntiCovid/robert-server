@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Objects;
 
 import fr.gouv.clea.qr.model.QRCode;
-import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.Location;
 import fr.inria.clea.lsp.LocationContact;
 import fr.inria.clea.lsp.LocationSpecificPart;
@@ -43,6 +42,101 @@ public class LocationQrCodeGenerator {
         this.generatedQRs = new ArrayList<>();
         this.generateQRCode(this.periodStartTime);
 
+    }
+
+    /**
+     * start a new period and return its first valid QRCode
+     * 
+     * @param instant : instant at which the new period should start, will be
+     *                rounded to the nearest hour.
+     * @return a QRCode with the provided instant (rounded to the nearest hour) as
+     *         starting validity
+     * @throws InvalidTimestampException
+     * @throws CleaEncryptionException
+     */
+    public QRCode startNewPeriod(Instant instant) throws InvalidTimestampException, CleaEncryptionException {
+        return this.startNewPeriod(TimeUtils.ntpTimestampFromInstant(instant));
+    }
+
+    /**
+     * start a new period and return its first valid QRCode
+     * 
+     * @param periodStart NTP timestamp at which the period started.
+     * @return a QRCode with the provided timestamp (rounded to the nearest hour) as
+     *         starting validity
+     * @throws InvalidTimestampException
+     * @throws CleaEncryptionException
+     */
+    public QRCode startNewPeriod(long periodStart) throws InvalidTimestampException, CleaEncryptionException {
+        this.periodStartTime = TimeUtils.hourRoundedTimestamp(periodStart);
+        this.generatedQRs.clear();
+        return this.generateQRCode(periodStart);
+    }
+
+    public long getPeriodStart() {
+        return this.periodStartTime;
+    }
+
+    /**
+     * get a valid QR code for the provided instant
+     * 
+     * @param instant : instant at which the returned QRCode should be valid
+     * @return a valid QRCode for the provided instant
+     * @throws InvalidTimestampException if instant is not included in the current
+     *                                   period
+     * @throws CleaEncryptionException
+     */
+    public QRCode getQrCodeAt(Instant instant) throws InvalidTimestampException, CleaEncryptionException {
+        return this.getQrCodeAt(TimeUtils.ntpTimestampFromInstant(instant));
+    }
+
+    /**
+     * get a valid QR code for the provided NTP timestamp
+     * 
+     * @param timestamp timestamp at which the returned QRCode should be valid
+     * @return a valid QRCode for the provided timestamp
+     * @throws InvalidTimestampException
+     * @throws CleaEncryptionException
+     */
+    public QRCode getQrCodeAt(long timestamp) throws InvalidTimestampException, CleaEncryptionException {
+        if (timestamp < this.periodStartTime || timestamp > this.periodStartTime + this.periodDuration) {
+            String msg = new StringBuilder().append(this.periodStartTime)
+            throw new InvalidTimestampException("timestamp : " + timestamp
+                    + " not in the current period of the generator. consider starting a new period first.\n");
+        }
+        // check if qr already exists for timestamp
+        QRCode qr = this.findExistingQrCode(timestamp);
+        if (Objects.nonNull(qr)) {
+            return qr;
+        }
+        // generate a new one
+        qr = this.generateQRCode(timestamp);
+        return qr;
+    }
+
+    /**
+     * find a valid QRCode for the provided timestamp in the already generated one.
+     * 
+     * @param instant instant at which the QRCode should be valid
+     * @return a valid QRCode or null if none were found.
+     */
+    public QRCode findExistingQrCode(Instant instant) {
+        return this.findExistingQrCode(TimeUtils.ntpTimestampFromInstant(instant));
+    }
+
+    /**
+     * find a valid QRCode for the provided timestamp in the already generated one.
+     * 
+     * @param timestamp timestamp at which the QRCode should be valid.
+     * @return a valid QRCode or null if none were found.
+     */
+    public QRCode findExistingQrCode(long timestamp) {
+        for (QRCode qr : generatedQRs) {
+            if (qr.isValidScanTime(timestamp)) {
+                return qr;
+            }
+        }
+        return null;
     }
 
     private Location createLocation(LocationSpecificPart lsp, LocationContact contact,
@@ -86,31 +180,6 @@ public class LocationQrCodeGenerator {
         return contact;
     }
 
-    /**
-     * find a valid QRCode for the provided timestamp in the already generated one.
-     * 
-     * @param timestamp timestamp at which the QRCode should be valid.
-     * @return a valid QRCode or null if none were found.
-     */
-    public QRCode findExistingQrCode(long timestamp) {
-        for (QRCode qr : generatedQRs) {
-            if (qr.isValidScanTime(timestamp)) {
-                return qr;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * find a valid QRCode for the provided timestamp in the already generated one.
-     * 
-     * @param instant instant at which the QRCode should be valid
-     * @return a valid QRCode or null if none were found.
-     */
-    public QRCode findExistingQrCode(Instant instant) {
-        return this.findExistingQrCode(TimeUtils.ntpTimestampFromInstant(instant));
-    }
-
     private QRCode generateQRCode(long timestamp) throws CleaEncryptionException {
         QRCode qr;
         if (this.qrCodeRenewalInterval == 0) {
@@ -123,75 +192,6 @@ public class LocationQrCodeGenerator {
         }
         this.generatedQRs.add(qr);
         return qr;
-    }
-
-    /**
-     * get a valid QR code for the provided NTP timestamp
-     * 
-     * @param timestamp timestamp at which the returned QRCode should be valid
-     * @return a valid QRCode for the provided timestamp
-     * @throws InvalidTimestampException
-     * @throws CleaEncryptionException
-     */
-    public QRCode getQrCodeAt(long timestamp) throws InvalidTimestampException, CleaEncryptionException {
-        if (timestamp < this.periodStartTime || timestamp > this.periodStartTime + this.periodDuration) {
-            throw new InvalidTimestampException("timestamp : " + timestamp
-                    + " not in the current period of the generator. consider starting a new period first.\n");
-        }
-        // check if qr already exists for timestamp
-        QRCode qr = this.findExistingQrCode(timestamp);
-        if (Objects.nonNull(qr)) {
-            return qr;
-        }
-        // generate a new one
-        qr = this.generateQRCode(timestamp);
-        return qr;
-    }
-
-    /**
-     * start a new period and return its first valid QRCode
-     * 
-     * @param periodStart NTP timestamp at which the period started.
-     * @return a QRCode with the provided timestamp (rounded to the nearest hour) as
-     *         starting validity
-     * @throws InvalidTimestampException
-     * @throws CleaEncryptionException
-     */
-    public QRCode startNewPeriod(long periodStart) throws InvalidTimestampException, CleaEncryptionException {
-        this.periodStartTime = TimeUtils.hourRoundedTimestamp(periodStart);
-        this.generatedQRs.clear();
-        return this.generateQRCode(periodStart);
-    }
-
-    /**
-     * start a new period and return its first valid QRCode
-     * 
-     * @param instant : instant at which the new period should start, will be
-     *                rounded to the nearest hour.
-     * @return a QRCode with the provided instant (rounded to the nearest hour) as
-     *         starting validity
-     * @throws InvalidTimestampException
-     * @throws CleaEncryptionException
-     */
-    public QRCode startNewPeriod(Instant instant) throws InvalidTimestampException, CleaEncryptionException {
-        return this.startNewPeriod(TimeUtils.ntpTimestampFromInstant(instant));
-    }
-
-    /**
-     * get a valid QR code for the provided instant
-     * 
-     * @param instant : instant at which the returned QRCode should be valid
-     * @return a valid QRCode for the provided instant
-     * @throws InvalidTimestampException if instant is not included in the current
-     *                                   period
-     * @throws CleaEncryptionException
-     */
-    public QRCode getQrCodeAt(Instant instant) throws InvalidTimestampException, CleaEncryptionException {
-        return this.getQrCodeAt(TimeUtils.ntpTimestampFromInstant(instant));
-    }
-
-    public long getPeriodStart() {
-        return this.periodStartTime;
     }
 
     public static class InvalidTimestampException extends IllegalArgumentException {
