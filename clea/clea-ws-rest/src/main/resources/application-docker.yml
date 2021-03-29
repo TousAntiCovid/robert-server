@@ -7,6 +7,3 @@ clea:
       report:
         checkAuthorization: false
 
-spring:
-  kafka:
-    bootstrap-servers: "${KAFKA_URL:kafka:29092}"

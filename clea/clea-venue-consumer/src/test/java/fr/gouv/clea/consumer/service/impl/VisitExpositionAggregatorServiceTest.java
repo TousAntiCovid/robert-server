@@ -76,7 +76,7 @@ class VisitExpositionAggregatorServiceTest {
         // assertThat(repository.count()).isEqualTo(21L);
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.forEach(it -> {
-                    assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid.toString());
+                    assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid);
                     assertThat(it.getBackwardVisits()).isEqualTo(1);
                 }
         );
@@ -109,7 +109,7 @@ class VisitExpositionAggregatorServiceTest {
         // assertThat(repository.count()).isEqualTo(21L);
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.forEach(it -> {
-                    assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid.toString());
+                    assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid);
                     assertThat(it.getBackwardVisits()).isEqualTo(2);
                 }
         );
@@ -149,18 +149,18 @@ class VisitExpositionAggregatorServiceTest {
         // assertThat(repository.count()).isEqualTo(42L);
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.stream()
-                .filter(it -> it.getLocationTemporaryPublicId().equals(uuid.toString()))
+                .filter(it -> it.getLocationTemporaryPublicId().equals(uuid))
                 .forEach(it -> {
-                            assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid.toString());
+                            assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid);
                             assertThat(it.getBackwardVisits()).isEqualTo(1);
                             assertThat(it.getForwardVisits()).isEqualTo(1);
                         }
                 );
 
         entities.stream()
-                .filter(it -> it.getLocationTemporaryPublicId().equals(newUUID.toString()))
+                .filter(it -> it.getLocationTemporaryPublicId().equals(newUUID))
                 .forEach(it -> {
-                            assertThat(it.getLocationTemporaryPublicId()).isEqualTo(newUUID.toString());
+                            assertThat(it.getLocationTemporaryPublicId()).isEqualTo(newUUID);
                             assertThat(it.getBackwardVisits()).isEqualTo(1);
                             assertThat(it.getForwardVisits()).isEqualTo(0);
                         }

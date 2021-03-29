@@ -16,7 +16,7 @@ clea:
         enabled: false
     security:
       crypto:
-        manualCTAuthoritySecretKey: "f55d39487b91c00ad24d4fc70f54511539ed308e954ab859734598d16d047bdf"
+        manualCTAuthoritySecretKey: "${CLEA_CRYPTO_AUTHORITY_SECRET:f55d39487b91c00ad24d4fc70f54511539ed308e954ab859734598d16d047bdf}"
 
 logging:
   level:
@@ -24,18 +24,20 @@ logging:
 
 spring:
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
     generate-ddl: true
     open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQL95Dialect # use postgres because of @Type(pg-uuid) even with h2 Datasource
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:create}
   kafka:
-    bootstrap-servers: "localhost:9092"
+    bootstrap-servers: "${KAFKA_URL:localhost:9092}"
     consumer:
       auto-offset-reset: earliest
-      group-id: group1
+      group-id: ${KAFKA_GROUP_ID:group1}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: fr.gouv.clea.consumer.utils.KafkaDeserializer
     template:
-      default-topic: cleaQrCodes
+      default-topic: ${KAFKA_TOPIC:cleaQrCodes}
   main:
     web-application-type: none
   output:

@@ -25,7 +25,6 @@ services:
       DB_USER: user
       DB_PASSWORD: pass
       KAFKA_URL: kafka:29092
-      CLEA_CRYPTO_AUTHORITY_SECRET: "123"
     depends_on:
       - postgres
       - kafka
@@ -93,9 +92,9 @@ services:
 
   pgadmin:
     container_name: pgadmin
-    image: "dpage/pgadmin4:5"
+    image: "dpage/pgadmin4:5.1"
     environment:
-      PGADMIN_DEFAULT_EMAIL: user@inria.dev
+      PGADMIN_DEFAULT_EMAIL: user@pgadmin.com
       PGADMIN_DEFAULT_PASSWORD: pass
       PGADMIN_LISTEN_PORT: 80
     depends_on:

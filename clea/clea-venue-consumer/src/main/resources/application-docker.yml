@@ -11,7 +11,6 @@ spring:
     console:
       enabled: false
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:create}
   kafka:
@@ -21,4 +20,4 @@ clea:
   conf:
     security:
       crypto:
-        manualCTAuthoritySecretKey: ${CLEA_CRYPTO_AUTHORITY_SECRET:123}
+        manualCTAuthoritySecretKey: ${CLEA_CRYPTO_AUTHORITY_SECRET:f55d39487b91c00ad24d4fc70f54511539ed308e954ab859734598d16d047bdf}

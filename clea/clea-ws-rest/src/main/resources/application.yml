@@ -17,7 +17,7 @@ clea:
     retentionDurationInDays: 14
     security:
       report:
-        checkAuthorization: false
+        checkAuthorization: true # secured by default
         robertJwtPublicKey: ${CLEA_SECURITY_JWT_KEY:TODO}
 
 logging:
