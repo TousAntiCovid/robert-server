@@ -1,7 +1,6 @@
 package fr.gouv.clea.consumer.model;
 
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -46,7 +45,6 @@ public class ExposedVisitEntity {
     private long backwardVisits;
     private long forwardVisits;
 
-    @Column(name="qrcode_scanTime")
     private Instant qrCodeScanTime; // for purge
 
     @CreationTimestamp

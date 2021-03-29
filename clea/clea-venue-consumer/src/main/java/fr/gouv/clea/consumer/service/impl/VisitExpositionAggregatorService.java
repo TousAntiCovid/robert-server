@@ -1,22 +1,22 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -79,7 +79,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         // TODO: visit.getPeriodStart returning an Instant
         long periodStart = this.periodStartInstant(visit).toEpochMilli();
         return ExposedVisitEntity.builder()
-                .locationTemporaryPublicId(UUID.fromString(visit.getStringLocationTemporaryPublicId()))
+                .locationTemporaryPublicId(visit.getLocationTemporaryPublicId())
                 .venueType(visit.getVenueType())
                 .venueCategory1(visit.getVenueCategory1())
                 .venueCategory2(visit.getVenueCategory2())
