@@ -64,7 +64,7 @@ public class ScenarioAppContext {
 
         final String permanentLocationSecretKey = Hex.toHexString(UUID.randomUUID().toString().getBytes());
         LocationQrCodeGenerator location = LocationQrCodeGenerator.builder()
-                                                                .countryCode(250) // France QR Code
+                                                                .countryCode(250) // France Country Code
                                                                 .staff(false) // not used in test declaration as of now
                                                                 .venueCategory1(venueCategories.get(venueCategory1))
                                                                 .venueType(venueTypes.get(venueType))
