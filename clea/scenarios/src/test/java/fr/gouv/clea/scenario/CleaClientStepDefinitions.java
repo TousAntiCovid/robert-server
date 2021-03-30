@@ -23,9 +23,9 @@ public class CleaClientStepDefinitions implements En {
             this.scenarioAppContext.getOrCreateVisitor(visitorName);
         });
         Given("^\"([^\"]*)\" created a QRCode \"([^\"]*)\" as a \"([^\"]*)\" at \"([^\"]*)\" with a capacity of (\\d+) and category \"([^\"]*)\" and with a renewal time of (\\d+) \"([^\"]*)\"$",
-                (String locationName, String qrCodeId, String venueType, String periodStartTime, Integer venueCapacity, String venueCategory1, Integer qrCodeRenewalInterval, String qrCodeReewalIntervalUnit) -> {
+                (String locationName, String qrCodeId, String venueType, String periodStartTime, Integer venueCapacity, String venueCategory1, Integer qrCodeRenewalInterval, String qrCodeRenewalIntervalUnit) -> {
             Instant periodStartTimeInstant = TimeUtils.naturalLanguageDateStringToInstant(periodStartTime);
-            Duration qrCodeRenewalIntervalDuration = Duration.of(qrCodeRenewalInterval, ChronoUnit.valueOf(qrCodeReewalIntervalUnit.toUpperCase()));
+            Duration qrCodeRenewalIntervalDuration = Duration.of(qrCodeRenewalInterval, ChronoUnit.valueOf(qrCodeRenewalIntervalUnit.toUpperCase()));
             LocationQrCodeGenerator location = this.scenarioAppContext.getOrCreateLocation(locationName, periodStartTimeInstant, venueType, venueCategory1, venueCapacity, qrCodeRenewalIntervalDuration);
             // TODO: add QR id
         });

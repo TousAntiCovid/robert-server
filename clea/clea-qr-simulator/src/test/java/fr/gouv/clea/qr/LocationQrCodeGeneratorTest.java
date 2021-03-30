@@ -3,13 +3,12 @@ package fr.gouv.clea.qr;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
-
-import org.junit.jupiter.api.Test;
-
-import fr.gouv.clea.qr.LocationQrCodeGenerator;
-import fr.gouv.clea.qr.model.QRCode;
+import java.time.temporal.ChronoUnit;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import fr.gouv.clea.qr.model.QRCode;
 
 public class LocationQrCodeGeneratorTest {
     
@@ -35,7 +34,7 @@ public class LocationQrCodeGeneratorTest {
                                         .permanentLocationSecretKey(permanentLocationSecretKey)
                                         .serverAuthorityPublicKey(serverAuthorityPublicKey)
                                         .locationPhone("0123456789")
-                                        .locationPin("1234")
+                                        .locationPin("123456")
                                         .build();
         dynamicGenerator = LocationQrCodeGenerator.builder()
                                         .countryCode(250)
@@ -50,7 +49,7 @@ public class LocationQrCodeGeneratorTest {
                                         .permanentLocationSecretKey(permanentLocationSecretKey)
                                         .serverAuthorityPublicKey(serverAuthorityPublicKey)
                                         .locationPhone("0123456789")
-                                        .locationPin("1234")
+                                        .locationPin("123456")
                                         .build();
     }
 
@@ -63,18 +62,18 @@ public class LocationQrCodeGeneratorTest {
     @Test
     public void shouldGenerateOnlyOnce() throws Exception{
         QRCode qr = staticGenerator.getQrCodeAt(staticGenerator.getPeriodStart());
-        QRCode qr2 = staticGenerator.getQrCodeAt(staticGenerator.getPeriodStart()+600);
+        QRCode qr2 = staticGenerator.getQrCodeAt(staticGenerator.getPeriodStart().plus(600, ChronoUnit.SECONDS));
         assertThat(qr2).isEqualTo(qr);
         
         qr = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart());
-        qr2 = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart()+600);
+        qr2 = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart().plus(600, ChronoUnit.SECONDS));
         assertThat(qr2).isEqualTo(qr);
     }
     
     @Test
     public void shouldBeSameTLid() throws Exception{
         QRCode qr = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart());
-        QRCode qr2 = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart()+3600);
+        QRCode qr2 = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart().plus(1, ChronoUnit.HOURS));
 
         assertThat(qr.getLocationTemporaryPublicID()).isEqualTo(qr2.getLocationTemporaryPublicID());
 
@@ -83,7 +82,7 @@ public class LocationQrCodeGeneratorTest {
     @Test
     public void startingNewPeriod() throws Exception{
         QRCode qr = dynamicGenerator.getQrCodeAt(dynamicGenerator.getPeriodStart());
-        QRCode qr2 = dynamicGenerator.startNewPeriod(now.plusSeconds(3600*24));
+        QRCode qr2 = dynamicGenerator.startNewPeriod(now.plus(1, ChronoUnit.DAYS));
         assertThat(qr).isNotEqualTo(qr2);
         assertThat(qr.getLocationTemporaryPublicID()).isNotEqualTo(qr2.getLocationTemporaryPublicID());
     }
