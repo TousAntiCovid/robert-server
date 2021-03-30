@@ -59,6 +59,7 @@ public class LocationQrCodeGenerator {
      */
     public QRCode startNewPeriod(Instant periodStart) throws CleaCryptoException {
         this.generatedQRs.clear();
+        this.periodStartTime = periodStart;
         return this.generateQRCode(periodStart);
     }
 
