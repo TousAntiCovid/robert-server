@@ -1,5 +1,19 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -22,18 +36,6 @@ import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -196,6 +198,7 @@ public class StatusControllerImpl implements IStatusController {
 		            record.getLastStatusRequestEpoch(),
 		            currentEpoch);
 		}
+
 		// Request is valid
 		// (now iterating through steps from section "If the ESR_REQUEST_A,i is valid, the server:", p11 of spec)
 		// Step #1: Set StatusRequestEpoch with current epoch number
@@ -209,30 +212,30 @@ public class StatusControllerImpl implements IStatusController {
 		// Step #2: Risk and score were processed during batch, simple lookup
 		RiskLevel riskLevel = record.isAtRisk() ? RiskLevel.HIGH : RiskLevel.NONE;
 
+		// Include new EBIDs and ECCs for next M epochs
+		StatusResponseDto statusResponse = StatusResponseDto.builder()
+				.riskLevel(riskLevel)
+				.config(this.getClientConfig())
+				.tuples(Base64.encode(tuples))
+				.build();
+
 		// Step #3: Set UserNotified to true if at risk
 		// If was never notified and batch flagged a risk, notify
 		// and remember last exposed epoch as new starting point for subsequent risk notifications
 	    // The status atRisk will be reinitialized by the batch
 		if (riskLevel != RiskLevel.NONE) {
 			record.setNotified(true);
-		}
 
-        // Include new EBIDs and ECCs for next M epochs
-        StatusResponseDto statusResponse = StatusResponseDto.builder()
-                .riskLevel(riskLevel)
-                .config(this.getClientConfig())
-                .tuples(Base64.encode(tuples))
-                .build();
+			// Include lastContactDate only if any and if user is evaluated at risk
+			if (record.getLastContactTimestamp() > 0) {
+				statusResponse.setLastContactDate(Long.toString(record.getLastContactTimestamp()));
+			}
 
-		// Include lastContactDate only if any
-		if (record.getLastContactTimestamp() > 0) {
-			statusResponse.setLastContactDate(Long.toString(record.getLastContactTimestamp()));
-		}
-
-		// Include lastRiskScoringDate only if any
-		if (record.getLatestRiskEpoch() > 0) {
-		  long serviceTimeStart = serverConfigurationService.getServiceTimeStart();
-		  statusResponse.setLastRiskScoringDate(Long.toString(TimeUtils.getNtpSeconds(record.getLatestRiskEpoch(), serviceTimeStart)));
+			// Include lastRiskScoringDate only if any and if user is evaluated at risk
+			if (record.getLatestRiskEpoch() > 0) {
+				long serviceTimeStart = serverConfigurationService.getServiceTimeStart();
+				statusResponse.setLastRiskScoringDate(Long.toString(TimeUtils.getNtpSeconds(record.getLatestRiskEpoch(), serviceTimeStart)));
+			}
 		}
 
 		//TODO: Test this in integration tests and update api spec
