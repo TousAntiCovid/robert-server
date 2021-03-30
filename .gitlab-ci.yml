@@ -94,10 +94,10 @@ build_clea:
   variables:
     COMPONENT: "clea"
 
-build_robert-analytics-server:
+build_analytics-server:
   extends: .build_template
   variables:
-    COMPONENT: "robert-analytics-server"
+    COMPONENT: "analytics-server"
 
 test_tac-warning:
   extends: .test_template
@@ -131,11 +131,11 @@ test_clea:
   variables:
     COMPONENT: "clea"
 
-test_robert-analytics-server:
+test_analytics-server:
   extends: .test_template
-  needs: [ "build_robert-analytics-server" ]
+  needs: [ "build_analytics-server" ]
   variables:
-    COMPONENT: "robert-analytics-server"
+    COMPONENT: "analytics-server"
 
 docker-robert-crypto-grpc-server:
   extends: .docker_template
@@ -293,8 +293,8 @@ deploy-clea:
   variables:
     COMPONENT: "clea"
 
-deploy-robert-analytics-server:
+deploy-analytics-server:
   extends: .deploy_template
-  needs: ["test_robert-analytics-server"]
+  needs: ["test_analytics-server"]
   variables:
-    COMPONENT: "robert-analytics-server"
+    COMPONENT: "analytics-server"

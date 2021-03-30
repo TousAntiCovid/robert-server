@@ -20,7 +20,7 @@
 
     <modules>
         <module>robert-server</module>
-        <module>robert-analytics-server</module>
+        <module>analytics-server</module>
     </modules>
 
 

@@ -1,0 +1,137 @@
+openapi: 3.0.0
+info:
+  description: "#TOUS-ANTI-COVID, Robert analytics Client API"
+  version: 1.0.0
+  title: "#TOUS-ANTI-COVID, Robert analytics"
+  termsOfService: https://gitlab.inria.fr/stemcovid19/wp3-robert-server/analytics-server
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags: [ ]
+paths:
+  /analytics:
+    post:
+      tags: [ "analytics" ]
+      summary: Create analytics
+      description: |-
+        Request the creation of analytics. Nothing is returned
+
+      operationId: createAnalytics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsRequest"
+
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Bad request, something is incorrect in the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized request, bad, missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: An unexpected error occurs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - bearerAuth: [ ]
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  requestBodies:
+    AnalyticsRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AnalyticsRequest"
+
+  schemas:
+    AnalyticsRequest:
+      type: object
+      properties:
+        installationUuid:
+          type: string
+          maxLength: 64
+          description: the installation unique identifier.
+        infos:
+          $ref: "#/components/schemas/Information"
+          description:
+            The list of infos.
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimestampedEvent"
+          description:
+            The events list of the analytics.
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimestampedEvent"
+          description:
+            The errors list of the analytics.
+      required:
+        - installationUuid
+
+
+    Information:
+      type: object
+      maxProperties: 20
+      additionalProperties:
+        type: string
+        maxLength: 512
+
+    TimestampedEvent:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 64
+          description: The event name.
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 64
+          description: The BasicInfo timestamp.
+        description:
+          type: string
+          maxLength: 512
+          description: the basic info description
+      required:
+        - name
+        - timestamp
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: the error message
+        timestamp:
+          type: string
+          format: date-time
+          description: the error timestamp
+      required:
+        - message
+        - timestamp
+
+
+
+
