@@ -22,7 +22,7 @@ public class CleaClientStepDefinitions implements En {
             // TODO Robert registration of the user
             this.scenarioAppContext.getOrCreateVisitor(visitorName);
         });
-        Given("^\"([^\"]*)\" created a QRCode \"([^\"]*)\" as a \"([^\"]*)\" at \"([^\"]*)\" with a capacity of (\\d+) and category \"([^\"]*)\" and with a renewal time of (\\d+) \"([^\"]*)\"$",
+        Given("^\"([^\"]*)\" created a QRCode \"([^\"]*)\" as a \"([^\"]*)\" at \"([^\"]*)\" with a capacity of (\\d+) and category \"([^\"]*)\" and with a renewal time of \"(\\d+) ([^\"]*)\"$",
                 (String locationName, String qrCodeId, String venueType, String periodStartTime, Integer venueCapacity, String venueCategory1, Integer qrCodeRenewalInterval, String qrCodeRenewalIntervalUnit) -> {
             Instant periodStartTimeInstant = TimeUtils.naturalLanguageDateStringToInstant(periodStartTime);
             Duration qrCodeRenewalIntervalDuration = Duration.of(qrCodeRenewalInterval, ChronoUnit.valueOf(qrCodeRenewalIntervalUnit.toUpperCase()));
@@ -44,7 +44,7 @@ public class CleaClientStepDefinitions implements En {
             assertThat(riskLevel).isEqualTo(0);
         });
 
-        Then("^Exposure status request for \"([^\"]*)\" should include only \"(\\d+)\" visit(s) to \"([^\"]*)\" at \"([^\"]*)\"", (String visitorName, Integer nbVisits, String locationName, String qrScanTime) -> {
+        Then("Exposure status request for {string} should include only {int} visit\\(s) to {string} at {string}", (String visitorName, Integer nbVisits, String locationName, String qrScanTime) -> {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             assertThat(visitor.getLocalList().size()).isEqualTo(nbVisits);
         });

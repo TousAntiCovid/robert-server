@@ -3,6 +3,7 @@ package fr.gouv.clea.scenario;
 import fr.gouv.clea.client.service.CleaClient;
 import fr.gouv.clea.qr.LocationQrCodeGenerator;
 import fr.inria.clea.lsp.CleaEciesEncoder;
+import fr.inria.clea.lsp.exception.CleaCryptoException;
 import fr.inria.clea.lsp.exception.CleaEncryptionException;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -56,7 +57,7 @@ public class ScenarioAppContext {
     }
 
     private LocationQrCodeGenerator createLocation(String locationName, Instant periodStartTime,
-    String venueType, String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaEncryptionException{
+    String venueType, String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaCryptoException{
         log.info("Creating location " + locationName);
         long qrCodeRenewalIntervalLong = qrCodeRenewalInterval.getSeconds();
         int qrCodeRenewalIntervalExponentCompact = (int)(Math.log(qrCodeRenewalIntervalLong)/Math.log(2));
@@ -67,7 +68,7 @@ public class ScenarioAppContext {
                                                                 .staff(false) // not used in test declaration as of now
                                                                 .venueCategory1(venueCategories.get(venueCategory1))
                                                                 .venueType(venueTypes.get(venueType))
-                                                                .periodDuration(8) // not used in test declaration as of now
+                                                                .periodDuration(24) // not used in test declaration as of now
                                                                 .periodStartTime(periodStartTime)
                                                                 .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponentCompact)
                                                                 .manualContactTracingAuthorityPublicKey(manualContactTracingAuthorityPublicKey)
@@ -79,7 +80,7 @@ public class ScenarioAppContext {
     }
 
     public LocationQrCodeGenerator getOrCreateLocation(String locationName, Instant periodStartTime,
-            String venueType, String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaEncryptionException {
+            String venueType, String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaCryptoException {
         return locations.containsKey(locationName) ?
                 locations.get(locationName) :
                 this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCapacity, qrCodeRenewalInterval);
