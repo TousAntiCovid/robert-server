@@ -1,16 +1,5 @@
 package fr.gouv.stopc.robertserver.ws.service.impl;
 
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
-import fr.gouv.stopc.robertserver.ws.dto.declaration.GenerateDeclarationTokenRequest;
-import fr.gouv.stopc.robertserver.ws.service.DeclarationService;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.stereotype.Service;
-
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -23,11 +12,21 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.stereotype.Service;
+
+import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
+import fr.gouv.stopc.robertserver.ws.dto.declaration.GenerateDeclarationTokenRequest;
+import fr.gouv.stopc.robertserver.ws.service.DeclarationService;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
+
 @Service
 @Slf4j
 public class DeclarationServiceImpl implements DeclarationService {
-
-    //TODO: Test this class
 
     public static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.RS256;
 
@@ -70,7 +69,7 @@ public class DeclarationServiceImpl implements DeclarationService {
     @Override
     public Optional<String> generateAnalyticsToken() {
 
-        log.info("Generating simple analytics token");
+        log.debug("Generating simple analytics token");
 
         try {
             Date issuedAt = Date.from(ZonedDateTime.now().toInstant());
