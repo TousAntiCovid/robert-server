@@ -226,12 +226,12 @@ public class StatusControllerImpl implements IStatusController {
 		if (riskLevel != RiskLevel.NONE) {
 			record.setNotified(true);
 
-			// Include lastContactDate only if any
+			// Include lastContactDate only if any and if user is evaluated at risk
 			if (record.getLastContactTimestamp() > 0) {
 				statusResponse.setLastContactDate(Long.toString(record.getLastContactTimestamp()));
 			}
 
-			// Include lastRiskScoringDate only if any
+			// Include lastRiskScoringDate only if any and if user is evaluated at risk
 			if (record.getLatestRiskEpoch() > 0) {
 				long serviceTimeStart = serverConfigurationService.getServiceTimeStart();
 				statusResponse.setLastRiskScoringDate(Long.toString(TimeUtils.getNtpSeconds(record.getLatestRiskEpoch(), serviceTimeStart)));
