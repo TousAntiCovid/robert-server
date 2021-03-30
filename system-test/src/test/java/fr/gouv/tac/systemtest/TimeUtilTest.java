@@ -1,15 +1,24 @@
 package fr.gouv.tac.systemtest;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.TimeZone;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Test;
 
 public class TimeUtilTest {
+
+    private TimeZone origTimeZone = TimeZone.getDefault();
+
+    @After
+    public void resetTimeZone() {
+        TimeZone.setDefault(origTimeZone);
+    }
 
     @Test
     public void dateToTimestampTestAtOriginOneMinute() {
@@ -49,18 +58,20 @@ public class TimeUtilTest {
 
     @Test
     public void naturalLanguageDateStringToNTPTimestampTest() {
+        //use UTC timezone because on Europe/Paris timezone, there are time changes twice a year leading to the failure of this test.
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         Long today = TimeUtil.naturalLanguageDateStringToNTPTimestamp("Today at noon") ;
-                Long yesterday = TimeUtil.naturalLanguageDateStringToNTPTimestamp("Yesterday at noon");
+        Long yesterday = TimeUtil.naturalLanguageDateStringToNTPTimestamp("Yesterday at noon");
         assertEquals(new Long(24*3600), new Long(today - yesterday) );
-
     }
 
     @Test
     public void naturalLanguageDateStringToNTPTimestampTest2() {
+        //use UTC timezone because on Europe/Paris timezone, there are time changes twice a year leading to the failure of this test.
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         Long yesterday = TimeUtil.naturalLanguageDateStringToNTPTimestamp("12:30, 2 day ago") ;
         Long today = TimeUtil.naturalLanguageDateStringToNTPTimestamp("Yesterday at 12:30");
         assertEquals(new Long(24*3600), new Long(today - yesterday) );
-
     }
 
     @Test
