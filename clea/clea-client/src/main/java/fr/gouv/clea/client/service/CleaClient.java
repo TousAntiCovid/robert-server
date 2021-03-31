@@ -29,6 +29,8 @@ public class CleaClient {
     public CleaClient(String name) {
         this.name = name;
         this.localList = new ArrayList<>();
+        this.statusService = Optional.empty();
+        this.reportService = Optional.empty();
     }
 
     public List<ScannedQrCode> getLocalList() {
