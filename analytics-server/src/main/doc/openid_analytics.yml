@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
-  description: "#TOUS-ANTI-COVID, Robert analytics Client API"
+  description: "#TOUS-ANTI-COVID, analytics Client API"
   version: 1.0.0
-  title: "#TOUS-ANTI-COVID, Robert analytics"
+  title: "#TOUS-ANTI-COVID, analytics"
   termsOfService: https://gitlab.inria.fr/stemcovid19/wp3-robert-server/analytics-server
   contact:
     email: stopcovid@inria.fr
@@ -127,7 +127,7 @@ components:
         timestamp:
           type: string
           format: date-time
-          description: the error timestamp
+          description: the error timestamp Date-time notation as defined by RFC 3339, section 5.6, for example, 2017-07-21T17:32:28Z
       required:
         - message
         - timestamp
