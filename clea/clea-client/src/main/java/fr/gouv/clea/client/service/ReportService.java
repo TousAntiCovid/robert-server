@@ -28,9 +28,9 @@ public class ReportService {
     /**
      * report a list of qr code to the backend server
      */
-    public ReportResponse report(List<ScannedQrCode> localList) throws IOException, InterruptedException {
+    public ReportResponse report(List<ScannedQrCode> localList, long pivotDate) throws IOException, InterruptedException {
         String jsonRequest;
-        Report reportRequest = new Report();
+        Report reportRequest = new Report(pivotDate);
         reportRequest.addAllVisits(localList);
         
         log.info("Reporting {} visits to {}", localList.size(), this.reportEndPoint);

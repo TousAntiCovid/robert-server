@@ -41,7 +41,7 @@ public class ReportServiceTest {
         localList.add(new ScannedQrCode(qrCode, now.minus(200, ChronoUnit.SECONDS)));
         localList.add(new ScannedQrCode(qrCode2, now));
 
-        ReportResponse response = backend.report(localList);
+        ReportResponse response = backend.report(localList, now.getEpochSecond());
 
         assertThat(response.isSuccess()).isTrue();
         assertThat(response.getMessage()).isEmpty();

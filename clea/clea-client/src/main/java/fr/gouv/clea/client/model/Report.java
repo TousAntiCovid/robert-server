@@ -8,10 +8,12 @@ import lombok.Data;
 @Data
 public class Report {
 
+    long pivotDate;
     List<Visit> visits;
-
-    public Report(){
+    
+    public Report(long pivotDate){
         this.visits = new ArrayList<>();
+        this.pivotDate = pivotDate;
     }
 
     public void addVisit(ScannedQrCode scannedQr){

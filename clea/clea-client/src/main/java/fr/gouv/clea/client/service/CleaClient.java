@@ -71,6 +71,17 @@ public class CleaClient {
         }
     }
 
+    public void sendReport(long pivotDate) throws IOException, InterruptedException{
+        CleaClientConfiguration configuration;
+        try {
+             configuration = CleaClientConfiguration.getInstance();
+        } catch (IOException e) {
+            log.error("Can't access config file, report can't proceed.");
+            return;
+        }
+        new ReportService(configuration.getBackendUrl() + configuration.getReportPath()).report(localList, pivotDate);
+    }
+
     public float getStatus() throws IOException {
         return new StatusService().status(localList);
     }
