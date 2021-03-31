@@ -48,6 +48,21 @@ public class CleaClientStepDefinitions implements En {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             assertThat(visitor.getLocalList().size()).isEqualTo(nbVisits);
         });
+
+        When("{string} declare himself/herself sick", (String visitorName) -> {
+            CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
+            visitor.sendReport(Instant.now()); //TODO: default pivotDate (today?)
+        });
+
+        When("{string} declare himself/herself sick with a {string} PivotDate", (String visitorName, String pivotDate) -> {
+            CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
+            visitor.sendReport(TimeUtils.naturalLanguageDateStringToInstant(pivotDate));
+        });
+
+        Then("{string} cannot send his/her visits", (String visitorName) -> {
+            CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
+            assertThat(visitor.getLastReportSuccess()).isFalse();
+        });
     }
 
     protected String toFirstLetterUpperCase(String string) {
