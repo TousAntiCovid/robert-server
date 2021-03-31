@@ -26,7 +26,6 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import fr.gouv.tac.analytics.server.config.security.oauth2tokenvalidator.DelegatingOAuth2JwtTokenValidator;
 import fr.gouv.tac.analytics.server.config.security.oauth2tokenvalidator.ExpirationTokenPresenceOAuth2TokenValidator;
-import fr.gouv.tac.analytics.server.config.security.oauth2tokenvalidator.JtiCanOnlyBeUsedOnceOAuth2TokenValidator;
 import fr.gouv.tac.analytics.server.config.security.oauth2tokenvalidator.JtiPresenceOAuth2TokenValidator;
 
 @EnableWebSecurity
@@ -70,10 +69,9 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Bean
     public JwtDecoder jwtDecoder(final JtiPresenceOAuth2TokenValidator jtiPresenceOAuth2TokenValidator,
-                                 final JtiCanOnlyBeUsedOnceOAuth2TokenValidator jtiCanOnlyBeUsedOnceOAuth2TokenValidator,
                                  final ExpirationTokenPresenceOAuth2TokenValidator expirationTokenPresenceOAuth2TokenValidator) {
         final NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(robertRSAPublicKey).build();
-        final DelegatingOAuth2JwtTokenValidator delegatingTokenValidator = new DelegatingOAuth2JwtTokenValidator(expirationTokenPresenceOAuth2TokenValidator, new JwtTimestampValidator(), jtiPresenceOAuth2TokenValidator, jtiCanOnlyBeUsedOnceOAuth2TokenValidator);
+        final DelegatingOAuth2JwtTokenValidator delegatingTokenValidator = new DelegatingOAuth2JwtTokenValidator(expirationTokenPresenceOAuth2TokenValidator, new JwtTimestampValidator(), jtiPresenceOAuth2TokenValidator);
         jwtDecoder.setJwtValidator(delegatingTokenValidator);
         return jwtDecoder;
     }

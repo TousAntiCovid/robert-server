@@ -21,7 +21,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 @ExtendWith(SpringExtension.class)
-public class AnalyticsMongoVoInfoSizeValidatorTest {
+public class AnalyticsVoInfoSizeValidatorTest {
 
     @Captor
     private ArgumentCaptor<String> stringArgumentCaptor;
