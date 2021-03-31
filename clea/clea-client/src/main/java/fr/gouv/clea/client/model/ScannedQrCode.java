@@ -45,9 +45,9 @@ public class ScannedQrCode {
         return this.getLocationTemporaryId().startsWith(prefix);
     }
     
-    public int getScanTimeAsNtpTimestamp() {
+    public long getScanTimeAsNtpTimestamp() {
         long timestamp = this.scanTime.getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970;
         // TODO check convertion to unsigned int
-        return (int) timestamp;
+        return timestamp;
     }
 }

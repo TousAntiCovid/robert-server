@@ -12,6 +12,9 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class HttpClientWrapper {
     private HttpClient client;
     private Map<String,String> headers;
@@ -32,6 +35,7 @@ public class HttpClientWrapper {
         for(Entry<String, String> header : headers.entrySet()){
             requestBuilder.setHeader(header.getKey(), header.getValue());
         }
+        requestBuilder.setHeader("Content-Type", "application/json");
         HttpRequest request = requestBuilder.build();
         HttpResponse<String> response =  this.client.send(request, HttpResponse.BodyHandlers.ofString());
         return (T) new ObjectMapper().readValue(response.body(), returnType);
