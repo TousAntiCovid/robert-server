@@ -27,6 +27,7 @@ import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV5;
 import fr.gouv.stopc.robertserver.ws.dto.declaration.GenerateDeclarationTokenRequest;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
@@ -98,7 +99,32 @@ public class StatusControllerImpl implements IStatusController {
 	            .tuples(status.getTuples())
 	            .build());
 	}
-    
+
+	@Override
+	public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) throws RobertServerException {
+		ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
+		if (Objects.isNull(statusResponse) || Objects.isNull(statusResponse.getStatusCode())) {
+			log.error("The response of the status must not be null");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+
+		if (statusResponse.getStatusCode().isError()) {
+			log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCode());
+			return ResponseEntity.status(statusResponse.getStatusCode()).build();
+		}
+
+		StatusResponseDto status = statusResponse.getBody();
+		return ResponseEntity.ok(
+				StatusResponseDtoV5.builder()
+						.riskLevel(status.getRiskLevel())
+						.config(status.getConfig())
+						.tuples(status.getTuples())
+						.declarationToken(status.getDeclarationToken())
+						.lastContactDate(status.getLastContactDate())
+						.lastRiskScoringDate(status.getLastRiskScoringDate())
+						.build());
+	}
+
     @Override
     public ResponseEntity<StatusResponseDto> getStatus(StatusVo statusVo) {
 		AuthRequestValidationService.ValidationResult<GetIdFromStatusResponse> validationResult =
@@ -238,8 +264,8 @@ public class StatusControllerImpl implements IStatusController {
 			}
 		}
 
-		//TODO: Test this in integration tests and update api spec
-		//Generate a declaration token if there is a RiskLevel > 0 and an associated lastContactDate
+
+		//Generate declaration token (for CNAM) and atRisk token (for Analytics)
 		if (!RiskLevel.NONE.equals(riskLevel) && record.getLastContactTimestamp() > 0) {
 			long lastStatusRequestTimestamp = TimeUtils.getNtpSeconds(
 					record.getLastStatusRequestEpoch(),
@@ -253,7 +279,13 @@ public class StatusControllerImpl implements IStatusController {
 					.build();
 			String declarationToken = declarationService.generateDeclarationToken(request).orElse(null);
 			statusResponse.setDeclarationToken(declarationToken);
+			log.debug("Declaration token generated : {}", declarationToken);
+
 		}
+
+		String analyticsToken = declarationService.generateAnalyticsToken().orElse(null);
+		statusResponse.setAnalyticsToken(analyticsToken);
+		log.debug("analytics token generated : {}", analyticsToken);
 
 		// Save changes to the record
 		this.registrationService.saveRegistration(record);

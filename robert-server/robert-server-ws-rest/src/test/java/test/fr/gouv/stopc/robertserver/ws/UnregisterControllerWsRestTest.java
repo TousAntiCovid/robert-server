@@ -1,5 +1,34 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+import java.net.URI;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Optional;
+
+import javax.crypto.KeyGenerator;
+import javax.inject.Inject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdResponse;
@@ -24,28 +53,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.crypto.KeyGenerator;
-import javax.inject.Inject;
-import java.net.URI;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -63,6 +70,9 @@ public class UnregisterControllerWsRestTest {
     private String pathPrefixV4;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V5)
+    private String pathPrefixV5;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
     @Inject
@@ -159,10 +169,16 @@ public class UnregisterControllerWsRestTest {
         acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.UNREGISTER).build().encode().toUri());
     }
 
-    /** Test the access for API V3, should not be used since API V4 */
+    /** Test the access for API V4, should not be used since API V5 */
     @Test
     public void testAccessV4() {
         acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.UNREGISTER).build().encode().toUri());
+    }
+
+    /** Test the access for API V5, should not be used since API V6 */
+    @Test
+    public void testAccessV5() {
+        acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.UNREGISTER).build().encode().toUri());
     }
 
     /** {@link #acceptOldEBIDValueEpochSucceeds(URI)} and shortcut to test for API V4 exposure */

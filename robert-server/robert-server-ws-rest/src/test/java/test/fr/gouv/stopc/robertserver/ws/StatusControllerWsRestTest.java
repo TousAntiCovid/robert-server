@@ -1,5 +1,38 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.net.URI;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+import javax.crypto.KeyGenerator;
+import javax.inject.Inject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
@@ -19,6 +52,7 @@ import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV5;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
@@ -34,28 +68,6 @@ import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.crypto.KeyGenerator;
-import javax.inject.Inject;
-import java.net.URI;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -76,6 +88,9 @@ public class StatusControllerWsRestTest {
     private String pathPrefixV4;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V5)
+    private String pathPrefixV5;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
     @Value("${robert.server.status-request-minimum-epoch-gap}")
@@ -200,6 +215,8 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(oldEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -629,9 +646,15 @@ public class StatusControllerWsRestTest {
         statusRequestAtRiskSucceedsV1ToV4(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.STATUS).build().encode().toUri());
     }
 
-    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V5 exposure */
+    /** Test the access for API V5, should not be used since API V6 */
     @Test
-    public void testStatusRequestAtRiskSucceedsV5() {
+    public void testAccessV5() {
+        statusRequestAtRiskSucceedsV5(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.STATUS).build().encode().toUri());
+    }
+
+    /** {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V6 exposure */
+    @Test
+    public void testStatusRequestAtRiskSucceedsV6() {
         statusRequestAtRiskSucceeds(this.targetUrl);
     }
 
@@ -695,7 +718,34 @@ public class StatusControllerWsRestTest {
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
-    
+
+    protected void statusRequestAtRiskSucceedsV5(URI targetUrl) {
+        // Given
+        byte[] idA = this.generateKey(5);
+        Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
+
+        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
+        // When
+        ResponseEntity<StatusResponseDtoV5> response = this.restTemplate.exchange(targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDtoV5.class);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
+        assertNotNull(response.getBody().getTuples());
+        assertEquals(Long.toString(reg.getLastContactTimestamp()), response.getBody().getLastContactDate());
+        assertNotNull(response.getBody().getLastRiskScoringDate());
+        assertTrue(Long.parseLong(response.getBody().getLastRiskScoringDate()) > 0);
+        assertTrue(reg.isNotified());
+        assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
+        verify(this.registrationService, times(2)).findById(idA);
+        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+    }
+
+
     protected void statusRequestAtRiskSucceeds(URI targetUrl) {
         // Given
         byte[] idA = this.generateKey(5);
@@ -720,6 +770,7 @@ public class StatusControllerWsRestTest {
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(2)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        assertNotNull(response.getBody().getAnalyticsToken());
     }
 
     @Test
@@ -748,6 +799,8 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -781,6 +834,8 @@ public class StatusControllerWsRestTest {
     public void testStatusRequestNoNewRiskSinceLastNotifSucceeds() {
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         List<EpochExposition> epochExpositions = new ArrayList<>();
 
@@ -891,6 +946,8 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1075,6 +1132,8 @@ public class StatusControllerWsRestTest {
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
@@ -1135,6 +1194,8 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1206,6 +1267,8 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1319,6 +1382,8 @@ public class StatusControllerWsRestTest {
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
@@ -1355,6 +1420,8 @@ public class StatusControllerWsRestTest {
         when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
         when(this.wsServerConfiguration.getDeclareTokenPrivateKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()));
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(false);
+
+        when(this.wsServerConfiguration.getAnalyticsTokenPrivateKey()).thenReturn(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()));
 
         // When
         ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
@@ -1407,6 +1474,53 @@ public class StatusControllerWsRestTest {
 
     }
 
+    @Test
+    public void when_calling_status_should_return_an_analytics_token() {
 
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(false)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(Optional.of(GetIdFromStatusResponse.newBuilder()
+                .setEpochId(currentEpoch)
+                .setIdA(ByteString.copyFrom(idA))
+                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                .build()))
+                .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody().getAnalyticsToken());
+    }
 
 }

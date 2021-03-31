@@ -19,7 +19,7 @@ import fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo;
 @RestController
 @RequestMapping(value = {"${controller.path.prefix}" + UriConstants.API_V2,
         "${controller.path.prefix}" + UriConstants.API_V3, "${controller.path.prefix}" + UriConstants.API_V4,
-        "${controller.path.prefix}" + UriConstants.API_V5 })
+        "${controller.path.prefix}" + UriConstants.API_V5, "${controller.path.prefix}" + UriConstants.API_V6 })
 @Consumes(MediaType.APPLICATION_JSON_VALUE)
 @Produces(MediaType.APPLICATION_JSON_VALUE)
 public interface IDeleteHistoryController {

@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: analytics-server
+  cloud:
+    consul:
+      enabled: false
+
+    vault:
+      enabled: false
+

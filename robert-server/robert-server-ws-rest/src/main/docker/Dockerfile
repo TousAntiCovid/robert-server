@@ -5,4 +5,5 @@ ADD ./src/main/resources/application.properties /work/config/application.propert
 ENV ROBERT_JWT_PRIVATE_KEY changeit
 ENV ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY changeit
 ENV ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID changeit
-CMD ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties", "-Dspring-boot.run.arguments=--robert.jwt.privatekey=${ROBERT_JWT_PRIVATE_KEY},--robert.jwt.declare.public-kid=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID},--robert.jwt.declare.private-key=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}"]
+ENV ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY changeit
+CMD ["java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties", "-Dspring-boot.run.arguments=--robert.jwt.privatekey=${ROBERT_JWT_PRIVATE_KEY},--robert.jwt.declare.public-kid=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID},--robert.jwt.declare.private-key=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY},--robert.jwt.analytics.token.private-key=${ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}"]

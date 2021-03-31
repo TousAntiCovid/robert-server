@@ -1,0 +1,48 @@
+{
+	"info": {
+		"_postman_id": "d4f7ab3f-c595-4cab-91a5-75921c944e41",
+		"name": "TAC-analytics",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Post - analytics",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiYWJjZGUifQ.G0oQVGvH1m97TTppY9J8ypdHI0saNjVyDt4wBQ1CV3OYQe9eK3xrQjhs6y0a1YpGlpcMTHYyBeRG15Ze-1XDoH0aKbLiQ-t9RddbyrctDG3gKdJkixfczwFIjt2BTJIpmcZAgx2aBbYU_SObFwn2hDn9GnNy2BPpGxHnPVTdzO9MuIcFZURcLvokiYM3tssue7mff4hep90F55hJPg_UC5ggm3bgQ78Ysu6gsImDDZoc1tn1bVEdXxkQ1LywG9U9zylPER2tczKnr8m0rCK6vNVnzsXjM1YKzJmhbR53BeXbTAGcUqQWZwDej3VvlkJxq3McBmMKihlDw0sov_ABKw",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"installationUuid\": \"toto\",\n     \"infos\": {\n    \"additionalProp1\": \"string\",\n    \"additionalProp2\": \"string\",\n    \"additionalProp3\": \"string\"\n  },\n  \"events\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"description\": \"string\"\n    }\n  ],\n  \"errors\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"description\": \"string\"\n    }\n  ]\n\n\n\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8087/api/v4/analytics",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8087",
+					"path": [
+						"api",
+						"v4",
+						"analytics"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -35,4 +35,10 @@ public class WsServerConfiguration {
 
     @Value("${robert.jwt.declare.private-key}")
     private String declareTokenPrivateKey;
+
+    @Value("${robert.jwt.analytics.token.private-key}")
+    private String analyticsTokenPrivateKey;
+
+    @Value("${robert.jwt.analytics.token.lifetime}")
+    private Long analyticsTokenLifeTime;
 }
