@@ -2,11 +2,9 @@ services:
 
   clea-ws-rest:
     container_name: clea-ws-rest
-    image: clea-ws-rest:latest
     build: ./clea-ws-rest/
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      KAFKA_URL: kafka:29092
+      SPRING_PROFILES_ACTIVE: dev,docker
     depends_on:
       - kafka
     ports:
@@ -17,14 +15,9 @@ services:
 
   clea-venue-consumer:
     container_name: clea-venue-consumer
-    image: clea-venue-consumer:latest
     build: ./clea-venue-consumer/
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      DB_URL: jdbc:postgresql://postgres:5432/cleadb
-      DB_USER: user
-      DB_PASSWORD: pass
-      KAFKA_URL: kafka:29092
+      SPRING_PROFILES_ACTIVE: dev,docker
     depends_on:
       - postgres
       - kafka
@@ -82,8 +75,8 @@ services:
     image: "postgres:latest"
     environment:
       POSTGRES_DB: cleadb
-      POSTGRES_PASSWORD: pass
-      POSTGRES_USER: user
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     networks:
@@ -92,10 +85,10 @@ services:
 
   pgadmin:
     container_name: pgadmin
-    image: "dpage/pgadmin4:5.1"
+    image: "dpage/pgadmin4:latest"
     environment:
       PGADMIN_DEFAULT_EMAIL: user@pgadmin.com
-      PGADMIN_DEFAULT_PASSWORD: pass
+      PGADMIN_DEFAULT_PASSWORD: password
       PGADMIN_LISTEN_PORT: 80
     depends_on:
       - postgres
