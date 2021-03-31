@@ -1,5 +1,0 @@
-clea:
-  conf:
-    security:
-      report:
-        checkAuthorization: false
