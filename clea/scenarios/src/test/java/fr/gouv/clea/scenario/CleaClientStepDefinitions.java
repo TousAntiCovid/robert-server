@@ -63,6 +63,11 @@ public class CleaClientStepDefinitions implements En {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             assertThat(visitor.getLastReportSuccess()).isFalse();
         });
+
+        Then("{string} sends his/her visits", (String visitorName) -> {
+            CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
+            assertThat(visitor.getLastReportSuccess()).isTrue();
+        });
     }
 
     protected String toFirstLetterUpperCase(String string) {
