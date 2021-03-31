@@ -6,6 +6,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Map.Entry;
 
 import fr.gouv.clea.client.configuration.CleaClientConfiguration;
@@ -18,6 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 public class CleaClient {
     private String name;
     private List<ScannedQrCode> localList;
+    @ToString.Exclude
+    private Optional<StatusService> statusService;
+    @ToString.Exclude
+    private Optional<ReportService> reportService;
 
     public CleaClient(String name) {
         this.name = name;
@@ -71,18 +77,38 @@ public class CleaClient {
         }
     }
 
-    public void sendReport(long pivotDate) throws IOException, InterruptedException{
-        CleaClientConfiguration configuration;
-        try {
-             configuration = CleaClientConfiguration.getInstance();
-        } catch (IOException e) {
-            log.error("Can't access config file, report can't proceed.");
-            return;
-        }
-        new ReportService(configuration.getBackendUrl() + configuration.getReportPath()).report(localList, pivotDate);
+    public boolean sendReport(Instant pivotDate) throws IOException, InterruptedException{
+        return this.getReportService().report(localList, pivotDate.getEpochSecond()).isSuccess(); //TODO: NTP Time with TimeUtils from Clea-Crypto
+    }
+
+    public boolean sendReport() throws IOException, InterruptedException{
+        return this.sendReport(Instant.now());
+    }
+
+    public boolean getLastReportSuccess() throws IOException{
+        return this.getReportService().getLastReportResponse().isSuccess();
     }
 
     public float getStatus() throws IOException {
-        return new StatusService().status(localList);
+        return this.getStatusService().status(localList);
+    }
+
+    private ReportService getReportService() throws IOException{  
+        return reportService.orElse(this.createReportService());
+    }
+
+    private ReportService createReportService() throws IOException{
+        CleaClientConfiguration configuration = CleaClientConfiguration.getInstance();
+        reportService = Optional.of(new ReportService(configuration.getBackendUrl() + configuration.getReportPath()));
+        return reportService.get();
+    }
+
+    private StatusService getStatusService() throws IOException{
+        return statusService.orElse(this.createStatusService());
+    }
+
+    private StatusService createStatusService() throws IOException {
+       statusService = Optional.of(new StatusService());
+       return statusService.get();
     }
 }

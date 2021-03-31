@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ReportService {
     private HttpClientWrapper httpClient;
     private String reportEndPoint;
+    private ReportResponse lastReportResponse;
+    private Report lastReportRequest;
 
     public ReportService(String reportEndPoint) throws IOException {
         this(reportEndPoint, new HttpClientWrapper());
@@ -32,11 +34,17 @@ public class ReportService {
         String jsonRequest;
         Report reportRequest = new Report(pivotDate);
         reportRequest.addAllVisits(localList);
+        this.lastReportRequest = reportRequest;
         
         log.info("Reporting {} visits to {}", localList.size(), this.reportEndPoint);
         jsonRequest = new ObjectMapper().writeValueAsString(reportRequest);
         log.info(jsonRequest);
-        return this.post(jsonRequest);
+        this.lastReportResponse = this.post(jsonRequest);
+        return this.lastReportResponse;
+    }
+
+    public ReportResponse getLastReportResponse(){
+        return this.lastReportResponse;
     }
 
     protected ReportResponse post(String jsonRequest) throws IOException, InterruptedException {
