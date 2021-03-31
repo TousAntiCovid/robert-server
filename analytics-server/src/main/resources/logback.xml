@@ -2,9 +2,9 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <property name="LOG_DIR" value="${ROBERT_SERVER_LOG_FILE_PATH:-/tmp/logs}"/>
-    <property name="LOG_FILENAME" value="${ROBERT_SERVER_LOG_FILE_NAME:-analyticsMongo-server-ws-rest}"/>
+    <property name="LOG_FILENAME" value="${ROBERT_SERVER_LOG_FILE_NAME:-analytics-server-ws-rest}"/>
     <property name="ERROR_LOG_FILENAME"
-              value="${ROBERT_SERVER_ERROR_LOG_FILE_NAME:-analyticsMongo-server-ws-rest}.error"/>
+              value="${ROBERT_SERVER_ERROR_LOG_FILE_NAME:-analytics-server-ws-rest}.error"/>
 
     <appender name="RollingFile"
               class="ch.qos.logback.core.rolling.RollingFileAppender">

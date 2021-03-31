@@ -11,6 +11,8 @@ effectué le dernier status, la liste des erreurs rencontrées...)
 
 ![](analytics.png)
 
+Dans une première itération de cette application, la base de données mongo n'est pas utilisée.
+
 L'application repose sur une application springboot en frontal. Celle-ci traite la requête provenant du terminal de
 l'utilisateur final. Les principaux traitements effectués par cette application sont :
 

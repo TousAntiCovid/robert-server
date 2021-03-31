@@ -1,5 +1,14 @@
 package fr.gouv.tac.analytics.server.controller.mapper;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
 import fr.gouv.tac.analytics.server.controller.vo.TimestampedEventVo;
 import fr.gouv.tac.analytics.server.model.kafka.Analytics;
@@ -7,17 +16,9 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @ExtendWith(SpringExtension.class)
-public class AnalyticsMongoMapperTest {
+public class AnalyticsMapperTest {
 
     private static final AnalyticsMapper mapper = new AnalyticsMapperImpl();
 
