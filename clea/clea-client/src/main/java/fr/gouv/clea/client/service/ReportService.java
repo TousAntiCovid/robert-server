@@ -51,4 +51,8 @@ public class ReportService {
         return this.httpClient.post(this.reportEndPoint, jsonRequest, ReportResponse.class);
     }
 
+    public void setAuthorizationToken(String token){
+        this.httpClient.addAuthorizationToken(token);
+    }
+
 }

@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 
 import fr.gouv.clea.client.configuration.CleaClientConfiguration;
 import fr.gouv.clea.client.model.ScannedQrCode;
+import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -78,7 +79,7 @@ public class CleaClient {
     }
 
     public boolean sendReport(Instant pivotDate) throws IOException, InterruptedException{
-        return this.getReportService().report(localList, pivotDate.getEpochSecond()).isSuccess(); //TODO: NTP Time with TimeUtils from Clea-Crypto
+        return this.getReportService().report(localList, TimeUtils.ntpTimestampFromInstant(pivotDate)).isSuccess(); //TODO: NTP Time with TimeUtils from Clea-Crypto
     }
 
     public boolean sendReport() throws IOException, InterruptedException{
@@ -99,7 +100,8 @@ public class CleaClient {
 
     private ReportService createReportService() throws IOException{
         CleaClientConfiguration configuration = CleaClientConfiguration.getInstance();
-        reportService = Optional.of(new ReportService(configuration.getBackendUrl() + configuration.getReportPath()));
+        this.reportService = Optional.of(new ReportService(configuration.getBackendUrl() + configuration.getReportPath()));
+        this.reportService.get().setAuthorizationToken(this.getAuthorizationToken());
         return reportService.get();
     }
 
@@ -110,5 +112,10 @@ public class CleaClient {
     private StatusService createStatusService() throws IOException {
        statusService = Optional.of(new StatusService());
        return statusService.get();
+    }
+
+    private String getAuthorizationToken(){
+        //TODO: get/generate authorization Token
+        return "dummy";
     }
 }
