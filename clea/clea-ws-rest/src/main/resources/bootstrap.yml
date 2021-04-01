@@ -18,4 +18,4 @@ spring:
       host: ${VAULT_HOST:localhost}
       port: ${VAULT_PORT:8200}
       scheme: ${VAULT_SCHEME:http}
-      token: ${VAULT_TOKEN:token}
+      token: ${CLEA_VAULT_TOKEN:token}
