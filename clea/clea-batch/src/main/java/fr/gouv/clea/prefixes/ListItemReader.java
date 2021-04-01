@@ -1,47 +1,29 @@
-package fr.gouv.clea.identification.reader;
+package fr.gouv.clea.prefixes;
 
-import static java.util.Optional.ofNullable;
-
-import java.util.ArrayList;
-import java.util.Collections;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemStream;
 import org.springframework.batch.item.ItemStreamException;
-import org.springframework.batch.item.database.JdbcPagingItemReader;
+import org.springframework.batch.item.database.JdbcCursorItemReader;
 
-import fr.gouv.clea.dto.SinglePlaceExposedVisits;
-import fr.gouv.clea.entity.ExposedVisit;
-import lombok.Setter;
+import java.util.ArrayList;
+import java.util.List;
 
-public class SinglePlaceExposedVisitItemReader implements ItemReader<SinglePlaceExposedVisits>, ItemStream {
+@RequiredArgsConstructor
+public class ListItemReader implements ItemReader<List<String>>, ItemStream {
 
-    @Setter
-    private JdbcPagingItemReader<ExposedVisit> delegate;
+    private final JdbcCursorItemReader<String> delegate;
 
     @Override
-    public SinglePlaceExposedVisits read() throws Exception {
+    public List<String> read() throws Exception {
 
-        SinglePlaceExposedVisits singlePlaceExposedVisits = null;
+        final List<String> ltidList = new ArrayList<>();
 
-        for (ExposedVisit visit; (visit = this.delegate.read()) != null; ) {
-            if (ofNullable(singlePlaceExposedVisits).isEmpty()) {
-                singlePlaceExposedVisits = createNewPlace(visit);
-            } else {
-                singlePlaceExposedVisits.addVisit(visit);
-            }
+        for (String clusterLtid; (clusterLtid = this.delegate.read()) != null; ) {
+            ltidList.add(clusterLtid);
         }
-        return singlePlaceExposedVisits;
-    }
-
-    private SinglePlaceExposedVisits createNewPlace(final ExposedVisit exposedVisit) {
-        return SinglePlaceExposedVisits.builder()
-                .venueCategory1(exposedVisit.getVenueCategory1())
-                .venueCategory2(exposedVisit.getVenueCategory2())
-                .locationTemporaryPublicId(exposedVisit.getLocationTemporaryPublicId())
-                .visits(new ArrayList<>(Collections.singletonList(exposedVisit)))
-                .build();
+        return ltidList;
     }
 
     /**

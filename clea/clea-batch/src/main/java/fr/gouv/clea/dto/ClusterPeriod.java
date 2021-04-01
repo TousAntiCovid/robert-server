@@ -19,14 +19,10 @@ public class ClusterPeriod {
 	private int firstTimeSlot;
 	private int lastTimeSlot;
 	
-
-	@JsonProperty("s")
 	private long clusterStart;
 	
-	@JsonProperty("d")
 	private int clusterDurationInSeconds;
 	
-	@JsonProperty("r")
 	private float riskLevel;
 	
 	public void adjustLimit(final ExposedVisit v) {

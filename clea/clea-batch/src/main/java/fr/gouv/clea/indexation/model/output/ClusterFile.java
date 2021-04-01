@@ -3,11 +3,9 @@ package fr.gouv.clea.indexation.model.output;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 
-@Getter
+@Data
 @ToString
 @EqualsAndHashCode
 public class ClusterFile {
@@ -15,7 +13,7 @@ public class ClusterFile {
     private List<ClusterFileItem> items;
     
     public ClusterFile() {
-        items = new ArrayList<ClusterFileItem>();
+        items = new ArrayList<>();
     }
 
     public boolean addItem(ClusterFileItem item) {

@@ -22,7 +22,7 @@ public class SinglePlaceCluster {
 	@Builder.Default
 	private List<ClusterPeriod> periods = new ArrayList<>();
 
-	public static SinglePlaceCluster initialise(SinglePlaceExposedVisits record) {
+	public static SinglePlaceCluster initialize(SinglePlaceExposedVisits record) {
     	return SinglePlaceCluster.builder()
     		.locationTemporaryPublicId(record.getLocationTemporaryPublicId())
 			.venueType(record.getVenueType())

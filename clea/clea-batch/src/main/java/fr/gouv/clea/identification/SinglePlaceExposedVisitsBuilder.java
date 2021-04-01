@@ -1,0 +1,59 @@
+package fr.gouv.clea.identification;
+
+import fr.gouv.clea.dto.SinglePlaceExposedVisits;
+import fr.gouv.clea.entity.ExposedVisit;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.annotation.AfterStep;
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.sql.DataSource;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static fr.gouv.clea.config.BatchConstants.*;
+
+/**
+ * This class is executing in many Threads
+ */
+@Slf4j
+@StepScope
+public class SinglePlaceExposedVisitsBuilder implements ItemProcessor<String, SinglePlaceExposedVisits> {
+
+    JdbcTemplate jdbcTemplate;
+    AtomicLong counter = new AtomicLong();
+
+    public SinglePlaceExposedVisitsBuilder(DataSource dataSource) {
+        jdbcTemplate = new JdbcTemplate(dataSource);
+    }
+
+    @Override
+    public SinglePlaceExposedVisits process(final String ltid) {
+        final List<ExposedVisit> list = jdbcTemplate.query("select * from " + EXPOSED_VISITS_TABLE
+                        + " WHERE ltid= ? ORDER BY " + PERIOD_COLUMN + ", " + TIMESLOT_COLUMN,
+                new ExposedVisitRowMapper(), UUID.fromString(ltid));
+        ExposedVisit v = list.stream().findFirst().orElse(null);
+        if (null != v) {
+            long ln = counter.incrementAndGet();
+            if (0 == ln % 1000) {
+                log.info("Loaded {} visits, current LTId={} ", ln, ltid);
+            }
+            return SinglePlaceExposedVisits.builder()
+                    .locationTemporaryPublicId(v.getLocationTemporaryPublicId())
+                    .venueType(v.getVenueType()).venueCategory1(v.getVenueCategory1())
+                    .venueCategory2(v.getVenueCategory2()).visits(list).build();
+        }
+        return null;
+    }
+
+    @AfterStep
+    public ExitStatus afterStep(ExecutionContext ctx) {
+        log.info("building {} SinglePlaceExposedVisits", counter.get());
+        return ExitStatus.COMPLETED;
+    }
+
+}

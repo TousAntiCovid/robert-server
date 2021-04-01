@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.ClusterFile;
 import fr.gouv.clea.indexation.model.output.ClusterFileIndex;
+import fr.gouv.clea.indexation.model.output.ClusterFileItem;
+import fr.gouv.clea.indexation.model.output.Prefix;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
@@ -16,18 +18,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 @StepScope
 @Slf4j
-public class IndexationWriter implements ItemWriter<HashMap<String, ClusterFile>> {
+public class IndexationWriter implements ItemWriter<ClusterFileItem> {
 
     private String outputPath;
 
-    private BatchProperties config;
-
     private Long jobId;
+
+    private final int prefixLength;
 
     @BeforeStep
     public void retrieveInterStepData(final StepExecution stepExecution) {
@@ -35,22 +39,27 @@ public class IndexationWriter implements ItemWriter<HashMap<String, ClusterFile>
     }
 
     public IndexationWriter(final BatchProperties config) {
-        this.config = config;
         this.outputPath = config.clusterFilesOutputPath;
+        this.prefixLength = config.prefixLength;
     }
 
     @Override
-    public void write(final List<? extends HashMap<String, ClusterFile>> clusterIndexMap) throws Exception {
-
+    public void write(List<? extends ClusterFileItem> items) throws Exception {
         log.info("Creating directories : " + outputPath + File.separator + this.jobId + File.separator);
         Files.createDirectories(Paths.get(outputPath + File.separator + this.jobId + File.separator));
 
         //generate index json file
-        final HashMap<String, ClusterFile> hashMap = clusterIndexMap.get(0);
-        generateClusterIndex(hashMap);
+        final HashMap<String, ClusterFile> clusterIndexMap = new HashMap<>();
 
+        items.forEach(clusterFileItem -> {
+            final String uuid = clusterFileItem.getTemporaryLocationId();
+            ClusterFile clusterFile = clusterIndexMap.computeIfAbsent(Prefix.of(uuid, prefixLength), key -> new ClusterFile());
+            clusterFile.addItem(clusterFileItem);
+        });
         //generate cluster files
-        hashMap.forEach(this::generateClusterFile);
+        clusterIndexMap.forEach(this::generateClusterFile);
+
+        generateClusterIndex(clusterIndexMap);
     }
 
     private void generateClusterFile(final String prefix, final ClusterFile clusterFile) {

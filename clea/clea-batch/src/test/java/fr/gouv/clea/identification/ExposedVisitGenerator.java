@@ -67,7 +67,7 @@ public class ExposedVisitGenerator {
 			List<ExposedVisit> batch = new ArrayList<>();
 
 			long clusterStart = janv21 + (r.nextInt(65) * 1000l);
-			int ts = r.nextInt(4);
+			int ts = r.nextInt(150);
 			for (int slot = 0; slot <= ts; slot++) {
 
 				//@formatter:off
