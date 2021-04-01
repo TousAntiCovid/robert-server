@@ -110,7 +110,6 @@ test_robert-server:
   needs: ["build_robert-server"]
   variables:
     COMPONENT: "robert-server"
-  allow_failure: true
 
 test_robert-push-notif-server:
   extends: .test_template
@@ -123,7 +122,6 @@ test_submission-code-server:
   needs: ["build_submission-code-server"]
   variables:
     COMPONENT: "submission-code-server"
-  allow_failure: true
 
 test_clea:
   extends: .test_template
@@ -202,7 +200,6 @@ integration_tests:
     - docker-robert-push-notif-server
   tags:
     - docker_run
-  allow_failure: true
   before_script:
     - docker info
   script:
