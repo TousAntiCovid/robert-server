@@ -35,6 +35,7 @@ import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
 import fr.gouv.tac.analytics.server.controller.vo.ErrorVo;
 import fr.gouv.tac.analytics.server.controller.vo.TimestampedEventVo;
 import fr.gouv.tac.analytics.server.model.kafka.Analytics;
+import fr.gouv.tac.analytics.server.utils.UriConstants;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ public class AnalyticsCreationValidationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${analyticsserver.controller.analytics.path}")
+    @Value("${analyticsserver.controller.path.prefix}"+ UriConstants.API_V1 + UriConstants.ANALYTICS)
     private String analyticsControllerPath;
 
     @MockBean
