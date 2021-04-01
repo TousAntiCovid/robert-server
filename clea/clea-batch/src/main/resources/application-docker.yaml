@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/clea?ssl=false}
+    username: ${DB_USER:user}
+    password: ${DB_PASSWORD:pass}
+    test-on-borrow: true
+    validation-query: SELECT 1

@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    #driverClassName: org.h2.Driver
+    #url: jdbc:h2:mem:clea
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/clea?ssl=false
+    username: clea
+    password: aelc
+    test-on-borrow: true
+    validation-query: SELECT 1
+  #jpa:
+  #  hibernate.ddl-auto: create_update
+  batch:
+    # Manage it's batch metadata tables 
+    initialize-schema: always
+    #prevent job to launch on startup
+    job:
+      enabled: false
+  flyway:
+    enabled: "true"
+ 
