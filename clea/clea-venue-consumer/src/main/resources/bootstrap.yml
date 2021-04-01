@@ -6,6 +6,7 @@ spring:
     consul:
       config:
         enabled: ${CONSUL_CONFIG_ENABLED:false}
+        format: YAML
       enabled: ${CONSUL_ENABLED:false}
       host: ${CONSUL_HOST:localhost}
       port: ${CONSUL_PORT:8500}
