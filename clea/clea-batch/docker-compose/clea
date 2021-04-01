@@ -1,0 +1,19 @@
+#! /bin/bash
+
+SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+SCRIPTNAME=`basename $0`
+OPTIONS="-p $SCRIPTNAME -f $SCRIPTPATH/docker-compose.yml"
+
+# IP of the host (bridge)
+export EXTERNAL_IP=$(docker network inspect bridge --format='{{(index .IPAM.Config 0).Gateway}}')
+
+if [ "$1" == "restart" ] ; then
+  shift
+  docker-compose $OPTIONS stop $*
+  docker-compose $OPTIONS rm -f $*
+  docker-compose $OPTIONS up -d $*
+else 
+  docker-compose $OPTIONS $*
+fi
+
+
