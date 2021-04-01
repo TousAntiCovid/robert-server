@@ -1,6 +1,6 @@
 spring:
   application:
-    name: analytics-server
+    name: analytics
   cloud:
     consul:
       enabled: ${CONSUL_ENABLED:false}
