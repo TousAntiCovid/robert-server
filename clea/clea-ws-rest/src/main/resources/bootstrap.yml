@@ -11,11 +11,11 @@ spring:
       host: ${CONSUL_HOST:localhost}
       port: ${CONSUL_PORT:8500}
       scheme: ${CONSUL_SCHEME:http}
-      token: ${CLEA_SERVER_CONSUL_ACL_TOKEN:token}
+      token: ${CLEA_WS_REST_CONSUL_ACL_TOKEN:token}
 
     vault:
       enabled: ${VAULT_ENABLED:false}
       host: ${VAULT_HOST:localhost}
       port: ${VAULT_PORT:8200}
       scheme: ${VAULT_SCHEME:http}
-      token: ${VAULT_TOKEN:token}
+      token: ${CLEA_VAULT_TOKEN:token}
