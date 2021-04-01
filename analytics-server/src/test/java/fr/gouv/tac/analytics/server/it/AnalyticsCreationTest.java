@@ -42,6 +42,7 @@ import fr.gouv.tac.analytics.server.controller.vo.TimestampedEventVo;
 import fr.gouv.tac.analytics.server.model.kafka.Analytics;
 import fr.gouv.tac.analytics.server.model.kafka.TimestampedEvent;
 import fr.gouv.tac.analytics.server.utils.TestUtils;
+import fr.gouv.tac.analytics.server.utils.UriConstants;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +68,7 @@ public class AnalyticsCreationTest {
     @Autowired
     private KafkaProperties kafkaProperties;
 
-    @Value("${analyticsserver.controller.analytics.path}")
+    @Value("${analyticsserver.controller.path.prefix}"+ UriConstants.API_V1 + UriConstants.ANALYTICS)
     private String analyticsControllerPath;
 
     private KafkaMessageListenerContainer<String, Analytics> container;

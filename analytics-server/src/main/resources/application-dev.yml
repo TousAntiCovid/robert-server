@@ -1,5 +1,25 @@
-server.port=8089
-analyticsserver.robert_jwt_analyticspublickey=MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgHoDa/ff6ZfDzUSgjo+AbYhgthpgaBEX3L6YFRr+QfVwa5A7sxp/aze9gKgN8JlaCtNV2M7cor96fLMV71ucWUuPeyZf5CBMokETU9L8AD44KEZDyZFdGLydV3F7mTPIkcQlTjMqWF5V/l7NOQY0FvQpOYZ5Eosi19qsZyeeU5izAgMBAAE=
+server:
+  port: 8089
+
+# Available endpoints for the monitoring
+management:
+  server:
+    port: 8090
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,prometheus
+
+# Kafka producer conf
+spring:
+  kafka:
+    bootstrap-servers: localhost:19092
+    template:
+      default-topic: analyticsTopic
+
+analyticsserver:
+
+  robert_jwt_analyticspublickey: MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgHoDa/ff6ZfDzUSgjo+AbYhgthpgaBEX3L6YFRr+QfVwa5A7sxp/aze9gKgN8JlaCtNV2M7cor96fLMV71ucWUuPeyZf5CBMokETU9L8AD44KEZDyZFdGLydV3F7mTPIkcQlTjMqWF5V/l7NOQY0FvQpOYZ5Eosi19qsZyeeU5izAgMBAAE=
 # related private key
 # MIICWgIBAAKBgHoDa/ff6ZfDzUSgjo+AbYhgthpgaBEX3L6YFRr+QfVwa5A7sxp/
 # aze9gKgN8JlaCtNV2M7cor96fLMV71ucWUuPeyZf5CBMokETU9L8AD44KEZDyZFd
@@ -15,5 +35,18 @@ analyticsserver.robert_jwt_analyticspublickey=MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiA
 # z6moYEF6oO2bSmSNAkBB0sE2OcivffQDWs9Z2zdRbdBWLofQeWypmAPGOAqRE5HE
 # RLPXHTKS4C1JFeotdXJ3bRrl1sODweOQghINCTav
 # generated with : https://travistidwell.com/jsencrypt/demo/
-spring.kafka.bootstrap-servers=localhost:19092
-spring.kafka.template.default-topic=analyticsTopic
+
+  validation:
+    analytics:
+      information:
+        maxInfoAllowed: 20
+        maxInfoKeyLength: 64
+        maxInfoValueLength: 512
+      event:
+        maxElementAllowed: 20
+        maxNameLength: 64
+        maxDescriptionLength: 512
+      error:
+        maxElementAllowed: 20
+        maxNameLength: 64
+        maxDescriptionLength: 512

@@ -35,6 +35,7 @@ import fr.gouv.tac.analytics.server.config.security.oauth2tokenvalidator.JtiPres
 import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
 import fr.gouv.tac.analytics.server.controller.vo.ErrorVo;
 import fr.gouv.tac.analytics.server.model.kafka.Analytics;
+import fr.gouv.tac.analytics.server.utils.UriConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -56,7 +57,7 @@ public class AnalyticsCreationOauth2ErrorTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${analyticsserver.controller.analytics.path}")
+    @Value("${analyticsserver.controller.path.prefix}"+ UriConstants.API_V1 + UriConstants.ANALYTICS)
     private String analyticsControllerPath;
 
     @Value("${analyticsserver.robert_jwt_analyticsprivatekey}")
