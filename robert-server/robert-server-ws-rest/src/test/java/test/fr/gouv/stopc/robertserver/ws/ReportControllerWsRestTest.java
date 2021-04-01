@@ -1,5 +1,32 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
@@ -18,27 +45,6 @@ import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = { RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application.properties")
@@ -70,6 +76,9 @@ public class ReportControllerWsRestTest {
     private String pathPrefixV4;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V5)
+    private String pathPrefixV5;
+
+    @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
 	@Value("${robert.server.disable-check-token}")
@@ -256,7 +265,13 @@ public class ReportControllerWsRestTest {
     public void testAccessV4WithV3Dto() {
         reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REPORT).build().encode().toUri());
     }
-    
+
+    /** Test the access for API V5 with old DTO, should not be used since API V6. */
+    @Test
+    public void testAccessV5WithV3Dto() {
+        reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REPORT).build().encode().toUri());
+    }
+
     /** {@link #reportContactHistoryV2OrV3Succeeds(URI)} Test the access for API V5 with old DTO */
     @Test
     public void testReportContactHistorySucceedsWithV3Dto() {
@@ -293,8 +308,14 @@ public class ReportControllerWsRestTest {
     public void testAccessV4() {
         reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REPORT).build().encode().toUri());
     }
-    
-    /** {@link #reportContactHistorySucceeds(URI)} Test the access for API V5 */
+
+    /** Test the access for API V5 with old DTO, should not be used since API V6. */
+    @Test
+    public void testAccessV5() {
+        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REPORT).build().encode().toUri());
+    }
+
+    /** {@link #reportContactHistorySucceeds(URI)} Test the access for API V6 */
     @Test
     public void testReportContactHistorySucceeds() {
         reportContactHistorySucceeds(this.targetUrl);

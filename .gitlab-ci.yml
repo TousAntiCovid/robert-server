@@ -24,6 +24,8 @@ stages:
   artifacts:
     paths:
       - $COMPONENT/*/target/*.jar
+  tags:
+    - ci
 
 .test_template:
   stage: test
@@ -36,7 +38,8 @@ stages:
       junit:
         - "$COMPONENT/*/target/surefire-reports/TEST-*.xml"
         - "$COMPONENT/*/target/failsafe-reports/TEST-*.xml"
-
+  tags:
+    - ci
 
 .docker_template:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/docker-git:latest
@@ -58,6 +61,8 @@ stages:
   only:
     - develop
     - tags
+  tags:
+    - ci
 
 build_robert-server:
   extends: .build_template
@@ -84,6 +89,16 @@ build_submission-code-server:
   variables:
     COMPONENT: "submission-code-server"
 
+build_clea:
+  extends: .build_template
+  variables:
+    COMPONENT: "clea"
+
+build_analytics-server:
+  extends: .build_template
+  variables:
+    COMPONENT: "analytics-server"
+
 test_tac-warning:
   extends: .test_template
   needs: ["build_tac-warning"]
@@ -109,6 +124,18 @@ test_submission-code-server:
   variables:
     COMPONENT: "submission-code-server"
   allow_failure: true
+
+test_clea:
+  extends: .test_template
+  needs: ["build_clea"]
+  variables:
+    COMPONENT: "clea"
+
+test_analytics-server:
+  extends: .test_template
+  needs: [ "build_analytics-server" ]
+  variables:
+    COMPONENT: "analytics-server"
 
 docker-robert-crypto-grpc-server:
   extends: .docker_template
@@ -193,6 +220,7 @@ integration_tests:
     - echo "ROBERT_JWT_PUBLIC_KEY=${CI_ROBERT_JWT_PUBLIC_KEY}" >> .env
     - echo "ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${CI_ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}" >> .env
     - echo "ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${CI_ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}" >> .env
+    - echo "ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY=${CI_ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}" >> .env
     - cat .env
     - docker login -u $CI_REGISTRY_USER --password-stdin  $CI_REGISTRY <<< "$CI_REGISTRY_PASSWORD"
     - echo $PWD
@@ -258,3 +286,15 @@ deploy-tac-warning:
   needs: ["test_tac-warning"]
   variables:
     COMPONENT: "tac-warning"
+
+deploy-clea:
+  extends: .deploy_template
+  needs: ["test_clea"]
+  variables:
+    COMPONENT: "clea"
+
+deploy-analytics-server:
+  extends: .deploy_template
+  needs: ["test_analytics-server"]
+  variables:
+    COMPONENT: "analytics-server"

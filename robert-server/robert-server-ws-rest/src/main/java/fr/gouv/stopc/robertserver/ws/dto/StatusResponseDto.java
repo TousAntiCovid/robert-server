@@ -28,4 +28,7 @@ public class StatusResponseDto {
     private String lastRiskScoringDate;
 
     private String declarationToken;
+
+    private String analyticsToken;
+
 }
