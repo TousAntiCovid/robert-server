@@ -13,6 +13,7 @@ spring:
         enabled: ${CONSUL_CONFIG_ENABLED:false}
         watch:
           enabled: false
+        format: YAML
     vault:
       enabled: ${VAULT_ENABLED:false}
       host: ${VAULT_HOST:localhost}
