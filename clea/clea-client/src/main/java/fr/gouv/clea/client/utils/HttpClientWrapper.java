@@ -12,9 +12,6 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class HttpClientWrapper {
     private HttpClient client;
     private Map<String,String> headers;
@@ -29,7 +26,13 @@ public class HttpClientWrapper {
         HttpResponse<String> response =  this.client.send(request, HttpResponse.BodyHandlers.ofString());
         return (T) new ObjectMapper().readValue(response.body(), returnType);
     } 
-    
+
+    public int getStatusCode(String uri) throws IOException, InterruptedException{
+        HttpRequest request = HttpRequest.newBuilder(URI.create(uri)).GET().build();
+        HttpResponse<String> response =  this.client.send(request, HttpResponse.BodyHandlers.ofString());
+        return response.statusCode();
+    } 
+
     public <T> T post(String uri, String body, Class<T> returnType) throws IOException, InterruptedException{
         Builder requestBuilder = HttpRequest.newBuilder(URI.create(uri)).POST(HttpRequest.BodyPublishers.ofString(body));
         for(Entry<String, String> header : headers.entrySet()){

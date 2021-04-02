@@ -69,4 +69,8 @@ public class CleaClientConfiguration {
             return 0;
         }
     }
+
+    public String getBatchTriggerUrl() {
+        return this.config.getProperty("batch_trigger_url", "");
+    }
 }

@@ -1,16 +1,18 @@
 package fr.gouv.clea.client.service;
 
+import org.awaitility.Awaitility;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import fr.gouv.clea.client.configuration.CleaClientConfiguration;
+import fr.gouv.clea.client.model.ClusterIndex;
 import fr.gouv.clea.client.model.ScannedQrCode;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.ToString;
@@ -25,6 +27,8 @@ public class CleaClient {
     private Optional<StatusService> statusService;
     @ToString.Exclude
     private Optional<ReportService> reportService;
+    @ToString.Exclude
+    private Optional<CleaBatchTriggerService> batchTriggerService;
 
     public CleaClient(String name) {
         this.name = name;
@@ -91,12 +95,37 @@ public class CleaClient {
     public boolean getLastReportSuccess() throws IOException{
         return this.getReportService().getLastReportResponse().isSuccess();
     }
+    
+    public void triggerNewClusterIdenfication() throws IOException, InterruptedException {
+        int currentClusterIteration = this.getCurrentClusterIndexIteration();
+        this.getBatchTriggerService().triggerClusterDetection();
+        this.waitForClusterIndex(currentClusterIteration+1);
+    }
+
+    protected int getCurrentClusterIndexIteration() throws IOException {
+        Optional<ClusterIndex> currentIndex = this.getStatusService().getClusterIndex();
+        if (currentIndex.isPresent()) {
+            return currentIndex.get().getIteration();
+        }
+        return 0;
+    }
+
+    private void waitForClusterIndex(int clusterIteration) {
+        Awaitility.with().pollInterval(1, TimeUnit.SECONDS)
+            .await()
+            .atMost(30, TimeUnit.SECONDS)
+            .until(() -> this.getCurrentClusterIndexIteration() == clusterIteration);
+    }
+
+    private CleaBatchTriggerService getBatchTriggerService() throws IOException {
+        return batchTriggerService.orElse(new CleaBatchTriggerService(CleaClientConfiguration.getInstance().getBatchTriggerUrl()));
+    }
 
     public float getStatus() throws IOException {
         return this.getStatusService().status(localList);
     }
 
-    private ReportService getReportService() throws IOException{  
+    private ReportService getReportService() throws IOException {  
         return reportService.orElse(this.createReportService());
     }
 
