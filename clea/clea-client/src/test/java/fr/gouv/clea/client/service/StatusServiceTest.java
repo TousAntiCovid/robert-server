@@ -2,6 +2,7 @@ package fr.gouv.clea.client.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import fr.gouv.clea.client.configuration.CleaClientConfiguration;
 import fr.gouv.clea.client.model.ScannedQrCode;
 
 public class StatusServiceTest {
@@ -17,27 +19,27 @@ public class StatusServiceTest {
     private final Instant now = Instant.ofEpochSecond(1615827600L);
     private ScannedQrCode qr;
     private ScannedQrCode qr2;
+    private StatusService statusService;
 
     @BeforeEach
-    public void setup(){
+    public void setup() throws Exception {
         System.out.println(now);
         qr = new ScannedQrCode(qrCode, now);
         qr2 = new ScannedQrCode(qrCode2, now);
+        statusService = new StatusService(CleaClientConfiguration.getInstance());
     }
     
     @Test
-    public void statusShouldReturnAtRisk() throws Exception {
+    public void statusShouldReturnAtRisk() throws IOException  {
         List<ScannedQrCode> localList = new ArrayList<>();
         localList.add(qr);
-        StatusService statusService = new StatusService();
         assertThat(statusService.status(localList)).isGreaterThan(0f);
     }
 
     @Test
-    public void statusShouldReturnNoRisk() throws Exception {
+    public void statusShouldReturnNoRisk() throws IOException {
         List<ScannedQrCode> localList = new ArrayList<>();
         localList.add(qr2);
-        StatusService statusService = new StatusService();
         assertThat(statusService.status(localList)).isEqualTo(0f);
     }
 }

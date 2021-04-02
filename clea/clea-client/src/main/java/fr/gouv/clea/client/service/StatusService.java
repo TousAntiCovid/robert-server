@@ -30,8 +30,7 @@ public class StatusService {
     private String indexFilename;
     private ObjectMapper objectMapper;
 
-    public StatusService() throws IOException {
-        CleaClientConfiguration config = CleaClientConfiguration.getInstance();
+    public StatusService(CleaClientConfiguration config) {
         this.indexPath = config.getStatusPath();
         this.indexFilename = config.getIndexFilename();
         objectMapper = new ObjectMapper();

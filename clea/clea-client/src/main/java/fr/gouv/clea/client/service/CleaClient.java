@@ -112,7 +112,7 @@ public class CleaClient {
     }
 
     private StatusService createStatusService() throws IOException {
-       statusService = Optional.of(new StatusService());
+       statusService = Optional.of(new StatusService(CleaClientConfiguration.getInstance()));
        return statusService.get();
     }
 
