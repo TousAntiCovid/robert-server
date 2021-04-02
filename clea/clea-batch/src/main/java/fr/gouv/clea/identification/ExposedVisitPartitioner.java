@@ -30,6 +30,10 @@ public class ExposedVisitPartitioner implements Partitioner {
         final List<String> visitedPlaces = jdbcTemplate.queryForList(selectDistinctLtidRequest, String.class);
 
         Map<String, ExecutionContext> result = new HashMap<>();
+        if (visitedPlaces.isEmpty()) {
+        	return result;
+        }
+        
         String lastEvaluatedLtid = visitedPlaces.get(0);
 
         for (String currentLtid : visitedPlaces) {

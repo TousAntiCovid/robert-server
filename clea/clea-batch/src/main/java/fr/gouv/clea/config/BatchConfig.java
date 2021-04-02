@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 
 import javax.sql.DataSource;
@@ -102,7 +103,7 @@ public class BatchConfig {
 
 		partitionHandler.setGridSize(properties.getGridSize());
 		partitionHandler.setStep(identificationStepWorker);
-		partitionHandler.setTaskExecutor(taskExecutor);
+		partitionHandler.setTaskExecutor(taskExecutor());
 		return partitionHandler;
 	}
 
@@ -138,4 +139,10 @@ public class BatchConfig {
 		listener.setKeys(new String[] { CLUSTERMAP_JOB_CONTEXT_KEY });
 		return listener;
 	}
+	
+	@Bean
+	TaskExecutor taskExecutor() {
+	    return new SimpleAsyncTaskExecutor("batch-ident");
+	}
+
 }
