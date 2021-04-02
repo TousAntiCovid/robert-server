@@ -3,9 +3,9 @@ spring:
     #driverClassName: org.h2.Driver
     #url: jdbc:h2:mem:clea
     driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/clea?ssl=false
-    username: clea
-    password: aelc
+    url: jdbc:postgresql://localhost:5432/cleadb?ssl=false
+    username: username
+    password: password
     test-on-borrow: true
     validation-query: SELECT 1
   #jpa:
