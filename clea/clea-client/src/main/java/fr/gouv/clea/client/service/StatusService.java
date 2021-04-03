@@ -87,7 +87,7 @@ public class StatusService {
         Set<String> matchingPrefixes = new HashSet<>();
         for (String prefix : clusterIndex.getPrefixes()) {
             for (ScannedQrCode qr : localList) {
-                if (qr.startWithPrefix(prefix)) {
+                if (qr.startsWithPrefix(prefix)) {
                     matchingPrefixes.add(prefix);
                     break;
                 }

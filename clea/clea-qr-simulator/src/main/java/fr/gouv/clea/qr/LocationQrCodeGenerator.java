@@ -79,7 +79,9 @@ public class LocationQrCodeGenerator {
     public QRCode getQrCodeAt(Instant instant) throws CleaCryptoException {
         if (instant.isBefore(this.periodStartTime) || instant.isAfter(this.periodStartTime.plus(this.periodDuration, ChronoUnit.SECONDS))) {
             throw new InvalidInstantException("Instant : " + instant
-                    + " not in the current period of the generator. consider starting a new period first.\n");
+                    + " not in the current period of the generator: "
+                    + this.periodStartTime + " -> " + this.periodStartTime.plus(this.periodDuration, ChronoUnit.SECONDS)
+                    + ". consider starting a new period first.\n");
         }
         // check if qr already exists for timestamp
         QRCode qr = this.findExistingQrCode(instant);

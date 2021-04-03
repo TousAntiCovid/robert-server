@@ -4,10 +4,15 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
+import fr.inria.clea.lsp.Location;
+import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.exception.CleaEncodingException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -23,7 +28,7 @@ public class ScannedQrCode {
     private Instant scanTime;
 
     @JsonIgnore
-    private Optional<String> locationTemporaryId; //LTId
+    private Optional<UUID> locationTemporaryId; //LTId
 
     public ScannedQrCode(String qrCode, Instant scanTime){
         this.qrCode = qrCode;
@@ -31,18 +36,24 @@ public class ScannedQrCode {
         this.locationTemporaryId = Optional.empty();
     }
 
-    public String getLocationTemporaryId() {
+    public UUID getLocationTemporaryId() {
         return locationTemporaryId.orElse(this.decodeLocationTemporaryId());
     }
     
-    private String decodeLocationTemporaryId() {
-        byte[] tlIdByte = Arrays.copyOfRange(Base64.getDecoder().decode(qrCode), 1, 17) ;
-        locationTemporaryId = Optional.of(Base64.getEncoder().encodeToString(tlIdByte));
+    private UUID decodeLocationTemporaryId() {
+        String lspBase64 = qrCode.substring(Location.COUNTRY_SPECIFIC_PREFIX.length());
+        EncryptedLocationSpecificPart encryptedLsp;
+        try {
+            encryptedLsp = new LocationSpecificPartDecoder().decodeHeader(Base64.getDecoder().decode(lspBase64));
+        } catch (CleaEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        locationTemporaryId = Optional.of(encryptedLsp.getLocationTemporaryPublicId());
         return locationTemporaryId.get();
     }
 
-    public boolean startWithPrefix(String prefix){
-        return this.getLocationTemporaryId().startsWith(prefix);
+    public boolean startsWithPrefix(String prefix){
+        return this.getLocationTemporaryId().toString().startsWith(prefix);
     }
     
     public long getScanTimeAsNtpTimestamp() {
