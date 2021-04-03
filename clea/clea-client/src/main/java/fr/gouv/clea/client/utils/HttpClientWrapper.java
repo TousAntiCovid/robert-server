@@ -6,9 +6,19 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -17,8 +27,38 @@ public class HttpClientWrapper {
     private Map<String,String> headers;
 
     public HttpClientWrapper(){
-        this.client = HttpClient.newHttpClient();
+        // this.client = HttpClient.newHttpClient();
+        this.client = this.unsecureSSLHttpClient();
         this.headers = new HashMap<>();
+    }
+    
+    private HttpClient unsecureSSLHttpClient() {
+        TrustManager[] trustAllCerts = { new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            } } };
+
+        SSLContext sslContext;
+        try {
+            sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new SecureRandom());
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
+
+        return HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(10000))
+                .sslContext(sslContext) // SSL context 'sc' initialised as earlier
+                .build();
     }
 
     public <T> T get(String uri, Class<T> returnType) throws IOException, InterruptedException{
