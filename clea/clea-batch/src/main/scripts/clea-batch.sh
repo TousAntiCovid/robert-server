@@ -46,10 +46,10 @@ fi
 # =======================
 
 # All files except indexCluster.json
-s3cmd sync --exclude=clusterIndex.json $WORKDIR s3://${BUCKET}/ || die "S3cmd fails to copy cluster files to bucket"
+s3cmd sync --acl-public --exclude=clusterIndex.json $WORKDIR s3://${BUCKET}/ || die "S3cmd fails to copy cluster files to bucket"
 
 # only indexCluster.json at the root of "v1"
-s3cmd put $(find $WORKDIR -type f -name clusterIndex.json) s3://${BUCKET}/v1/ || die "S3cmd fails to copy clusterIndex file to bucket"
+s3cmd put --acl-public $(find $WORKDIR -type f -name clusterIndex.json) s3://${BUCKET}/v1/ || die "S3cmd fails to copy clusterIndex file to bucket"
 
 # purge batch temporary files
 rm -rf $WORKDIR
