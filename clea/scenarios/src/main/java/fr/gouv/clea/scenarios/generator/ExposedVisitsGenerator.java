@@ -16,11 +16,11 @@ import org.bouncycastle.util.encoders.Hex;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 
 import fr.gouv.clea.client.model.ScannedQrCode;
 import fr.gouv.clea.client.service.CleaClient;
 import fr.gouv.clea.qr.LocationQrCodeGenerator;
-import fr.gouv.clea.qr.model.QRCode;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.exception.CleaCryptoException;
 import lombok.extern.slf4j.Slf4j;
@@ -52,12 +52,17 @@ public class ExposedVisitsGenerator {
         this.reportQrCodes();
     }
 
-    protected void reportQrCodes() throws IOException, InterruptedException {
+    protected void reportQrCodes() {
         CleaClient client = new CleaClient("A client");
-        this.qrCodes.stream()
-            .limit(200)
-            .forEach(qr -> client.scanQrCode(qr.getQrCode(), qr.getScanTime()));
-        client.sendReport();
+        Lists.partition(this.qrCodes, 200)
+            .forEach(chunkedQr -> { 
+                chunkedQr.forEach(qr -> client.scanQrCode(qr.getQrCode(), qr.getScanTime()));
+                try {
+                    client.sendReport();
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            } );
     }
 
     protected void dumpQrCodes(File file) throws JsonGenerationException, JsonMappingException, IOException {
