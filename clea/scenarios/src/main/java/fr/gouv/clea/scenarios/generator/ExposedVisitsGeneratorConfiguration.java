@@ -1,4 +1,4 @@
-package fr.gouv.clea.qr;
+package fr.gouv.clea.scenarios.generator;
 
 import lombok.Getter;
 import lombok.Setter;
