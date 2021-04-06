@@ -10,7 +10,6 @@ import fr.gouv.clea.indexation.readers.PrefixesMemoryReader;
 import fr.gouv.clea.indexation.writers.IndexationWriter;
 import fr.gouv.clea.mapper.SinglePlaceClusterPeriodMapper;
 import fr.gouv.clea.prefixes.ListItemReader;
-import fr.gouv.clea.prefixes.PrefixesComputingProcessor;
 import fr.gouv.clea.prefixes.PrefixesMemoryWriter;
 import fr.gouv.clea.prefixes.PrefixesStorageService;
 import org.springframework.batch.core.Job;
@@ -120,10 +119,10 @@ public class BatchConfig {
     @Bean
     public Step prefixesComputing() {
         return stepBuilderFactory.get("prefixes")
-                .<List<String>, List<String>>chunk(1)
+                .<List<String>, List<String>>chunk(1000)
                 .reader(ltidListDBReader())
-                .processor(new PrefixesComputingProcessor(properties))
-                .writer(new PrefixesMemoryWriter(prefixesStorageService))
+//                .processor(new PrefixesComputingProcessor(properties, prefixesStorageService))
+                .writer(new PrefixesMemoryWriter(properties, prefixesStorageService))
                 .taskExecutor(taskExecutor())
                 .throttleLimit(10)
                 .build();
@@ -145,6 +144,7 @@ public class BatchConfig {
     }
 
     @Bean
+    @StepScope
     public ItemProcessor<String, SinglePlaceExposedVisits> exposedVisitBuilder() {
         return new SinglePlaceExposedVisitsBuilder(dataSource);
     }
@@ -154,6 +154,7 @@ public class BatchConfig {
     public ItemProcessor<SinglePlaceExposedVisits, SinglePlaceCluster> singleClusterPlaceBuilder() {
         return new SinglePlaceExposedVisitsProcessor(properties, riskConfigurationService);
     }
+
     @Bean
     @StepScope
     public ItemProcessor<SinglePlaceCluster, List<SinglePlaceClusterPeriod>> singlePlaceClusterPeriodListBuilder() {

@@ -1,9 +1,9 @@
 package fr.gouv.clea.prefixes;
 
-import fr.gouv.clea.indexation.model.output.ClusterFile;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,5 +12,5 @@ public class PrefixesStorageService {
 
     //FIXME: what kind of concurrent object to use?
     @Getter
-    private final Map<String, ClusterFile> clustersMap = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> clustersMap = new ConcurrentHashMap<>();
 }
