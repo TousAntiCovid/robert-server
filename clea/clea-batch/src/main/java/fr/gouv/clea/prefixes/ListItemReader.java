@@ -1,6 +1,7 @@
 package fr.gouv.clea.prefixes;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemStream;
@@ -10,6 +11,7 @@ import org.springframework.batch.item.database.JdbcCursorItemReader;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 public class ListItemReader implements ItemReader<List<String>>, ItemStream {
 
@@ -23,7 +25,8 @@ public class ListItemReader implements ItemReader<List<String>>, ItemStream {
         for (String clusterLtid; (clusterLtid = this.delegate.read()) != null; ) {
             ltidList.add(clusterLtid);
         }
-        return ltidList;
+        //null return means all input data has been read, and forwards execution to processor
+        return !ltidList.isEmpty() ? ltidList : null;
     }
 
     /**

@@ -16,7 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import static fr.gouv.clea.config.BatchConstants.LTID_COLUMN;
+import static fr.gouv.clea.config.BatchConstants.LTID_COL;
 import static fr.gouv.clea.config.BatchConstants.SINGLE_PLACE_CLUSTER_PERIOD_TABLE;
 
 @Slf4j
@@ -35,7 +35,7 @@ public class SinglePlaceClusterBuilder implements ItemProcessor<String, ClusterF
     @Override
     public ClusterFileItem process(final String ltid) {
         final List<SinglePlaceClusterPeriod> clusterPeriodList = jdbcTemplate.query("select * from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE
-                        + " WHERE ltid= ? ORDER BY " + LTID_COLUMN,
+                        + " WHERE ltid= ? ORDER BY " + LTID_COL,
                 new SinglePlaceClusterPeriodRowMapper(), UUID.fromString(ltid));
         SinglePlaceClusterPeriod singlePlaceClusterPeriod = clusterPeriodList.stream().findFirst().orElse(null);
         if (null != singlePlaceClusterPeriod) {

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static fr.gouv.clea.config.BatchConstants.EXPOSED_VISITS_TABLE;
-import static fr.gouv.clea.config.BatchConstants.LTID_COLUMN;
+import static fr.gouv.clea.config.BatchConstants.LTID_COL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -42,7 +42,7 @@ class ExposedVisitPartitionerTest {
     @Test
     void partition_returns_map_with_as_much_execution_contexts_as_LTids_returned_by_db() {
 
-        final String expectedRequest = "SELECT DISTINCT " + LTID_COLUMN + " FROM " + EXPOSED_VISITS_TABLE;
+        final String expectedRequest = "SELECT DISTINCT " + LTID_COL + " FROM " + EXPOSED_VISITS_TABLE;
         when(jdbcTemplate.queryForList(eq(expectedRequest), eq(String.class))).thenReturn(List.of("lTid1", "lTid1", "lTid2", "lTid3", "lTid3", "lTid3"));
 
         final Map<String, ExecutionContext> result = partitioner.partition(4);

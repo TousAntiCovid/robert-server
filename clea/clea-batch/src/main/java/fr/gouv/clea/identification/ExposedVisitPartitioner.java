@@ -26,7 +26,7 @@ public class ExposedVisitPartitioner implements Partitioner {
 
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
-        final String selectDistinctLtidRequest = "SELECT DISTINCT " + LTID_COLUMN + " FROM " + EXPOSED_VISITS_TABLE;
+        final String selectDistinctLtidRequest = "SELECT DISTINCT " + LTID_COL + " FROM " + EXPOSED_VISITS_TABLE;
         final List<String> visitedPlaces = jdbcTemplate.queryForList(selectDistinctLtidRequest, String.class);
 
         Map<String, ExecutionContext> result = new HashMap<>();

@@ -60,7 +60,6 @@ public class BatchConfig {
 
     @Bean
     public Job identificationJob() {
-        // @formatter:off
         return this.jobBuilderFactory.get("identificationJob")
                 .incrementer(new RunIdIncrementer())
                 .start(clusterIdentification())
@@ -75,7 +74,7 @@ public class BatchConfig {
         JdbcCursorItemReader<String> reader = new JdbcCursorItemReader<>();
         reader.setVerifyCursorPosition(false);
         reader.setDataSource(dataSource);
-        reader.setSql("select distinct " + LTID_COLUMN + " from " + EXPOSED_VISITS_TABLE + " order by " + LTID_COLUMN);
+        reader.setSql("select distinct " + LTID_COL + " from " + EXPOSED_VISITS_TABLE + " order by " + LTID_COL);
         reader.setRowMapper((rs, i) -> rs.getString(1));
         return reader;
     }
@@ -86,12 +85,11 @@ public class BatchConfig {
      * @return list of ltids as strings
      */
     @Bean
-    @StepScope
     public ItemReader<List<String>> ltidListDBReader() {
         JdbcCursorItemReader<String> reader = new JdbcCursorItemReader<>();
         reader.setDataSource(dataSource);
         reader.setVerifyCursorPosition(false);
-        reader.setSql("select distinct " + LTID_COLUMN + " from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + "ORDER BY " + LTID_COLUMN);
+        reader.setSql("select distinct " + LTID_COL + " from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + " ORDER BY " + LTID_COL);
         reader.setRowMapper((rs, i) -> rs.getString(1));
         return new ListItemReader(reader);
     }
@@ -146,16 +144,18 @@ public class BatchConfig {
         return new SimpleAsyncTaskExecutor("batch-ident");
     }
 
-    @StepScope
+    @Bean
     public ItemProcessor<String, SinglePlaceExposedVisits> exposedVisitBuilder() {
         return new SinglePlaceExposedVisitsBuilder(dataSource);
     }
 
     @Bean
+    @StepScope
     public ItemProcessor<SinglePlaceExposedVisits, SinglePlaceCluster> singleClusterPlaceBuilder() {
         return new SinglePlaceExposedVisitsProcessor(properties, riskConfigurationService);
     }
     @Bean
+    @StepScope
     public ItemProcessor<SinglePlaceCluster, List<SinglePlaceClusterPeriod>> singlePlaceClusterPeriodListBuilder() {
         return new ClusterToPeriodsProcessor(mapper);
     }
