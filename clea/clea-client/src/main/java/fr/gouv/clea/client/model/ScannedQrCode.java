@@ -41,10 +41,9 @@ public class ScannedQrCode {
     }
     
     private UUID decodeLocationTemporaryId() {
-        String lspBase64 = qrCode.substring(Location.COUNTRY_SPECIFIC_PREFIX.length());
         EncryptedLocationSpecificPart encryptedLsp;
         try {
-            encryptedLsp = new LocationSpecificPartDecoder().decodeHeader(Base64.getDecoder().decode(lspBase64));
+            encryptedLsp = new LocationSpecificPartDecoder().decodeHeader(Base64.getDecoder().decode(qrCode));
         } catch (CleaEncodingException e) {
             throw new RuntimeException(e);
         }

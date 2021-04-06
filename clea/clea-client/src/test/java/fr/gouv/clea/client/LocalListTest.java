@@ -15,10 +15,10 @@ import fr.gouv.clea.client.service.CleaClient;
  */
 public class LocalListTest 
 {
-    private final String prefix = "https://tac.gouv.fr/";
+    private final String prefix = "https://tac.gouv.fr?v=0#";
     private final String qrCode = "AKSYrwI8hzHkrJv0mf9X3I3a3cz8wvP/zQQZ/uD2cL78m5hBXXW46YrPPTxiYNShhQDvyd6w0zyJD96D0tIy6DIRyQOEuWWxW84GmrMDgiOxCFtWt+qlY1Wnsh1szt4UJpCjkYEf7Ij78n/cEQY=";
     private final String qrCode2 = "AKSYrwI8hzHkrJv0mf9X3I0KXTn4TUzSX7aM4pfWCpsb7CPSLULz1FBWh9+7RP0hU0VxTb15uDJXY61itwy9yJzDbkz8FGXUZra0LBwCg3D8EbSZsBk/g/havNababZULUxXs8IEaMaims2BnOY=";
-    private final String tlId = "pJivAjyHMeSsm/SZ/1fcjQ==";
+    private final String tlId = "a498af02-3c87-31e4-ac9b-f499ff57dc8d";
     private final Instant now = Instant.now(); 
     
     /**
@@ -36,7 +36,7 @@ public class LocalListTest
         ScannedQrCode scanned = localList.get(0);
         assertThat(scanned.getQrCode()).isEqualTo(qrCode);
         assertThat(scanned.getScanTime()).isEqualTo(now);
-        assertThat(scanned.getLocationTemporaryId()).isEqualTo(tlId);
+        assertThat(scanned.getLocationTemporaryId().toString()).isEqualTo(tlId);
     }
 
      /**

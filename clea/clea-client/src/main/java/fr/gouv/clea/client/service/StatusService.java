@@ -72,7 +72,7 @@ public class StatusService {
 
     protected Optional<Float> getQrRiskLevel(ScannedQrCode qr, Cluster cluster) throws IOException {
         Optional<Float> result = Optional.empty();
-        if (qr.getLocationTemporaryId().equals(cluster.getLocationTemporaryPublicID())) {
+        if (qr.getLocationTemporaryId().toString().equals(cluster.getLocationTemporaryPublicID())) {
             for (ClusterExposition exposition : cluster.getExpositions()) {
                 if (exposition.isInExposition(qr.getScanTime())) {
                     float newRisk = Math.max(result.orElse(0f), exposition.getRisk());

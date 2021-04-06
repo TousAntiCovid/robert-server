@@ -32,14 +32,14 @@ public class StatusServiceTest {
     @Test
     public void statusShouldReturnAtRisk() throws IOException  {
         List<ScannedQrCode> localList = new ArrayList<>();
-        localList.add(qr);
+        localList.add(qr2);
         assertThat(statusService.status(localList)).isGreaterThan(0f);
     }
 
     @Test
     public void statusShouldReturnNoRisk() throws IOException {
         List<ScannedQrCode> localList = new ArrayList<>();
-        localList.add(qr2);
+        localList.add(qr);
         assertThat(statusService.status(localList)).isEqualTo(0f);
     }
 }
