@@ -37,12 +37,12 @@ public class ScenarioAppContext {
     public void generateKeys() throws Exception {
         CleaEciesEncoder cleaEciesEncoder = new CleaEciesEncoder();
         String[] serverAuthorityKeyPair = cleaEciesEncoder.genKeysPair(true);
-        this.serverAuthorityPublicKey = serverAuthorityKeyPair[1];
+        this.serverAuthorityPublicKey = "0280ea16894c9f3b363693666fa88282b25971984f7a4f88e7697fa213e4caff0b";
         System.out.println("Server Authority Private Key: " + serverAuthorityKeyPair[0]);
         System.out.println("Server Authority Public Key : " + this.serverAuthorityPublicKey);
 
         String[] manualContactTracingAuthorityKeyPair = cleaEciesEncoder.genKeysPair(true);
-        this.manualContactTracingAuthorityPublicKey = serverAuthorityKeyPair[1];
+        this.manualContactTracingAuthorityPublicKey = "0280ea16894c9f3b363693666fa88282b25971984f7a4f88e7697fa213e4caff0b";
         System.out.println("Server Authority Private Key: " + serverAuthorityKeyPair[0]);
         System.out.println("Server Authority Public Key : " + this.manualContactTracingAuthorityPublicKey);
     }
@@ -68,7 +68,7 @@ public class ScenarioAppContext {
                                                                 .staff(false) // not used in test declaration as of now
                                                                 .venueCategory1(venueCategories.get(venueCategory1))
                                                                 .venueType(venueTypes.get(venueType))
-                                                                .periodDuration(24) // not used in test declaration as of now
+                                                                .periodDuration(255) // not used in test declaration as of now
                                                                 .periodStartTime(periodStartTime)
                                                                 .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponentCompact)
                                                                 .manualContactTracingAuthorityPublicKey(manualContactTracingAuthorityPublicKey)

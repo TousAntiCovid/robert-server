@@ -44,19 +44,29 @@ public class CleaClientStepDefinitions implements En {
             assertThat(riskLevel).isEqualTo(0);
         });
 
+        Then("Exposure status should reports {string} as being at risk", (String visitorName) -> {
+            float riskLevel = this.scenarioAppContext.getVisitor(visitorName).getStatus();
+            assertThat(riskLevel).isGreaterThan(0);
+        });
+
         Then("Exposure status request for {string} should include only {int} visit\\(s) to {string} at {string}", (String visitorName, Integer nbVisits, String locationName, String qrScanTime) -> {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             assertThat(visitor.getLocalList().size()).isEqualTo(nbVisits);
         });
 
-        When("{string} declare himself/herself sick", (String visitorName) -> {
+        When("{string} declares himself/herself sick", (String visitorName) -> {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
-            visitor.sendReport(Instant.now()); //TODO: default pivotDate (today?)
+            visitor.sendReport();
         });
 
-        When("{string} declare himself/herself sick with a {string} PivotDate", (String visitorName, String pivotDate) -> {
+        When("{string} declares himself/herself sick with a {string} PivotDate", (String visitorName, String pivotDate) -> {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             visitor.sendReport(TimeUtils.naturalLanguageDateStringToInstant(pivotDate));
+        });
+
+        When("{string} trigger batch processing", (String visitorName) -> {
+            CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
+            visitor.triggerNewClusterIdenfication();
         });
 
         Then("{string} cannot send his/her visits", (String visitorName) -> {
@@ -68,6 +78,7 @@ public class CleaClientStepDefinitions implements En {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             assertThat(visitor.getLastReportSuccess()).isTrue();
         });
+        
     }
 
     protected String toFirstLetterUpperCase(String string) {

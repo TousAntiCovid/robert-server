@@ -7,10 +7,10 @@ Feature: Several healthy visitors visit different places
     Given "Hugo" registered on TAC
     Given "Heather" registered on TAC
     Given "Henry" registered on TAC
-    Given "Chez Gusto" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
-    Given "Chez Gusto" created a QRCode "LunchService2" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
-    Given "La fontaine aux perles" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
-    Given "La fontaine aux perles" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 2 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
+    Given "Chez Gusto" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 10 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
+    Given "Chez Gusto" created a QRCode "LunchService2" as a "restaurant" at "04:00am, 10 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
+    Given "La fontaine aux perles" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 10 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
+    Given "La fontaine aux perles" created a QRCode "LunchService1" as a "restaurant" at "04:00am, 10 days ago" with a capacity of 20 and category "NUMBER_1" and with a renewal time of "15 minutes"
 
   Scenario: One healthy visitor alone
     Given "Hugo" recorded a visit to "Chez Gusto" at "12:30, 2 days ago" withQRCode "LunchService1"
@@ -59,7 +59,16 @@ Feature: Several healthy visitors visit different places
     When "Heather" asks for exposure status
     Then Exposure status request for "Heather" should include only 2 visit(s) to "La fontaine aux perles" at "2 days ago"
 
-  Scenario: One visitor at risk in the one location 
-    Given "Heather" recorded a visit to "La fontaine aux perles" at "12:30, 2 days ago" withQRCode "LunchService1"
-    When "Heather" declare himself sick
-    Then "Heather" sends his visits
+  Scenario: One sick and two persons at risk (same location and average RiskLevel)
+    Given "Hugo" recorded a visit to "Chez Gusto" at "12:30, 4 days ago" withQRCode "LunchService1"
+    Given "Henry" recorded a visit to "Chez Gusto" at "11:30, 4 days ago" withQRCode "LunchService1"
+    Given "Heather" recorded a visit to "Chez Gusto" at "13:30, 4 days ago" withQRCode "LunchService1"
+  
+    When "Heather" declares himself sick
+    When "Heather" trigger batch processing
+    When "Hugo" asks for exposure status
+    When "Henry" asks for exposure status
+
+    Then "Heather" sends his visits 
+    Then Exposure status should reports "Hugo" as being at risk
+    Then Exposure status should reports "Henry" as being at risk
