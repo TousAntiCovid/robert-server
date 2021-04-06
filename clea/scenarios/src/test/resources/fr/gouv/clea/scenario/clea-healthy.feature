@@ -72,3 +72,27 @@ Feature: Several healthy visitors visit different places
     Then "Heather" sends his visits 
     Then Exposure status should reports "Hugo" as being at risk
     Then Exposure status should reports "Henry" as being at risk
+
+
+
+  Scenario: One sick and one person not at risk (different location)
+    Given "Henry" recorded a visit to "La fontaine aux perles" at "11:30, 4 days ago" withQRCode "LunchService1"
+    Given "Heather" recorded a visit to "Chez Gusto" at "13:30, 4 days ago" withQRCode "LunchService1"
+
+    When "Heather" declares himself sick
+    When "Heather" trigger batch processing
+    When "Henry" asks for exposure status
+
+    Then "Heather" sends his visits 
+    Then Exposure status should reports "Henry" as not being at risk
+
+  Scenario: One sick and one person not at risk (same location different visit date)
+    Given "Henry" recorded a visit to "La fontaine aux perles" at "11:30, 3 days ago" withQRCode "LunchService1"
+    Given "Heather" recorded a visit to "Chez Gusto" at "13:30, 4 days ago" withQRCode "LunchService1"
+
+    When "Heather" declares himself sick
+    When "Heather" trigger batch processing
+    When "Henry" asks for exposure status
+
+    Then "Heather" sends his visits 
+    Then Exposure status should reports "Henry" as not being at risk 
