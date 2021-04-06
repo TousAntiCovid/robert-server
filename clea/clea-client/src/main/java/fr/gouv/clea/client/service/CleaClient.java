@@ -35,6 +35,7 @@ public class CleaClient {
         this.localList = new ArrayList<>();
         this.statusService = Optional.empty();
         this.reportService = Optional.empty();
+        this.batchTriggerService = Optional.empty();
     }
 
     public List<ScannedQrCode> getLocalList() {
@@ -89,7 +90,9 @@ public class CleaClient {
     }
 
     public boolean sendReport() throws IOException, InterruptedException{
-        return this.sendReport(Instant.now());
+        //return this.getReportService().report(localList).isSuccess();
+        //Backend should accept report without pivot date, not the case right now, using 14 day ago pivot date instead
+        return this.sendReport(Instant.now().minus(Duration.ofDays(14)));
     }
 
     public boolean getLastReportSuccess() throws IOException{

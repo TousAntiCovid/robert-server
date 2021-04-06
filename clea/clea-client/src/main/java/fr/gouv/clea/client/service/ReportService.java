@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import fr.gouv.clea.client.model.Report;
 import fr.gouv.clea.client.model.ReportResponse;
@@ -37,7 +38,19 @@ public class ReportService {
         this.lastReportRequest = reportRequest;
         
         log.info("Reporting {} visits to {}", localList.size(), this.reportEndPoint);
-        jsonRequest = new ObjectMapper().writeValueAsString(reportRequest);
+        jsonRequest = new ObjectMapper().registerModule(new Jdk8Module()).writeValueAsString(reportRequest);
+        log.info(jsonRequest);
+        this.lastReportResponse = this.post(jsonRequest);
+        return this.lastReportResponse;
+    }
+
+    public ReportResponse report(List<ScannedQrCode> localList) throws IOException, InterruptedException {
+        String jsonRequest;
+        Report reportRequest = new Report();
+        reportRequest.addAllVisits(localList);
+        this.lastReportRequest = reportRequest;
+        log.info("Reporting {} visits to {}", localList.size(), this.reportEndPoint);
+        jsonRequest = new ObjectMapper().registerModule(new Jdk8Module()).writeValueAsString(reportRequest);
         log.info(jsonRequest);
         this.lastReportResponse = this.post(jsonRequest);
         return this.lastReportResponse;
