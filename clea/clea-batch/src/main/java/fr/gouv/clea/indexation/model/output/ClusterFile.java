@@ -1,14 +1,18 @@
 package fr.gouv.clea.indexation.model.output;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import lombok.*;
 
 @Data
 @ToString
 @EqualsAndHashCode
 public class ClusterFile {
+
+    private String name;
 
     private List<ClusterFileItem> items;
     

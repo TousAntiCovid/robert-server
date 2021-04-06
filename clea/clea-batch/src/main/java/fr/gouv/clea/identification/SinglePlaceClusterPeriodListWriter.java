@@ -26,14 +26,16 @@ public class SinglePlaceClusterPeriodListWriter extends JdbcBatchItemWriter<List
     }
 
     @Override
-    public void write(List<? extends List<SinglePlaceClusterPeriod>> list) {
-        list.get(0).forEach(singlePlaceClusterPeriod -> {
-            final BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(singlePlaceClusterPeriod);
-            jdbcTemplate.update(getInsertSql(), parameterSource);
-        });
+    public void write(List<? extends List<SinglePlaceClusterPeriod>> lists) {
+        lists.forEach(list ->
+                list.forEach(singlePlaceClusterPeriod -> {
+                    final BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(singlePlaceClusterPeriod);
+                    jdbcTemplate.update(getInsertSql(), parameterSource);
+                }));
     }
 
     private String getInsertSql() {
+        // values as parameters from SinglePlaceClusterPeriod attributes
         return "insert into " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE +
                 // column names
                 " (" +
@@ -47,10 +49,7 @@ public class SinglePlaceClusterPeriodListWriter extends JdbcBatchItemWriter<List
                         CLUSTER_START_COL,
                         CLUSTER_DURATION_COL,
                         RISK_LEVEL_COL) +
-                ")" +
-                " values " +
-                // values as parameters from SinglePlaceClusterPeriod attributes
-                "(" +
+                ") values (" +
                 String.join(", ",
                         ":locationTemporaryPublicId",
                         ":venueType", ":venueCategory1",

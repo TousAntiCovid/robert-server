@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.ClusterFile;
 import fr.gouv.clea.indexation.model.output.ClusterFileIndex;
-import fr.gouv.clea.indexation.model.output.ClusterFileItem;
-import fr.gouv.clea.indexation.model.output.Prefix;
+import fr.gouv.clea.prefixes.PrefixesStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.AfterStep;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemWriter;
@@ -18,53 +18,48 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
 @StepScope
 @Slf4j
-public class IndexationWriter implements ItemWriter<ClusterFileItem> {
+public class IndexationWriter implements ItemWriter<ClusterFile> {
 
     private String outputPath;
 
     private Long jobId;
 
-    private final int prefixLength;
+    private final PrefixesStorageService prefixesStorageService;
 
     @BeforeStep
     public void retrieveInterStepData(final StepExecution stepExecution) {
         this.jobId = stepExecution.getJobExecutionId();
     }
 
-    public IndexationWriter(final BatchProperties config) {
+    @AfterStep
+    public void createClusterIndex(final StepExecution stepExecution) throws IOException {
+        generateClusterIndex(prefixesStorageService.getPrefixWithAssociatedLtidsMap().keySet());
+    }
+
+    public IndexationWriter(final BatchProperties config, final PrefixesStorageService prefixesStorageService) {
         this.outputPath = config.clusterFilesOutputPath;
-        this.prefixLength = config.prefixLength;
+        this.prefixesStorageService = prefixesStorageService;
     }
 
     @Override
-    public void write(List<? extends ClusterFileItem> items) throws Exception {
+    public void write(List<? extends ClusterFile> items) throws Exception {
+
         log.info("Creating directories : " + outputPath + File.separator + this.jobId + File.separator);
         Files.createDirectories(Paths.get(outputPath + File.separator + this.jobId + File.separator));
 
-        //generate index json file
-        final HashMap<String, ClusterFile> clusterIndexMap = new HashMap<>();
-
-        items.forEach(clusterFileItem -> {
-            final String uuid = clusterFileItem.getTemporaryLocationId();
-            ClusterFile clusterFile = clusterIndexMap.computeIfAbsent(Prefix.of(uuid, prefixLength), key -> new ClusterFile());
-            clusterFile.addItem(clusterFileItem);
-        });
         //generate cluster files
-        clusterIndexMap.forEach(this::generateClusterFile);
+        items.forEach(this::generateClusterFile);
 
-        generateClusterIndex(clusterIndexMap);
     }
 
-    private void generateClusterFile(final String prefix, final ClusterFile clusterFile) {
+    private void generateClusterFile(final ClusterFile clusterFile) {
 
-        final String outputClusterFilePath = outputPath + File.separator + this.jobId + File.separator + prefix + ".json";
+        final String outputClusterFilePath = outputPath + File.separator + this.jobId + File.separator + clusterFile.getName() + ".json";
         log.debug("Generating cluster file : {}", outputClusterFilePath);
         Path jsonClusterPath = Paths.get(outputClusterFilePath);
         File jsonClusterFile = jsonClusterPath.toFile();
@@ -78,11 +73,11 @@ public class IndexationWriter implements ItemWriter<ClusterFileItem> {
         }
     }
 
-    private void generateClusterIndex(final HashMap<String, ClusterFile> clusterIndexMap) throws IOException {
+    private void generateClusterIndex(final Set<String> prefixes) throws IOException {
 
         ClusterFileIndex clusterFileIndex = ClusterFileIndex.builder()
                 .iteration(jobId.intValue())
-                .prefixes(clusterIndexMap.keySet())
+                .prefixes(prefixes)
                 .build();
 
         log.info("Generating cluster index : " + outputPath + File.separator + "clusterIndex.json");

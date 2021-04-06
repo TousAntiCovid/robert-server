@@ -4,9 +4,10 @@ import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceExposedVisits;
 import fr.gouv.clea.identification.*;
-import fr.gouv.clea.indexation.model.output.ClusterFileItem;
+import fr.gouv.clea.indexation.model.output.ClusterFile;
 import fr.gouv.clea.indexation.processors.SinglePlaceClusterBuilder;
-import fr.gouv.clea.indexation.readers.PrefixesMemoryReader;
+import fr.gouv.clea.indexation.readers.IteratorItemReader;
+import fr.gouv.clea.indexation.readers.MemoryMapItemReader;
 import fr.gouv.clea.indexation.writers.IndexationWriter;
 import fr.gouv.clea.mapper.SinglePlaceClusterPeriodMapper;
 import fr.gouv.clea.prefixes.ListItemReader;
@@ -29,7 +30,10 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 
 import javax.sql.DataSource;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 import static fr.gouv.clea.config.BatchConstants.*;
 
@@ -86,6 +90,7 @@ public class BatchConfig {
     @Bean
     public ItemReader<List<String>> ltidListDBReader() {
         JdbcCursorItemReader<String> reader = new JdbcCursorItemReader<>();
+        reader.setSaveState(false);
         reader.setDataSource(dataSource);
         reader.setVerifyCursorPosition(false);
         reader.setSql("select distinct " + LTID_COL + " from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + " ORDER BY " + LTID_COL);
@@ -121,7 +126,6 @@ public class BatchConfig {
         return stepBuilderFactory.get("prefixes")
                 .<List<String>, List<String>>chunk(1000)
                 .reader(ltidListDBReader())
-//                .processor(new PrefixesComputingProcessor(properties, prefixesStorageService))
                 .writer(new PrefixesMemoryWriter(properties, prefixesStorageService))
                 .taskExecutor(taskExecutor())
                 .throttleLimit(10)
@@ -130,11 +134,12 @@ public class BatchConfig {
 
     @Bean
     public Step clusterIndexation() {
+        MemoryMapItemReader reader = new MemoryMapItemReader((prefixesStorageService.getPrefixWithAssociatedLtidsMap().entrySet())::iterator);
         return stepBuilderFactory.get("indexation")
-                .<String, ClusterFileItem>chunk(1)
-                .reader(new PrefixesMemoryReader())
-                .processor(new SinglePlaceClusterBuilder(dataSource, mapper)) // build a Map of ClusterFile at once
-                .writer(new IndexationWriter(properties)) // build Files and index
+                .<Map.Entry<String, List<String>>, ClusterFile>chunk(1)
+                .reader(reader)
+                .processor(new SinglePlaceClusterBuilder(dataSource, mapper, properties)) // build a Map of ClusterFile at once
+                .writer(new IndexationWriter(properties, prefixesStorageService)) // build Files and index
                 .build();
     }
 

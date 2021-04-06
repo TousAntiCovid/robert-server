@@ -3,13 +3,11 @@ package fr.gouv.clea.prefixes;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.Prefix;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemWriter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
 @RequiredArgsConstructor
 public class PrefixesMemoryWriter implements ItemWriter<List<String>> {
 
@@ -26,8 +24,8 @@ public class PrefixesMemoryWriter implements ItemWriter<List<String>> {
     public void write(List<? extends List<String>> ltids) {
         ltids.get(0).forEach(ltid -> {
             final String prefix = Prefix.of(ltid, prefixLength);
-            prefixesStorageService.getClustersMap().computeIfAbsent(prefix, p -> new ArrayList<>());
-            prefixesStorageService.getClustersMap().get(prefix).add(ltid);
+            prefixesStorageService.getPrefixWithAssociatedLtidsMap().computeIfAbsent(prefix, p -> new ArrayList<>());
+            prefixesStorageService.getPrefixWithAssociatedLtidsMap().get(prefix).add(ltid);
         });
     }
 }

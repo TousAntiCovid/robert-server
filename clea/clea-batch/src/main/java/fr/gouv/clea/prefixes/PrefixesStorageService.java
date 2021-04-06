@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class PrefixesStorageService {
 
-    //FIXME: what kind of concurrent object to use?
     @Getter
-    private final Map<String, List<String>> clustersMap = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> prefixWithAssociatedLtidsMap = new ConcurrentHashMap<>();
 }
