@@ -24,7 +24,7 @@ public class CleaBatchTriggerService {
      */
     public void triggerClusterDetection() throws IOException, InterruptedException {        
         log.info("Triggering cluster detection on {}",  this.batchTriggerEndPoint);
-        int statusCode = httpClient.getStatusCode(this.batchTriggerEndPoint);
+        int statusCode = httpClient.postStatusCode(this.batchTriggerEndPoint, "");
         if (statusCode != 200) {
             throw new RuntimeException("Error when sending triggerClusterDetection request");
         }
