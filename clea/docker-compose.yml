@@ -27,6 +27,20 @@ services:
       - clea-network
     restart: always
 
+  clea-batch:
+    image: clea-batch:latest
+    build: ./clea-batch/
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "15000:15000"
+    depends_on:
+      - postgres
+    networks:
+      - clea-network
+    restart: "no"
+
+
   kafka:
     container_name: kafka
     image: "wurstmeister/kafka:latest"
