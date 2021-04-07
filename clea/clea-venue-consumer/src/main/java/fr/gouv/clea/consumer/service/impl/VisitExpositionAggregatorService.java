@@ -38,7 +38,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(visit.getPeriodDuration(), (int) scanTimeSlot + exposureTime);
 
-        List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), periodStartInstant.toEpochMilli());
+        List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), periodStartTimeNTPTimestamp(visit));
 
         List<ExposedVisitEntity> toUpdate = new ArrayList<>();
         List<ExposedVisitEntity> toPersist = new ArrayList<>();
@@ -66,6 +66,10 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         return TimeUtils.instantFromTimestamp((long) visit.getCompressedPeriodStartTime() * TimeUtils.NB_SECONDS_PER_HOUR);
     }
 
+    protected long periodStartTimeNTPTimestamp(Visit visit){
+        return ((long) visit.getCompressedPeriodStartTime()) * TimeUtils.NB_SECONDS_PER_HOUR;
+    }
+
     protected ExposedVisitEntity updateExposedVisit(Visit visit, ExposedVisitEntity exposedVisit) {
         if (visit.isBackward()) {
             exposedVisit.setBackwardVisits(exposedVisit.getBackwardVisits() + 1);
@@ -77,7 +81,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
 
     protected ExposedVisitEntity newExposedVisit(Visit visit, int slotIndex) {
         // TODO: visit.getPeriodStart returning an Instant
-        long periodStart = this.periodStartInstant(visit).toEpochMilli();
+        long periodStart = periodStartTimeNTPTimestamp(visit);
         return ExposedVisitEntity.builder()
                 .locationTemporaryPublicId(visit.getLocationTemporaryPublicId())
                 .venueType(visit.getVenueType())
