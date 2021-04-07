@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {"clea.conf.security.report.checkAuthorization=true"})
-public class CleaControllerAuthEnabledTest {
+class CleaControllerAuthEnabledTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V1)
     private String pathPrefix;
@@ -32,7 +32,7 @@ public class CleaControllerAuthEnabledTest {
     private TestRestTemplate restTemplate;
 
     @Test
-    public void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
+    void testWhenReportRequestWithMissingAuthenticationThenGetBadRequest() {
         List<Visit> visits = List.of(
                 new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()),
                 new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()),
@@ -41,11 +41,11 @@ public class CleaControllerAuthEnabledTest {
         HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, 0L), CleaControllerTest.newJsonHeader());
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
-    public void testWhenReportRequestWithNonValidAuthenticationThenGetUnauthorized() {
+    void testWhenReportRequestWithNonValidAuthenticationThenGetUnauthorized() {
         List<Visit> visits = List.of(
                 new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()),
                 new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()),
