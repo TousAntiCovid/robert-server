@@ -1,6 +1,10 @@
 spring:
   application:
     name: analytics
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
   cloud:
     consul:
       enabled: ${CONSUL_ENABLED:false}
