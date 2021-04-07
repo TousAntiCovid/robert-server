@@ -1,10 +1,11 @@
 package fr.gouv.clea.indexation.readers;
 
-import org.springframework.batch.core.annotation.BeforeRead;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemReader;
 
 import java.util.Iterator;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class IteratorItemReader<T> implements ItemReader<T> {
 

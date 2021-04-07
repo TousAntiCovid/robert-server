@@ -10,7 +10,7 @@ public class BatchConstants {
     public static final String PERIOD_COLUMN = "period_start";
     public static final String TIMESLOT_COLUMN = "timeslot";
     
-    public static final String LTID_PARAM = "ltid";
+    public static final String LTIDS_PARAM = "ltids";
 
     public static final String LTID_COL = "ltid";
     public static final String VENUE_TYPE_COL = "venue_type";

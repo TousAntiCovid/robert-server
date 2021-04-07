@@ -5,13 +5,11 @@ import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceExposedVisits;
 import fr.gouv.clea.entity.ExposedVisit;
+import fr.gouv.clea.identification.processor.SinglePlaceExposedVisitsProcessor;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import javax.sql.DataSource;
 
 import java.util.Optional;
 import java.util.UUID;

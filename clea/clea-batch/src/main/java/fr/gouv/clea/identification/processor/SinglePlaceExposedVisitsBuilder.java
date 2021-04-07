@@ -1,7 +1,8 @@
-package fr.gouv.clea.identification;
+package fr.gouv.clea.identification.processor;
 
 import fr.gouv.clea.dto.SinglePlaceExposedVisits;
 import fr.gouv.clea.entity.ExposedVisit;
+import fr.gouv.clea.identification.ExposedVisitRowMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.annotation.AfterStep;
@@ -24,28 +25,35 @@ import static fr.gouv.clea.config.BatchConstants.*;
 @StepScope
 public class SinglePlaceExposedVisitsBuilder implements ItemProcessor<String, SinglePlaceExposedVisits> {
 
-    JdbcTemplate jdbcTemplate;
-    AtomicLong counter = new AtomicLong();
+    private final JdbcTemplate jdbcTemplate;
 
-    public SinglePlaceExposedVisitsBuilder(DataSource dataSource) {
+    private final AtomicLong counter = new AtomicLong();
+
+    private final ExposedVisitRowMapper rowMapper;
+
+    public SinglePlaceExposedVisitsBuilder(DataSource dataSource, ExposedVisitRowMapper rowMapper) {
         jdbcTemplate = new JdbcTemplate(dataSource);
+        this.rowMapper = rowMapper;
     }
 
     @Override
     public SinglePlaceExposedVisits process(final String ltid) {
+        final long time1 = System.currentTimeMillis();
         final List<ExposedVisit> list = jdbcTemplate.query("select * from " + EXPOSED_VISITS_TABLE
                         + " WHERE ltid= ? ORDER BY " + PERIOD_COLUMN + ", " + TIMESLOT_COLUMN,
-                new ExposedVisitRowMapper(), UUID.fromString(ltid));
+                rowMapper, UUID.fromString(ltid));
         ExposedVisit v = list.stream().findFirst().orElse(null);
         if (null != v) {
             long ln = counter.incrementAndGet();
             if (0 == ln % 1000) {
                 log.info("Loaded {} visits, current LTId={} ", ln, ltid);
             }
+            final long time2 = System.currentTimeMillis();
             return SinglePlaceExposedVisits.builder()
                     .locationTemporaryPublicId(v.getLocationTemporaryPublicId())
                     .venueType(v.getVenueType()).venueCategory1(v.getVenueCategory1())
                     .venueCategory2(v.getVenueCategory2()).visits(list).build();
+
         }
         return null;
     }

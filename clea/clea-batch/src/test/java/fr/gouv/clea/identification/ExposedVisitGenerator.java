@@ -47,7 +47,7 @@ public class ExposedVisitGenerator {
 		// hour of 21-01-01 : 3818448000
 		// diff: 7560000
 
-		final int NBLIEUX = 1000000;
+		final int NBLIEUX = 10000;
 		final int batchSize = 10;
 
 		final Random r = new Random();
@@ -67,8 +67,8 @@ public class ExposedVisitGenerator {
 			List<ExposedVisit> batch = new ArrayList<>();
 
 			long clusterStart = janv21 + (r.nextInt(65) * 1000l);
-			int ts = r.nextInt(150);
-			for (int slot = 0; slot <= ts; slot++) {
+			int visitsPerPlace = r.nextInt(80);
+			for (int slot = 0; slot <= visitsPerPlace; slot++) {
 
 				//@formatter:off
 				ExposedVisit v=ExposedVisit.builder()

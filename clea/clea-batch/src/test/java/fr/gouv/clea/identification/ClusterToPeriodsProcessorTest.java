@@ -3,6 +3,7 @@ package fr.gouv.clea.identification;
 import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
+import fr.gouv.clea.identification.processor.ClusterToPeriodsProcessor;
 import fr.gouv.clea.mapper.SinglePlaceClusterPeriodMapper;
 import fr.gouv.clea.mapper.SinglePlaceClusterPeriodMapperImpl;
 import org.assertj.core.api.Assertions;
