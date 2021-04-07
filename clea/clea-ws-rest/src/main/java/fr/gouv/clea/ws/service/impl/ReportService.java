@@ -63,7 +63,7 @@ public class ReportService implements IReportService {
 
     private DecodedVisit decode(Visit visit, long pivotDate) {
         try {
-            byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());
+            byte[] binaryLocationSpecificPart = Base64.getUrlDecoder().decode(visit.getQrCode());
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
             Instant qrCodeScanTime = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp());
             return new DecodedVisit(qrCodeScanTime, encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);

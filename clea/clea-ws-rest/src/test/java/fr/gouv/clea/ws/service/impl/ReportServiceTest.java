@@ -156,7 +156,7 @@ class ReportServiceTest {
                 .locationTemporaryPublicId(uuid)
                 .build();
         byte[] qrCodeHeader = new LocationSpecificPartEncoder(null).binaryEncodedHeader(lsp);
-        String qrCode = Base64.encodeBase64String(qrCodeHeader);
+        String qrCode = Base64.encodeBase64URLSafeString(qrCodeHeader);
         when(decoder.decodeHeader(qrCodeHeader)).thenReturn(createEncryptedLocationSpecificPart(uuid));
         return new Visit(qrCode, qrCodeScanTime);
     }
