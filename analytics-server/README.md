@@ -32,6 +32,27 @@ note : le fichier source du diagramme est fourni [ici](analytics.drawio)
 le contrat d'interface du service rest exposé est disponible au format
 openapi [anaylics_openapi](src/main/doc/openid_analytics.yml)
 
+## Configuration Kafka SSL
+Ce chapitre explique comment configurer une connexion sécurisée SSL entre le producteur de message (notre application) et le server kafka.
+
+Il faut générer un certificat pour le server Kafka (avec CN = hostname). Ce certificat est stocké dans un truststore (au format jks) et protégé par un mot de passe.
+
+Afin de générer un magasin au fomat `jks`, vous pouvez suivre les instructions suivantes:
+
+```sh
+openssl pkcs12 -inkey node-1.pem -in node-1.pem -name node-1 -export -out node-1.p12
+keytool -importkeystore -deststorepass changeme \
+    -destkeystore node-1-keystore.jks -srckeystore node-1.p12 -srcstoretype PKCS12
+```
+Le trustore doit être installé sur le system de fichier des serveurs hébergeant l'application analytics.
+
+La configuration SSL est sauvegardée dans Vault et injectée à l'application via spring-cloud-vault-config-consul in apps.
+Voici les propriétés devant être utilisées :
+- `spring.kafka.bootstrap-servers` doit être initialisé avec la liste des hostname:port des serveurs kafka (il faut indiquer le même nom que le `CN` du certificat)
+- `spring.kafka.properties.security.protocol` égal à `ssl` pour activer le SSL
+- `spring.kafka.ssl.trust-store-location` suivant le nommage suivant `file:///path/to/kafka.client.truststore.jks` (ne pas oublier le préfixe `file://` pour une URL valide)
+- `spring.kafka.ssl.trust-store-password`
+
 # Environment de développement
 
 Si ce n'est déjà fait, se logguer, sur la registry docker de l'inria.
@@ -65,3 +86,4 @@ Dans le fichier etc/hosts (c:\windows\system32\drivers\etc\hosts) ajouter l'entr
     127.0.0.1 docker-desktop
 
 Dans l'application docker desktop settings, placer la quantité de mémoire à 10G.
+
