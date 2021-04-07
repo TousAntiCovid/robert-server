@@ -60,8 +60,8 @@ Feature: Several healthy visitors visit different places
     Then Exposure status request for "Heather" should include only 2 visit(s) to "La fontaine aux perles" at "2 days ago"
 
   Scenario: One sick and two persons at risk (same location and average RiskLevel)
-    Given "Hugo" recorded a visit to "Chez Gusto" at "12:30, 4 days ago" withQRCode "LunchService1"
-    Given "Henry" recorded a visit to "Chez Gusto" at "11:30, 4 days ago" withQRCode "LunchService1"
+    Given "Hugo" recorded a visit to "Chez Gusto" at "15:30, 4 days ago" withQRCode "LunchService1"
+    Given "Henry" recorded a visit to "Chez Gusto" at "14:30, 4 days ago" withQRCode "LunchService1"
     Given "Heather" recorded a visit to "Chez Gusto" at "13:30, 4 days ago" withQRCode "LunchService1"
   
     When "Heather" declares himself sick
