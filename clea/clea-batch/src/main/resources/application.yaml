@@ -21,7 +21,7 @@ spring:
 
 clea:
   batch:
-    duration-unit-in-seconds: 1800
+    duration-unit-in-seconds: 3600
     cluster:
       static-prefix-length: ${CLEA_BATCH_PREFIX_LENGTH:2}
       files-output-path: ${CLEA_BATCH_OUTPUT_PATH:/tmp/v1}

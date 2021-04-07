@@ -77,7 +77,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
 
     protected ExposedVisitEntity newExposedVisit(Visit visit, int slotIndex) {
         // TODO: visit.getPeriodStart returning an Instant
-        long periodStart = this.periodStartInstant(visit).toEpochMilli();
+        long periodStart = ((long)visit.getCompressedPeriodStartTime())*TimeUtils.NB_SECONDS_PER_HOUR;
         return ExposedVisitEntity.builder()
                 .locationTemporaryPublicId(visit.getLocationTemporaryPublicId())
                 .venueType(visit.getVenueType())
