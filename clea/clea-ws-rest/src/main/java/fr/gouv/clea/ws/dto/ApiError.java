@@ -14,5 +14,5 @@ public class ApiError {
     private int httpStatus;
     private Instant timestamp;
     private String message;
-    private Set<ApiSubError> subErrors;
+    private Set<ValidationError> validationErrors;
 }

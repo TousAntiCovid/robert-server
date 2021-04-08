@@ -18,15 +18,15 @@ public class CleaBadRequestException extends AbstractCleaException {
     private static final String EX_CODE = "clea-003";
     private static final String MESSAGE = "Invalid request";
 
-    private Set<ConstraintViolation<ReportRequest>> superViolations;
-    private Set<ConstraintViolation<Visit>> subViolations;
+    private Set<ConstraintViolation<ReportRequest>> reportRequestViolations;
+    private Set<ConstraintViolation<Visit>> visitViolations;
 
     public CleaBadRequestException(
-            Set<ConstraintViolation<ReportRequest>> superViolations,
-            Set<ConstraintViolation<Visit>> subViolations
+            Set<ConstraintViolation<ReportRequest>> reportRequestViolations,
+            Set<ConstraintViolation<Visit>> visitViolations
     ) {
         super(MESSAGE, EX_CODE);
-        this.superViolations = superViolations;
-        this.subViolations = subViolations;
+        this.reportRequestViolations = reportRequestViolations;
+        this.visitViolations = visitViolations;
     }
 }

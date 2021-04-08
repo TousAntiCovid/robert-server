@@ -113,12 +113,12 @@ class CleaControllerTest {
         assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
         assertThat(apiError.getTimestamp()).isBefore(Instant.now());
         assertThat(apiError.getMessage()).isEqualTo("Invalid request");
-        assertThat(apiError.getSubErrors().size()).isEqualTo(1);
-        assertThat(apiError.getSubErrors().stream().findFirst()).isPresent();
-        assertThat(apiError.getSubErrors().stream().findFirst().get().getObject()).isEqualTo("ReportRequest");
-        assertThat(apiError.getSubErrors().stream().findFirst().get().getField()).isEqualTo("pivotDateAsNtpTimestamp");
-        assertThat(apiError.getSubErrors().stream().findFirst().get().getRejectedValue()).isNull();
-        assertThat(apiError.getSubErrors().stream().findFirst().get().getMessage()).isEqualTo("must not be null");
+        assertThat(apiError.getValidationErrors().size()).isEqualTo(1);
+        assertThat(apiError.getValidationErrors().stream().findFirst()).isPresent();
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getObject()).isEqualTo("ReportRequest");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getField()).isEqualTo("pivotDateAsNtpTimestamp");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getRejectedValue()).isNull();
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getMessage()).isEqualTo("must not be null");
     }
 
     @Test
@@ -135,7 +135,7 @@ class CleaControllerTest {
         assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
         assertThat(apiError.getTimestamp()).isBefore(Instant.now());
         assertThat(apiError.getMessage()).isEqualTo("JSON parse error");
-        assertThat(apiError.getSubErrors()).isEmpty();
+        assertThat(apiError.getValidationErrors()).isEmpty();
     }
 
     @Test
@@ -149,7 +149,7 @@ class CleaControllerTest {
         assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
         assertThat(apiError.getTimestamp()).isBefore(Instant.now());
         assertThat(apiError.getMessage()).isEqualTo("Invalid request");
-        assertThat(apiError.getSubErrors().size()).isEqualTo(2);
+        assertThat(apiError.getValidationErrors().size()).isEqualTo(2);
     }
 
     @Test
@@ -163,7 +163,7 @@ class CleaControllerTest {
         assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
         assertThat(apiError.getTimestamp()).isBefore(Instant.now());
         assertThat(apiError.getMessage()).isEqualTo("Invalid request");
-        assertThat(apiError.getSubErrors().size()).isEqualTo(1);
+        assertThat(apiError.getValidationErrors().size()).isEqualTo(1);
     }
 
     @Test
@@ -248,11 +248,11 @@ class CleaControllerTest {
         assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
         assertThat(apiError.getTimestamp()).isBefore(Instant.now());
         assertThat(apiError.getMessage()).isEqualTo("JSON parse error");
-        assertThat(apiError.getSubErrors()).isEmpty();
+        assertThat(apiError.getValidationErrors()).isEmpty();
     }
 
     @Test
-    @DisplayName("when no visit is valid then reject everything")
+    @DisplayName("when no valid visit then reject everything")
     void noValidVisits() throws JsonProcessingException {
         ReportRequest reportRequest = new ReportRequest(List.of(new Visit(" ", 1L)), 2L);
         String json = objectMapper.writeValueAsString(reportRequest);
@@ -264,11 +264,11 @@ class CleaControllerTest {
         assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
         assertThat(apiError.getTimestamp()).isBefore(Instant.now());
         assertThat(apiError.getMessage()).isEqualTo("Invalid request");
-        assertThat(apiError.getSubErrors().size()).isEqualTo(1);
-        assertThat(apiError.getSubErrors().stream().findFirst()).isPresent();
-        assertThat(apiError.getSubErrors().stream().findFirst().get().getObject()).isEqualTo("Visit");
-        assertThat(apiError.getSubErrors().stream().findFirst().get().getField()).isEqualTo("qrCode");
-        assertThat(apiError.getSubErrors().stream().findFirst().get().getRejectedValue()).asString().isBlank();
-        assertThat(apiError.getSubErrors().stream().findFirst().get().getMessage()).isEqualTo("must not be blank");
+        assertThat(apiError.getValidationErrors().size()).isEqualTo(1);
+        assertThat(apiError.getValidationErrors().stream().findFirst()).isPresent();
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getObject()).isEqualTo("Visit");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getField()).isEqualTo("qrCode");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getRejectedValue()).asString().isBlank();
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getMessage()).isEqualTo("must not be blank");
     }
 }

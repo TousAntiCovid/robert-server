@@ -1,7 +1,7 @@
 package fr.gouv.clea.ws.exception;
 
 import fr.gouv.clea.ws.dto.ApiError;
-import fr.gouv.clea.ws.dto.ApiSubError;
+import fr.gouv.clea.ws.dto.ValidationError;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,18 +27,9 @@ public class CleaRestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(CleaBadRequestException.class)
     public ResponseEntity<ApiError> handleCleaBadRequestException(CleaBadRequestException ex, WebRequest webRequest) {
-        final ResponseStatus responseStatus = ex.getClass().getAnnotation(ResponseStatus.class);
-        final HttpStatus status = responseStatus == null ? HttpStatus.INTERNAL_SERVER_ERROR : responseStatus.value();
+        final HttpStatus status = getHttpStatus(ex);
         log.error(String.format(ERROR_MESSAGE_TEMPLATE, ex.getLocalizedMessage(), webRequest.getDescription(false)));
         return this.jsonResponseEntity(this.cleaBadRequestExceptionToApiError(ex, status));
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleAbstractCleaException(Exception ex, WebRequest webRequest) {
-        final ResponseStatus responseStatus = ex.getClass().getAnnotation(ResponseStatus.class);
-        final HttpStatus status = responseStatus == null ? HttpStatus.INTERNAL_SERVER_ERROR : responseStatus.value();
-        log.error(String.format(ERROR_MESSAGE_TEMPLATE, ex.getLocalizedMessage(), webRequest.getDescription(false)));
-        return this.jsonResponseEntity(this.exceptionToApiError(ex, status));
     }
 
     @Override
@@ -51,6 +42,18 @@ public class CleaRestExceptionHandler extends ResponseEntityExceptionHandler {
                 Set.of()
         );
         return new ResponseEntity<>(error, headers, status);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleOtherException(Exception ex, WebRequest webRequest) {
+        final HttpStatus status = getHttpStatus(ex);
+        log.error(String.format(ERROR_MESSAGE_TEMPLATE, ex.getLocalizedMessage(), webRequest.getDescription(false)));
+        return this.jsonResponseEntity(this.exceptionToApiError(ex, status));
+    }
+
+    private HttpStatus getHttpStatus(Exception ex) {
+        final ResponseStatus responseStatus = ex.getClass().getAnnotation(ResponseStatus.class);
+        return responseStatus == null ? HttpStatus.INTERNAL_SERVER_ERROR : responseStatus.value();
     }
 
     private ResponseEntity<ApiError> jsonResponseEntity(ApiError apiError) {
@@ -70,11 +73,11 @@ public class CleaRestExceptionHandler extends ResponseEntityExceptionHandler {
 
     private ApiError cleaBadRequestExceptionToApiError(CleaBadRequestException ex, HttpStatus status) {
         final String splitRegex = "\\.";
-        Set<ApiSubError> superErrors = ex.getSuperViolations().stream().map(
+        Set<ValidationError> superErrors = ex.getReportRequestViolations().stream().map(
                 it -> {
                     String[] objectSplits = it.getRootBeanClass().getName().split(splitRegex);
                     String[] fieldSplits = it.getPropertyPath().toString().split(splitRegex);
-                    return new ApiSubError(
+                    return new ValidationError(
                             objectSplits[objectSplits.length - 1],
                             fieldSplits[fieldSplits.length - 1],
                             it.getInvalidValue(),
@@ -82,11 +85,11 @@ public class CleaRestExceptionHandler extends ResponseEntityExceptionHandler {
                     );
                 }
         ).collect(Collectors.toSet());
-        Set<ApiSubError> subErrors = ex.getSubViolations().stream().map(
+        Set<ValidationError> subErrors = ex.getVisitViolations().stream().map(
                 it -> {
                     String[] objectSplits = it.getRootBeanClass().getName().split(splitRegex);
                     String[] fieldSplits = it.getPropertyPath().toString().split(splitRegex);
-                    return new ApiSubError(
+                    return new ValidationError(
                             objectSplits[objectSplits.length - 1],
                             fieldSplits[fieldSplits.length - 1],
                             it.getInvalidValue(),

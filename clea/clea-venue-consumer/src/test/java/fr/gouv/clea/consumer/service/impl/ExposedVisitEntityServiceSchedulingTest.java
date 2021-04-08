@@ -2,6 +2,7 @@ package fr.gouv.clea.consumer.service.impl;
 
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.inria.clea.lsp.utils.TimeUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,18 +40,18 @@ class ExposedVisitEntityServiceSchedulingTest {
     @Autowired
     private ScheduledTaskHolder scheduledTaskHolder;
 
-    private static ExposedVisitEntity createExposedVisit(Instant qrCodeScanTime) {
+    private static ExposedVisitEntity createExposedVisit(int timeSlot, long periodStart) {
         return new ExposedVisitEntity(
                 null, // handled by db
                 UUID.randomUUID(),
                 RandomUtils.nextInt(),
                 RandomUtils.nextInt(),
                 RandomUtils.nextInt(),
+                periodStart,
+                timeSlot,
                 RandomUtils.nextLong(),
-                RandomUtils.nextInt(),
                 RandomUtils.nextLong(),
-                RandomUtils.nextLong(),
-                qrCodeScanTime,
+                Instant.now(),
                 null, // handled by db
                 null // handled by db
         );
@@ -80,23 +81,42 @@ class ExposedVisitEntityServiceSchedulingTest {
     @DisplayName("check that croned job remove outdated exposed visits from DB")
     void deleteOutdatedExposedVisits() {
         Instant now = Instant.now();
-        Instant yesterday = now.minus(1, ChronoUnit.DAYS);
-        Instant _14DaysAgo = now.minus(14, ChronoUnit.DAYS);
-        Instant _15DaysAgo = now.minus(15, ChronoUnit.DAYS);
+
+        long _15DaysLater = TimeUtils.ntpTimestampFromInstant(now.plus(15, ChronoUnit.DAYS));
+        long _14DaysLater = TimeUtils.ntpTimestampFromInstant(now.plus(14, ChronoUnit.DAYS));
+        long _2DaysLater = TimeUtils.ntpTimestampFromInstant(now.plus(2, ChronoUnit.DAYS));
+        long yesterday = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
+        long _2DaysAgo = TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS));
+        long _14DaysAgo = TimeUtils.ntpTimestampFromInstant(now.minus(14, ChronoUnit.DAYS));
+        long _15DaysAgo = TimeUtils.ntpTimestampFromInstant(now.minus(15, ChronoUnit.DAYS));
+        long _16DaysAgo = TimeUtils.ntpTimestampFromInstant(now.minus(16, ChronoUnit.DAYS));
+
         repository.saveAll(
                 List.of(
-                        createExposedVisit(yesterday), // keep
-                        createExposedVisit(_14DaysAgo), // remove, will always be < now
-                        createExposedVisit(_15DaysAgo) // remove
+                        createExposedVisit(1, _15DaysLater), // keep
+                        createExposedVisit(2, _14DaysLater), // keep
+                        createExposedVisit(3, _2DaysLater), // keep
+                        createExposedVisit(4, yesterday), // keep
+                        createExposedVisit(5, _2DaysAgo), // keep
+                        createExposedVisit(0, _14DaysAgo), // keep, will only be purged if query condition is >=
+                        createExposedVisit(1, _14DaysAgo), // keep
+                        createExposedVisit(0, _15DaysAgo), // purge
+                        createExposedVisit(9, _16DaysAgo) // purge
                 )
         );
-        assertThat(repository.count()).isEqualTo(3);
+
+        assertThat(repository.count()).isEqualTo(9);
 
         await().atMost(30, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(repository.count()).isEqualTo(1));
+                .untilAsserted(() -> assertThat(repository.count()).isEqualTo(7));
 
-        assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(yesterday))).isTrue();
-        assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(_14DaysAgo))).isFalse();
-        assertThat(repository.findAll().stream().anyMatch(it -> it.getQrCodeScanTime().equals(_15DaysAgo))).isFalse();
+        assertThat(repository.findAll().stream().anyMatch(it -> it.getPeriodStart() == _15DaysLater)).isTrue();
+        assertThat(repository.findAll().stream().anyMatch(it -> it.getPeriodStart() == _14DaysLater)).isTrue();
+        assertThat(repository.findAll().stream().anyMatch(it -> it.getPeriodStart() == _2DaysLater)).isTrue();
+        assertThat(repository.findAll().stream().anyMatch(it -> it.getPeriodStart() == yesterday)).isTrue();
+        assertThat(repository.findAll().stream().anyMatch(it -> it.getPeriodStart() == _2DaysAgo)).isTrue();
+        assertThat(repository.findAll().stream().anyMatch(it -> it.getPeriodStart() == _14DaysAgo)).isTrue();
+        assertThat(repository.findAll().stream().anyMatch(it -> it.getPeriodStart() == _15DaysAgo)).isFalse();
+        assertThat(repository.findAll().stream().anyMatch(it -> it.getPeriodStart() == _16DaysAgo)).isFalse();
     }
 }

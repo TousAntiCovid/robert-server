@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class ApiSubError {
+public class ValidationError {
     private String object;
     private String field;
     private Object rejectedValue;

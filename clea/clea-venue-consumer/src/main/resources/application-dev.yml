@@ -3,6 +3,7 @@ clea:
     cleaClockDriftInSecs: 300
     driftBetweenDeviceAndOfficialTimeInSecs: 300
     retentionDurationInDays: 14
+    durationUnitInSeconds: 1800
     scheduling:
       purge:
         cron: "0 0 1 * * *"

@@ -3,6 +3,7 @@ package fr.gouv.clea.ws.controller;
 import fr.gouv.clea.ws.api.CleaWsRestAPI;
 import fr.gouv.clea.ws.dto.ReportResponse;
 import fr.gouv.clea.ws.exception.CleaBadRequestException;
+import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.utils.BadArgumentsLoggerService;
@@ -63,24 +64,27 @@ public class CleaController implements CleaWsRestAPI {
         String auth = webRequest.getHeader("Authorization");
         this.authorizationService.checkAuthorization(auth);
         ReportRequest filtered = this.filterReports(reportRequestVo, webRequest);
-        reportService.report(filtered);
-        String message = String.format("%s reports processed, %s rejected", filtered.getVisits().size(), reportRequestVo.getVisits().size() - filtered.getVisits().size());
+        List<DecodedVisit> reported = List.of();
+        if (!filtered.getVisits().isEmpty()) {
+            reported = reportService.report(filtered);
+        }
+        String message = String.format("%s reports processed, %s rejected", reported.size(), reportRequestVo.getVisits().size() - reported.size());
         log.info(message);
         return new ReportResponse(true, message);
     }
 
     private ReportRequest filterReports(ReportRequest report, WebRequest webRequest) {
-        Set<ConstraintViolation<ReportRequest>> superViolations = validator.validate(report);
-        if (!superViolations.isEmpty()) {
-            throw new CleaBadRequestException(superViolations, Set.of());
+        Set<ConstraintViolation<ReportRequest>> reportRequestViolations = validator.validate(report);
+        if (!reportRequestViolations.isEmpty()) {
+            throw new CleaBadRequestException(reportRequestViolations, Set.of());
         } else {
-            Set<ConstraintViolation<Visit>> subViolations = new HashSet<>();
+            Set<ConstraintViolation<Visit>> visitViolations = new HashSet<>();
             List<Visit> validVisits = report.getVisits().stream()
                     .filter(
                             visit -> {
-                                subViolations.addAll(validator.validate(visit));
-                                if (!subViolations.isEmpty()) {
-                                    this.badArgumentsLoggerService.logValidationErrorMessage(subViolations, webRequest);
+                                visitViolations.addAll(validator.validate(visit));
+                                if (!visitViolations.isEmpty()) {
+                                    this.badArgumentsLoggerService.logValidationErrorMessage(visitViolations, webRequest);
                                     return false;
                                 } else {
                                     return true;
@@ -88,12 +92,12 @@ public class CleaController implements CleaWsRestAPI {
                             }
                     ).collect(Collectors.toList());
             if (validVisits.isEmpty()) {
-                throw new CleaBadRequestException(Set.of(), subViolations);
+                throw new CleaBadRequestException(Set.of(), visitViolations);
             }
-            int totalSize = report.getVisits().size();
-            int filteredSize = totalSize - validVisits.size();
-            if (filteredSize > 0) {
-                log.warn(String.format(MALFORMED_VISIT_LOG_MESSAGE, filteredSize, totalSize));
+            int nbVisits = report.getVisits().size();
+            int nbFilteredVisits = nbVisits - validVisits.size();
+            if (nbFilteredVisits > 0) {
+                log.warn(String.format(MALFORMED_VISIT_LOG_MESSAGE, nbFilteredVisits, nbVisits));
             }
             return new ReportRequest(validVisits, report.getPivotDateAsNtpTimestamp());
         }
