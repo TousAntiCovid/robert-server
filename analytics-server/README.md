@@ -30,7 +30,7 @@ note : le fichier source du diagramme est fourni [ici](analytics.drawio)
 ## contrat d'interface
 
 le contrat d'interface du service rest exposé est disponible au format
-openapi [anaylics_openapi](src/main/doc/openid_analytics.yml)
+openapi [openapi-analytics.yaml](src/main/doc/openapi-analytics.yaml)
 
 ## Configuration Kafka SSL
 Ce chapitre explique comment configurer une connexion sécurisée SSL entre le producteur de message (notre application) et le server kafka.

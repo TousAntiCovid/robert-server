@@ -84,7 +84,7 @@ public class TimestampedEventCollectionValidatorTest {
     @Test
     public void shouldAcceptCollectionWithNullDescription() {
         final TimestampedEventVo timestampedEventVo = timestampedEventVoBuilder();
-        timestampedEventVo.setDescription(null);
+        timestampedEventVo.setDesc(null);
 
         final Collection<TimestampedEventVo> value = Arrays.asList(timestampedEventVo);
 
@@ -132,7 +132,7 @@ public class TimestampedEventCollectionValidatorTest {
     @Test
     public void shouldRejectCollectionWithDescriptionTooLong() {
         final TimestampedEventVo timestampedEventVo = timestampedEventVoBuilder();
-        timestampedEventVo.setDescription(RandomStringUtils.random(eventsValidationParameters.getMaxDescriptionLength() + 1));
+        timestampedEventVo.setDesc(RandomStringUtils.random(eventsValidationParameters.getMaxDescriptionLength() + 1));
 
         final Collection<TimestampedEventVo> value = Arrays.asList(timestampedEventVo);
 
@@ -151,7 +151,7 @@ public class TimestampedEventCollectionValidatorTest {
         return TimestampedEventVo.builder()
                 .name("valid name")
                 .timestamp(ZonedDateTime.now())
-                .description("some description")
+                .desc("some description")
                 .build();
     }
 }
