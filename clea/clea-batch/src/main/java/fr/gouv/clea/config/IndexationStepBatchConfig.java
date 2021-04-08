@@ -94,7 +94,7 @@ public class IndexationStepBatchConfig {
 
     @Bean
     public IndexationWriter indexationWriter() {
-        return new IndexationWriter(properties, prefixesStorageService);
+        return new IndexationWriter(properties);
     }
 
     @Bean

@@ -29,21 +29,13 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
 
     private Long jobId;
 
-    private final PrefixesStorageService prefixesStorageService;
-
     @BeforeStep
     public void retrieveInterStepData(final StepExecution stepExecution) {
         this.jobId = stepExecution.getJobExecutionId();
     }
 
-    @AfterStep
-    public void createClusterIndex(final StepExecution stepExecution) throws IOException {
-        generateClusterIndex(prefixesStorageService.getPrefixWithAssociatedLtidsMap().keySet());
-    }
-
-    public IndexationWriter(final BatchProperties config, final PrefixesStorageService prefixesStorageService) {
+    public IndexationWriter(final BatchProperties config) {
         this.outputPath = config.getFilesOutputPath();
-        this.prefixesStorageService = prefixesStorageService;
     }
 
     @Override
@@ -72,19 +64,4 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
         }
     }
 
-    private void generateClusterIndex(final Set<String> prefixes) throws IOException {
-
-        ClusterFileIndex clusterFileIndex = ClusterFileIndex.builder()
-                .iteration(jobId.intValue())
-                .prefixes(prefixes)
-                .build();
-
-        log.info("Generating cluster index : " + outputPath + File.separator + "clusterIndex.json");
-
-        Path jsonPath = Paths.get(outputPath + File.separator + "clusterIndex.json");
-        File jsonIndex = jsonPath.toFile();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        mapper.writeValue(jsonIndex, clusterFileIndex);
-    }
 }

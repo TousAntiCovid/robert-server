@@ -17,14 +17,14 @@ public class CleaBatchJobConfig {
     private JobBuilderFactory jobBuilderFactory;
 
     @Bean
-    public Job cleaBatchJob(Step clusterIdentification, Step clustersIndexation, Step prefixesComputing, Step emptyIntermediateDb) {
+    public Job cleaBatchJob(Step clusterIdentification, Step clustersIndexation, Step prefixesComputing, Step emptyIntermediateDb, Step clusterIndexGeneration) {
         return this.jobBuilderFactory.get("clea-batch-job")
                 .incrementer(new RunIdIncrementer())
                 .start(emptyIntermediateDb)
                 .next(clusterIdentification)
                 .next(prefixesComputing)
                 .next(clustersIndexation)
+                .next(clusterIndexGeneration)
                 .build();
     }
-
 }
