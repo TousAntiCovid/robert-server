@@ -6,7 +6,7 @@ import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
 import org.mapstruct.Mapper;
 
 @Mapper
-public interface SinglePlaceClusterPeriodMapper {
+public interface ClusterPeriodModelsMapper {
 
     SinglePlaceClusterPeriod map(SinglePlaceCluster cluster, ClusterPeriod period);
 

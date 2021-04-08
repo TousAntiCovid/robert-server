@@ -1,15 +1,11 @@
 package fr.gouv.clea.indexation;
 
-import fr.gouv.clea.prefixes.PrefixesStorageService;
+import fr.gouv.clea.service.PrefixesStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ExecutionContext;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static fr.gouv.clea.config.BatchConstants.LTIDS_PARAM;
+import java.util.*;
 
 @Slf4j
 public class IndexationPartitioner implements Partitioner {
@@ -32,16 +28,41 @@ public class IndexationPartitioner implements Partitioner {
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
 
+        log.info("Computing indexation partitions...");
         final Map<String, List<String>> map = prefixesStorageService.getPrefixWithAssociatedLtidsMap();
 
+        final Iterator<Map.Entry<String, List<String>>> mapIterator = map.entrySet().iterator();
         final Map<String, ExecutionContext> result = new HashMap<>();
 
-        for (Map.Entry<String, List<String>> stringListEntry : map.entrySet()) {
+        final int partitionSize = map.size()/gridSize;
+
+        for (int partitionsIndex=0; partitionsIndex< gridSize; partitionsIndex++) {
             final ExecutionContext value = new ExecutionContext();
-            value.put(LTIDS_PARAM, stringListEntry.getValue());
-            value.put("prefix", stringListEntry.getKey());
-            result.put("partition-" + stringListEntry.getKey(), value);
+            final List<String> prefixes = new ArrayList<>();
+            final List<List<String>> ltids = new ArrayList<>();
+            for (int partitionIndex = 0; partitionIndex < partitionSize; partitionIndex++) {
+                if (mapIterator.hasNext()) {
+                    final var nextItem = mapIterator.next();
+                    prefixes.add(nextItem.getKey());
+                    ltids.add(nextItem.getValue());
+                } else {
+                    break;
+                }
+                value.put("prefixes", prefixes);
+                value.put("ltids", ltids);
+            }
+            result.put("partition-"+partitionsIndex, value);
         }
+
+
+//
+//        for (Map.Entry<String, List<String>> stringListEntry : map.entrySet()) {
+//            final ExecutionContext value = new ExecutionContext();
+//            value.put(LTIDS_PARAM, stringListEntry.getValue());
+//            value.put("prefix", stringListEntry.getKey());
+//            result.put("partition-" + stringListEntry.getKey(), value);
+//        }
+        log.info("Partitions number: {}", result.size());
         return result;
     }
 }

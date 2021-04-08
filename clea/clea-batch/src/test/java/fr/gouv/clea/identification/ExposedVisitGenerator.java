@@ -47,7 +47,7 @@ public class ExposedVisitGenerator {
 		// hour of 21-01-01 : 3818448000
 		// diff: 7560000
 
-		final int NBLIEUX = 10000;
+		final int NBLIEUX = 132000;
 		final int batchSize = 10;
 
 		final Random r = new Random();

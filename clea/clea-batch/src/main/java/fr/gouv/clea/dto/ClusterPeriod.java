@@ -1,6 +1,5 @@
 package fr.gouv.clea.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.gouv.clea.entity.ExposedVisit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

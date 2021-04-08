@@ -18,3 +18,5 @@ CREATE TABLE cluster_periods
 
     PRIMARY KEY (id)
 );
+
+CREATE INDEX IF NOT EXISTS cluster_periods_ltid ON cluster_periods (ltid);

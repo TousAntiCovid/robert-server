@@ -4,7 +4,8 @@ spring:
     test-on-borrow: true
     validation-query: SELECT 1
     hikari:
-      connection-timeout: 120000
+      #FIXME: 3h20 for now - testing
+      connection-timeout: 12000000
   jpa:
     hibernate.ddl-auto: none
     database-platform: org.hibernate.dialect.PostgreSQL95Dialect # even with h2 database
@@ -27,5 +28,5 @@ clea:
       static-prefix-length: ${CLEA_BATCH_PREFIX_LENGTH:2}
       files-output-path: ${CLEA_BATCH_OUTPUT_PATH:/tmp/v1}
       #TODO: totally arbitrary values, find out actual plausible values
-      grid-size: ${CLEA_BATCH_CLUSTER_GRID_SIZE:4}
+      grid-size: ${CLEA_BATCH_CLUSTER_GRID_SIZE:6}
       chunk-size: ${CLEA_BATCH_CLUSTER_CHUNK_SIZE:1000}

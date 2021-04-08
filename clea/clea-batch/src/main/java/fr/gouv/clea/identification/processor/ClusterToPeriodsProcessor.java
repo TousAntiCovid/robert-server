@@ -2,9 +2,8 @@ package fr.gouv.clea.identification.processor;
 
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
-import fr.gouv.clea.mapper.SinglePlaceClusterPeriodMapper;
+import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 import java.util.List;
@@ -13,7 +12,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ClusterToPeriodsProcessor implements ItemProcessor<SinglePlaceCluster, List<SinglePlaceClusterPeriod>> {
 
-    private final SinglePlaceClusterPeriodMapper mapper;
+    private final ClusterPeriodModelsMapper mapper;
 
     @Override
     public List<SinglePlaceClusterPeriod> process(SinglePlaceCluster cluster) {

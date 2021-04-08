@@ -4,8 +4,8 @@ import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
 import fr.gouv.clea.identification.processor.ClusterToPeriodsProcessor;
-import fr.gouv.clea.mapper.SinglePlaceClusterPeriodMapper;
-import fr.gouv.clea.mapper.SinglePlaceClusterPeriodMapperImpl;
+import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
+import fr.gouv.clea.mapper.ClusterPeriodModelsMapperImpl;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @ExtendWith(MockitoExtension.class)
 class ClusterToPeriodsProcessorTest {
 
-    private final SinglePlaceClusterPeriodMapper mapper = new SinglePlaceClusterPeriodMapperImpl();
+    private final ClusterPeriodModelsMapper mapper = new ClusterPeriodModelsMapperImpl();
 
     private final ClusterToPeriodsProcessor processor = new ClusterToPeriodsProcessor(mapper);
 

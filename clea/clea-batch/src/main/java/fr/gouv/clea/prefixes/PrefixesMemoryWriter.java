@@ -2,6 +2,7 @@ package fr.gouv.clea.prefixes;
 
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.Prefix;
+import fr.gouv.clea.service.PrefixesStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.item.ItemWriter;
 

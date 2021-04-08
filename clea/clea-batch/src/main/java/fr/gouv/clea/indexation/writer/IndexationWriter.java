@@ -1,11 +1,11 @@
-package fr.gouv.clea.indexation.writers;
+package fr.gouv.clea.indexation.writer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.ClusterFile;
 import fr.gouv.clea.indexation.model.output.ClusterFileIndex;
-import fr.gouv.clea.prefixes.PrefixesStorageService;
+import fr.gouv.clea.service.PrefixesStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.AfterStep;
@@ -47,14 +47,13 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
     }
 
     @Override
-    public void write(List<? extends ClusterFile> items) throws Exception {
+    public void write(List<? extends ClusterFile> clusterFile) throws Exception {
 
         log.info("Creating directories : " + outputPath + File.separator + this.jobId + File.separator);
         Files.createDirectories(Paths.get(outputPath + File.separator + this.jobId + File.separator));
 
-        //generate cluster files
-        items.forEach(this::generateClusterFile);
 
+        clusterFile.forEach(this::generateClusterFile);
     }
 
     private void generateClusterFile(final ClusterFile clusterFile) {
