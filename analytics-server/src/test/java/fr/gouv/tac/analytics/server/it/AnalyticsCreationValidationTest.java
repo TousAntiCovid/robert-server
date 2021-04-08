@@ -292,7 +292,7 @@ public class AnalyticsCreationValidationTest {
     public void itShouldRejectAnalyticsWithEvenDescriptionTooLong() throws Exception {
 
         final AnalyticsVo analyticsVo = buildAnalyticsVo();
-        analyticsVo.getEvents().get(0).setDescription("Event description too long");
+        analyticsVo.getEvents().get(0).setDesc("Event description too long");
 
         final String analyticsAsJson = objectMapper.writeValueAsString(analyticsVo);
 
@@ -385,7 +385,7 @@ public class AnalyticsCreationValidationTest {
     public void itShouldRejectAnalyticsWithErrorDescriptionTooLong() throws Exception {
 
         final AnalyticsVo analyticsVo = buildAnalyticsVo();
-        analyticsVo.getErrors().get(0).setDescription("Error description too long");
+        analyticsVo.getErrors().get(0).setDesc("Error description too long");
 
         final String analyticsAsJson = objectMapper.writeValueAsString(analyticsVo);
 
@@ -407,11 +407,11 @@ public class AnalyticsCreationValidationTest {
 
         final ZonedDateTime timestamp = ZonedDateTime.parse("2020-12-17T10:59:17.123Z");
 
-        final TimestampedEventVo event1 = TimestampedEventVo.builder().name("eventName1").timestamp(timestamp).description("event1 description").build();
+        final TimestampedEventVo event1 = TimestampedEventVo.builder().name("eventName1").timestamp(timestamp).desc("event1 description").build();
         final TimestampedEventVo event2 = TimestampedEventVo.builder().name("eventName2").timestamp(timestamp).build();
 
         final TimestampedEventVo error1 = TimestampedEventVo.builder().name("errorName1").timestamp(timestamp).build();
-        final TimestampedEventVo error2 = TimestampedEventVo.builder().name("errorName2").timestamp(timestamp).description("error2 description").build();
+        final TimestampedEventVo error2 = TimestampedEventVo.builder().name("errorName2").timestamp(timestamp).desc("error2 description").build();
 
         return AnalyticsVo.builder()
                 .installationUuid("some installation uuid")

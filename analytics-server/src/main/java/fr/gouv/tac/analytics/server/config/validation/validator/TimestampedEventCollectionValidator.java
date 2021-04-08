@@ -65,7 +65,7 @@ public class TimestampedEventCollectionValidator implements ConstraintValidator<
 
     private boolean areDescriptionValidSizes(final Collection<TimestampedEventVo> value, final ConstraintValidatorContext context) {
         final int maxDescriptionLength = parameters.getMaxDescriptionLength();
-        final Optional<String> firstRejectedDescription = getFirstAttributeWithInvalidLength(value, TimestampedEventVo::getDescription, maxDescriptionLength);
+        final Optional<String> firstRejectedDescription = getFirstAttributeWithInvalidLength(value, TimestampedEventVo::getDesc, maxDescriptionLength);
 
         if (firstRejectedDescription.isPresent()) {
             contextConfigurer(context, DESCRIPTION_TOO_LONG_ERROR_MESSAGE, timestampedEventCollectionType, maxDescriptionLength, firstRejectedDescription.get().length());

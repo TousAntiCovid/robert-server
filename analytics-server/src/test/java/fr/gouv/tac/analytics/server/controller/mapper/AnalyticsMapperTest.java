@@ -113,7 +113,7 @@ public class AnalyticsMapperTest {
         final List<TimestampedEventVo> analyticsEvents = new ArrayList<>();
         final List<TimestampedEventVo> analyticsErrors = new ArrayList<>();
 
-        final TimestampedEventVo event = TimestampedEventVo.builder().name("userAcceptedNotificationsInOnboarding").timestamp(ZonedDateTime.now()).description("some description").build();
+        final TimestampedEventVo event = TimestampedEventVo.builder().name("userAcceptedNotificationsInOnboarding").timestamp(ZonedDateTime.now()).desc("some description").build();
         final TimestampedEventVo error = TimestampedEventVo.builder().name("ERR432").timestamp(ZonedDateTime.now()).build();
         analyticsEvents.add(event);
         analyticsErrors.add(error);
