@@ -6,7 +6,7 @@ spring:
     password: password
 
   batch:
-    # Manage it's batch metadata tables 
+    # Manage it's batch metadata tables
     initialize-schema: always
     cluster:
       output-path: /tmp/v1

@@ -13,6 +13,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -30,11 +31,15 @@ public class GenerateClusterIndexTasklet implements Tasklet {
     }
 
     @Override
-    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-        generateClusterIndex(chunkContext.getStepContext().getJobInstanceId(), prefixesStorageService.getPrefixWithAssociatedLtidsMap().keySet());
+    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws IOException {
+        final Long jobId = chunkContext.getStepContext().getJobInstanceId();
+
+        log.info("Creating directories if not exists: " + outputPath + File.separator + jobId + File.separator);
+        Files.createDirectories(Paths.get(outputPath + File.separator + jobId + File.separator));
+
+        generateClusterIndex(jobId, prefixesStorageService.getPrefixWithAssociatedLtidsMap().keySet());
         return RepeatStatus.FINISHED;
     }
-
 
     private void generateClusterIndex(final Long jobId, final Set<String> prefixes) throws IOException {
 

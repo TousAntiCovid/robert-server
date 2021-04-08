@@ -82,6 +82,7 @@ public class IndexationStepBatchConfig {
     @Bean
     @StepScope
     public ItemReader<Map.Entry<String, List<String>>> memoryMapItemReader(
+            //values provided through step execution context by prefixPartitioner
             @Value("#{stepExecutionContext['prefixes']}") List<String> prefixes,
             @Value("#{stepExecutionContext['ltids']}") List<List<String>> ltids) {
         return new StepExecutionContextReader(prefixes, ltids);

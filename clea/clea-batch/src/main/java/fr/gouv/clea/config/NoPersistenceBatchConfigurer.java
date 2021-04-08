@@ -26,7 +26,6 @@ public class NoPersistenceBatchConfigurer extends DefaultBatchConfigurer {
 		super.setDataSource(dataSource);
 	}
 	
-	
 	@Override
 	protected JobRepository createJobRepository() throws Exception {
 		JobRepositoryFactoryBean factory = new JobRepositoryFactoryBean();
@@ -37,12 +36,12 @@ public class NoPersistenceBatchConfigurer extends DefaultBatchConfigurer {
 		factory.setSerializer(new ExecutionContextSerializer() {
 			
 			@Override
-			public Map<String, Object> deserialize(InputStream inputStream) throws IOException {
+			public Map<String, Object> deserialize(InputStream inputStream) {
 				return null;
 			}
 			
 			@Override
-			public void serialize(Map<String, Object> object, OutputStream outputStream) throws IOException {
+			public void serialize(Map<String, Object> object, OutputStream outputStream) {
 				// Noop
 			}
 		});

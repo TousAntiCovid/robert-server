@@ -67,11 +67,6 @@ public class IdentificationStepBatchConfig {
                 .build();
     }
 
-
-    // =================
-    // Identification step reader
-    // =================
-
     @Bean
     public JdbcCursorItemReader<String> identificationStepReader() {
 
@@ -86,7 +81,6 @@ public class IdentificationStepBatchConfig {
     public ItemProcessor<String, SinglePlaceExposedVisits> exposedVisitBuilder() {
         return new SinglePlaceExposedVisitsBuilder(dataSource, new ExposedVisitRowMapper());
     }
-
 
     @Bean
     public ItemProcessor<SinglePlaceExposedVisits, SinglePlaceCluster> singleClusterPlaceBuilder() {

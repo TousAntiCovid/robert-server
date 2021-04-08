@@ -56,5 +56,4 @@ public class PrefixesStepBatchConfig {
         reader.setRowMapper((rs, i) -> rs.getString(1));
         return new ListItemReader(reader);
     }
-
 }

@@ -41,7 +41,7 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
     @Override
     public void write(List<? extends ClusterFile> clusterFile) throws Exception {
 
-        log.info("Creating directories : " + outputPath + File.separator + this.jobId + File.separator);
+        log.info("Creating directories if not exists: " + outputPath + File.separator + jobId + File.separator);
         Files.createDirectories(Paths.get(outputPath + File.separator + this.jobId + File.separator));
 
 
