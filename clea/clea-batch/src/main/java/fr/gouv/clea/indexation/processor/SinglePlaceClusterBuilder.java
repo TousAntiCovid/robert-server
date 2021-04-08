@@ -44,7 +44,7 @@ public class SinglePlaceClusterBuilder implements ItemProcessor<Map.Entry<String
         log.debug("Processing prefix {} files...", prefixLtidsEntry.getKey());
         
         ClusterFile clusterFile = new ClusterFile();
-        clusterFile.setName(Prefix.of(prefixLtidsEntry.getValue().get(0), properties.prefixLength));
+        clusterFile.setName(Prefix.of(prefixLtidsEntry.getValue().get(0), properties.getStaticPrefixLength()));
         
         prefixLtidsEntry.getValue().forEach(createClusterFile(clusterFile));
         return clusterFile;

@@ -47,7 +47,7 @@ public class IndexationStepBatchConfig {
 
     @Bean
     public Step clustersIndexation() {
-        return this.stepBuilderFactory.get("indexationMaster")
+        return this.stepBuilderFactory.get("clustersIndexation")
                 .partitioner("partitioner", prefixPartitioner())
                 .partitionHandler(partitionHandler())
                 .build();
@@ -71,9 +71,8 @@ public class IndexationStepBatchConfig {
 
     @Bean
     public Step partitionedClustersIndexation() {
-        return stepBuilderFactory.get("clustersIndexation")
-                //FIXME: set config for chunk size
-                .<Map.Entry<String, List<String>>, ClusterFile>chunk(1000)
+        return stepBuilderFactory.get("partitionedClustersIndexation")
+                .<Map.Entry<String, List<String>>, ClusterFile>chunk(properties.getChunkSize())
                 .reader(memoryMapItemReader(null, null))
                 .processor(singlePlaceClusterBuilder()) // build a Map of ClusterFile at once
                 .writer(indexationWriter()) // build Files and index

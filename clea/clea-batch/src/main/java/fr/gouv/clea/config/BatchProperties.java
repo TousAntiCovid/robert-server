@@ -1,30 +1,25 @@
 package fr.gouv.clea.config;
 
-import lombok.Getter;
-import lombok.ToString;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import lombok.*;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
+@Setter
 @ToString
-@Component
+@NoArgsConstructor
+@ConfigurationProperties(prefix = "clea.batch.cluster")
 public class BatchProperties {
 
     /**
      * Duration unit of a timeSlot
      */
-    @Value("${clea.batch.duration-unit-in-seconds}")
-    public int durationUnitInSeconds;
+    private int durationUnitInSeconds;
 
-    @Value("${clea.batch.cluster.files-output-path}")
-    public String clusterFilesOutputPath;
+    private String filesOutputPath;
 
-    @Value("${clea.batch.cluster.static-prefix-length}")
-    public int prefixLength;
+    private int staticPrefixLength;
 
-    @Value("${clea.batch.cluster.grid-size}")
     private int gridSize;
 
-    @Value("${clea.batch.cluster.chunk-size}")
     private int chunkSize;
 }

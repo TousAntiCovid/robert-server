@@ -17,7 +17,7 @@ public class PrefixesMemoryWriter implements ItemWriter<List<String>> {
     private final int prefixLength;
 
     public PrefixesMemoryWriter(BatchProperties config, PrefixesStorageService prefixesStorageService) {
-        this.prefixLength = config.getPrefixLength();
+        this.prefixLength = config.getStaticPrefixLength();
         this.prefixesStorageService = prefixesStorageService;
     }
 

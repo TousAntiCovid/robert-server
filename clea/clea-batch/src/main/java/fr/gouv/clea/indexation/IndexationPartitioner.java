@@ -34,9 +34,13 @@ public class IndexationPartitioner implements Partitioner {
         final Iterator<Map.Entry<String, List<String>>> mapIterator = map.entrySet().iterator();
         final Map<String, ExecutionContext> result = new HashMap<>();
 
-        final int partitionSize = map.size()/gridSize;
+        // At least 1 prefix per partition
+        final int partitionSize = Math.max(map.size()/gridSize, 1) ;
 
-        for (int partitionsIndex=0; partitionsIndex< gridSize; partitionsIndex++) {
+        // map.size() if less prefixes than parameterized gridSize, otherwise gridSize
+        final int partitionsTotalNumber = Math.min(map.size(), gridSize);
+
+        for (int partitionsIndex = 0; partitionsIndex< partitionsTotalNumber; partitionsIndex++) {
             final ExecutionContext value = new ExecutionContext();
             final List<String> prefixes = new ArrayList<>();
             final List<List<String>> ltids = new ArrayList<>();
@@ -53,16 +57,6 @@ public class IndexationPartitioner implements Partitioner {
             }
             result.put("partition-"+partitionsIndex, value);
         }
-
-
-//
-//        for (Map.Entry<String, List<String>> stringListEntry : map.entrySet()) {
-//            final ExecutionContext value = new ExecutionContext();
-//            value.put(LTIDS_PARAM, stringListEntry.getValue());
-//            value.put("prefix", stringListEntry.getKey());
-//            result.put("partition-" + stringListEntry.getKey(), value);
-//        }
-        log.info("Partitions number: {}", result.size());
         return result;
     }
 }

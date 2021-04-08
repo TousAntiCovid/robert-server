@@ -63,7 +63,7 @@ public class SinglePlaceExposedVisitsProcessor implements ItemProcessor<SinglePl
             cluster.addPeriod(forwardPeriod);
         }
 
-        cluster.computeDurations(properties.durationUnitInSeconds);
+        cluster.computeDurations(properties.getDurationUnitInSeconds());
 
         return cluster.isEmpty() ? null : cluster;
     }

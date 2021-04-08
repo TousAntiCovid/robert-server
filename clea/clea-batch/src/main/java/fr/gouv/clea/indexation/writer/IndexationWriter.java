@@ -42,7 +42,7 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
     }
 
     public IndexationWriter(final BatchProperties config, final PrefixesStorageService prefixesStorageService) {
-        this.outputPath = config.clusterFilesOutputPath;
+        this.outputPath = config.getFilesOutputPath();
         this.prefixesStorageService = prefixesStorageService;
     }
 
