@@ -37,7 +37,7 @@ public class ScannedQrCode {
     }
 
     public UUID getLocationTemporaryId() {
-        return locationTemporaryId.orElse(this.decodeLocationTemporaryId());
+        return locationTemporaryId.orElseGet(() -> this.decodeLocationTemporaryId());
     }
     
     private UUID decodeLocationTemporaryId() {
