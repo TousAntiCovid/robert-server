@@ -32,7 +32,6 @@ class VisitExpositionAggregatorServiceTest {
     @Autowired
     private IVisitExpositionAggregatorService service;
 
-
     private Instant todayAtMidnight;
     private Instant todayAt8am;
     private long todayAtMidnightAsNtp;
