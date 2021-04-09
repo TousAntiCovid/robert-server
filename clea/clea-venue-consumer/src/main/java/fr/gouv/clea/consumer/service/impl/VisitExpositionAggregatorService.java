@@ -43,10 +43,6 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(visit.getPeriodDuration(), (int) scanTimeSlot + exposureTime);
 
-        System.out.println(scanTimeSlot);
-        System.out.println(firstExposedSlot);
-        System.out.println(lastExposedSlot);
-
         List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), this.periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime()));
 
         List<ExposedVisitEntity> toUpdate = new ArrayList<>();
