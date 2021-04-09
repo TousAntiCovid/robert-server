@@ -59,7 +59,7 @@ public class CleaClientStepDefinitions implements En {
             visitor.sendReport();
         });
 
-        When("{string} declares himself/herself sick with a {string} PivotDate", (String visitorName, String pivotDate) -> {
+        When("{string} declares himself/herself sick with pivot date : {string}", (String visitorName, String pivotDate) -> {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             visitor.sendReport(TimeUtils.naturalLanguageDateStringToInstant(pivotDate));
         });

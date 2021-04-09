@@ -1,7 +1,6 @@
 Feature: Several healthy visitors visit different places
   Visits are simultaneous or not
   The healthy visitors must not be warned being at risk
-  The venues use a single QRCode for the whole day
 
   Background:
     Given "Hugo" registered on TAC
@@ -58,41 +57,3 @@ Feature: Several healthy visitors visit different places
     Given "Heather" recorded a visit to "La fontaine aux perles" at "19:47, 2 days ago" withQRCode "LunchService1"
     When "Heather" asks for exposure status
     Then Exposure status request for "Heather" should include only 2 visit(s) to "La fontaine aux perles" at "2 days ago"
-
-  Scenario: One sick and two persons at risk (same location and average RiskLevel)
-    Given "Hugo" recorded a visit to "Chez Gusto" at "15:30, 4 days ago" withQRCode "LunchService1"
-    Given "Henry" recorded a visit to "Chez Gusto" at "14:30, 4 days ago" withQRCode "LunchService1"
-    Given "Heather" recorded a visit to "Chez Gusto" at "13:30, 4 days ago" withQRCode "LunchService1"
-  
-    When "Heather" declares himself sick
-    When "Heather" trigger batch processing
-    When "Hugo" asks for exposure status
-    When "Henry" asks for exposure status
-
-    Then "Heather" sends his visits 
-    Then Exposure status should reports "Hugo" as being at risk
-    Then Exposure status should reports "Henry" as being at risk
-
-
-
-  Scenario: One sick and one person not at risk (different location)
-    Given "Henry" recorded a visit to "La fontaine aux perles" at "11:30, 4 days ago" withQRCode "LunchService1"
-    Given "Heather" recorded a visit to "Chez Gusto" at "13:30, 4 days ago" withQRCode "LunchService1"
-
-    When "Heather" declares himself sick
-    When "Heather" trigger batch processing
-    When "Henry" asks for exposure status
-
-    Then "Heather" sends his visits 
-    Then Exposure status should reports "Henry" as not being at risk
-
-  Scenario: One sick and one person not at risk (same location different visit date)
-    Given "Henry" recorded a visit to "La fontaine aux perles" at "11:30, 3 days ago" withQRCode "LunchService1"
-    Given "Heather" recorded a visit to "Chez Gusto" at "13:30, 4 days ago" withQRCode "LunchService1"
-
-    When "Heather" declares himself sick
-    When "Heather" trigger batch processing
-    When "Henry" asks for exposure status
-
-    Then "Heather" sends his visits 
-    Then Exposure status should reports "Henry" as not being at risk 
