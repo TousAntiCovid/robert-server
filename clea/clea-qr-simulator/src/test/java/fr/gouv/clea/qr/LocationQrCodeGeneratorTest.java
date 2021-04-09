@@ -9,9 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import fr.gouv.clea.qr.model.QRCode;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class LocationQrCodeGeneratorTest {
     
     private static final String manualContactTracingAuthorityPublicKey  = "04bd776a941090db1c90057401043babafc77164efedad1cbfbab2edec53c5afaff718a33e4cc8f2e9514b162dd4700e517ad341e80f47d49dc0b7e70b30ca4781";

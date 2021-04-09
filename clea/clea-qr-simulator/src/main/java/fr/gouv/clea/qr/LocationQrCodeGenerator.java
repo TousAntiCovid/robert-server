@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import fr.gouv.clea.qr.model.QRCode;
 import fr.inria.clea.lsp.Location;
@@ -52,72 +53,6 @@ public class LocationQrCodeGenerator {
         this.createPeriod(this.initialPeriodStartTime);
     }
 
-    public Instant getInitialPeriodStart() {
-        return this.initialPeriodStartTime;
-    }
-
-    /**
-     * get a valid QR code for the provided instant
-     * 
-     * @param instant : instant at which the returned QRCode should be valid
-     * @return a valid QRCode for the provided instant
-     * @throws CleaEncryptionException
-     */
-    public QRCode getQrCodeAt(Instant instant) throws CleaCryptoException {
-        Period period = this.findOrCreatePeriod(instant);
-        QRCode qr = this.findOrCreateQrCode(period, instant);
-        return qr;
-    }
-
-    private Period findOrCreatePeriod(Instant instant){
-        //find existing
-        for(Period period : generatedQRs.keySet()){
-            if(period.isInPeriod(instant)){
-                log.debug("Period already exists");
-                log.debug(instant + " is in "+ period.toString());
-                return period;
-            }
-        }
-        log.debug("Creating new period");
-        //Create new period
-        return this.createPeriod(instant);
-    }
-
-    private Period createPeriod(Instant instant){
-        // Assumption : All Periods are contiguous, rendering auto period-creation easier.
-        // This is not the real-world case. Could emulate how real-world will be done using a period duration such as periodDuration%24 == 0.
-        Instant periodStart = instant.minus(Duration.between(instant, this.initialPeriodStartTime).abs().getSeconds() % this.periodDuration.getSeconds(), ChronoUnit.SECONDS);
-        Period period = new Period(periodStart, periodDuration);
-        this.generatedQRs.put(period, new ArrayList<>());
-        log.debug("new period created.");
-        return period;
-    }
-
-    private QRCode findOrCreateQrCode(Period period, Instant instant) throws CleaCryptoException{
-        for(QRCode qr : this.generatedQRs.get(period)){
-            if(qr.isValidScanTime(instant)){
-                log.debug("found existing qr.");
-                return qr;
-            }
-        }
-        log.debug("creating new qr");
-        return this.createQrCode(period, instant);
-    }
-
-    private QRCode createQrCode(Period period, Instant instant) throws CleaCryptoException{
-        QRCode qr;
-        if (this.qrCodeRenewalInterval == 0) {
-            String deepLink = this.location.newDeepLink(period.getStartTime());
-            qr = new QRCode(deepLink, period.getStartTime(), this.qrCodeRenewalInterval);
-        } else {
-            Instant qrCodeValidityStartTime = instant.minus(Duration.between(instant, period.getStartTime()).abs().getSeconds() % this.qrCodeRenewalInterval, ChronoUnit.SECONDS);
-            String deepLink = this.location.newDeepLink(period.startTime, qrCodeValidityStartTime);
-            qr = new QRCode(deepLink, qrCodeValidityStartTime, this.qrCodeRenewalInterval);
-        }
-        this.generatedQRs.get(period).add(qr);
-        log.debug("new qr created : "+ qr.getQrCode());
-        return qr;
-    }
 
     private Location createLocation(LocationSpecificPart lsp, LocationContact contact,
             String manualContactTracingAuthorityPublicKey, String serverAuthorityPublicKey,
@@ -160,6 +95,77 @@ public class LocationQrCodeGenerator {
         return contact;
     }
 
+    public Instant getInitialPeriodStart() {
+        return this.initialPeriodStartTime;
+    }
+
+    /**
+     * get a valid QR code for the provided instant
+     * 
+     * @param instant : instant at which the returned QRCode should be valid
+     * @return a valid QRCode for the provided instant
+     * @throws CleaEncryptionException
+     */
+    public QRCode getQrCodeAt(Instant instant) throws CleaCryptoException {
+        Period period = this.findOrCreatePeriod(instant);
+        QRCode qr = this.findOrCreateQrCode(period, instant);
+        log.debug("QR Code At {} : {}", instant.toString(), qr.getQrCode());
+        return qr;
+    }
+
+    private Period findOrCreatePeriod(Instant instant){
+        return this.findExistingPeriod(instant).orElseGet(() -> this.createPeriod(instant));
+    }
+
+    private Optional<Period> findExistingPeriod(Instant instant){
+        log.debug("search existing period for {}", instant.toString());
+        for(Period period : this.generatedQRs.keySet()){
+            log.debug("is {} in {} ? {}", instant.toString(), period.toString(), period.isInPeriod(instant));
+            if(period.isInPeriod(instant))
+                return Optional.of(period);
+        }
+        return Optional.empty();
+    }
+
+    private Period createPeriod(Instant instant){
+        // Assumption : All Periods are contiguous, making auto period-creation easier.
+        // This is not the real-world case. Could emulate how real-world will be done using a period duration such as periodDuration%24 == 0.
+        Instant periodStart = instant.minus(Duration.between(instant, this.initialPeriodStartTime).abs().getSeconds() % this.periodDuration.getSeconds(), ChronoUnit.SECONDS);
+        Period period = new Period(periodStart, periodDuration);
+        this.generatedQRs.put(period, new ArrayList<>());
+        log.debug("new Period created");
+        return period;
+    }
+
+
+    private QRCode findOrCreateQrCode(Period period, Instant instant) throws CleaCryptoException{
+        Optional<QRCode> existingQr = this.findExistingQrCode(period, instant);
+        return existingQr.isPresent() ? existingQr.get() : this.createQrCode(period, instant);
+    }
+
+    private Optional<QRCode> findExistingQrCode(Period period, Instant instant){
+        for(QRCode qr : this.generatedQRs.get(period)){
+            if(qr.isValidScanTime(instant)){
+                return Optional.of(qr);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private QRCode createQrCode(Period period, Instant instant) throws CleaCryptoException{
+        QRCode qr;
+        if (this.qrCodeRenewalInterval == 0) {
+            String deepLink = this.location.newDeepLink(period.getStartTime());
+            qr = new QRCode(deepLink, period.getStartTime(), this.qrCodeRenewalInterval);
+        } else {
+            Instant qrCodeValidityStartTime = instant.minus(Duration.between(instant, period.getStartTime()).abs().getSeconds() % this.qrCodeRenewalInterval, ChronoUnit.SECONDS);
+            String deepLink = this.location.newDeepLink(period.startTime, qrCodeValidityStartTime);
+            qr = new QRCode(deepLink, qrCodeValidityStartTime, this.qrCodeRenewalInterval);
+        }
+        this.generatedQRs.get(period).add(qr);
+        log.debug("new QR created");
+        return qr;
+    }
     public static class InvalidInstantException extends IllegalArgumentException {
         private static final long serialVersionUID = 1L;
     
