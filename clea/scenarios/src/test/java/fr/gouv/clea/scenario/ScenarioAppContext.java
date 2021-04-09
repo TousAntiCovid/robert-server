@@ -1,19 +1,21 @@
 package fr.gouv.clea.scenario;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.UUID;
+
+import org.bouncycastle.util.encoders.Hex;
+
 import fr.gouv.clea.client.service.CleaClient;
 import fr.gouv.clea.qr.LocationQrCodeGenerator;
 import fr.inria.clea.lsp.CleaEciesEncoder;
 import fr.inria.clea.lsp.exception.CleaCryptoException;
-import fr.inria.clea.lsp.exception.CleaEncryptionException;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 public class ScenarioAppContext {
@@ -27,24 +29,35 @@ public class ScenarioAppContext {
     public ScenarioAppContext() throws Exception {
         visitors = new HashMap<String, CleaClient>(10);
         locations = new HashMap<String, LocationQrCodeGenerator>(10);
+        this.initializeKeys();
+        venueTypes = new HashMap<String, Integer>(Map.of("restaurant", 1));
+        venueCategories = new HashMap<String, Integer>(Map.of("NUMBER_1", 1));
+    }
+
+    public void initializeKeys() throws Exception {
+        Properties properties = new Properties();
+        properties.load(ScenarioAppContext.class.getClassLoader().getResourceAsStream("application.properties"));
+        this.serverAuthorityPublicKey = properties.getProperty("serverAuthorityPublicKey");
+        this.manualContactTracingAuthorityPublicKey = properties.getProperty("manualContactTracingAuthorityPublicKey");
+        if (Objects.isNull(this.serverAuthorityPublicKey) || this.serverAuthorityPublicKey.isBlank()) {
         this.generateKeys();
-        venueTypes = new HashMap<String, Integer> (
-                Map.of("restaurant", 1));
-        venueCategories = new HashMap<String, Integer> (
-                Map.of("NUMBER_1", 1));
+        } else {
+            log.info("Server Authority Public Key : " + this.serverAuthorityPublicKey);
+            log.info("Manual Contact Tracing Authority Public Key : " + this.manualContactTracingAuthorityPublicKey);
+    }
     }
 
     public void generateKeys() throws Exception {
         CleaEciesEncoder cleaEciesEncoder = new CleaEciesEncoder();
         String[] serverAuthorityKeyPair = cleaEciesEncoder.genKeysPair(true);
-        this.serverAuthorityPublicKey = "0280ea16894c9f3b363693666fa88282b25971984f7a4f88e7697fa213e4caff0b";
-        System.out.println("Server Authority Private Key: " + serverAuthorityKeyPair[0]);
-        System.out.println("Server Authority Public Key : " + this.serverAuthorityPublicKey);
+        this.serverAuthorityPublicKey = serverAuthorityKeyPair[1];
+        log.info("Server Authority Private Key: " + serverAuthorityKeyPair[0]);
+        log.info("Server Authority Public Key : " + this.serverAuthorityPublicKey);
 
         String[] manualContactTracingAuthorityKeyPair = cleaEciesEncoder.genKeysPair(true);
-        this.manualContactTracingAuthorityPublicKey = "0280ea16894c9f3b363693666fa88282b25971984f7a4f88e7697fa213e4caff0b";
-        System.out.println("Server Authority Private Key: " + serverAuthorityKeyPair[0]);
-        System.out.println("Server Authority Public Key : " + this.manualContactTracingAuthorityPublicKey);
+        this.manualContactTracingAuthorityPublicKey = manualContactTracingAuthorityKeyPair[1];
+        log.info("Manual Contact Tracing Authority Private Key: " + serverAuthorityKeyPair[0]);
+        log.info("Manual Contact Tracing Authority Public Key : " + this.manualContactTracingAuthorityPublicKey);
     }
 
     public CleaClient getOrCreateVisitor(String name) {
@@ -56,11 +69,11 @@ public class ScenarioAppContext {
         return new CleaClient(name);
     }
 
-    private LocationQrCodeGenerator createLocation(String locationName, Instant periodStartTime,
-    String venueType, String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaCryptoException{
+    private LocationQrCodeGenerator createLocation(String locationName, Instant periodStartTime, String venueType,
+            String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaCryptoException {
         log.info("Creating location " + locationName);
         long qrCodeRenewalIntervalLong = qrCodeRenewalInterval.getSeconds();
-        int qrCodeRenewalIntervalExponentCompact = (int)(Math.log(qrCodeRenewalIntervalLong)/Math.log(2));
+        int qrCodeRenewalIntervalExponentCompact = (int) (Math.log(qrCodeRenewalIntervalLong) / Math.log(2));
 
         final String permanentLocationSecretKey = Hex.toHexString(UUID.randomUUID().toString().getBytes());
         LocationQrCodeGenerator location = LocationQrCodeGenerator.builder()
@@ -79,18 +92,18 @@ public class ScenarioAppContext {
         return location;
     }
 
-    public LocationQrCodeGenerator getOrCreateLocation(String locationName, Instant periodStartTime,
-            String venueType, String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaCryptoException {
-        return locations.containsKey(locationName) ?
-                locations.get(locationName) :
-                this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCapacity, qrCodeRenewalInterval);
+    public LocationQrCodeGenerator getOrCreateLocation(String locationName, Instant periodStartTime, String venueType,
+            String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaCryptoException {
+        return locations.containsKey(locationName) ? locations.get(locationName)
+                : this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCapacity,
+                        qrCodeRenewalInterval);
     }
 
-    public LocationQrCodeGenerator getLocation(String locationName){
+    public LocationQrCodeGenerator getLocation(String locationName) {
         return locations.get(locationName);
     }
 
-    public CleaClient getVisitor(String visitorName){
+    public CleaClient getVisitor(String visitorName) {
         return visitors.get(visitorName);
     }
 }
