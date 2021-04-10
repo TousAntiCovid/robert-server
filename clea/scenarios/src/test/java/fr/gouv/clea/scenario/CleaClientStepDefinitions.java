@@ -37,7 +37,7 @@ public class CleaClientStepDefinitions implements En {
             this.scenarioAppContext.getOrCreateVisitor(visitorName).scanQrCode(qr.getQrCode(), qrCodeScanTimeInstant);
         });
         When("^\"([^\"]*)\" asks for exposure status$", (String visitorName) -> {
-            // TODO
+            this.scenarioAppContext.getOrCreateVisitor(visitorName).triggerNewClusterIdenfication();
         });
         Then("^Exposure status should reports \"([^\"]*)\" as not being at risk$", (String visitorName) -> {
             float riskLevel = this.scenarioAppContext.getOrCreateVisitor(visitorName).getStatus();

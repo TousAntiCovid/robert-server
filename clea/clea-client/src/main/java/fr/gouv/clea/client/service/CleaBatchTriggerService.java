@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import fr.gouv.clea.client.utils.HttpClientWrapper;
@@ -59,8 +60,13 @@ public class CleaBatchTriggerService {
         Process process = builder.start();
         StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), log::debug);
         Executors.newSingleThreadExecutor().submit(streamGobbler);
-        int exitCode = process.waitFor();
-        assert exitCode == 0;
+        boolean hasExited = process.waitFor(2, TimeUnit.SECONDS);
+        if (!hasExited) {
+            throw new RuntimeException("Cluster detection trigger timeout (ssh)");
+    }
+        if (process.exitValue() != 0) {
+            throw new RuntimeException("Cluster detection trigger failed (ssh)");
+        }
     }
 
     protected String getHost() {
