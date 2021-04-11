@@ -106,4 +106,9 @@ public class ScenarioAppContext {
     public CleaClient getVisitor(String visitorName) {
         return visitors.get(visitorName);
     }
+
+    public void triggerNewClusterIdenfication() throws IOException, InterruptedException {
+        CleaClient client = visitors.values().stream().findAny().orElse(new CleaClient(""));
+        client.triggerNewClusterIdenfication();
+}
 }

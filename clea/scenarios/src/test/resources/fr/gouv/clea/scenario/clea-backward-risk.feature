@@ -18,8 +18,8 @@ Feature: One Healthy visitor meets two sick visitor
     When "Heather" declares himself sick with pivot date : "2 days ago"
     When "Henry" declares himself sick with pivot date : "2 days ago"
     When "Laure" declares herself sick with pivot date : "2 days ago"
-    When "Laure" trigger batch processing 
-    When "Hugo" asks for exposure status
+    When "Laure" trigger batch processing
+    When Cluster detection triggered
 
     Then "Heather" sends his visits
     Then "Henry" sends his visits 

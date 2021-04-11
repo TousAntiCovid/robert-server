@@ -21,8 +21,7 @@
   
     When "Heather" declares himself sick
     When "Heather" trigger batch processing
-    When "Hugo" asks for exposure status
-    When "Henry" asks for exposure status
+    When Cluster detection triggered
 
     Then "Heather" sends his visits 
     Then Exposure status should reports "Hugo" as being at risk

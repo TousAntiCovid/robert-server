@@ -36,8 +36,8 @@ public class CleaClientStepDefinitions implements En {
             QRCode qr = location.getQrCodeAt(TimeUtils.naturalLanguageDateStringToInstant(qrCodeScanTime));
             this.scenarioAppContext.getOrCreateVisitor(visitorName).scanQrCode(qr.getQrCode(), qrCodeScanTimeInstant);
         });
-        When("^\"([^\"]*)\" asks for exposure status$", (String visitorName) -> {
-            this.scenarioAppContext.getOrCreateVisitor(visitorName).triggerNewClusterIdenfication();
+        When("^Cluster detection triggered$", () -> {
+            this.scenarioAppContext.triggerNewClusterIdenfication();
         });
         Then("^Exposure status should reports \"([^\"]*)\" as not being at risk$", (String visitorName) -> {
             float riskLevel = this.scenarioAppContext.getOrCreateVisitor(visitorName).getStatus();
@@ -78,7 +78,7 @@ public class CleaClientStepDefinitions implements En {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             assertThat(visitor.getLastReportSuccess()).isTrue();
         });
-        
+
     }
 
     protected String toFirstLetterUpperCase(String string) {
