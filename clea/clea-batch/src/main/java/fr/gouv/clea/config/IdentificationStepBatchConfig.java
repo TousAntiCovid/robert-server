@@ -59,7 +59,7 @@ public class IdentificationStepBatchConfig {
         final SynchronizedItemStreamReader<String> reader = new SynchronizedItemStreamReader<>();
         reader.setDelegate(identificationStepReader());
         return stepBuilderFactory.get("clusterIdentification")
-                .<String, List<SinglePlaceClusterPeriod>>chunk(1000)
+                .<String, List<SinglePlaceClusterPeriod>>chunk(properties.getIdentificationStepChunkSize())
                 .reader(reader)
                 .processor(compositeProcessor)
                 .writer(new SinglePlaceClusterPeriodListWriter(dataSource))

@@ -1,6 +1,9 @@
 package fr.gouv.clea.config;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
@@ -21,5 +24,7 @@ public class BatchProperties {
 
     private int gridSize;
 
-    private int chunkSize;
+    private int identificationStepChunkSize;
+
+    private int indexationStepChunkSize;
 }

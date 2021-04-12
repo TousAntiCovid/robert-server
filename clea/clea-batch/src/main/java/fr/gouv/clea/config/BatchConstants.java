@@ -20,4 +20,6 @@ public class BatchConstants {
     public static final String CLUSTER_START_COL = "cluster_start";
     public static final String CLUSTER_DURATION_COL = "cluster_duration_in_seconds";
     public static final String RISK_LEVEL_COL = "risk_level";
+    public static final String CLUSTER_INDEX_FILENAME = "clusterIndex.json";
+    public static final String JSON_FILE_EXTENSION = ".json";
 }

@@ -38,28 +38,28 @@ class SinglePlaceExposedVisitsBuilderTest {
         final UUID ltidUUID = UUID.fromString(ltid);
 
         final int venueType = 2;
-        final int vCat1 = 1;
-        final int vCat2 = 2;
-        // only v1 is detailed because only this one's information are queried to build SinglePlaceExposedVisits
-        final ExposedVisit v1 = ExposedVisit.builder()
+        final int venueCat1 = 1;
+        final int venueCat2 = 2;
+        // only visit1 is detailed because only this one's information are queried to build SinglePlaceExposedVisits
+        final ExposedVisit visit1 = ExposedVisit.builder()
                 .locationTemporaryPublicId(ltidUUID)
                 .venueType(venueType)
-                .venueCategory1(vCat1)
-                .venueCategory2(vCat2)
+                .venueCategory1(venueCat1)
+                .venueCategory2(venueCat2)
                 .build();
-        final ExposedVisit v2 = new ExposedVisit();
+        final ExposedVisit visit2 = new ExposedVisit();
 
         final String sql = "select * from " + EXPOSED_VISITS_TABLE
                 + " WHERE ltid= ? ORDER BY " + PERIOD_COLUMN + ", " + TIMESLOT_COLUMN;
-        when(jdbcTemplate.query(sql, rowMapper, ltidUUID)).thenReturn(List.of(v1, v2));
+        when(jdbcTemplate.query(sql, rowMapper, ltidUUID)).thenReturn(List.of(visit1, visit2));
 
         final SinglePlaceExposedVisits processResult = builder.process(ltid);
 
         assertThat(processResult).isNotNull();
         assertThat(processResult.getLocationTemporaryPublicId()).isEqualTo(ltidUUID);
-        assertThat(processResult.getVenueCategory1()).isEqualTo(vCat1);
-        assertThat(processResult.getVenueCategory2()).isEqualTo(vCat2);
-        assertThat(processResult.getVisits()).containsExactly(v1, v2);
+        assertThat(processResult.getVenueCategory1()).isEqualTo(venueCat1);
+        assertThat(processResult.getVenueCategory2()).isEqualTo(venueCat2);
+        assertThat(processResult.getVisits()).containsExactly(visit1, visit2);
         assertThat(processResult.getVenueType()).isEqualTo(venueType);
     }
 

@@ -29,34 +29,41 @@ public class IndexationPartitioner implements Partitioner {
     public Map<String, ExecutionContext> partition(int gridSize) {
 
         log.info("Computing indexation partitions...");
-        final Map<String, List<String>> map = prefixesStorageService.getPrefixWithAssociatedLtidsMap();
+        final Map<String, List<String>> prefixLtidsMap = prefixesStorageService.getPrefixWithAssociatedLtidsMap();
 
-        final Iterator<Map.Entry<String, List<String>>> mapIterator = map.entrySet().iterator();
+        final Iterator<Map.Entry<String, List<String>>> prefixLtidsMapIterator = prefixLtidsMap.entrySet().iterator();
         final Map<String, ExecutionContext> result = new HashMap<>();
 
         // At least 1 prefix per partition
-        final int partitionSize = Math.max(map.size()/gridSize, 1) ;
+        final int partitionSize = Math.max(prefixLtidsMap.size()/gridSize, 1) ;
 
-        // map.size() if less prefixes than parameterized gridSize, otherwise gridSize
-        final int partitionsTotalNumber = Math.min(map.size(), gridSize);
+        // prefixLtidsMap.size() if less prefixes than parameterized gridSize, otherwise gridSize
+        final int partitionsTotalNumber = Math.min(prefixLtidsMap.size(), gridSize);
 
+        // Build partitions execution contexts by splitting map into X equal parts, X being partitionsTotalNumber
         for (int partitionsIndex = 0; partitionsIndex< partitionsTotalNumber; partitionsIndex++) {
-            final ExecutionContext value = new ExecutionContext();
-            final List<String> prefixes = new ArrayList<>();
-            final List<List<String>> ltids = new ArrayList<>();
-            for (int partitionIndex = 0; partitionIndex < partitionSize; partitionIndex++) {
-                if (mapIterator.hasNext()) {
-                    final var nextItem = mapIterator.next();
-                    prefixes.add(nextItem.getKey());
-                    ltids.add(nextItem.getValue());
-                } else {
-                    break;
-                }
-                value.put("prefixes", prefixes);
-                value.put("ltids", ltids);
-            }
+            final ExecutionContext value = createPartitionExecutionContext(prefixLtidsMapIterator, partitionSize);
             result.put("partition-"+partitionsIndex, value);
         }
+        log.debug("{} partitions created", result.size());
         return result;
+    }
+
+    private ExecutionContext createPartitionExecutionContext(Iterator<Map.Entry<String, List<String>>> prefixesLtidsMapIterator, int partitionSize) {
+        final ExecutionContext value = new ExecutionContext();
+        final List<String> prefixes = new ArrayList<>();
+        final List<List<String>> ltids = new ArrayList<>();
+        for (int partitionIndex = 0; partitionIndex < partitionSize; partitionIndex++) {
+            if (prefixesLtidsMapIterator.hasNext()) {
+                final var nextItem = prefixesLtidsMapIterator.next();
+                prefixes.add(nextItem.getKey());
+                ltids.add(nextItem.getValue());
+            } else {
+                break;
+            }
+            value.put("prefixes", prefixes);
+            value.put("ltids", ltids);
+        }
+        return value;
     }
 }

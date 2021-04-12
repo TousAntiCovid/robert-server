@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
+import static fr.gouv.clea.config.BatchConstants.CLUSTER_INDEX_FILENAME;
+
 @Slf4j
 public class GenerateClusterIndexTasklet implements Tasklet {
 
@@ -25,9 +27,12 @@ public class GenerateClusterIndexTasklet implements Tasklet {
 
     private final String outputPath;
 
-    public GenerateClusterIndexTasklet(final BatchProperties batchProperties, PrefixesStorageService prefixesStorageService) {
+    private final ObjectMapper objectMapper;
+
+    public GenerateClusterIndexTasklet(final BatchProperties batchProperties, PrefixesStorageService prefixesStorageService, ObjectMapper objectMapper) {
         this.outputPath = batchProperties.getFilesOutputPath();
         this.prefixesStorageService = prefixesStorageService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -48,12 +53,11 @@ public class GenerateClusterIndexTasklet implements Tasklet {
                 .prefixes(prefixes)
                 .build();
 
-        log.info("Generating cluster index : " + outputPath + File.separator + "clusterIndex.json");
+        log.info("Generating cluster index : " + outputPath + File.separator + CLUSTER_INDEX_FILENAME);
 
-        Path jsonPath = Paths.get(outputPath + File.separator + "clusterIndex.json");
+        Path jsonPath = Paths.get(outputPath + File.separator + CLUSTER_INDEX_FILENAME);
         File jsonIndex = jsonPath.toFile();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        mapper.writeValue(jsonIndex, clusterFileIndex);
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        objectMapper.writeValue(jsonIndex, clusterFileIndex);
     }
 }

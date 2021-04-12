@@ -6,7 +6,6 @@ import fr.gouv.clea.service.PrefixesStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.item.ItemWriter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -16,17 +15,17 @@ public class PrefixesMemoryWriter implements ItemWriter<List<String>> {
 
     private final int prefixLength;
 
-    public PrefixesMemoryWriter(BatchProperties config, PrefixesStorageService prefixesStorageService) {
+    public PrefixesMemoryWriter(final BatchProperties config, final PrefixesStorageService prefixesStorageService) {
         this.prefixLength = config.getStaticPrefixLength();
         this.prefixesStorageService = prefixesStorageService;
     }
 
     @Override
-    public void write(List<? extends List<String>> ltids) {
+    public void write(final List<? extends List<String>> ltids) {
         ltids.get(0).forEach(ltid -> {
             final String prefix = Prefix.of(ltid, prefixLength);
-            prefixesStorageService.getPrefixWithAssociatedLtidsMap().computeIfAbsent(prefix, p -> new ArrayList<>());
-            prefixesStorageService.getPrefixWithAssociatedLtidsMap().get(prefix).add(ltid);
+            prefixesStorageService.addPrefixIfAbsent(prefix);
+            prefixesStorageService.addLtidToPrefix(prefix, ltid);
         });
     }
 }

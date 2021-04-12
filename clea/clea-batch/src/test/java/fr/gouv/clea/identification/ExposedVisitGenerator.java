@@ -2,6 +2,7 @@ package fr.gouv.clea.identification;
 
 import fr.gouv.clea.entity.ExposedVisit;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,12 +43,13 @@ public class ExposedVisitGenerator {
 //	}
 
 	@Test
+	@Disabled("for local development purpose")
 	public void fillRandomVisits() {
 		// hour of now : 3826008000
 		// hour of 21-01-01 : 3818448000
 		// diff: 7560000
 
-		final int NBLIEUX = 5000;
+		final int NB_LOCATIONS = 5000;
 		final int batchSize = 10;
 
 		final Random r = new Random();
@@ -58,7 +60,7 @@ public class ExposedVisitGenerator {
 		
 		log.info("Starting to fill EXPOSED_VISITS...");
 		
-		for (int l = 0; l < NBLIEUX; l++) {
+		for (int l = 0; l < NB_LOCATIONS; l++) {
 			UUID lieu = UUID.randomUUID();
 			int venueType = r.nextInt(18)+1; 		// 1 to 18
 			int venueCategory1 = r.nextInt(4) + 1;  // 1 to 4

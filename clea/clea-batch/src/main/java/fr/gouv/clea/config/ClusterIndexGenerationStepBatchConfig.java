@@ -1,5 +1,6 @@
 package fr.gouv.clea.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.clea.indexation.index.GenerateClusterIndexTasklet;
 import fr.gouv.clea.service.PrefixesStorageService;
 import org.springframework.batch.core.Step;
@@ -22,14 +23,14 @@ public class ClusterIndexGenerationStepBatchConfig {
     private BatchProperties batchProperties;
 
     @Bean
-    public Step clusterIndexGeneration() {
+    public Step clusterIndexGeneration(final ObjectMapper objectMapper) {
         return stepBuilderFactory.get("clusterIndexGeneration")
-                .tasklet(generateClusterIndex())
+                .tasklet(generateClusterIndex(objectMapper))
                 .build();
     }
 
     @Bean
-    public Tasklet generateClusterIndex() {
-        return new GenerateClusterIndexTasklet(batchProperties, prefixesStorageService);
+    public Tasklet generateClusterIndex(final ObjectMapper objectMapper) {
+        return new GenerateClusterIndexTasklet(batchProperties, prefixesStorageService, objectMapper);
     }
 }

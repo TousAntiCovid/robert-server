@@ -41,16 +41,16 @@ public class SinglePlaceExposedVisitsBuilder implements ItemProcessor<String, Si
         final List<ExposedVisit> list = jdbcTemplate.query("select * from " + EXPOSED_VISITS_TABLE
                         + " WHERE ltid= ? ORDER BY " + PERIOD_COLUMN + ", " + TIMESLOT_COLUMN,
                 rowMapper, UUID.fromString(ltid));
-        ExposedVisit v = list.stream().findFirst().orElse(null);
-        if (null != v) {
-            long ln = counter.incrementAndGet();
-            if (0 == ln % 1000) {
-                log.info("Loaded {} visits, current LTId={} ", ln, ltid);
+        ExposedVisit firstExposedVisit = list.stream().findFirst().orElse(null);
+        if (null != firstExposedVisit) {
+            long loadedVisitsCount = counter.incrementAndGet();
+            if (0 == loadedVisitsCount % 1000) {
+                log.info("Loaded {} visits, current LTId={} ", loadedVisitsCount, ltid);
             }
             return SinglePlaceExposedVisits.builder()
-                    .locationTemporaryPublicId(v.getLocationTemporaryPublicId())
-                    .venueType(v.getVenueType()).venueCategory1(v.getVenueCategory1())
-                    .venueCategory2(v.getVenueCategory2()).visits(list).build();
+                    .locationTemporaryPublicId(firstExposedVisit.getLocationTemporaryPublicId())
+                    .venueType(firstExposedVisit.getVenueType()).venueCategory1(firstExposedVisit.getVenueCategory1())
+                    .venueCategory2(firstExposedVisit.getVenueCategory2()).visits(list).build();
         }
         return null;
     }

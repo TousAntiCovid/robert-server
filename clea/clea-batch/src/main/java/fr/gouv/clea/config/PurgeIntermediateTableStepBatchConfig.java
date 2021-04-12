@@ -15,25 +15,21 @@ import javax.sql.DataSource;
 import static fr.gouv.clea.config.BatchConstants.SINGLE_PLACE_CLUSTER_PERIOD_TABLE;
 
 @Configuration
-public class EmptyIntermediateDbStepBatchConfig {
+public class PurgeIntermediateTableStepBatchConfig {
 
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
-    @Autowired
-    private DataSource dataSource;
-
     @Bean
-    public Step emptyIntermediateDb() {
-        return stepBuilderFactory.get("emptyIntermediateDb")
-                .tasklet(emptyDb())
+    public Step purgeIntermediateTable(final JdbcTemplate jdbcTemplate) {
+        return stepBuilderFactory.get("purgeIntermediateTable")
+                .tasklet(clearTable(jdbcTemplate))
                 .build();
     }
 
     @Bean
-    public Tasklet emptyDb() {
+    public Tasklet clearTable(final JdbcTemplate jdbcTemplate) {
         return (contribution, chunkContext) -> {
-            JdbcOperations jdbcTemplate = new JdbcTemplate(dataSource);
             jdbcTemplate.execute("truncate " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + ";");
             return RepeatStatus.FINISHED;
         };

@@ -1,5 +1,6 @@
 package fr.gouv.clea.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.clea.indexation.IndexationPartitioner;
 import fr.gouv.clea.indexation.model.output.ClusterFile;
 import fr.gouv.clea.indexation.processor.SinglePlaceClusterBuilder;
@@ -46,36 +47,35 @@ public class IndexationStepBatchConfig {
     private ClusterPeriodModelsMapper mapper;
 
     @Bean
-    public Step clustersIndexation() {
+    public Step clustersIndexation(final ObjectMapper objectMapper) {
         return this.stepBuilderFactory.get("clustersIndexation")
                 .partitioner("partitioner", prefixPartitioner())
-                .partitionHandler(partitionHandler())
+                .partitionHandler(partitionHandler(objectMapper))
                 .build();
     }
 
 
     @Bean
     public Partitioner prefixPartitioner() {
-        log.info("callToPartitioner");
         return new IndexationPartitioner(prefixesStorageService);
     }
 
     @Bean
-    public TaskExecutorPartitionHandler partitionHandler() {
+    public TaskExecutorPartitionHandler partitionHandler(final ObjectMapper objectMapper) {
         final TaskExecutorPartitionHandler partitionHandler = new TaskExecutorPartitionHandler();
         partitionHandler.setGridSize(properties.getGridSize());
-        partitionHandler.setStep(partitionedClustersIndexation());
+        partitionHandler.setStep(partitionedClustersIndexation(objectMapper));
         partitionHandler.setTaskExecutor(indexationTaskExecutor());
         return partitionHandler;
     }
 
     @Bean
-    public Step partitionedClustersIndexation() {
+    public Step partitionedClustersIndexation(final ObjectMapper objectMapper) {
         return stepBuilderFactory.get("partitionedClustersIndexation")
-                .<Map.Entry<String, List<String>>, ClusterFile>chunk(properties.getChunkSize())
+                .<Map.Entry<String, List<String>>, ClusterFile>chunk(properties.getIndexationStepChunkSize())
                 .reader(memoryMapItemReader(null, null))
                 .processor(singlePlaceClusterBuilder()) // build a Map of ClusterFile at once
-                .writer(indexationWriter()) // build Files and index
+                .writer(indexationWriter(objectMapper)) // build Files and index
                 .build();
     }
 
@@ -94,8 +94,8 @@ public class IndexationStepBatchConfig {
     }
 
     @Bean
-    public IndexationWriter indexationWriter() {
-        return new IndexationWriter(properties);
+    public IndexationWriter indexationWriter(final ObjectMapper objectMapper) {
+        return new IndexationWriter(properties, objectMapper);
     }
 
     @Bean

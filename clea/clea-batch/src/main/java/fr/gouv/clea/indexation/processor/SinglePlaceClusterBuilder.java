@@ -52,7 +52,7 @@ public class SinglePlaceClusterBuilder implements ItemProcessor<Map.Entry<String
 
     private Consumer<String> createClusterFile(final ClusterFile clusterFile) {
         return ltid -> {
-            final List<SinglePlaceClusterPeriod> singlePlacePeriodsList = queryForSinglePlaceClusterPeriods(ltid);
+            final List<SinglePlaceClusterPeriod> singlePlacePeriodsList = getSinglePlaceClusterPeriods(ltid);
             // Verify if at least one period is present, and if so, proceed
             singlePlacePeriodsList.stream().findFirst().ifPresent(firstPeriod -> {
                 List<ClusterPeriod> clusterPeriods = buildClusterPeriods(singlePlacePeriodsList);
@@ -71,7 +71,7 @@ public class SinglePlaceClusterBuilder implements ItemProcessor<Map.Entry<String
                 .build());
     }
 
-    private List<SinglePlaceClusterPeriod> queryForSinglePlaceClusterPeriods(final String ltid) {
+    private List<SinglePlaceClusterPeriod> getSinglePlaceClusterPeriods(final String ltid) {
         return jdbcTemplate.query("select * from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + " WHERE ltid= ?",
                 new SinglePlaceClusterPeriodRowMapper(), UUID.fromString(ltid));
     }

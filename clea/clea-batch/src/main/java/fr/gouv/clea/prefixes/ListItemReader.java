@@ -26,7 +26,7 @@ public class ListItemReader implements ItemReader<List<String>>, ItemStream {
             ltidList.add(clusterLtid);
         }
         //null return means all input data has been read, and forwards execution to processor
-        return !ltidList.isEmpty() ? ltidList : null;
+        return ltidList.isEmpty() ? null : ltidList;
     }
 
     /**
