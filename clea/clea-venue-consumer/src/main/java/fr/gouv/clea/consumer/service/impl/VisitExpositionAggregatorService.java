@@ -38,7 +38,11 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
     @Override
     public void updateExposureCount(Visit visit) {
         Instant periodStartAsInstant = this.periodStartFromCompressedPeriodStartAsInstant(visit.getCompressedPeriodStartTime());
-        long scanTimeSlot = Duration.between(visit.getQrCodeScanTime(), periodStartAsInstant).abs().toSeconds() / durationUnitInSeconds;
+        long scanTimeSlot = Duration.between(periodStartAsInstant, visit.getQrCodeScanTime()).toSeconds() / durationUnitInSeconds;
+        if (scanTimeSlot < 0) {
+            log.warn("qrScanTime: {} should not before periodStartTime: {}", visit.getQrCodeScanTime(), periodStartAsInstant);
+            return;
+        }
         int exposureTime = this.getExposureTime(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(visit.getPeriodDuration(), (int) scanTimeSlot + exposureTime);
@@ -96,7 +100,6 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
                 .timeSlot(slotIndex)
                 .backwardVisits(visit.isBackward() ? 1 : 0)
                 .forwardVisits(visit.isBackward() ? 0 : 1)
-                .qrCodeScanTime(visit.getQrCodeScanTime())
                 .build();
     }
 

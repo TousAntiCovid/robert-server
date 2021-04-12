@@ -220,4 +220,34 @@ class VisitExpositionAggregatorServiceTest {
         IntStream.rangeClosed(13, 19)
                 .forEach(step -> assertThat(entities.stream().filter(it -> it.getTimeSlot() == step).count()).isEqualTo(1));
     }
+
+    @Test
+    @DisplayName("stop processing if qrCodeScanTime is before periodStartTime")
+    void testWhenQrScanIsBeforePeriodStart() {
+        Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+        long todayAt8amAsNtp = TimeUtils.ntpTimestampFromInstant(todayAt8am);
+
+        Visit visit = Visit.builder()
+                .version(0)
+                .type(0)
+                .countryCode(33)
+                .staff(true)
+                .locationTemporaryPublicId(uuid)
+                .qrCodeRenewalIntervalExponentCompact(2)
+                .venueType(4)
+                .venueCategory1(0)
+                .venueCategory2(0)
+                .periodDuration(24)
+                .compressedPeriodStartTime((int) (todayAt8amAsNtp / 3600))
+                .qrCodeValidityStartTime(0)
+                .locationTemporarySecretKey(locationTemporarySecretKey)
+                .encryptedLocationContactMessage(encryptedLocationContactMessage)
+                .qrCodeScanTime(todayAtMidnight)
+                .isBackward(true)
+                .build();
+        service.updateExposureCount(visit);
+
+        assertThat(repository.count()).isZero();
+    }
 }

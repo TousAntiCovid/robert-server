@@ -51,7 +51,6 @@ class ExposedVisitEntityServiceSchedulingTest {
                 timeSlot,
                 RandomUtils.nextLong(),
                 RandomUtils.nextLong(),
-                Instant.now(),
                 null, // handled by db
                 null // handled by db
         );
