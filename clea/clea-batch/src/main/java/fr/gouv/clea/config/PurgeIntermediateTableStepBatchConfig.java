@@ -30,7 +30,7 @@ public class PurgeIntermediateTableStepBatchConfig {
     @Bean
     public Tasklet clearTable(final JdbcTemplate jdbcTemplate) {
         return (contribution, chunkContext) -> {
-            jdbcTemplate.execute("truncate " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + ";");
+            jdbcTemplate.execute("truncate table " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + ";");
             return RepeatStatus.FINISHED;
         };
     }
