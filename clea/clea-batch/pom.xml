@@ -82,6 +82,7 @@
                 <configuration>
                     <verbose>false</verbose>
                     <offline>true</offline>
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -145,5 +146,126 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>test-bats</id>
+            <activation>
+                <property>
+                    <name>test.bats</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-scm-plugin</artifactId>
+                        <version>1.11.2</version>
+                        <executions>
+                            <execution>
+                                <id>clone-bats-core</id>
+                                <goals>
+                                    <goal>checkout</goal>
+                                </goals>
+                                <phase>test</phase>
+                                <configuration>
+                                    <checkoutDirectory>${project.basedir}/target/bats/core</checkoutDirectory>
+                                    <connectionType>connection</connectionType>
+                                    <connectionUrl>scm:git:https://github.com/bats-core/bats-core.git</connectionUrl>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>clone-bats-support</id>
+                                <goals>
+                                    <goal>checkout</goal>
+                                </goals>
+                                <phase>test</phase>
+                                <configuration>
+                                    <checkoutDirectory>${project.basedir}/target/bats/support</checkoutDirectory>
+                                    <connectionType>connection</connectionType>
+                                    <connectionUrl>scm:git:https://github.com/ztombol/bats-support.git</connectionUrl>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>clone-bats-assert</id>
+                                <goals>
+                                    <goal>checkout</goal>
+                                </goals>
+                                <phase>test</phase>
+                                <configuration>
+                                    <checkoutDirectory>${project.basedir}/target/bats/assert</checkoutDirectory>
+                                    <connectionType>connection</connectionType>
+                                    <connectionUrl>scm:git:https://github.com/ztombol/bats-assert.git</connectionUrl>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <providerImplementations>
+                                <git>jgit</git>
+                            </providerImplementations>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.apache.maven.scm</groupId>
+                                <artifactId>maven-scm-provider-jgit</artifactId>
+                                <version>1.11.2</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>chmod</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <phase>test</phase>
+                                <configuration>
+                                    <executable>chmod</executable>
+                                    <arguments>
+                                        <argument>+x</argument>
+                                        <argument>target/bats/core/bin/bats</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>chmod-libexec</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <phase>test</phase>
+                                <configuration>
+                                    <executable>chmod</executable>
+                                    <arguments>
+                                        <argument>+x</argument>
+                                        <argument>target/bats/core/libexec/bats-core/bats-exec-suite</argument>
+                                        <argument>target/bats/core/libexec/bats-core/bats-exec-file</argument>
+                                        <argument>target/bats/core/libexec/bats-core/bats-exec-test</argument>
+                                        <argument>target/bats/core/libexec/bats-core/bats-preprocess</argument>
+                                        <argument>target/bats/core/libexec/bats-core/bats-format-pretty</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>bats</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <phase>test</phase>
+                                <configuration>
+                                    <executable>target/bats/core/bin/bats</executable>
+                                    <arguments>
+                                        <argument>src/test/bats</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
