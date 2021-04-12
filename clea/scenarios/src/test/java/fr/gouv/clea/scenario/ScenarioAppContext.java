@@ -81,7 +81,7 @@ public class ScenarioAppContext {
                                                                 .staff(false) // not used in test declaration as of now
                                                                 .venueCategory1(venueCategories.get(venueCategory1))
                                                                 .venueType(venueTypes.get(venueType))
-                                                                .periodDuration(8) // not used in test declaration as of now
+                                                                .periodDuration(12) // not used in test declaration as of now
                                                                 .periodStartTime(periodStartTime)
                                                                 .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponentCompact)
                                                                 .manualContactTracingAuthorityPublicKey(manualContactTracingAuthorityPublicKey)
