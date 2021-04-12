@@ -3,13 +3,15 @@ clea:
     cleaClockDriftInSecs: 300
     driftBetweenDeviceAndOfficialTimeInSecs: 300
     retentionDurationInDays: 14
+    durationUnitInSeconds: 1800
     scheduling:
       purge:
         cron: "0 0 1 * * *"
         enabled: false
     security:
       crypto:
-        manualCTAuthoritySecretKey: f55d39487b91c00ad24d4fc70f54511539ed308e954ab859734598d16d047bdf
+        serverAuthorityPublicKey: 02c3a58bf668fa3fe2fc206152abd6d8d55102adfee68c8b227676d1fe763f5a06
+        serverAuthoritySecretKey: f55d39487b91c00ad24d4fc70f54511539ed308e954ab859734598d16d047bdf
 
 logging:
   level:

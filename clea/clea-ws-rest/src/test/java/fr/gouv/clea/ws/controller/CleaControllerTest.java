@@ -2,6 +2,8 @@ package fr.gouv.clea.ws.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import fr.gouv.clea.ws.dto.ApiError;
 import fr.gouv.clea.ws.service.impl.ReportService;
 import fr.gouv.clea.ws.utils.UriConstants;
 import fr.gouv.clea.ws.vo.ReportRequest;
@@ -10,6 +12,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -27,16 +30,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-public class CleaControllerTest {
+class CleaControllerTest {
 
     @Captor
-    ArgumentCaptor<ReportRequest> reportRequestArgumentCaptor;
+    private ArgumentCaptor<ReportRequest> reportRequestArgumentCaptor;
     @Value("${controller.path.prefix}" + UriConstants.API_V1)
     private String pathPrefix;
     @Autowired
@@ -46,14 +50,19 @@ public class CleaControllerTest {
     @MockBean
     private ReportService reportService;
 
-    public static HttpHeaders newJsonHeader() {
+    static HttpHeaders newJsonHeader() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }
 
+    @BeforeEach
+    void init() {
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
     @Test
-    public void testInfectedUserCanReportHimselfAsInfected() {
+    void testInfectedUserCanReportHimselfAsInfected() {
         List<Visit> visits = List.of(new Visit("qrCode", 0L));
         HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, 0L), newJsonHeader());
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
@@ -62,7 +71,7 @@ public class CleaControllerTest {
     }
 
     @Test
-    public void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
+    void testWhenReportRequestWithInvalidMediaTypeThenGetUnsupportedMediaType() {
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, "foo", String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
@@ -70,7 +79,7 @@ public class CleaControllerTest {
     }
 
     @Test
-    public void testWhenReportRequestWithNullVisitListThenGetBadRequest() {
+    void testWhenReportRequestWithNullVisitListThenGetBadRequest() {
         HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(null, 0L), newJsonHeader());
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
 
@@ -79,7 +88,7 @@ public class CleaControllerTest {
     }
 
     @Test
-    public void testWhenReportRequestWithInvalidJsonDataThenGetBadRequest() throws JSONException {
+    void testWhenReportRequestWithInvalidJsonDataThenGetBadRequest() throws JSONException {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", 1);
         ResponseEntity<String> response = restTemplate.postForEntity(
@@ -94,12 +103,22 @@ public class CleaControllerTest {
 
     @Test
     @DisplayName("when pivotDate is null, reject everything")
-    void nullPivotDate() {
+    void nullPivotDate() throws JsonProcessingException {
         List<Visit> visits = List.of(new Visit(RandomStringUtils.randomAlphanumeric(20), RandomUtils.nextLong()));
         HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(visits, null), newJsonHeader());
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(reportService);
+        ApiError apiError = objectMapper.readValue(response.getBody(), ApiError.class);
+        assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(apiError.getTimestamp()).isBefore(Instant.now());
+        assertThat(apiError.getMessage()).isEqualTo("Invalid request");
+        assertThat(apiError.getValidationErrors().size()).isEqualTo(1);
+        assertThat(apiError.getValidationErrors().stream().findFirst()).isPresent();
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getObject()).isEqualTo("ReportRequest");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getField()).isEqualTo("pivotDateAsNtpTimestamp");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getRejectedValue()).isNull();
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getMessage()).contains("nul");
     }
 
     @Test
@@ -112,24 +131,39 @@ public class CleaControllerTest {
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(reportService);
+        ApiError apiError = objectMapper.readValue(response.getBody(), ApiError.class);
+        assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(apiError.getTimestamp()).isBefore(Instant.now());
+        assertThat(apiError.getMessage()).isEqualTo("JSON parse error");
+        assertThat(apiError.getValidationErrors()).isEmpty();
     }
 
     @Test
     @DisplayName("when visit list is null, reject everything")
-    void nullVisitList() {
+    void nullVisitList() throws JsonProcessingException {
         HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(null, 0L), newJsonHeader());
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(reportService);
+        ApiError apiError = objectMapper.readValue(response.getBody(), ApiError.class);
+        assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(apiError.getTimestamp()).isBefore(Instant.now());
+        assertThat(apiError.getMessage()).isEqualTo("Invalid request");
+        assertThat(apiError.getValidationErrors().size()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("when visit list is empty, reject everything")
-    void emptyVisitList() {
+    void emptyVisitList() throws JsonProcessingException {
         HttpEntity<ReportRequest> request = new HttpEntity<>(new ReportRequest(List.of(), 0L), newJsonHeader());
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(reportService);
+        ApiError apiError = objectMapper.readValue(response.getBody(), ApiError.class);
+        assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(apiError.getTimestamp()).isBefore(Instant.now());
+        assertThat(apiError.getMessage()).isEqualTo("Invalid request");
+        assertThat(apiError.getValidationErrors().size()).isEqualTo(1);
     }
 
     @Test
@@ -210,5 +244,32 @@ public class CleaControllerTest {
         ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoMoreInteractions(reportService);
+        ApiError apiError = objectMapper.readValue(response.getBody(), ApiError.class);
+        assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(apiError.getTimestamp()).isBefore(Instant.now());
+        assertThat(apiError.getMessage()).isEqualTo("JSON parse error");
+        assertThat(apiError.getValidationErrors()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("when no valid visit then reject everything")
+    void noValidVisits() throws JsonProcessingException {
+        ReportRequest reportRequest = new ReportRequest(List.of(new Visit(" ", 1L)), 2L);
+        String json = objectMapper.writeValueAsString(reportRequest);
+        HttpEntity<String> request = new HttpEntity<>(json, newJsonHeader());
+        ResponseEntity<String> response = restTemplate.postForEntity(pathPrefix + UriConstants.REPORT, request, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verifyNoMoreInteractions(reportService);
+        ApiError apiError = objectMapper.readValue(response.getBody(), ApiError.class);
+        assertThat(apiError.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(apiError.getTimestamp()).isBefore(Instant.now());
+        assertThat(apiError.getMessage()).isEqualTo("Invalid request");
+        assertThat(apiError.getValidationErrors().size()).isEqualTo(1);
+        assertThat(apiError.getValidationErrors().stream().findFirst()).isPresent();
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getObject()).isEqualTo("Visit");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getField()).isEqualTo("qrCode");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getRejectedValue()).asString().isBlank();
+        // TODO find a way to test this localized message: vide / empty
+        // assertThat(apiError.getValidationErrors().stream().findFirst().get().getMessage()).isEqualTo("ne doit pas être vide");
     }
 }

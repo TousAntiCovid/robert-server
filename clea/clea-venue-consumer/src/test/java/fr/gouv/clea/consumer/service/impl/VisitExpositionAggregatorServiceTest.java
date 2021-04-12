@@ -4,10 +4,10 @@ import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
+import fr.inria.clea.lsp.utils.TimeUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +18,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 @SpringBootTest
 @DirtiesContext
@@ -32,14 +32,18 @@ class VisitExpositionAggregatorServiceTest {
     @Autowired
     private IVisitExpositionAggregatorService service;
 
-    private Instant yesterday;
+    private Instant todayAtMidnight;
+    private Instant todayAt8am;
+    private long todayAtMidnightAsNtp;
     private UUID uuid;
     private byte[] locationTemporarySecretKey;
     private byte[] encryptedLocationContactMessage;
 
     @BeforeEach
     void init() {
-        yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
+        todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+        todayAtMidnightAsNtp = TimeUtils.ntpTimestampFromInstant(todayAtMidnight);
         uuid = UUID.randomUUID();
         locationTemporarySecretKey = RandomUtils.nextBytes(20);
         encryptedLocationContactMessage = RandomUtils.nextBytes(20);
@@ -63,17 +67,16 @@ class VisitExpositionAggregatorServiceTest {
                 .venueType(4)
                 .venueCategory1(0)
                 .venueCategory2(0)
-                .periodDuration(3)
-                .compressedPeriodStartTime(1062707)
+                .periodDuration(24)
+                .compressedPeriodStartTime((int) (todayAtMidnightAsNtp / 3600))
                 .qrCodeValidityStartTime(Instant.now())
                 .locationTemporarySecretKey(locationTemporarySecretKey)
                 .encryptedLocationContactMessage(encryptedLocationContactMessage)
-                .qrCodeScanTime(yesterday)
+                .qrCodeScanTime(todayAt8am)
                 .isBackward(true)
                 .build();
         service.updateExposureCount(visit);
 
-        // assertThat(repository.count()).isEqualTo(21L);
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.forEach(it -> {
                     assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid);
@@ -95,18 +98,22 @@ class VisitExpositionAggregatorServiceTest {
                 .venueType(4)
                 .venueCategory1(0)
                 .venueCategory2(0)
-                .periodDuration(3)
-                .compressedPeriodStartTime(1062707)
+                .periodDuration(24)
+                .compressedPeriodStartTime((int) (todayAtMidnightAsNtp / 3600))
                 .qrCodeValidityStartTime(Instant.now())
                 .locationTemporarySecretKey(locationTemporarySecretKey)
                 .encryptedLocationContactMessage(encryptedLocationContactMessage)
-                .qrCodeScanTime(yesterday)
+                .qrCodeScanTime(todayAt8am)
                 .isBackward(true)
                 .build();
         service.updateExposureCount(visit);
-        service.updateExposureCount(visit);
+        long before = repository.count();
 
-        // assertThat(repository.count()).isEqualTo(21L);
+        service.updateExposureCount(visit);
+        long after = repository.count();
+
+        assertThat(before).isEqualTo(after);
+
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.forEach(it -> {
                     assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid);
@@ -128,12 +135,12 @@ class VisitExpositionAggregatorServiceTest {
                 .venueType(4)
                 .venueCategory1(0)
                 .venueCategory2(0)
-                .periodDuration(3)
-                .compressedPeriodStartTime(1062707)
+                .periodDuration(24)
+                .compressedPeriodStartTime((int) (todayAtMidnightAsNtp / 3600))
                 .qrCodeValidityStartTime(Instant.now())
                 .locationTemporarySecretKey(locationTemporarySecretKey)
                 .encryptedLocationContactMessage(encryptedLocationContactMessage)
-                .qrCodeScanTime(yesterday)
+                .qrCodeScanTime(todayAt8am)
                 .isBackward(true)
                 .build();
         service.updateExposureCount(visit);
@@ -146,7 +153,6 @@ class VisitExpositionAggregatorServiceTest {
         visit.setBackward(true);
         service.updateExposureCount(visit);
 
-        // assertThat(repository.count()).isEqualTo(42L);
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.stream()
                 .filter(it -> it.getLocationTemporaryPublicId().equals(uuid))
@@ -162,15 +168,86 @@ class VisitExpositionAggregatorServiceTest {
                 .forEach(it -> {
                             assertThat(it.getLocationTemporaryPublicId()).isEqualTo(newUUID);
                             assertThat(it.getBackwardVisits()).isEqualTo(1);
-                            assertThat(it.getForwardVisits()).isEqualTo(0);
+                            assertThat(it.getForwardVisits()).isZero();
                         }
                 );
     }
 
-    @Disabled
     @Test
     @DisplayName("test how many slots are generated for a given visit")
     void testSlotGeneration() {
-        fail("Not tested yet");
+        Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        long todayAtMidnightAsNtp = TimeUtils.ntpTimestampFromInstant(todayAtMidnight);
+        Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+
+        Visit visit = Visit.builder()
+                .version(0)
+                .type(0)
+                .countryCode(33)
+                .staff(true)
+                .locationTemporaryPublicId(uuid)
+                .qrCodeRenewalIntervalExponentCompact(2)
+                .venueType(4)
+                .venueCategory1(0)
+                .venueCategory2(0)
+                .periodDuration(24)
+                .compressedPeriodStartTime((int) (todayAtMidnightAsNtp / 3600))
+                .qrCodeValidityStartTime(todayAtMidnight)
+                .locationTemporarySecretKey(locationTemporarySecretKey)
+                .encryptedLocationContactMessage(encryptedLocationContactMessage)
+                .qrCodeScanTime(todayAt8am)
+                .isBackward(true)
+                .build();
+        service.updateExposureCount(visit);
+
+        /*
+         * if:
+         * periodDuration = 24 hours
+         * periodStartTime = today at 00:00:00
+         * qrCodeScanTime = today at 08:00:00
+         * durationUnit = 1800 seconds
+         * exposureTime = 3
+         *
+         * then:
+         *  => scanTimeSlot = 8*2 = 16
+         *  => slots to generate = 3 before & scanTimeSlot & 3 after = 7
+         *  => firstExposedSlot = 16-3 = 13
+         *  => lastExposedSlot = 16+3 = 19
+         */
+
+        assertThat(repository.count()).isEqualTo(7L);
+        List<ExposedVisitEntity> entities = repository.findAll();
+        IntStream.rangeClosed(13, 19)
+                .forEach(step -> assertThat(entities.stream().filter(it -> it.getTimeSlot() == step).count()).isEqualTo(1));
+    }
+
+    @Test
+    @DisplayName("stop processing if qrCodeScanTime is before periodStartTime")
+    void testWhenQrScanIsBeforePeriodStart() {
+        Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+        long todayAt8amAsNtp = TimeUtils.ntpTimestampFromInstant(todayAt8am);
+
+        Visit visit = Visit.builder()
+                .version(0)
+                .type(0)
+                .countryCode(33)
+                .staff(true)
+                .locationTemporaryPublicId(uuid)
+                .qrCodeRenewalIntervalExponentCompact(2)
+                .venueType(4)
+                .venueCategory1(0)
+                .venueCategory2(0)
+                .periodDuration(24)
+                .compressedPeriodStartTime((int) (todayAt8amAsNtp / 3600))
+                .qrCodeValidityStartTime(todayAtMidnight)
+                .locationTemporarySecretKey(locationTemporarySecretKey)
+                .encryptedLocationContactMessage(encryptedLocationContactMessage)
+                .qrCodeScanTime(todayAtMidnight)
+                .isBackward(true)
+                .build();
+        service.updateExposureCount(visit);
+
+        assertThat(repository.count()).isZero();
     }
 }
