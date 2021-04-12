@@ -31,14 +31,13 @@ public class SinglePlaceExposedVisitsBuilder implements ItemProcessor<String, Si
 
     private final ExposedVisitRowMapper rowMapper;
 
-    public SinglePlaceExposedVisitsBuilder(DataSource dataSource, ExposedVisitRowMapper rowMapper) {
-        jdbcTemplate = new JdbcTemplate(dataSource);
+    public SinglePlaceExposedVisitsBuilder(JdbcTemplate jdbcTemplate, ExposedVisitRowMapper rowMapper) {
+        this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
     }
 
     @Override
     public SinglePlaceExposedVisits process(final String ltid) {
-        final long time1 = System.currentTimeMillis();
         final List<ExposedVisit> list = jdbcTemplate.query("select * from " + EXPOSED_VISITS_TABLE
                         + " WHERE ltid= ? ORDER BY " + PERIOD_COLUMN + ", " + TIMESLOT_COLUMN,
                 rowMapper, UUID.fromString(ltid));
@@ -48,12 +47,10 @@ public class SinglePlaceExposedVisitsBuilder implements ItemProcessor<String, Si
             if (0 == ln % 1000) {
                 log.info("Loaded {} visits, current LTId={} ", ln, ltid);
             }
-            final long time2 = System.currentTimeMillis();
             return SinglePlaceExposedVisits.builder()
                     .locationTemporaryPublicId(v.getLocationTemporaryPublicId())
                     .venueType(v.getVenueType()).venueCategory1(v.getVenueCategory1())
                     .venueCategory2(v.getVenueCategory2()).visits(list).build();
-
         }
         return null;
     }
@@ -63,5 +60,4 @@ public class SinglePlaceExposedVisitsBuilder implements ItemProcessor<String, Si
         log.info("building {} SinglePlaceExposedVisits", counter.get());
         return ExitStatus.COMPLETED;
     }
-
 }

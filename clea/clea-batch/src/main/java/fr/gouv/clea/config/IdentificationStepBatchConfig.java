@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -79,7 +80,7 @@ public class IdentificationStepBatchConfig {
 
     @Bean
     public ItemProcessor<String, SinglePlaceExposedVisits> exposedVisitBuilder() {
-        return new SinglePlaceExposedVisitsBuilder(dataSource, new ExposedVisitRowMapper());
+        return new SinglePlaceExposedVisitsBuilder(new JdbcTemplate(dataSource), new ExposedVisitRowMapper());
     }
 
     @Bean

@@ -1,10 +1,12 @@
-package fr.gouv.clea.identification;
+package fr.gouv.clea.identification.processor;
 
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceExposedVisits;
 import fr.gouv.clea.entity.ExposedVisit;
+import fr.gouv.clea.identification.RiskConfigurationService;
+import fr.gouv.clea.identification.RiskLevelConfig;
 import fr.gouv.clea.identification.processor.SinglePlaceExposedVisitsProcessor;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class SinglePlaceExposedVisitsProcessorTest {
 
-	private BatchProperties properties=new BatchProperties();
+	private BatchProperties properties = new BatchProperties();
 	RiskConfigurationService eval = new RiskConfigurationService();
 	
 	public SinglePlaceExposedVisitsProcessorTest() {
@@ -54,8 +56,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 
 		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,eval).process(spe);
 		assertThat(res).isNull();
-		
-	}	
+	}
 
 	@Test
 	void oneClusterPeriod() {
@@ -114,9 +115,6 @@ class SinglePlaceExposedVisitsProcessorTest {
 		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(1* properties.getDurationUnitInSeconds());
 	}
 
-	
-	
-	
 	@Test
 	void forwardRiskLevel() {
 		SinglePlaceExposedVisits spe = new SinglePlaceExposedVisits();
@@ -152,5 +150,4 @@ class SinglePlaceExposedVisitsProcessorTest {
 		Optional<RiskLevelConfig> riskLevelEvaluation = eval.evaluate(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
 		riskLevelEvaluation.ifPresent(evaluatedRiskLevel -> assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getBackwardRisk(), Offset.offset(0.01f)));
 	}
-
 }

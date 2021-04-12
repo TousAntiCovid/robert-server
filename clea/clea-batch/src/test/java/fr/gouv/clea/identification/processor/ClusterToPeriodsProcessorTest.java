@@ -1,9 +1,8 @@
-package fr.gouv.clea.identification;
+package fr.gouv.clea.identification.processor;
 
 import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
-import fr.gouv.clea.identification.processor.ClusterToPeriodsProcessor;
 import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
 import fr.gouv.clea.mapper.ClusterPeriodModelsMapperImpl;
 import org.assertj.core.api.Assertions;
