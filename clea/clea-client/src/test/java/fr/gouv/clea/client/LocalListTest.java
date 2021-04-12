@@ -15,10 +15,10 @@ import fr.gouv.clea.client.service.CleaClient;
  */
 public class LocalListTest 
 {
-    private final String prefix = "https://tac.gouv.fr/";
-    private final String qrCode = "AKSYrwI8hzHkrJv0mf9X3I3a3cz8wvP/zQQZ/uD2cL78m5hBXXW46YrPPTxiYNShhQDvyd6w0zyJD96D0tIy6DIRyQOEuWWxW84GmrMDgiOxCFtWt+qlY1Wnsh1szt4UJpCjkYEf7Ij78n/cEQY=";
-    private final String qrCode2 = "AKSYrwI8hzHkrJv0mf9X3I0KXTn4TUzSX7aM4pfWCpsb7CPSLULz1FBWh9+7RP0hU0VxTb15uDJXY61itwy9yJzDbkz8FGXUZra0LBwCg3D8EbSZsBk/g/havNababZULUxXs8IEaMaims2BnOY=";
-    private final String tlId = "pJivAjyHMeSsm/SZ/1fcjQ==";
+    private final String prefix = "https://tac.gouv.fr?v=0#";
+    private final String qrCode = "AKSYrwI8hzHkrJv0mf9X3I3a3cz8wvP_zQQZ_uD2cL78m5hBXXW46YrPPTxiYNShhQDvyd6w0zyJD96D0tIy6DIRyQOEuWWxW84GmrMDgiOxCFtWt-qlY1Wnsh1szt4UJpCjkYEf7Ij78n_cEQY";
+    private final String qrCode2 = "AKSYrwI8hzHkrJv0mf9X3I0KXTn4TUzSX7aM4pfWCpsb7CPSLULz1FBWh9-7RP0hU0VxTb15uDJXY61itwy9yJzDbkz8FGXUZra0LBwCg3D8EbSZsBk_g_havNababZULUxXs8IEaMaims2BnOY";
+    private final String tlId = "a498af02-3c87-31e4-ac9b-f499ff57dc8d";
     private final Instant now = Instant.now(); 
     
     /**
@@ -27,16 +27,16 @@ public class LocalListTest
     @Test
     public void shouldAddScannedQrCode()
     {
-        CleaClient cleaClient = new CleaClient();
+        CleaClient cleaClient = new CleaClient("alice");
         
-        cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
+        cleaClient.scanQrCode(prefix.concat(qrCode), now);
         
         List<ScannedQrCode> localList = cleaClient.getLocalList();
         assertThat(localList.size()).isEqualTo(1);
         ScannedQrCode scanned = localList.get(0);
         assertThat(scanned.getQrCode()).isEqualTo(qrCode);
-        assertThat(scanned.getScanTime()).isEqualTo(now.getEpochSecond());
-        assertThat(scanned.getLocationTemporaryId()).isEqualTo(tlId);
+        assertThat(scanned.getScanTime()).isEqualTo(now);
+        assertThat(scanned.getLocationTemporaryId().toString()).isEqualTo(tlId);
     }
 
      /**
@@ -44,10 +44,10 @@ public class LocalListTest
      */
     @Test
     public void shouldNotAddTwice(){
-        CleaClient cleaClient = new CleaClient();
+        CleaClient cleaClient = new CleaClient("bob");
         
-        cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
-        cleaClient.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(3600).getEpochSecond());
+        cleaClient.scanQrCode(prefix.concat(qrCode), now);
+        cleaClient.scanQrCode(prefix.concat(qrCode2), now.plusSeconds(3600));
         
         List<ScannedQrCode> localList = cleaClient.getLocalList();
         assertThat(localList.size()).isEqualTo(1);
@@ -58,10 +58,10 @@ public class LocalListTest
      */
     @Test
     public void shouldAddTwice(){
-        CleaClient cleaClient = new CleaClient();
+        CleaClient cleaClient = new CleaClient("alice");
         
-        cleaClient.scanQrCode(prefix.concat(qrCode), now.getEpochSecond());
-        cleaClient.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(4*3600).getEpochSecond());
+        cleaClient.scanQrCode(prefix.concat(qrCode), now);
+        cleaClient.scanQrCode(prefix.concat(qrCode2),now.plusSeconds(4*3600));
         
         List<ScannedQrCode> localList = cleaClient.getLocalList();
         assertThat(localList.size()).isEqualTo(2);

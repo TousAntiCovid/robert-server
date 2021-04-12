@@ -118,7 +118,7 @@ class CleaControllerTest {
         assertThat(apiError.getValidationErrors().stream().findFirst().get().getObject()).isEqualTo("ReportRequest");
         assertThat(apiError.getValidationErrors().stream().findFirst().get().getField()).isEqualTo("pivotDateAsNtpTimestamp");
         assertThat(apiError.getValidationErrors().stream().findFirst().get().getRejectedValue()).isNull();
-        assertThat(apiError.getValidationErrors().stream().findFirst().get().getMessage()).isEqualTo("must not be null");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getMessage()).isEqualTo("ne doit pas être nul");
     }
 
     @Test
@@ -269,6 +269,6 @@ class CleaControllerTest {
         assertThat(apiError.getValidationErrors().stream().findFirst().get().getObject()).isEqualTo("Visit");
         assertThat(apiError.getValidationErrors().stream().findFirst().get().getField()).isEqualTo("qrCode");
         assertThat(apiError.getValidationErrors().stream().findFirst().get().getRejectedValue()).asString().isBlank();
-        assertThat(apiError.getValidationErrors().stream().findFirst().get().getMessage()).isEqualTo("must not be blank");
+        assertThat(apiError.getValidationErrors().stream().findFirst().get().getMessage()).isEqualTo("ne doit pas être vide");
     }
 }
