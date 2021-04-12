@@ -10,8 +10,8 @@
 
   
   Scenario: One person visiting the same location as one sick, before exposure time
-    Given "Heather" recorded a visit to "Chez Gusto" at "15:00, 4 days ago" withQRCode "LunchService1"
-    Given "Hugo" recorded a visit to "Chez Gusto" at "8:00, 4 days ago" withQRCode "LunchService1"
+    Given "Heather" recorded a visit to "Chez Gusto" at "8:00, 4 days ago" withQRCode "LunchService1"
+    Given "Hugo" recorded a visit to "Chez Gusto" at "15:00, 4 days ago" withQRCode "LunchService1"
   
     When "Heather" declares himself sick
     When Cluster detection triggered

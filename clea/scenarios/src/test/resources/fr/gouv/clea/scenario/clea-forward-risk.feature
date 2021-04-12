@@ -20,7 +20,6 @@
     Given "Heather" recorded a visit to "Chez Gusto" at "13:30, 4 days ago" withQRCode "LunchService1"
   
     When "Heather" declares himself sick
-    When "Heather" trigger batch processing
     When Cluster detection triggered
 
     Then "Heather" sends his visits 

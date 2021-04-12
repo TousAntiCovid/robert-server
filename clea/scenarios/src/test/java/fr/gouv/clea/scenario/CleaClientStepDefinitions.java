@@ -64,11 +64,6 @@ public class CleaClientStepDefinitions implements En {
             visitor.sendReport(TimeUtils.naturalLanguageDateStringToInstant(pivotDate));
         });
 
-        When("{string} trigger batch processing", (String visitorName) -> {
-            CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
-            visitor.triggerNewClusterIdenfication();
-        });
-
         Then("{string} cannot send his/her visits", (String visitorName) -> {
             CleaClient visitor = this.scenarioAppContext.getVisitor(visitorName);
             assertThat(visitor.getLastReportSuccess()).isFalse();
