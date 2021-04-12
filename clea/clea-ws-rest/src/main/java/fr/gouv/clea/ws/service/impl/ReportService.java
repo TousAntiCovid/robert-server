@@ -6,9 +6,9 @@ import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.utils.MessageFormatter;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
-import fr.inria.clea.lsp.CleaEncodingException;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.exception.CleaEncodingException;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +63,7 @@ public class ReportService implements IReportService {
 
     private DecodedVisit decode(Visit visit, long pivotDate) {
         try {
-            byte[] binaryLocationSpecificPart = Base64.getDecoder().decode(visit.getQrCode());
+            byte[] binaryLocationSpecificPart = Base64.getUrlDecoder().decode(visit.getQrCode());
             EncryptedLocationSpecificPart encryptedLocationSpecificPart = decoder.decodeHeader(binaryLocationSpecificPart);
             Instant qrCodeScanTime = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp());
             return new DecodedVisit(qrCodeScanTime, encryptedLocationSpecificPart, visit.getQrCodeScanTimeAsNtpTimestamp() < pivotDate);

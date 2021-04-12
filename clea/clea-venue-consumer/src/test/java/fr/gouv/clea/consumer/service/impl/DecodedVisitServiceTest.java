@@ -4,18 +4,18 @@ import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
 import fr.inria.clea.lsp.CleaEciesEncoder;
-import fr.inria.clea.lsp.CleaEncodingException;
-import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
-import fr.inria.clea.lsp.utils.TimeUtils;
+import fr.inria.clea.lsp.exception.CleaEncodingException;
+import fr.inria.clea.lsp.exception.CleaEncryptionException;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -71,16 +71,15 @@ class DecodedVisitServiceTest {
     void drift() throws CleaEncryptionException, CleaEncodingException {
         int CRIexp = 10; // qrCodeRenewalInterval=2^10(=1024). 1024+300+300=1624
         Instant now = Instant.now();
-        long qrCodeValidityStartTime = TimeUtils.currentNtpTime() + 2000;
+        Instant qrCodeValidityStartTime = Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(2000, ChronoUnit.SECONDS);
         UUID uuid = UUID.randomUUID();
         byte[] locationTemporarySecretKey = RandomUtils.nextBytes(20);
 
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
                         LocationSpecificPart.builder()
-                                .qrCodeValidityStartTime(0)
                                 .qrCodeRenewalIntervalExponentCompact(CRIexp)
-                                // .qrCodeValidityStartTime(qrCodeValidityStartTime)
+                                .qrCodeValidityStartTime(qrCodeValidityStartTime)
                                 .locationTemporaryPublicId(uuid)
                                 .locationTemporarySecretKey(locationTemporarySecretKey)
                                 .build()
