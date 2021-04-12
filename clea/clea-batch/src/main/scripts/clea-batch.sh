@@ -1,10 +1,10 @@
-#!/bin/bash
+ #!/usr/bin/env bash
 
 PROGNAM=$(basename $0)
 die() { echo "[$PROGNAM] $*" 1>&2 ; exit 1; }
 
 WORKDIR=${CLEA_BATCH_CLUSTER_OUTPUT_PATH:-/tmp/v1}
-BUCKET=${BUCKET:-cleacluster-eu-west-3}
+BUCKET=${BUCKET:-}
 
 set -o pipefail  # trace ERR through pipes
 set -o errtrace  # trace ERR through 'time command' and other functions
@@ -13,20 +13,19 @@ set -o nounset   ## set -u : exit the script if you try to use an uninitialised 
 set +e
 
 
+[ -n "${BUCKET}" ] || die "Environment variable BUCKET required"
+
 if ! java -jar clea-batch.jar $@ ; then
     die "Java batch fails"
 fi
 
-# ============================================
-# !!!!! MOCK !!!!!!
-# ============================================
-#GEN=$((1 + $RANDOM % 100))
-#mkdir -p $WORKDIR/v1/$GEN
-#for i in {1..11} ; do NEW_UUID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 6 | head -n 1); touch $WORKDIR/v1/$GEN/$NEW_UUID.json; done
-#touch /tmp/v1/$GEN/indexCluster.json
-# ============================================
 
 echo "[$PROGNAM] Coying files...."
+
+
+# Test that output folder exists, computing NBFILES fails if folder doesn't exist
+[ -d $WORKDIR ] || die "Working directory $WORKDIR not exists" 
+
 
 # count that there is at least "n" cluster files (to not push empty list)
 MIN_FILES=1
