@@ -1,4 +1,4 @@
- #!/usr/bin/env bash
+#!/usr/bin/env bash
 
 PROGNAM=$(basename $0)
 die() { echo "[$PROGNAM] $*" 1>&2 ; exit 1; }
