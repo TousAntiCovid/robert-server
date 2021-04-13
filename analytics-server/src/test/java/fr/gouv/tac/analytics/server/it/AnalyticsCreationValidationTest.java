@@ -1,8 +1,10 @@
 package fr.gouv.tac.analytics.server.it;
 
+
 import static fr.gouv.tac.analytics.server.config.validation.validator.AnalyticsVoInfoSizeValidator.*;
 import static fr.gouv.tac.analytics.server.config.validation.validator.TimestampedEventCollectionValidator.DESCRIPTION_TOO_LONG_ERROR_MESSAGE;
 import static fr.gouv.tac.analytics.server.config.validation.validator.TimestampedEventCollectionValidator.NAME_TOO_LONG_ERROR_MESSAGE;
+import static fr.gouv.tac.analytics.server.controller.CustomExceptionHandler.PAYLOAD_TOO_LARGE;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -163,11 +165,11 @@ public class AnalyticsCreationValidationTest {
         final MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post(analyticsControllerPath)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(analyticsAsJson))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isPayloadTooLarge())
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains(String.format(TOO_MANY_INFO_ERROR_MESSAGE, 3, 2));
+        Assertions.assertThat(errorVo.getMessage()).contains(String.format(TOO_MANY_INFO_ERROR_MESSAGE, PAYLOAD_TOO_LARGE, 3, 2));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
         verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));

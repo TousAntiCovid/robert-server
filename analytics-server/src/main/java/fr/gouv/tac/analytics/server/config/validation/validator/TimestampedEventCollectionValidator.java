@@ -1,5 +1,7 @@
 package fr.gouv.tac.analytics.server.config.validation.validator;
 
+import static fr.gouv.tac.analytics.server.controller.CustomExceptionHandler.PAYLOAD_TOO_LARGE;
+
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
@@ -20,7 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor(onConstructor = @__(@Inject))
 public class TimestampedEventCollectionValidator implements ConstraintValidator<TimestampedEventCollection, Collection<TimestampedEventVo>> {
 
-    public static final String TOO_MANY_ELEMENTS_ERROR_MESSAGE = "Too many %s, %d found, whereas the maximum allowed is %d";
+
+    public static final String TOO_MANY_ELEMENTS_ERROR_MESSAGE = "%s Too many %s, %d found, whereas the maximum allowed is %d";
     public static final String NAME_TOO_LONG_ERROR_MESSAGE = "For %s, name with more than %d characters is not allowed, found %d characters";
     public static final String DESCRIPTION_TOO_LONG_ERROR_MESSAGE = "For %s, description with more than %d characters is not allowed, found %d characters";
 
@@ -45,7 +48,7 @@ public class TimestampedEventCollectionValidator implements ConstraintValidator<
 
     private boolean isValidCollectionSize(final Collection<TimestampedEventVo> value, final ConstraintValidatorContext context) {
         if (value.size() > parameters.getMaxElementAllowed()) {
-            contextConfigurer(context, TOO_MANY_ELEMENTS_ERROR_MESSAGE, timestampedEventCollectionType, value.size(), parameters.getMaxElementAllowed());
+            contextConfigurer(context, TOO_MANY_ELEMENTS_ERROR_MESSAGE, PAYLOAD_TOO_LARGE, timestampedEventCollectionType, value.size(), parameters.getMaxElementAllowed());
             return false;
         }
         return true;
