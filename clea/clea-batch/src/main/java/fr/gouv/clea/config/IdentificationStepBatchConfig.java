@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -62,7 +63,7 @@ public class IdentificationStepBatchConfig {
                 .<String, List<SinglePlaceClusterPeriod>>chunk(properties.getIdentificationStepChunkSize())
                 .reader(reader)
                 .processor(compositeProcessor)
-                .writer(new SinglePlaceClusterPeriodListWriter(dataSource))
+                .writer(new SinglePlaceClusterPeriodListWriter(new NamedParameterJdbcTemplate(dataSource)))
                 .taskExecutor(taskExecutor())
                 .throttleLimit(20)
                 .build();

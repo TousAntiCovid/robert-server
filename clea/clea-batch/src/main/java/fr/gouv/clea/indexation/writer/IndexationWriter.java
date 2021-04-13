@@ -48,11 +48,10 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
         log.info("Creating directories if not exists: {}", jobDirectoryOutputPath);
         Files.createDirectories(jobDirectoryOutputPath);
 
-
         clusterFile.forEach(clusterFile1 -> generateClusterFile(clusterFile1, jobDirectoryOutputPath));
     }
 
-    private void generateClusterFile(final ClusterFile clusterFile, final Path directoryOutputPath) {
+    void generateClusterFile(final ClusterFile clusterFile, final Path directoryOutputPath) {
 
         final Path jsonClusterPath = Path.of(directoryOutputPath.toString(), clusterFile.getName()+JSON_FILE_EXTENSION);
         log.debug("Generating cluster file : {}", jsonClusterPath);
@@ -65,5 +64,4 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
             e.printStackTrace();
         }
     }
-
 }

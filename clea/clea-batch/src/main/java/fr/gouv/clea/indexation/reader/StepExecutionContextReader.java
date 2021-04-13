@@ -1,5 +1,6 @@
 package fr.gouv.clea.indexation.reader;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemReader;
 
@@ -10,6 +11,7 @@ import java.util.Map;
 @Slf4j
 public class StepExecutionContextReader implements ItemReader<Map.Entry<String, List<String>>> {
 
+    @Getter
     private int index = 0;
 
     private final List<String> prefixes;

@@ -1,6 +1,7 @@
 package fr.gouv.clea.identification.writer;
 
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -15,13 +16,10 @@ import java.util.stream.Collectors;
 import static fr.gouv.clea.config.BatchConstants.*;
 
 @Slf4j
+@RequiredArgsConstructor
 public class SinglePlaceClusterPeriodListWriter implements ItemWriter<List<SinglePlaceClusterPeriod>> {
 
     private final NamedParameterJdbcOperations jdbcTemplate;
-
-    public SinglePlaceClusterPeriodListWriter(DataSource datasource) {
-        this.jdbcTemplate = new NamedParameterJdbcTemplate(datasource);
-    }
 
     @Override
     public void write(List<? extends List<SinglePlaceClusterPeriod>> lists) {
