@@ -43,7 +43,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
             log.warn("LTId: {}, qrScanTime: {} should not before periodStartTime: {}", visit.getLocationTemporaryPublicId(), visit.getQrCodeScanTime(), periodStartAsInstant);
             return;
         }
-        int exposureTime = this.getExposureTime(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
+        int exposureTime = this.getExposureTimeSlots(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(visit.getPeriodDuration(), (int) scanTimeSlot + exposureTime);
 
@@ -112,7 +112,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
      * e.g. if EXPOSURE_TIME_UNIT is 3600 sec (one hour), an exposure time equals to 3 means 3 hours
      * if EXPOSURE_TIME_UNIT is 1800 sec (30 minutes), an exposure time equals to 3 means 1,5 hour.
      */
-    private int getExposureTime(int venueType, int venueCategory1, int venueCategory2, boolean staff) {
+    private int getExposureTimeSlots(int venueType, int venueCategory1, int venueCategory2, boolean staff) {
         return 3;
     }
 }
