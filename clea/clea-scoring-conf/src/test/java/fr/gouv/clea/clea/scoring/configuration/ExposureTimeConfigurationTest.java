@@ -11,12 +11,12 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
-@EnableConfigurationProperties(value = TestConfiguration.class)
+@EnableConfigurationProperties(value = ExposureTimeConfiguration.class)
 @ContextConfiguration(classes = { ExposureTimeConfigurationConverter.class })
 @TestPropertySource("classpath:application.properties")
 public class ExposureTimeConfigurationTest {
     @Autowired
-    private TestConfiguration configuration;
+    private ExposureTimeConfiguration configuration;
     
     @Test
     void testExposureTimeConfigurationHasExpectedSize() {
@@ -25,19 +25,21 @@ public class ExposureTimeConfigurationTest {
     
     @Test
     void testExposureTimeConfigurationHasExpectedData() {
-        ExposureTimeConfiguration scoring = configuration.getScorings().get(2);
+        ExposureTimeConfigurationItem scoring = (ExposureTimeConfigurationItem) configuration.getScorings().get(2);
         
         assertThat(scoring.getVenueType()).isEqualTo(3);
-        assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringConfiguration.wildcardValue);
-        assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringConfiguration.wildcardValue);
-        assertThat(scoring.getExposureTime()).isEqualTo(1);
+        assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringConfigurationItem.wildcardValue);
+        assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringConfigurationItem.wildcardValue);
+        assertThat(scoring.getExposureTimeBackward()).isEqualTo(1);
+        assertThat(scoring.getExposureTimeForward()).isEqualTo(11);
     }
     
     @Test
     void testGetMostSpecificConfiguration() {
-        ExposureTimeConfiguration scoring = configuration.getConfigurationFor(1, 1, 1);
+        ExposureTimeConfigurationItem scoring = configuration.getConfigurationFor(1, 1, 1);
         
-        assertThat(scoring.getExposureTime()).isEqualTo(3);
+        assertThat(scoring.getExposureTimeBackward()).isEqualTo(3);
+        assertThat(scoring.getExposureTimeForward()).isEqualTo(13);
     }
 
 }

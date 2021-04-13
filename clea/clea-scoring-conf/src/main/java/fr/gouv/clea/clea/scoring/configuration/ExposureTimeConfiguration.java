@@ -1,18 +1,23 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
+import java.util.List;
 
-@ToString(callSuper = true)
-@Getter
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+import lombok.Setter;
+
+@Configuration
+@ConfigurationProperties(prefix="clea.conf")
 public class ExposureTimeConfiguration extends ScoringConfiguration {
-    private int exposureTime;
-    
-    @Builder
-    public ExposureTimeConfiguration(int venueType, int venueCategory1, int venueCategory2, int exposureTime){
-      super(venueType, venueCategory1, venueCategory2);
-      this.exposureTime = exposureTime; 
+    @Setter
+    protected List<ExposureTimeConfigurationItem> scorings;
+
+    public List<? extends ScoringConfigurationItem> getScorings() {
+        return scorings;
     }
 
+    public ExposureTimeConfigurationItem getConfigurationFor(int venueType, int venueCategory1, int venueCategory2) {
+        return (ExposureTimeConfigurationItem) super.getConfigurationFor(venueType, venueCategory1, venueCategory2);
+    }
 }

@@ -6,23 +6,24 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConfigurationPropertiesBinding
-public class ExposureTimeConfigurationConverter implements Converter<String, ExposureTimeConfiguration>{
+public class ExposureTimeConfigurationConverter implements Converter<String, ExposureTimeConfigurationItem>{
 
     public static final String WILDCARD = "*";
 
     @Override
-    public ExposureTimeConfiguration convert(String source) {
+    public ExposureTimeConfigurationItem convert(String source) {
         String[] data = source.split(",");
-        return ExposureTimeConfiguration.builder()
+        return ExposureTimeConfigurationItem.builder()
             .venueType(this.stringToInt(data[0]))
             .venueCategory1(this.stringToInt(data[1]))
             .venueCategory2(this.stringToInt(data[2]))
-            .exposureTime(Integer.parseInt(data[3]))
+            .exposureTimeBackward(Integer.parseInt(data[3]))
+            .exposureTimeForward(Integer.parseInt(data[4]))
             .build(); 
     }
     
     public int stringToInt(String s) {
-        return s.equals(WILDCARD) ? ExposureTimeConfiguration.wildcardValue : Integer.parseInt(s);
+        return s.equals(WILDCARD) ? ExposureTimeConfigurationItem.wildcardValue : Integer.parseInt(s);
     }
 
 }
