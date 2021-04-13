@@ -22,4 +22,7 @@ public class BatchConstants {
     public static final String RISK_LEVEL_COL = "risk_level";
     public static final String CLUSTER_INDEX_FILENAME = "clusterIndex.json";
     public static final String JSON_FILE_EXTENSION = ".json";
+    public static final String PREFIXES_PARTITION_KEY = "prefixes";
+    public static final String LTIDS_LIST_PARTITION_KEY = "ltids";
+
 }

@@ -7,6 +7,9 @@ import org.springframework.batch.item.ExecutionContext;
 
 import java.util.*;
 
+import static fr.gouv.clea.config.BatchConstants.LTIDS_LIST_PARTITION_KEY;
+import static fr.gouv.clea.config.BatchConstants.PREFIXES_PARTITION_KEY;
+
 @Slf4j
 public class IndexationPartitioner implements Partitioner {
 
@@ -45,6 +48,9 @@ public class IndexationPartitioner implements Partitioner {
             final ExecutionContext value = createPartitionExecutionContext(prefixLtidsMapIterator, partitionSize);
             result.put("partition-"+partitionsIndex, value);
         }
+
+        // handle possible remaining entries due to non-null euclidian partitionSize division quotient
+        dispatchRemainingEntries(prefixLtidsMapIterator, result);
         log.debug("{} partitions created", result.size());
         return result;
     }
@@ -61,9 +67,19 @@ public class IndexationPartitioner implements Partitioner {
             } else {
                 break;
             }
-            value.put("prefixes", prefixes);
-            value.put("ltids", ltids);
+            value.put(PREFIXES_PARTITION_KEY, prefixes);
+            value.put(LTIDS_LIST_PARTITION_KEY, ltids);
         }
         return value;
+    }
+
+    private void dispatchRemainingEntries(final Iterator<Map.Entry<String, List<String>>> prefixLtidsMapIterator, final Map<String, ExecutionContext> result) {
+        final int partitionIndex = 0;
+        while (prefixLtidsMapIterator.hasNext()) {
+            final Map.Entry<String, List<String>> currentValue = prefixLtidsMapIterator.next();
+            final ExecutionContext executionContext = result.get("partition-" + partitionIndex);
+            ((List<String>) executionContext.get(PREFIXES_PARTITION_KEY)).add(currentValue.getKey());
+            ((List<List<String>>) executionContext.get(LTIDS_LIST_PARTITION_KEY)).add(currentValue.getValue());
+        }
     }
 }
