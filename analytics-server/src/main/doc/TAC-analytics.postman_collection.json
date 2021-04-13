@@ -12,13 +12,13 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiYWJjZGUifQ.G0oQVGvH1m97TTppY9J8ypdHI0saNjVyDt4wBQ1CV3OYQe9eK3xrQjhs6y0a1YpGlpcMTHYyBeRG15Ze-1XDoH0aKbLiQ-t9RddbyrctDG3gKdJkixfczwFIjt2BTJIpmcZAgx2aBbYU_SObFwn2hDn9GnNy2BPpGxHnPVTdzO9MuIcFZURcLvokiYM3tssue7mff4hep90F55hJPg_UC5ggm3bgQ78Ysu6gsImDDZoc1tn1bVEdXxkQ1LywG9U9zylPER2tczKnr8m0rCK6vNVnzsXjM1YKzJmhbR53BeXbTAGcUqQWZwDej3VvlkJxq3McBmMKihlDw0sov_ABKw",
+						"value": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiYWJjZGUiLCJleHAiOjE5MjYyMzkwMjIsInRydWMiOiJtYWNoaW4ifQ.YOBnc6YIeJIlWrm7y7z5N9P2HDGKI4um_P1AL5rGAuEobHB1APmqkeAT1Wv5to26ChDDAy2EklY3S_G8zNDPhg",
 						"type": "text"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"installationUuid\": \"toto\",\n     \"infos\": {\n    \"additionalProp1\": \"string\",\n    \"additionalProp2\": \"string\",\n    \"additionalProp3\": \"string\"\n  },\n  \"events\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"description\": \"string\"\n    }\n  ],\n  \"errors\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"description\": \"string\"\n    }\n  ]\n\n\n\n}",
+					"raw": "{\n    \"installationUuid\": \"toto\",\n     \"infos\": {\n    \"additionalProp1\": \"string\",\n    \"additionalProp2\": \"string\",\n    \"additionalProp3\": \"string\"\n  },\n  \"events\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"desc\": \"string\"\n    }\n  ],\n  \"errors\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"desc\": \"string\"\n    }\n  ]\n\n\n\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -26,7 +26,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8087/api/v4/analytics",
+					"raw": "http://127.0.0.1:8089/api/v1/analytics",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -34,11 +34,91 @@
 						"0",
 						"1"
 					],
-					"port": "8087",
+					"port": "8089",
 					"path": [
 						"api",
-						"v4",
+						"v1",
 						"analytics"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "INT - analytics",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJ0eXBlIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJqdGkiOiJiOTg0M2QwYS03ZjVjLTRjODktYTBlNC04NjBjZjVjZWEwY2IiLCJpYXQiOjE2MTgyOTY1NDMsImV4cCI6MTYxODMxODE0MywiaXNzIjoicm9iZXJ0LXNlcnZlciJ9.Kpvn_swCxrq2dmgTjt7EAQT0hYK_yDs69E71E_GuP35feG5iW8LCSI6NzXmAvIgB1clkTVfsIY3n39ddJXY4mVdoy82OJKk-MnL5nGCUjXJ5synznZJ1wNLtnHdqNdhHCDCwsb2wKF1iaVZe2W0w-yPY7pQVhtTHcPU7C09rtCQeX5PUGOoaXQyCjD3gq8PPqizFpZ2LVEjMYQTJNrvgHQ2BSE9b0h271EtRM1P3dPM4OVJjtlYTRhck93GzBwmtejTGeZjgbpun7dTY7xZShMoEnOq-7B-ac2E7i4JW4QycS4GVt1L1Rc7G07-u4UK5vkSor7JDlAAg8Y2jk7MPgg",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"installationUuid\": \"test6\",\n     \"infos\": {\n    \"additionalProp1\": \"string\",\n    \"additionalProp2\": \"string\",\n    \"additionalProp3\": \"string\"\n  },\n  \"events\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"description\": \"string\"\n    }\n  ],\n  \"errors\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"description\": \"string\"\n    }\n  ]\n\n\n\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://analytics-api-int.tousanticovid.gouv.fr/api/v1/analytics",
+					"protocol": "https",
+					"host": [
+						"analytics-api-int",
+						"tousanticovid",
+						"gouv",
+						"fr"
+					],
+					"path": [
+						"api",
+						"v1",
+						"analytics"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "INT - analytics health check",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJ0eXBlIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJqdGkiOiJiOTg0M2QwYS03ZjVjLTRjODktYTBlNC04NjBjZjVjZWEwY2IiLCJpYXQiOjE2MTgyOTY1NDMsImV4cCI6MTYxODMxODE0MywiaXNzIjoicm9iZXJ0LXNlcnZlciJ9.Kpvn_swCxrq2dmgTjt7EAQT0hYK_yDs69E71E_GuP35feG5iW8LCSI6NzXmAvIgB1clkTVfsIY3n39ddJXY4mVdoy82OJKk-MnL5nGCUjXJ5synznZJ1wNLtnHdqNdhHCDCwsb2wKF1iaVZe2W0w-yPY7pQVhtTHcPU7C09rtCQeX5PUGOoaXQyCjD3gq8PPqizFpZ2LVEjMYQTJNrvgHQ2BSE9b0h271EtRM1P3dPM4OVJjtlYTRhck93GzBwmtejTGeZjgbpun7dTY7xZShMoEnOq-7B-ac2E7i4JW4QycS4GVt1L1Rc7G07-u4UK5vkSor7JDlAAg8Y2jk7MPgg",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"installationUuid\": \"test6\",\n     \"infos\": {\n    \"additionalProp1\": \"string\",\n    \"additionalProp2\": \"string\",\n    \"additionalProp3\": \"string\"\n  },\n  \"events\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"description\": \"string\"\n    }\n  ],\n  \"errors\": [\n    {\n      \"name\": \"string\",\n      \"timestamp\": \"2021-02-10T17:46:54.167Z\",\n      \"description\": \"string\"\n    }\n  ]\n\n\n\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://analytics-api-int.tousanticovid.gouv.fr/actuator/health",
+					"protocol": "https",
+					"host": [
+						"analytics-api-int",
+						"tousanticovid",
+						"gouv",
+						"fr"
+					],
+					"path": [
+						"actuator",
+						"health"
 					]
 				}
 			},
