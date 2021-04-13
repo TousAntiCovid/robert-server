@@ -1,6 +1,7 @@
 package fr.gouv.tac.analytics.server.config.validation.validator;
 
 import static fr.gouv.tac.analytics.server.config.validation.validator.TimestampedEventCollectionValidator.*;
+import static fr.gouv.tac.analytics.server.controller.CustomExceptionHandler.PAYLOAD_TOO_LARGE;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -109,7 +110,7 @@ public class TimestampedEventCollectionValidatorTest {
 
         Assertions.assertThat(result).isFalse();
 
-        Assertions.assertThat(stringArgumentCaptor.getValue()).isEqualTo(String.format(TOO_MANY_ELEMENTS_ERROR_MESSAGE, "EVENT", 5 , 3));
+        Assertions.assertThat(stringArgumentCaptor.getValue()).isEqualTo(String.format(TOO_MANY_ELEMENTS_ERROR_MESSAGE, PAYLOAD_TOO_LARGE, "EVENT", 5 , 3));
     }
 
     @Test
