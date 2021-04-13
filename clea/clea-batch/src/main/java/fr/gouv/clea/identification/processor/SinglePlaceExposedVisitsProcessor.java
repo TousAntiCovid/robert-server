@@ -1,10 +1,12 @@
-package fr.gouv.clea.identification;
+package fr.gouv.clea.identification.processor;
 
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceExposedVisits;
 import fr.gouv.clea.entity.ExposedVisit;
+import fr.gouv.clea.identification.RiskConfigurationService;
+import fr.gouv.clea.identification.RiskLevelConfig;
 import fr.gouv.clea.utils.ExposedVisitComparator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
@@ -61,7 +63,7 @@ public class SinglePlaceExposedVisitsProcessor implements ItemProcessor<SinglePl
             cluster.addPeriod(forwardPeriod);
         }
 
-        cluster.computeDurations(properties.durationUnitInSeconds);
+        cluster.computeDurations(properties.getDurationUnitInSeconds());
 
         return cluster.isEmpty() ? null : cluster;
     }

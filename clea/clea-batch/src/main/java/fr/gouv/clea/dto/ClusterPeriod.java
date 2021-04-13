@@ -1,6 +1,5 @@
 package fr.gouv.clea.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.gouv.clea.entity.ExposedVisit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,14 +18,10 @@ public class ClusterPeriod {
 	private int firstTimeSlot;
 	private int lastTimeSlot;
 	
-
-	@JsonProperty("s")
 	private long clusterStart;
 	
-	@JsonProperty("d")
 	private int clusterDurationInSeconds;
 	
-	@JsonProperty("r")
 	private float riskLevel;
 	
 	public void adjustLimit(final ExposedVisit v) {
