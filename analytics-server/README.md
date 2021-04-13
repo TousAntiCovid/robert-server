@@ -87,3 +87,30 @@ Dans le fichier etc/hosts (c:\windows\system32\drivers\etc\hosts) ajouter l'entr
 
 Dans l'application docker desktop settings, placer la quantité de mémoire à 10G.
 
+## Génération - Vérification d'un token
+
+Pour cela il est possible d'utiliser https://jwt.io
+
+Il faut sélectionner l'algorithm RS-256
+
+La clef publique est récupérable au niveau de la clef `robert_jwt_analyticspublickey` dans le fichier application-dev.yml 
+en le formattant de la façon suivante avant de la copier dans le champ prévu à cet effet sous jwt.io
+
+      -----BEGIN PUBLIC KEY-----
+      <1ERE LIGNE DE LA CLEF PUBLIQUE TRONQUEE à 65 caractères>
+      <...>
+      <...>
+      -----END PUBLIC KEY-----
+
+La clef privée est récupérable en commentaire sous la clef publique.
+Il faut la formatter de la façon suivante avant de la copier dans le champ prévu à cet effet sous jwt.io
+
+    -----BEGIN RSA PRIVATE KEY-----
+      <1ERE LIGNE DE LA CLEF PRIVEE TRONQUEE à 65 caractères>
+      <...>
+      <...>
+    -----END RSA PRIVATE KEY----
+
+Il vous est alors possible de : 
+* modifier le payload pour générer un nouveau token
+* lire le contenu d'un token
