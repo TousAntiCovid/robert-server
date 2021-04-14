@@ -45,5 +45,5 @@ public class ExposureTimeConfigurationTest {
         assertThat(scoring.getExposureTimeStaffBackward()).isEqualTo(23);
         assertThat(scoring.getExposureTimeStaffForward()).isEqualTo(33);
     }
-
+    
 }

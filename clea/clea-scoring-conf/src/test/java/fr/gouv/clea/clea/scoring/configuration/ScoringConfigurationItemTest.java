@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 public class ScoringConfigurationItemTest {
     @Test
     void testConfigurationWithNoWildcardHasMaxPriority() {
-        ExposureTimeConfigurationItem scoring = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(1)
                 .venueCategory2(1)
@@ -18,12 +18,12 @@ public class ScoringConfigurationItemTest {
 
     @Test
     void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithNoWildcard() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(ScoringConfigurationItem.wildcardValue)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
                 .build();
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(1)
                 .venueCategory2(1)
@@ -34,12 +34,12 @@ public class ScoringConfigurationItemTest {
 
     @Test
     void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithCategory1Wildcard() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(ScoringConfigurationItem.wildcardValue)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
                 .build();
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(1)
@@ -50,12 +50,12 @@ public class ScoringConfigurationItemTest {
 
     @Test
     void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithCategory2Wildcard() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(ScoringConfigurationItem.wildcardValue)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
                 .build();
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(1)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
@@ -66,12 +66,12 @@ public class ScoringConfigurationItemTest {
 
     @Test
     void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithCategory1And2Wildcard() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(ScoringConfigurationItem.wildcardValue)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
                 .build();
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
@@ -83,12 +83,12 @@ public class ScoringConfigurationItemTest {
 
     @Test
     void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithTypeAndCategory1Wildcard() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(ScoringConfigurationItem.wildcardValue)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
                 .build();
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(ScoringConfigurationItem.wildcardValue)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(1)
@@ -99,12 +99,12 @@ public class ScoringConfigurationItemTest {
     
     @Test
     void testConfigurationWithCategory1WithNoWildcardHasPriorityOverConfigurationWithCategory2WithNoWildcard() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(1)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
                 .build();       
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(1)
@@ -115,12 +115,12 @@ public class ScoringConfigurationItemTest {
     
     @Test
     void testConfigurationWithCategory1HasPriorityOverConfigurationWithWildcard() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(1)
                 .venueCategory2(1)
                 .build();
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(1)
@@ -131,12 +131,12 @@ public class ScoringConfigurationItemTest {
 
     @Test
     void testConfigurationWithTypeHasPriorityOverConfigurationWithWildcard() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(1)
                 .venueCategory2(1)
                 .build();
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(ScoringConfigurationItem.wildcardValue)
                 .venueCategory1(1)
                 .venueCategory2(1)
@@ -147,12 +147,12 @@ public class ScoringConfigurationItemTest {
 
     @Test
     void testConfigurationWithTypeHasPriorityOverConfigurationWithWildcards() {
-        ExposureTimeConfigurationItem scoring1 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
                 .venueType(1)
                 .venueCategory1(ScoringConfigurationItem.wildcardValue)
                 .venueCategory2(ScoringConfigurationItem.wildcardValue)
                 .build();
-        ExposureTimeConfigurationItem scoring2 = ExposureTimeConfigurationItem.builder()
+        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
                 .venueType(ScoringConfigurationItem.wildcardValue)
                 .venueCategory1(1)
                 .venueCategory2(1)
