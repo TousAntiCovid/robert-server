@@ -32,6 +32,8 @@ public class ExposureTimeConfigurationTest {
         assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringConfigurationItem.wildcardValue);
         assertThat(scoring.getExposureTimeBackward()).isEqualTo(1);
         assertThat(scoring.getExposureTimeForward()).isEqualTo(11);
+        assertThat(scoring.getExposureTimeStaffBackward()).isEqualTo(21);
+        assertThat(scoring.getExposureTimeStaffForward()).isEqualTo(31);
     }
     
     @Test
@@ -40,6 +42,8 @@ public class ExposureTimeConfigurationTest {
         
         assertThat(scoring.getExposureTimeBackward()).isEqualTo(3);
         assertThat(scoring.getExposureTimeForward()).isEqualTo(13);
+        assertThat(scoring.getExposureTimeStaffBackward()).isEqualTo(23);
+        assertThat(scoring.getExposureTimeStaffForward()).isEqualTo(33);
     }
 
 }

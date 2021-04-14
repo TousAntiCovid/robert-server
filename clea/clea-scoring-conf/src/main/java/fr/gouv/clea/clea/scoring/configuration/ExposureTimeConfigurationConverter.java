@@ -19,6 +19,8 @@ public class ExposureTimeConfigurationConverter implements Converter<String, Exp
             .venueCategory2(this.stringToInt(data[2]))
             .exposureTimeBackward(Integer.parseInt(data[3]))
             .exposureTimeForward(Integer.parseInt(data[4]))
+            .exposureTimeStaffBackward(Integer.parseInt(data[5]))
+            .exposureTimeStaffForward(Integer.parseInt(data[6]))
             .build(); 
     }
     
