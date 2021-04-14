@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,8 +46,8 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         }
         int exposureTime = this.getExposureTimeSlots(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
-        int lastExposedSlot = Math.min(visit.getPeriodDuration(), (int) scanTimeSlot + exposureTime);
-
+        int lastExposedSlot = Math.min(this.getPeriodMaxSlot(visit.getPeriodDuration()), (int) scanTimeSlot + exposureTime);
+        
         List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), this.periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime()));
 
         List<ExposedVisitEntity> toUpdate = new ArrayList<>();
@@ -73,6 +74,20 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         } else {
             log.info("LTId: {}, qrScanTime: {} - No visit to persist / update", visit.getLocationTemporaryPublicId(), visit.getQrCodeScanTime());
         }
+    }
+
+    /**
+     * durationUnitInSeconds must be a value ensuring: 3600 % durationUnitInSeconds = 0
+     */
+    protected int getPeriodMaxSlot(int periodDuration) {
+        // This check should go in venue consumer configuration validation
+        if (Duration.ofHours(1).toSeconds() % periodDuration == 0) {
+            log.error("durationUnitInSeconds does not have a valid value: {}. 1 hour / durationUnitInSeconds has a reminder!");
+        }
+        if (periodDuration == 255) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) Duration.of(periodDuration, ChronoUnit.HOURS).dividedBy(Duration.of(durationUnitInSeconds, ChronoUnit.SECONDS));
     }
 
     private long periodStartFromCompressedPeriodStart(long compressedPeriodStartTime) {
