@@ -40,7 +40,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         Instant periodStartAsInstant = this.periodStartFromCompressedPeriodStartAsInstant(visit.getCompressedPeriodStartTime());
         long scanTimeSlot = Duration.between(periodStartAsInstant, visit.getQrCodeScanTime()).toSeconds() / durationUnitInSeconds;
         if (scanTimeSlot < 0) {
-            log.warn("qrScanTime: {} should not before periodStartTime: {}", visit.getQrCodeScanTime(), periodStartAsInstant);
+            log.warn("LTId: {}, qrScanTime: {} should not before periodStartTime: {}", visit.getLocationTemporaryPublicId(), visit.getQrCodeScanTime(), periodStartAsInstant);
             return;
         }
         int exposureTime = this.getExposureTime(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
@@ -51,6 +51,8 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
 
         List<ExposedVisitEntity> toUpdate = new ArrayList<>();
         List<ExposedVisitEntity> toPersist = new ArrayList<>();
+
+        log.info("updateExposureCount: LTId: {}, scanTimeSlot: {}, firstExposedSlot: {}, lastExposedSlot: {} ", visit.getLocationTemporaryPublicId(), scanTimeSlot, firstExposedSlot, lastExposedSlot);
 
         IntStream.rangeClosed(firstExposedSlot, lastExposedSlot)
                 .forEach(slotIndex ->
@@ -68,6 +70,8 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
             repository.saveAll(merged);
             log.info("Persisting {} new visits!", toPersist.size());
             log.info("Updating {} existing visits!", toUpdate.size());
+        } else {
+            log.info("LTId: {}, qrScanTime: {} - No visit to persist / update", visit.getLocationTemporaryPublicId(), visit.getQrCodeScanTime());
         }
     }
 
