@@ -25,4 +25,6 @@ public class BatchConstants {
     public static final String PREFIXES_PARTITION_KEY = "prefixes";
     public static final String LTIDS_LIST_PARTITION_KEY = "ltids";
 
+    public static final String SQL_SELECT_BY_LTID_IN_SINGLEPLACECLUSTERPERIOD = "select * from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + " WHERE ltid= ?";
+
 }

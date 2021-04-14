@@ -9,6 +9,7 @@ import fr.gouv.clea.indexation.model.output.ClusterFile;
 import fr.gouv.clea.indexation.model.output.ClusterFileItem;
 import fr.gouv.clea.indexation.model.output.Prefix;
 import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,30 +22,22 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static fr.gouv.clea.config.BatchConstants.SINGLE_PLACE_CLUSTER_PERIOD_TABLE;
+import static fr.gouv.clea.config.BatchConstants.SQL_SELECT_BY_LTID_IN_SINGLEPLACECLUSTERPERIOD;
 
 @Slf4j
+@RequiredArgsConstructor
 public class SinglePlaceClusterBuilder implements ItemProcessor<Map.Entry<String, List<String>>, ClusterFile> {
 
     private final JdbcTemplate jdbcTemplate;
     private final ClusterPeriodModelsMapper mapper;
-    private final BatchProperties properties;
 
-    public SinglePlaceClusterBuilder(
-            final DataSource dataSource,
-            final ClusterPeriodModelsMapper mapper,
-            final BatchProperties properties) {
-
-        jdbcTemplate = new JdbcTemplate(dataSource);
-        this.mapper = mapper;
-        this.properties = properties;
-    }
 
     @Override
     public ClusterFile process(final Map.Entry<String, List<String>> prefixLtidsEntry) {
         log.debug("Processing prefix {} files...", prefixLtidsEntry.getKey());
         
         ClusterFile clusterFile = new ClusterFile();
-        clusterFile.setName(Prefix.of(prefixLtidsEntry.getValue().get(0), properties.getStaticPrefixLength()));
+        clusterFile.setName(prefixLtidsEntry.getKey());
         
         prefixLtidsEntry.getValue().forEach(createClusterFile(clusterFile));
         return clusterFile;
@@ -61,7 +54,7 @@ public class SinglePlaceClusterBuilder implements ItemProcessor<Map.Entry<String
         };
     }
 
-    private ClusterFileItem createClusterFileItem(SinglePlaceClusterPeriod firstPeriod, List<ClusterPeriod> clusterPeriods) {
+    ClusterFileItem createClusterFileItem(SinglePlaceClusterPeriod firstPeriod, List<ClusterPeriod> clusterPeriods) {
         return ClusterFileItem.ofCluster(SinglePlaceCluster.builder()
                 .locationTemporaryPublicId(firstPeriod.getLocationTemporaryPublicId())
                 .venueCategory1(firstPeriod.getVenueCategory1())
@@ -71,9 +64,8 @@ public class SinglePlaceClusterBuilder implements ItemProcessor<Map.Entry<String
                 .build());
     }
 
-    private List<SinglePlaceClusterPeriod> getSinglePlaceClusterPeriods(final String ltid) {
-        return jdbcTemplate.query("select * from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + " WHERE ltid= ?",
-                new SinglePlaceClusterPeriodRowMapper(), UUID.fromString(ltid));
+    List<SinglePlaceClusterPeriod> getSinglePlaceClusterPeriods(final String ltid) {
+        return jdbcTemplate.query(SQL_SELECT_BY_LTID_IN_SINGLEPLACECLUSTERPERIOD, new SinglePlaceClusterPeriodRowMapper(), UUID.fromString(ltid));
     }
 
     private List<ClusterPeriod> buildClusterPeriods(final List<SinglePlaceClusterPeriod> clusterPeriodList) {

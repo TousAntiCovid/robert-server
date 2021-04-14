@@ -35,7 +35,7 @@ public class PrefixesStepBatchConfig {
     @Bean
     public Step prefixesComputing() {
         return stepBuilderFactory.get("prefixesComputing")
-                .<List<String>, List<String>>chunk(1000)
+                .<List<String>, List<String>>chunk(properties.getPrefixesComputingStepChunkSize())
                 .reader(ltidListDBReader())
                 .writer(new PrefixesMemoryWriter(properties, prefixesStorageService))
                 .build();
