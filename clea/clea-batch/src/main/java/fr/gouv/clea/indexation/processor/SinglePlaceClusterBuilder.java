@@ -1,27 +1,23 @@
 package fr.gouv.clea.indexation.processor;
 
-import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
 import fr.gouv.clea.indexation.SinglePlaceClusterPeriodRowMapper;
 import fr.gouv.clea.indexation.model.output.ClusterFile;
 import fr.gouv.clea.indexation.model.output.ClusterFileItem;
-import fr.gouv.clea.indexation.model.output.Prefix;
 import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static fr.gouv.clea.config.BatchConstants.SINGLE_PLACE_CLUSTER_PERIOD_TABLE;
 import static fr.gouv.clea.config.BatchConstants.SQL_SELECT_BY_LTID_IN_SINGLEPLACECLUSTERPERIOD;
 
 @Slf4j

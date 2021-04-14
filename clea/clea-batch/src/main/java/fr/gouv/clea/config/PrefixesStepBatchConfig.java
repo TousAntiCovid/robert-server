@@ -14,8 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.sql.DataSource;
 import java.util.List;
 
-import static fr.gouv.clea.config.BatchConstants.LTID_COL;
-import static fr.gouv.clea.config.BatchConstants.SINGLE_PLACE_CLUSTER_PERIOD_TABLE;
+import static fr.gouv.clea.config.BatchConstants.SQL_SELECT_DISTINCT_FROM_CLUSTERPERIODS_ORDERBY_LTID;
 
 @Configuration
 public class PrefixesStepBatchConfig {
@@ -52,7 +51,7 @@ public class PrefixesStepBatchConfig {
         reader.setSaveState(false);
         reader.setDataSource(dataSource);
         reader.setVerifyCursorPosition(false);
-        reader.setSql("select distinct " + LTID_COL + " from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + " ORDER BY " + LTID_COL);
+        reader.setSql(SQL_SELECT_DISTINCT_FROM_CLUSTERPERIODS_ORDERBY_LTID);
         reader.setRowMapper((rs, i) -> rs.getString(1));
         return new ListItemReader(reader);
     }

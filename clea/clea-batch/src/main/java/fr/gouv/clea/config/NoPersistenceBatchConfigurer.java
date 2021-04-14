@@ -7,12 +7,10 @@ import org.springframework.batch.core.repository.support.JobRepositoryFactoryBea
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
-
-import javax.sql.DataSource;
 
 @Component
 public class NoPersistenceBatchConfigurer extends DefaultBatchConfigurer {
