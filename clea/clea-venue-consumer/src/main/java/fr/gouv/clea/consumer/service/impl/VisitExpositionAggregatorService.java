@@ -87,8 +87,8 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         if (periodDuration == 255) {
             return Integer.MAX_VALUE;
         }
-        int periodMaxSlot = (int) Duration.of(periodDuration, ChronoUnit.HOURS).dividedBy(Duration.of(durationUnitInSeconds, ChronoUnit.SECONDS));
-        return periodMaxSlot - 1; // 0 based index
+        int nbSlotsInPeriod = (int) Duration.of(periodDuration, ChronoUnit.HOURS).dividedBy(Duration.of(durationUnitInSeconds, ChronoUnit.SECONDS));
+        return nbSlotsInPeriod - 1; // 0 based index
     }
 
     private long periodStartFromCompressedPeriodStart(long compressedPeriodStartTime) {
