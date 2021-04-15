@@ -312,7 +312,7 @@ class VisitExpositionAggregatorServiceTest {
                 .venueCategory2(0)
                 .periodDuration(255)
                 .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAt8am))
-                .qrCodeValidityStartTime(todayAtMidnight)
+                .qrCodeValidityStartTime(todayAt8am)
                 .locationTemporarySecretKey(locationTemporarySecretKey)
                 .encryptedLocationContactMessage(encryptedLocationContactMessage)
                 .qrCodeScanTime(todayAt8am)
@@ -343,7 +343,7 @@ class VisitExpositionAggregatorServiceTest {
     }
 
     @Test
-    @DisplayName("no slot should be generated when qrScanTime is after of period validity")
+    @DisplayName("no slot should be generated when qrScanTime is after period validity")
     void testSlotGenerationWithQrScanTimeFarFromPeriodDuration() {
         Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
         Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
