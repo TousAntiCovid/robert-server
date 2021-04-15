@@ -133,13 +133,13 @@ class DecodedVisitServiceTest {
     @Test
     @DisplayName("check with non valid temporaryLocationPublicId")
     void nonValidTemporaryLocationPublicId() throws CleaEncryptionException, CleaEncodingException {
-        int CRIexp = 0x1F;
+        int qrCodeRenewalIntervalExponent = 0x1F;
         UUID _uuid = UUID.randomUUID();
 
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
                         LocationSpecificPart.builder()
-                                .qrCodeRenewalIntervalExponentCompact(CRIexp)
+                                .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponent)
                                 .locationTemporaryPublicId(uuid)
                                 .locationTemporarySecretKey(locationTemporarySecretKey)
                                 .build()
