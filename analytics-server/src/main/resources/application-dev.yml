@@ -1,0 +1,48 @@
+server:
+  port: 8089
+
+# Available endpoints for the monitoring
+management:
+  server:
+    port: 8090
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,prometheus
+
+# Kafka producer conf
+spring:
+  kafka:
+    bootstrap-servers: localhost:19092
+    template:
+      default-topic: analyticsTopic
+
+analyticsserver:
+
+  robert_jwt_analyticspublickey: MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMAMa2bW7k1SQrY+MtGbGvbeBj+4JB5hzCHXe+Amzc/yLUlAabO12uUwlBUD0JetGqNSgJKRlyDLmeyChXI3P88CAwEAAQ==
+# related private key
+#  -----BEGIN RSA PRIVATE KEY-----
+#  MIIBOwIBAAJBAMAMa2bW7k1SQrY+MtGbGvbeBj+4JB5hzCHXe+Amzc/yLUlAabO1
+#  2uUwlBUD0JetGqNSgJKRlyDLmeyChXI3P88CAwEAAQJBAJ0YS6629/3l4U5EOLu+
+#  3eK8oW30Cg+UPjAcnWcxNr/21eabSBpJYFfxtzHi1F4XWAezk6ZHX3Z8W+0B1Zep
+#  AtECIQDrwSItfwn3fGg7EY2BnFRefznh1ahXj4zBO5rPsYtWxwIhANCKcpU/leUc
+#  0Qr7Ydcd8L4EedRcVIle3eLtdRDpPCa5AiAWwouBJu2YZftOEJC/vY7rnI7C/bSF
+#  14b4NL/qYzKXiwIhAKEuwQ12Tgb91NzmG2NHMvHLR9bJXlWmy11AJ8FgZCuRAiBy
+#  +uh6PG0NU/DkdJdxo4bH/m7OgZQOAoVTHZ2+v4K9ww==
+#  -----END RSA PRIVATE KEY-----
+# generated with : https://travistidwell.com/jsencrypt/demo/
+
+  validation:
+    analytics:
+      information:
+        maxInfoAllowed: 20
+        maxInfoKeyLength: 64
+        maxInfoValueLength: 512
+      event:
+        maxElementAllowed: 20
+        maxNameLength: 64
+        maxDescriptionLength: 512
+      error:
+        maxElementAllowed: 20
+        maxNameLength: 64
+        maxDescriptionLength: 512

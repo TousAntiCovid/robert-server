@@ -1,8 +1,10 @@
 package fr.gouv.tac.analytics.server.it;
 
+
 import static fr.gouv.tac.analytics.server.config.validation.validator.AnalyticsVoInfoSizeValidator.*;
 import static fr.gouv.tac.analytics.server.config.validation.validator.TimestampedEventCollectionValidator.DESCRIPTION_TOO_LONG_ERROR_MESSAGE;
 import static fr.gouv.tac.analytics.server.config.validation.validator.TimestampedEventCollectionValidator.NAME_TOO_LONG_ERROR_MESSAGE;
+import static fr.gouv.tac.analytics.server.controller.CustomExceptionHandler.PAYLOAD_TOO_LARGE;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +37,7 @@ import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
 import fr.gouv.tac.analytics.server.controller.vo.ErrorVo;
 import fr.gouv.tac.analytics.server.controller.vo.TimestampedEventVo;
 import fr.gouv.tac.analytics.server.model.kafka.Analytics;
+import fr.gouv.tac.analytics.server.utils.UriConstants;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -51,7 +54,7 @@ public class AnalyticsCreationValidationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${analyticsserver.controller.analytics.path}")
+    @Value("${analyticsserver.controller.path.prefix}"+ UriConstants.API_V1 + UriConstants.ANALYTICS)
     private String analyticsControllerPath;
 
     @MockBean
@@ -162,11 +165,11 @@ public class AnalyticsCreationValidationTest {
         final MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post(analyticsControllerPath)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(analyticsAsJson))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isPayloadTooLarge())
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains(String.format(TOO_MANY_INFO_ERROR_MESSAGE, 3, 2));
+        Assertions.assertThat(errorVo.getMessage()).contains(String.format(TOO_MANY_INFO_ERROR_MESSAGE, PAYLOAD_TOO_LARGE, 3, 2));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
         verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
@@ -291,7 +294,7 @@ public class AnalyticsCreationValidationTest {
     public void itShouldRejectAnalyticsWithEvenDescriptionTooLong() throws Exception {
 
         final AnalyticsVo analyticsVo = buildAnalyticsVo();
-        analyticsVo.getEvents().get(0).setDescription("Event description too long");
+        analyticsVo.getEvents().get(0).setDesc("Event description too long");
 
         final String analyticsAsJson = objectMapper.writeValueAsString(analyticsVo);
 
@@ -384,7 +387,7 @@ public class AnalyticsCreationValidationTest {
     public void itShouldRejectAnalyticsWithErrorDescriptionTooLong() throws Exception {
 
         final AnalyticsVo analyticsVo = buildAnalyticsVo();
-        analyticsVo.getErrors().get(0).setDescription("Error description too long");
+        analyticsVo.getErrors().get(0).setDesc("Error description too long");
 
         final String analyticsAsJson = objectMapper.writeValueAsString(analyticsVo);
 
@@ -406,11 +409,11 @@ public class AnalyticsCreationValidationTest {
 
         final ZonedDateTime timestamp = ZonedDateTime.parse("2020-12-17T10:59:17.123Z");
 
-        final TimestampedEventVo event1 = TimestampedEventVo.builder().name("eventName1").timestamp(timestamp).description("event1 description").build();
+        final TimestampedEventVo event1 = TimestampedEventVo.builder().name("eventName1").timestamp(timestamp).desc("event1 description").build();
         final TimestampedEventVo event2 = TimestampedEventVo.builder().name("eventName2").timestamp(timestamp).build();
 
         final TimestampedEventVo error1 = TimestampedEventVo.builder().name("errorName1").timestamp(timestamp).build();
-        final TimestampedEventVo error2 = TimestampedEventVo.builder().name("errorName2").timestamp(timestamp).description("error2 description").build();
+        final TimestampedEventVo error2 = TimestampedEventVo.builder().name("errorName2").timestamp(timestamp).desc("error2 description").build();
 
         return AnalyticsVo.builder()
                 .installationUuid("some installation uuid")

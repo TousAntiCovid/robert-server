@@ -22,5 +22,5 @@ public class TimestampedEventVo {
     @NotNull
     private ZonedDateTime timestamp;
 
-    private String description;
+    private String desc;
 }

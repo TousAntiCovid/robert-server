@@ -1,6 +1,7 @@
 package fr.gouv.tac.analytics.server.config.validation.validator;
 
 import static fr.gouv.tac.analytics.server.config.validation.validator.AnalyticsVoInfoSizeValidator.*;
+import static fr.gouv.tac.analytics.server.controller.CustomExceptionHandler.PAYLOAD_TOO_LARGE;
 
 import java.util.Map;
 
@@ -21,7 +22,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 @ExtendWith(SpringExtension.class)
-public class AnalyticsMongoVoInfoSizeValidatorTest {
+public class AnalyticsVoInfoSizeValidatorTest {
 
     @Captor
     private ArgumentCaptor<String> stringArgumentCaptor;
@@ -75,7 +76,7 @@ public class AnalyticsMongoVoInfoSizeValidatorTest {
         final boolean result = this.analyticsVoInfoSizeValidator.isValid(info, constraintValidatorContext);
         Assertions.assertThat(result).isFalse();
 
-        Assertions.assertThat(stringArgumentCaptor.getValue()).isEqualTo(String.format(TOO_MANY_INFO_ERROR_MESSAGE, 4, 3));
+        Assertions.assertThat(stringArgumentCaptor.getValue()).isEqualTo(String.format(TOO_MANY_INFO_ERROR_MESSAGE, PAYLOAD_TOO_LARGE, 4, 3));
     }
 
     @Test

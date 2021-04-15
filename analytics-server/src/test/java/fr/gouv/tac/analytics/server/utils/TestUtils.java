@@ -9,7 +9,7 @@ public class TestUtils {
         return TimestampedEvent.builder()
                 .name(timestampedEventVo.getName())
                 .timestamp(timestampedEventVo.getTimestamp())
-                .description(timestampedEventVo.getDescription())
+                .desc(timestampedEventVo.getDesc())
                 .build();
     }
 
