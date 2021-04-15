@@ -1,0 +1,12 @@
+# keys are stored in consul for INT, PREPROD and PRODUCTION platforms
+analyticsserver:
+  controller:
+    path:
+      prefix: /api
+
+# Kafka producer conf
+spring:
+  kafka:
+    bootstrap-servers: ${ANALYTICS_KAFKA_BOOTSTRAP_SERVERS}
+    template:
+      default-topic: ${ANALYTICS_KAFKA_DEFAULT_TOPIC:analyticsTopic}

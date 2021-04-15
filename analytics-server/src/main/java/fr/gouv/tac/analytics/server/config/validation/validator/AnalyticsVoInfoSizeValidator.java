@@ -1,5 +1,7 @@
 package fr.gouv.tac.analytics.server.config.validation.validator;
 
+import static fr.gouv.tac.analytics.server.controller.CustomExceptionHandler.PAYLOAD_TOO_LARGE;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -16,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor(onConstructor = @__(@Inject))
 public class AnalyticsVoInfoSizeValidator implements ConstraintValidator<AnalyticsVoInfoSize, Map<String, String>> {
 
-    public static final String TOO_MANY_INFO_ERROR_MESSAGE = "Too many info, %d found, whereas the maximum allowed is %d";
+    public static final String TOO_MANY_INFO_ERROR_MESSAGE = "%s Too many info, %d found, whereas the maximum allowed is %d";
     public static final String KEY_TOO_LONG_ERROR_MESSAGE = "Key with more than %d characters is not allowed, found %d characters";
     public static final String VALUE_TOO_LONG_ERROR_MESSAGE = "Parameter value with more than %d characters is not allowed, found %d characters";
 
@@ -34,7 +36,7 @@ public class AnalyticsVoInfoSizeValidator implements ConstraintValidator<Analyti
     private boolean isValidMapSize(final Map<String, String> value, final ConstraintValidatorContext context) {
         final int maxInfoAllowed = validationParameters.getInformation().getMaxInfoAllowed();
         if (value.size() > maxInfoAllowed) {
-            contextConfigurer(context, TOO_MANY_INFO_ERROR_MESSAGE, value.size(), maxInfoAllowed);
+            contextConfigurer(context, TOO_MANY_INFO_ERROR_MESSAGE, PAYLOAD_TOO_LARGE, value.size(), maxInfoAllowed);
             return false;
         }
         return true;
