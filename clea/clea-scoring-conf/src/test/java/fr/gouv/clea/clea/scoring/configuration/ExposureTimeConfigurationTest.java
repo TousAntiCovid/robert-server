@@ -46,4 +46,9 @@ public class ExposureTimeConfigurationTest {
         assertThat(scoring.getExposureTimeStaffForward()).isEqualTo(33);
     }
     
+    @Test
+    void testValidation() {
+        // test empty configuration
+    }
+    
 }

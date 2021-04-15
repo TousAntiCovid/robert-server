@@ -1,16 +1,24 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
+import javax.validation.constraints.Min;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
+// @Valid
+@SuperBuilder
 @AllArgsConstructor
 @ToString
 @Getter
 public class ScoringConfigurationItem {
     public static int wildcardValue = -1;
+    @Min(value = -1)
     private int venueType;
+    @Min(value = -1)
     private int venueCategory1;
+    @Min(value = -1)
     private int venueCategory2;
     
     /**
