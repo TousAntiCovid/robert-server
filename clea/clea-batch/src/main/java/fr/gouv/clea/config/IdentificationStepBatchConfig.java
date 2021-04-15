@@ -22,12 +22,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import javax.sql.DataSource;
 import java.util.List;
 
-import static fr.gouv.clea.config.BatchConstants.EXPOSED_VISITS_TABLE;
-import static fr.gouv.clea.config.BatchConstants.LTID_COL;
+import static fr.gouv.clea.config.BatchConstants.SQL_SELECT_DISTINCT_LTID_FROM_EXPOSEDVISITS;
 
 @Configuration
 public class IdentificationStepBatchConfig {
@@ -62,7 +62,7 @@ public class IdentificationStepBatchConfig {
                 .<String, List<SinglePlaceClusterPeriod>>chunk(properties.getIdentificationStepChunkSize())
                 .reader(reader)
                 .processor(compositeProcessor)
-                .writer(new SinglePlaceClusterPeriodListWriter(dataSource))
+                .writer(new SinglePlaceClusterPeriodListWriter(new NamedParameterJdbcTemplate(dataSource)))
                 .taskExecutor(taskExecutor())
                 .throttleLimit(20)
                 .build();
@@ -73,7 +73,7 @@ public class IdentificationStepBatchConfig {
 
         JdbcCursorItemReader<String> reader = new JdbcCursorItemReader<>();
         reader.setDataSource(dataSource);
-        reader.setSql("select distinct " + LTID_COL + " from " + EXPOSED_VISITS_TABLE + " order by " + LTID_COL);
+        reader.setSql(SQL_SELECT_DISTINCT_LTID_FROM_EXPOSEDVISITS);
         reader.setRowMapper((rs, i) -> rs.getString(1));
         return reader;
     }

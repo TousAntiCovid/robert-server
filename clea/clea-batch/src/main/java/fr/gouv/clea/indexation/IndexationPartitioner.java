@@ -74,12 +74,13 @@ public class IndexationPartitioner implements Partitioner {
     }
 
     private void dispatchRemainingEntries(final Iterator<Map.Entry<String, List<String>>> prefixLtidsMapIterator, final Map<String, ExecutionContext> result) {
-        final int partitionIndex = 0;
+        int partitionIndex = 0;
         while (prefixLtidsMapIterator.hasNext()) {
             final Map.Entry<String, List<String>> currentValue = prefixLtidsMapIterator.next();
             final ExecutionContext executionContext = result.get("partition-" + partitionIndex);
             ((List<String>) executionContext.get(PREFIXES_PARTITION_KEY)).add(currentValue.getKey());
             ((List<List<String>>) executionContext.get(LTIDS_LIST_PARTITION_KEY)).add(currentValue.getValue());
+            partitionIndex++;
         }
     }
 }

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+@Disabled("for local development purpose")
 @SpringBootTest
 //@ExtendWith(SpringExtension.class)
 //@RunWith(SpringRunner.class)
@@ -43,8 +44,7 @@ public class ExposedVisitGenerator {
 //	}
 
 	@Test
-	@Disabled("for local development purpose")
-	public void fillRandomVisits() {
+	void fillRandomVisits() {
 		// hour of now : 3826008000
 		// hour of 21-01-01 : 3818448000
 		// diff: 7560000
@@ -57,9 +57,9 @@ public class ExposedVisitGenerator {
 		final long janv21 = 3818448000l;
 
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(ds);
-		
+
 		log.info("Starting to fill EXPOSED_VISITS...");
-		
+
 		for (int l = 0; l < NB_LOCATIONS; l++) {
 			UUID lieu = UUID.randomUUID();
 			int venueType = r.nextInt(18)+1; 		// 1 to 18
@@ -108,7 +108,7 @@ public class ExposedVisitGenerator {
 						}
 					});
 			//@formatter:on
-			
+
 		}
 		log.info("Nb records in EXPOSED_VISITS: " + jdbcTemplate.queryForObject("select count(*) from EXPOSED_VISITS", Integer.class));
 

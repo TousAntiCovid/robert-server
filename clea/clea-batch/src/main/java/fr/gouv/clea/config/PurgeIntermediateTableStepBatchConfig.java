@@ -7,12 +7,9 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
-
-import static fr.gouv.clea.config.BatchConstants.SINGLE_PLACE_CLUSTER_PERIOD_TABLE;
+import static fr.gouv.clea.config.BatchConstants.SQL_TRUNCATE_TABLE_CLUSTERPERIODS;
 
 @Configuration
 public class PurgeIntermediateTableStepBatchConfig {
@@ -20,17 +17,20 @@ public class PurgeIntermediateTableStepBatchConfig {
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Bean
-    public Step purgeIntermediateTable(final JdbcTemplate jdbcTemplate) {
+    public Step purgeIntermediateTable() {
         return stepBuilderFactory.get("purgeIntermediateTable")
-                .tasklet(clearTable(jdbcTemplate))
+                .tasklet(clearTable())
                 .build();
     }
 
     @Bean
-    public Tasklet clearTable(final JdbcTemplate jdbcTemplate) {
+    public Tasklet clearTable() {
         return (contribution, chunkContext) -> {
-            jdbcTemplate.execute("truncate table " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + ";");
+            jdbcTemplate.execute(SQL_TRUNCATE_TABLE_CLUSTERPERIODS);
             return RepeatStatus.FINISHED;
         };
     }

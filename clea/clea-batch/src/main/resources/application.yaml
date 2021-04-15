@@ -6,7 +6,6 @@ spring:
   jpa:
     hibernate.ddl-auto: none
     database-platform: org.hibernate.dialect.PostgreSQL95Dialect # even with h2 database
-
   batch:
     # Manage it's batch metadata tables
     initialize-schema: never
@@ -17,6 +16,9 @@ spring:
     enabled: "false"
     baseline-on-migrate: "true"
     locations: classpath:db/migration/{vendor}
+  jackson:
+    serialization:
+      indent-output: true
 
 clea:
   batch:
@@ -24,7 +26,7 @@ clea:
       duration-unit-in-seconds: 1800
       static-prefix-length: ${CLEA_BATCH_PREFIX_LENGTH:2}
       files-output-path: ${CLEA_BATCH_OUTPUT_PATH:/tmp/v1}
-      #TODO: totally arbitrary values, find out actual plausible values
       grid-size: 6
       identification-step-chunk-size: 1000
       indexation-step-chunk-size: 1000
+      prefixes-computing-step-chunk-size: 1000

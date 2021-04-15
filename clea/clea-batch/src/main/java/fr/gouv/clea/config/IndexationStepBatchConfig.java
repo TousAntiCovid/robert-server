@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -41,16 +42,19 @@ public class IndexationStepBatchConfig {
     private BatchProperties properties;
 
     @Autowired
-    private DataSource dataSource;
-
-    @Autowired
     private ClusterPeriodModelsMapper mapper;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Bean
-    public Step clustersIndexation(final ObjectMapper objectMapper) {
+    public Step clustersIndexation() {
         return this.stepBuilderFactory.get("clustersIndexation")
                 .partitioner("partitioner", prefixPartitioner())
-                .partitionHandler(partitionHandler(objectMapper))
+                .partitionHandler(partitionHandler())
                 .build();
     }
 
@@ -61,16 +65,16 @@ public class IndexationStepBatchConfig {
     }
 
     @Bean
-    public TaskExecutorPartitionHandler partitionHandler(final ObjectMapper objectMapper) {
+    public TaskExecutorPartitionHandler partitionHandler() {
         final TaskExecutorPartitionHandler partitionHandler = new TaskExecutorPartitionHandler();
         partitionHandler.setGridSize(properties.getGridSize());
-        partitionHandler.setStep(partitionedClustersIndexation(objectMapper));
+        partitionHandler.setStep(partitionedClustersIndexation());
         partitionHandler.setTaskExecutor(indexationTaskExecutor());
         return partitionHandler;
     }
 
     @Bean
-    public Step partitionedClustersIndexation(final ObjectMapper objectMapper) {
+    public Step partitionedClustersIndexation() {
         return stepBuilderFactory.get("partitionedClustersIndexation")
                 .<Map.Entry<String, List<String>>, ClusterFile>chunk(properties.getIndexationStepChunkSize())
                 .reader(memoryMapItemReader(null, null))
@@ -90,7 +94,7 @@ public class IndexationStepBatchConfig {
 
     @Bean
     public ItemProcessor<Map.Entry<String, List<String>>, ClusterFile> singlePlaceClusterBuilder() {
-        return new SinglePlaceClusterBuilder(dataSource, mapper, properties);
+        return new SinglePlaceClusterBuilder(jdbcTemplate, mapper);
     }
 
     @Bean

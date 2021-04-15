@@ -11,12 +11,11 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static fr.gouv.clea.config.BatchConstants.*;
+import static fr.gouv.clea.config.BatchConstants.SQL_SELECT_FROM_EXPOSEDVISITS_WHERE_LTID_ORDERBY_PERIOD_AND_TIMESLOT;
 
 /**
  * This class is executing in many Threads
@@ -38,8 +37,7 @@ public class SinglePlaceExposedVisitsBuilder implements ItemProcessor<String, Si
 
     @Override
     public SinglePlaceExposedVisits process(final String ltid) {
-        final List<ExposedVisit> list = jdbcTemplate.query("select * from " + EXPOSED_VISITS_TABLE
-                        + " WHERE ltid= ? ORDER BY " + PERIOD_COLUMN + ", " + TIMESLOT_COLUMN,
+        final List<ExposedVisit> list = jdbcTemplate.query(SQL_SELECT_FROM_EXPOSEDVISITS_WHERE_LTID_ORDERBY_PERIOD_AND_TIMESLOT,
                 rowMapper, UUID.fromString(ltid));
         ExposedVisit firstExposedVisit = list.stream().findFirst().orElse(null);
         if (null != firstExposedVisit) {
