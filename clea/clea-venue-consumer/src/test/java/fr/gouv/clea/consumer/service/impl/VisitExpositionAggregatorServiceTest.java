@@ -347,4 +347,47 @@ class VisitExpositionAggregatorServiceTest {
         IntStream.rangeClosed(0, 3)
                 .forEach(step -> assertThat(entities.stream().filter(it -> it.getTimeSlot() == step).count()).isEqualTo(1));
     }
+
+    @Test
+    @DisplayName("no slot should be generated when qrScanTime is outside of periodDuration")
+    void testSlotGenerationWithQrScanTimeFarFromPeriodDuration() {
+        Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        long todayAtMidnightAsNtp = TimeUtils.ntpTimestampFromInstant(todayAtMidnight);
+        Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+
+        Visit visit = Visit.builder()
+                .version(0)
+                .type(0)
+                .countryCode(33)
+                .staff(true)
+                .locationTemporaryPublicId(uuid)
+                .qrCodeRenewalIntervalExponentCompact(2)
+                .venueType(4)
+                .venueCategory1(0)
+                .venueCategory2(0)
+                .periodDuration(1)
+                .compressedPeriodStartTime((int) (todayAtMidnightAsNtp / 3600))
+                .qrCodeValidityStartTime(todayAtMidnight)
+                .locationTemporarySecretKey(locationTemporarySecretKey)
+                .encryptedLocationContactMessage(encryptedLocationContactMessage)
+                .qrCodeScanTime(todayAt8am)
+                .isBackward(true)
+                .build();
+        service.updateExposureCount(visit);
+
+        /*
+         * if:
+         * periodDuration = 1 hours
+         * periodStartTime = today at 00:00:00
+         * qrCodeScanTime = today at 08:00:00
+         * durationUnit = 1800 seconds
+         * exposureTime = 3
+         *
+         * then:
+         *  => scanTimeSlot = 0
+         *  => slots to generate = 0
+         */
+
+        assertThat(repository.count()).isZero();
+    }
 }
