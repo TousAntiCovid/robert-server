@@ -26,9 +26,9 @@ public class StepExecutionContextReader implements ItemReader<Map.Entry<String, 
     @Override
     public Map.Entry<String, List<String>> read() {
         if (!prefixes.isEmpty() && index < prefixes.size()) {
-            AbstractMap.SimpleEntry<String, List<String>> singleMap = new AbstractMap.SimpleEntry<>(prefixes.get(index), ltids.get(index));
+            AbstractMap.SimpleEntry<String, List<String>> mapEntry = new AbstractMap.SimpleEntry<>(prefixes.get(index), ltids.get(index));
             index++;
-            return singleMap;
+            return mapEntry;
         } else {
             return null;
         }

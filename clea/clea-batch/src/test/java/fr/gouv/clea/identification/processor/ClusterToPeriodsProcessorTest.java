@@ -5,11 +5,13 @@ import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
 import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
 import fr.gouv.clea.mapper.ClusterPeriodModelsMapperImpl;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,11 +38,12 @@ class ClusterToPeriodsProcessorTest {
         final int lastTimeSlot = 1001;
         final int riskLevel = 4;
         final long periodStart = 1L;
-        final ClusterPeriod clusterPeriod = buildPeriod(clusterStart, clusterDurationInSeconds, firstTimeSlot, lastTimeSlot, riskLevel, periodStart);
-        final SinglePlaceCluster cluster = buildCluster(ltid, venueType, venueCat1, venueCat2, clusterPeriod);
+        final ClusterPeriod clusterPeriod = new ClusterPeriod(periodStart, firstTimeSlot, lastTimeSlot, clusterStart, clusterDurationInSeconds, riskLevel);
+        final SinglePlaceCluster cluster = new SinglePlaceCluster(ltid, venueType, venueCat1, venueCat2, List.of(clusterPeriod));
 
         final List<SinglePlaceClusterPeriod> singlePlaceClusterPeriods = processor.process(cluster);
 
+        assertThat(singlePlaceClusterPeriods).isNotNull();
         assertThat(singlePlaceClusterPeriods.size()).isEqualTo(1);
         assertThat(singlePlaceClusterPeriods.get(0).getClusterStart()).isEqualTo(clusterStart);
         assertThat(singlePlaceClusterPeriods.get(0).getClusterDurationInSeconds()).isEqualTo(clusterDurationInSeconds);
@@ -53,26 +56,5 @@ class ClusterToPeriodsProcessorTest {
         assertThat(singlePlaceClusterPeriods.get(0).getVenueCategory2()).isEqualTo(venueCat2);
         assertThat(singlePlaceClusterPeriods.get(0).getRiskLevel()).isEqualTo(riskLevel);
 
-    }
-
-    private SinglePlaceCluster buildCluster(final UUID ltid, final int venueType, final int venueCat1, final int venueCat2, final ClusterPeriod p1) {
-        final SinglePlaceCluster cluster = new SinglePlaceCluster();
-        cluster.setVenueType(venueType);
-        cluster.setVenueCategory1(venueCat1);
-        cluster.setVenueCategory2(venueCat2);
-        cluster.setLocationTemporaryPublicId(ltid);
-        cluster.setPeriods(List.of(p1));
-        return cluster;
-    }
-
-    private ClusterPeriod buildPeriod(final int clusterStart, final int clusterDurationInSeconds, final int firstTimeSlot, final int lastTimeSlot, final int riskLevel, final long periodStart) {
-        final ClusterPeriod clusterPeriod = new ClusterPeriod();
-        clusterPeriod.setClusterStart(clusterStart);
-        clusterPeriod.setClusterDurationInSeconds(clusterDurationInSeconds);
-        clusterPeriod.setFirstTimeSlot(firstTimeSlot);
-        clusterPeriod.setLastTimeSlot(lastTimeSlot);
-        clusterPeriod.setRiskLevel(riskLevel);
-        clusterPeriod.setPeriodStart(periodStart);
-        return clusterPeriod;
     }
 }
