@@ -74,7 +74,6 @@ public class LocationQrCodeGenerator {
         LocationSpecificPart lsp = LocationSpecificPart.builder()
                 .staff(staff)
                 .periodDuration(periodDuration)
-                .countryCode(countryCode)
                 .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponentCompact)
                 .venueType(venueType)
                 .venueCategory1(venueCategory1)
