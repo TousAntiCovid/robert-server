@@ -34,8 +34,7 @@ public class DecodedVisitService implements IDecodedVisitService {
             LocationSpecificPartDecoder decoder,
             CleaEciesEncoder cleaEciesEncoder,
             @Value("${clea.conf.driftBetweenDeviceAndOfficialTimeInSecs}") int driftBetweenDeviceAndOfficialTimeInSecs,
-            @Value("${clea.conf.cleaClockDriftInSecs}") int cleaClockDriftInSecs
-    ) {
+            @Value("${clea.conf.cleaClockDriftInSecs}") int cleaClockDriftInSecs) {
         this.decoder = decoder;
         this.cleaEciesEncoder = cleaEciesEncoder;
         this.driftBetweenDeviceAndOfficialTimeInSecs = driftBetweenDeviceAndOfficialTimeInSecs;
@@ -78,8 +77,10 @@ public class DecodedVisitService implements IDecodedVisitService {
     private boolean isDrifting(Visit visit) {
         double qrCodeRenewalInterval = (visit.getQrCodeRenewalIntervalExponentCompact() == 0x1F)
                 ? 0 : Math.pow(2, visit.getQrCodeRenewalIntervalExponentCompact());
-        if (qrCodeRenewalInterval == 0)
+        if (qrCodeRenewalInterval == 0) {
             return false;
-        return Duration.between(visit.getQrCodeScanTime(), visit.getQrCodeValidityStartTime()).abs().toSeconds() > (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
+        }
+        return Duration.between(visit.getQrCodeScanTime(), visit.getQrCodeValidityStartTime()).abs().toSeconds() 
+                > (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
     }
 }
