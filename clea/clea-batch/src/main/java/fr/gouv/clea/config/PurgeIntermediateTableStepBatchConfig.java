@@ -17,15 +17,18 @@ public class PurgeIntermediateTableStepBatchConfig {
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Bean
-    public Step purgeIntermediateTable(final JdbcTemplate jdbcTemplate) {
+    public Step purgeIntermediateTable() {
         return stepBuilderFactory.get("purgeIntermediateTable")
-                .tasklet(clearTable(jdbcTemplate))
+                .tasklet(clearTable())
                 .build();
     }
 
     @Bean
-    public Tasklet clearTable(final JdbcTemplate jdbcTemplate) {
+    public Tasklet clearTable() {
         return (contribution, chunkContext) -> {
             jdbcTemplate.execute(SQL_TRUNCATE_TABLE_CLUSTERPERIODS);
             return RepeatStatus.FINISHED;

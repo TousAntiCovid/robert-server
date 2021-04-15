@@ -5,7 +5,6 @@ import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
 import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
 import fr.gouv.clea.mapper.ClusterPeriodModelsMapperImpl;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;

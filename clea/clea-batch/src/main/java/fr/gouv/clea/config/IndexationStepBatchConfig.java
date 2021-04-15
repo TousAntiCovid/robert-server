@@ -47,11 +47,17 @@ public class IndexationStepBatchConfig {
     @Autowired
     private ClusterPeriodModelsMapper mapper;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Bean
-    public Step clustersIndexation(final ObjectMapper objectMapper, final JdbcTemplate jdbcTemplate) {
+    public Step clustersIndexation() {
         return this.stepBuilderFactory.get("clustersIndexation")
                 .partitioner("partitioner", prefixPartitioner())
-                .partitionHandler(partitionHandler(objectMapper, jdbcTemplate))
+                .partitionHandler(partitionHandler())
                 .build();
     }
 
@@ -62,16 +68,16 @@ public class IndexationStepBatchConfig {
     }
 
     @Bean
-    public TaskExecutorPartitionHandler partitionHandler(final ObjectMapper objectMapper, final JdbcTemplate jdbcTemplate) {
+    public TaskExecutorPartitionHandler partitionHandler() {
         final TaskExecutorPartitionHandler partitionHandler = new TaskExecutorPartitionHandler();
         partitionHandler.setGridSize(properties.getGridSize());
-        partitionHandler.setStep(partitionedClustersIndexation(objectMapper, jdbcTemplate));
+        partitionHandler.setStep(partitionedClustersIndexation());
         partitionHandler.setTaskExecutor(indexationTaskExecutor());
         return partitionHandler;
     }
 
     @Bean
-    public Step partitionedClustersIndexation(final ObjectMapper objectMapper, final JdbcTemplate jdbcTemplate) {
+    public Step partitionedClustersIndexation() {
         return stepBuilderFactory.get("partitionedClustersIndexation")
                 .<Map.Entry<String, List<String>>, ClusterFile>chunk(properties.getIndexationStepChunkSize())
                 .reader(memoryMapItemReader(null, null))

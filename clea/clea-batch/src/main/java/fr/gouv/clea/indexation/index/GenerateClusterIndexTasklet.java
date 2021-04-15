@@ -1,7 +1,6 @@
 package fr.gouv.clea.indexation.index;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.ClusterFileIndex;
 import fr.gouv.clea.service.PrefixesStorageService;
@@ -57,7 +56,6 @@ public class GenerateClusterIndexTasklet implements Tasklet {
 
         Path jsonPath = Path.of(outputPath, CLUSTER_INDEX_FILENAME);
         File jsonIndex = jsonPath.toFile();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         objectMapper.writeValue(jsonIndex, clusterFileIndex);
     }
 }

@@ -22,15 +22,18 @@ public class ClusterIndexGenerationStepBatchConfig {
     @Autowired
     private BatchProperties batchProperties;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Bean
-    public Step clusterIndexGeneration(final ObjectMapper objectMapper) {
+    public Step clusterIndexGeneration() {
         return stepBuilderFactory.get("clusterIndexGeneration")
-                .tasklet(generateClusterIndex(objectMapper))
+                .tasklet(generateClusterIndex())
                 .build();
     }
 
     @Bean
-    public Tasklet generateClusterIndex(final ObjectMapper objectMapper) {
+    public Tasklet generateClusterIndex() {
         return new GenerateClusterIndexTasklet(batchProperties, prefixesStorageService, objectMapper);
     }
 }

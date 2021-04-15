@@ -1,7 +1,6 @@
 package fr.gouv.clea.indexation.writer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.ClusterFile;
 import lombok.extern.slf4j.Slf4j;
@@ -52,10 +51,9 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
 
     void generateClusterFile(final ClusterFile clusterFile, final Path directoryOutputPath) {
 
-        final Path jsonClusterPath = Path.of(directoryOutputPath.toString(), clusterFile.getName()+JSON_FILE_EXTENSION);
+        final Path jsonClusterPath = Path.of(directoryOutputPath.toString(), clusterFile.getName() + JSON_FILE_EXTENSION);
         log.debug("Generating cluster file : {}", jsonClusterPath);
         File jsonClusterFile = jsonClusterPath.toFile();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         try {
             objectMapper.writeValue(jsonClusterFile, clusterFile.getItems());
         } catch (IOException e) {

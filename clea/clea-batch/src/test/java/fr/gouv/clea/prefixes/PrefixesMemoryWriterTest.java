@@ -1,6 +1,5 @@
 package fr.gouv.clea.prefixes;
 
-import fr.gouv.clea.indexation.model.output.Prefix;
 import fr.gouv.clea.service.PrefixesStorageService;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -11,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyString;

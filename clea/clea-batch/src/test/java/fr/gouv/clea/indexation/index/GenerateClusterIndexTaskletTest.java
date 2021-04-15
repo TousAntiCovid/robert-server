@@ -1,7 +1,6 @@
 package fr.gouv.clea.indexation.index;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.ClusterFileIndex;
 import fr.gouv.clea.service.PrefixesStorageService;
@@ -17,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Set;
 
 import static fr.gouv.clea.config.BatchConstants.CLUSTER_INDEX_FILENAME;
@@ -54,7 +52,6 @@ class GenerateClusterIndexTaskletTest {
 
         tasklet.generateClusterIndex(jobId, prefixes);
 
-        verify(objectMapper, times(1)).enable(SerializationFeature.INDENT_OUTPUT);
         verify(objectMapper, times(1)).writeValue(eq(jsonIndex), clusterFileIndexCaptor.capture());
         assertThat(clusterFileIndexCaptor.getValue().getPrefixes()).containsExactlyElementsOf(prefixes);
         assertThat(clusterFileIndexCaptor.getValue().getIteration()).isEqualTo(jobId.intValue());
