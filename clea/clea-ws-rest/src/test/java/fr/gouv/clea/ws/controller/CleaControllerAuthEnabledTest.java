@@ -25,6 +25,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
@@ -107,6 +108,19 @@ class CleaControllerAuthEnabledTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         response = restTemplate.getForEntity("/swagger-ui/", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("unsecured apis should return 200 when called with an invalid auth token")
+    void testUnsecuredApiWithInvalidToken() {
+        HttpHeaders headers = CleaControllerTest.newJsonHeader();
+        headers.setBearerAuth(RandomStringUtils.randomAlphanumeric(20));
+
+        ResponseEntity<String> response = restTemplate.exchange("/actuator", HttpMethod.GET, new HttpEntity<>(headers), String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        response = restTemplate.exchange("/swagger-ui/", HttpMethod.GET, new HttpEntity<>(headers), String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
