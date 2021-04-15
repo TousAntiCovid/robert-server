@@ -236,7 +236,7 @@ class VisitExpositionAggregatorServiceTest {
                 .venueCategory2(0)
                 .periodDuration(24)
                 .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAt8am))
-                .qrCodeValidityStartTime(todayAtMidnight)
+                .qrCodeValidityStartTime(todayAt8am)
                 .locationTemporarySecretKey(locationTemporarySecretKey)
                 .encryptedLocationContactMessage(encryptedLocationContactMessage)
                 .qrCodeScanTime(todayAtMidnight)
