@@ -42,9 +42,6 @@ public class IndexationStepBatchConfig {
     private BatchProperties properties;
 
     @Autowired
-    private DataSource dataSource;
-
-    @Autowired
     private ClusterPeriodModelsMapper mapper;
 
     @Autowired
@@ -81,7 +78,7 @@ public class IndexationStepBatchConfig {
         return stepBuilderFactory.get("partitionedClustersIndexation")
                 .<Map.Entry<String, List<String>>, ClusterFile>chunk(properties.getIndexationStepChunkSize())
                 .reader(memoryMapItemReader(null, null))
-                .processor(singlePlaceClusterBuilder(jdbcTemplate)) // build a Map of ClusterFile at once
+                .processor(singlePlaceClusterBuilder()) // build a Map of ClusterFile at once
                 .writer(indexationWriter(objectMapper)) // build Files and index
                 .build();
     }
@@ -96,7 +93,7 @@ public class IndexationStepBatchConfig {
     }
 
     @Bean
-    public ItemProcessor<Map.Entry<String, List<String>>, ClusterFile> singlePlaceClusterBuilder(final JdbcTemplate jdbcTemplate) {
+    public ItemProcessor<Map.Entry<String, List<String>>, ClusterFile> singlePlaceClusterBuilder() {
         return new SinglePlaceClusterBuilder(jdbcTemplate, mapper);
     }
 

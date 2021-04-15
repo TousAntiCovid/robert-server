@@ -30,8 +30,7 @@ public class BatchConstants {
     public static final String SQL_SELECT_BY_LTID_IN_SINGLEPLACECLUSTERPERIOD = "select * from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + " WHERE ltid= ?";
     public static final String SQL_SELECT_DISTINCT_LTID_FROM_EXPOSEDVISITS = "select distinct " + LTID_COL + " from " + EXPOSED_VISITS_TABLE + " order by " + LTID_COL;
     public static final String SQL_SELECT_DISTINCT_FROM_CLUSTERPERIODS_ORDERBY_LTID = "select distinct " + LTID_COL + " from " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + " ORDER BY " + LTID_COL;
-    public static final String SQL_SELECT_FROM_EXPOSEDVISITS_WHERE_LTID_ORDERBY_PERIOD_AND_TIMESLOT = "select * from " + EXPOSED_VISITS_TABLE
-            + " WHERE ltid= ? ORDER BY " + PERIOD_COLUMN + ", " + TIMESLOT_COLUMN;
+    public static final String SQL_SELECT_FROM_EXPOSEDVISITS_WHERE_LTID_ORDERBY_PERIOD_AND_TIMESLOT = "select * from " + EXPOSED_VISITS_TABLE + " WHERE ltid= ? ORDER BY " + PERIOD_COLUMN + ", " + TIMESLOT_COLUMN;
     public static final String SQL_TRUNCATE_TABLE_CLUSTERPERIODS = "truncate table " + SINGLE_PLACE_CLUSTER_PERIOD_TABLE + ";";
 
 }
