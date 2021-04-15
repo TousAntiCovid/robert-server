@@ -288,14 +288,14 @@ class VisitExpositionAggregatorServiceTest {
          *
          * then:
          *  => scanTimeSlot = 0
-         *  => slots to generate = scanTimeSlot + 2 after = 2
+         *  => slots to generate = scanTimeSlot + 1 after = 2
          *  => firstExposedSlot = 0
-         *  => lastExposedSlot = 0+2 = 2
+         *  => lastExposedSlot = 0+1 = 1
          */
 
-        assertThat(repository.count()).isEqualTo(3L);
+        assertThat(repository.count()).isEqualTo(2L);
         List<ExposedVisitEntity> entities = repository.findAll();
-        IntStream.rangeClosed(0, 2)
+        IntStream.rangeClosed(0, 1)
                 .forEach(step -> assertThat(entities.stream().filter(it -> it.getTimeSlot() == step).count()).isEqualTo(1));
     }
 

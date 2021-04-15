@@ -47,7 +47,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         int exposureTime = this.getExposureTimeSlots(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(this.getPeriodMaxSlot(visit.getPeriodDuration()), (int) scanTimeSlot + exposureTime);
-        
+
         List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), this.periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime()));
 
         List<ExposedVisitEntity> toUpdate = new ArrayList<>();
@@ -87,7 +87,8 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         if (periodDuration == 255) {
             return Integer.MAX_VALUE;
         }
-        return (int) Duration.of(periodDuration, ChronoUnit.HOURS).dividedBy(Duration.of(durationUnitInSeconds, ChronoUnit.SECONDS));
+        int periodMaxSlot = (int) Duration.of(periodDuration, ChronoUnit.HOURS).dividedBy(Duration.of(durationUnitInSeconds, ChronoUnit.SECONDS));
+        return periodMaxSlot - 1; // 0 based index
     }
 
     private long periodStartFromCompressedPeriodStart(long compressedPeriodStartTime) {
