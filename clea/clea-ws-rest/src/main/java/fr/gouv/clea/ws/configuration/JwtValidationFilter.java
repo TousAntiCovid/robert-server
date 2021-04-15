@@ -3,8 +3,6 @@ package fr.gouv.clea.ws.configuration;
 import fr.gouv.clea.ws.exception.CleaForbiddenException;
 import fr.gouv.clea.ws.exception.CleaUnauthorizedException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.filter.GenericFilterBean;
@@ -15,20 +13,18 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.security.KeyFactory;
 import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
 
 @Slf4j
 public class JwtValidationFilter extends GenericFilterBean {
 
     private final boolean checkAuthorization;
 
-    private final String robertJwtPublicKey;
+    private final PublicKey robertJwtPublicKey;
 
     private final HandlerExceptionResolver handlerExceptionResolver;
 
-    public JwtValidationFilter(boolean checkAuthorization, String robertJwtPublicKey, HandlerExceptionResolver handlerExceptionResolver) {
+    public JwtValidationFilter(boolean checkAuthorization, PublicKey robertJwtPublicKey, HandlerExceptionResolver handlerExceptionResolver) {
         this.checkAuthorization = checkAuthorization;
         this.robertJwtPublicKey = robertJwtPublicKey;
         this.handlerExceptionResolver = handlerExceptionResolver;
@@ -58,11 +54,7 @@ public class JwtValidationFilter extends GenericFilterBean {
 
     private void verifyJWT(String token) throws CleaForbiddenException {
         try {
-            byte[] encoded = Decoders.BASE64.decode(this.robertJwtPublicKey);
-            KeyFactory keyFactory = KeyFactory.getInstance(SignatureAlgorithm.RS256.getFamilyName());
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
-            PublicKey jwtPublicKey = keyFactory.generatePublic(keySpec);
-            Jwts.parserBuilder().setSigningKey(jwtPublicKey).build().parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(robertJwtPublicKey).build().parseClaimsJws(token);
         } catch (Exception e) {
             log.warn("Failed to verify JWT token!", e);
             throw new CleaForbiddenException();
