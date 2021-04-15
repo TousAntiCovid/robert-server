@@ -174,7 +174,7 @@ class VisitExpositionAggregatorServiceTest {
     }
 
     @Test
-    @DisplayName("test how many slots are generated for a given visit")
+    @DisplayName("test how many slots are generated for a given visit with a period duration of 24 hour")
     void testSlotGeneration() {
         Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
         long todayAtMidnightAsNtp = TimeUtils.ntpTimestampFromInstant(todayAtMidnight);
@@ -210,7 +210,7 @@ class VisitExpositionAggregatorServiceTest {
          *
          * then:
          *  => scanTimeSlot = 8*2 = 16
-         *  => slots to generate = 3 before & scanTimeSlot & 3 after = 7
+         *  => slots to generate = 3 before + scanTimeSlot + 3 after = 7
          *  => firstExposedSlot = 16-3 = 13
          *  => lastExposedSlot = 16+3 = 19
          */
@@ -249,5 +249,102 @@ class VisitExpositionAggregatorServiceTest {
         service.updateExposureCount(visit);
 
         assertThat(repository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("test how many slots are generated for a given visit with a period duration of 1 hour")
+    void testSlotGenerationWithPeriodDuration1() {
+        Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+        long todayAt8amAsNtp = TimeUtils.ntpTimestampFromInstant(todayAt8am);
+
+        Visit visit = Visit.builder()
+                .version(0)
+                .type(0)
+                .countryCode(33)
+                .staff(true)
+                .locationTemporaryPublicId(uuid)
+                .qrCodeRenewalIntervalExponentCompact(2)
+                .venueType(4)
+                .venueCategory1(0)
+                .venueCategory2(0)
+                .periodDuration(1)
+                .compressedPeriodStartTime((int) (todayAt8amAsNtp / 3600))
+                .qrCodeValidityStartTime(todayAtMidnight)
+                .locationTemporarySecretKey(locationTemporarySecretKey)
+                .encryptedLocationContactMessage(encryptedLocationContactMessage)
+                .qrCodeScanTime(todayAt8am)
+                .isBackward(true)
+                .build();
+        service.updateExposureCount(visit);
+
+        /*
+         * if:
+         * periodDuration = 1 hours
+         * periodStartTime = today at 08:00:00
+         * qrCodeScanTime = today at 08:00:00
+         * durationUnit = 1800 seconds
+         * exposureTime = 3
+         *
+         * then:
+         *  => scanTimeSlot = 0
+         *  => slots to generate = scanTimeSlot + 2 after = 2
+         *  => firstExposedSlot = 0
+         *  => lastExposedSlot = 0+2 = 2
+         */
+
+        assertThat(repository.count()).isEqualTo(3L);
+        List<ExposedVisitEntity> entities = repository.findAll();
+        IntStream.rangeClosed(0, 2)
+                .forEach(step -> assertThat(entities.stream().filter(it -> it.getTimeSlot() == step).count()).isEqualTo(1));
+    }
+
+    @Test
+    @DisplayName("test how many slots are generated for a given visit with a period duration of 255 hour")
+    void testSlotGenerationWithPeriodDuration255() {
+        Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+        long todayAt8amAsNtp = TimeUtils.ntpTimestampFromInstant(todayAt8am);
+
+        Visit visit = Visit.builder()
+                .version(0)
+                .type(0)
+                .countryCode(33)
+                .staff(true)
+                .locationTemporaryPublicId(uuid)
+                .qrCodeRenewalIntervalExponentCompact(2)
+                .venueType(4)
+                .venueCategory1(0)
+                .venueCategory2(0)
+                .periodDuration(255)
+                .compressedPeriodStartTime((int) (todayAt8amAsNtp / 3600))
+                .qrCodeValidityStartTime(todayAtMidnight)
+                .locationTemporarySecretKey(locationTemporarySecretKey)
+                .encryptedLocationContactMessage(encryptedLocationContactMessage)
+                .qrCodeScanTime(todayAt8am)
+                .isBackward(true)
+                .build();
+        service.updateExposureCount(visit);
+
+        /*
+         * if:
+         * periodDuration = 255 hours
+         * periodStartTime = today at 08:00:00
+         * qrCodeScanTime = today at 08:00:00
+         * durationUnit = 1800 seconds
+         * exposureTime = 3
+         *
+         * then:
+         *  => scanTimeSlot = 0
+         *  => slots to generate = scanTimeSlot + 3 after = 4
+         *  => firstExposedSlot = 0
+         *  => lastExposedSlot = 0+3 = 3
+         */
+
+        assertThat(repository.count()).isEqualTo(4L);
+        List<ExposedVisitEntity> entities = repository.findAll();
+        entities.forEach(it -> System.out.println(it.getTimeSlot()));
+        IntStream.rangeClosed(0, 3)
+                .forEach(step -> assertThat(entities.stream().filter(it -> it.getTimeSlot() == step).count()).isEqualTo(1));
     }
 }
