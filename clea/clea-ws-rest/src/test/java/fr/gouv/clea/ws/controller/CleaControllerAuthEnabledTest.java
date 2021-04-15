@@ -8,6 +8,7 @@ import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,5 +78,15 @@ class CleaControllerAuthEnabledTest {
         assertThat(apiError.getTimestamp()).isBefore(Instant.now());
         assertThat(apiError.getMessage()).isEqualTo("Could not be authenticated (Authorisation header/token invalid)");
         assertThat(apiError.getValidationErrors()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("unsecured apis should return 200 when called without auth toke")
+    void testUnsecuredApiWithoutToken() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/actuator", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        response = restTemplate.getForEntity("/swagger-ui/", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 }
