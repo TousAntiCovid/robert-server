@@ -31,7 +31,7 @@ public class SlotGenerationTest {
     static final Instant TODAY_AT_MIDNIGHT =  Instant.now().truncatedTo(DAYS);
     static final Instant TODAY_AT_8AM =  TODAY_AT_MIDNIGHT.plus(8, HOURS);
 
-     final VenueConsumerConfiguration config = new VenueConsumerConfiguration();
+    final VenueConsumerConfiguration config = new VenueConsumerConfiguration();
     
     @Mock
     IExposedVisitRepository repository;
