@@ -7,7 +7,6 @@ import fr.gouv.clea.consumer.service.IStatService;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,22 +30,12 @@ class StatServiceTest {
     @Autowired
     private IStatService service;
 
-    private Instant todayAtMidnight;
-    private Instant todayAt8am;
-    private long todayAtMidnightAsNtp;
-    private UUID uuid;
-    private byte[] locationTemporarySecretKey;
-    private byte[] encryptedLocationContactMessage;
-
-    @BeforeEach
-    void init() {
-        todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
-        todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
-        todayAtMidnightAsNtp = TimeUtils.ntpTimestampFromInstant(todayAtMidnight);
-        uuid = UUID.randomUUID();
-        locationTemporarySecretKey = RandomUtils.nextBytes(20);
-        encryptedLocationContactMessage = RandomUtils.nextBytes(20);
-    }
+    private final Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);;
+    private final Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);;
+    private final long todayAtMidnightAsNtp = TimeUtils.ntpTimestampFromInstant(todayAtMidnight);
+    private final UUID uuid = UUID.randomUUID();
+    private final byte[] locationTemporarySecretKey = RandomUtils.nextBytes(20);
+    private final byte[] encryptedLocationContactMessage = RandomUtils.nextBytes(20);
 
     @AfterEach
     void clean() {
@@ -67,12 +56,12 @@ class StatServiceTest {
          *  => stat duration = periodStartTime + (slot * durationUnit) = today at 08:00:00
          */
 
-        Visit visit = createVisit(
-                todayAt8am.plus(15, ChronoUnit.MINUTES),
-                4,
-                1,
-                2
-        );
+        Visit visit = defaultVisit().toBuilder()
+            .qrCodeScanTime(todayAt8am.plus(15, ChronoUnit.MINUTES))
+            .venueType(4)
+            .venueCategory1(1)
+            .venueCategory2(2)
+            .build();
 
         service.logStats(visit);
 
@@ -101,21 +90,13 @@ class StatServiceTest {
          *  => stat duration = periodStartTime + (slot * durationUnit) = today at 08:00:00
          */
 
-        Visit visit1 = createVisit(
-                todayAt8am.plus(15, ChronoUnit.MINUTES),
-                4,
-                1,
-                2
-        );
+        Visit visit1 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am.plus(15, ChronoUnit.MINUTES))
+                .build();
         service.logStats(visit1);
         long before = repository.count();
 
-        Visit visit2 = createVisit(
-                todayAt8am.plus(15, ChronoUnit.MINUTES),
-                4,
-                1,
-                2
-        );
+        Visit visit2 = visit1.toBuilder().build();
         service.logStats(visit2);
         long after = repository.count();
 
@@ -135,28 +116,19 @@ class StatServiceTest {
     @Test
     @DisplayName("visits in same slot, should be considered as same context")
     void testSameSlot() {
-        Visit visit1 = createVisit(
-                todayAt8am,
-                4,
-                1,
-                2
-        );
+        Visit visit1 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am)
+                .build();
         service.logStats(visit1);
 
-        Visit visit2 = createVisit(
-                todayAt8am.plus(15, ChronoUnit.MINUTES), // same slot
-                4,
-                1,
-                2
-        );
+        Visit visit2 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am.plus(15, ChronoUnit.MINUTES)) // same slot
+                .build();
         service.logStats(visit2);
 
-        Visit visit3 = createVisit(
-                todayAt8am.plus(28, ChronoUnit.MINUTES), // same slot
-                4,
-                1,
-                2
-        );
+        Visit visit3 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am.plus(28, ChronoUnit.MINUTES)) // same slot
+                .build();
         service.logStats(visit3);
 
         assertThat(repository.count()).isEqualTo(1L);
@@ -165,20 +137,14 @@ class StatServiceTest {
     @Test
     @DisplayName("visits in different slots, should be considered as different contexts")
     void testDifferentSlot() {
-        Visit visit1 = createVisit(
-                todayAt8am,
-                4,
-                1,
-                2
-        );
+        Visit visit1 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am)
+                .build();
         service.logStats(visit1);
 
-        Visit visit2 = createVisit(
-                todayAt8am.plus(31, ChronoUnit.MINUTES), // different slot
-                4,
-                1,
-                2
-        );
+        Visit visit2 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am.plus(31, ChronoUnit.MINUTES)) // different slot
+                .build();
         service.logStats(visit2);
 
         assertThat(repository.count()).isEqualTo(2L);
@@ -187,63 +153,53 @@ class StatServiceTest {
     @Test
     @DisplayName("context must be determined by [period, venueType, venueCategory1, venueCategory2]")
     void testContext() {
-        Visit visit1 = createVisit(
-                todayAt8am,
-                4,
-                1,
-                2
-        );
+        Visit visit1 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am)
+                .build();
         service.logStats(visit1);
         assertThat(repository.count()).isEqualTo(1L);
 
         // changing just venueType => new context
-        Visit visit2 = createVisit(
-                todayAt8am,
-                3,
-                1,
-                2
-        );
+        Visit visit2 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am)
+                .venueType(3)
+                .build();
         service.logStats(visit2);
         assertThat(repository.count()).isEqualTo(2L);
 
         // changing just venueCategory1 => new context
-        Visit visit3 = createVisit(
-                todayAt8am,
-                4,
-                2,
-                2
-        );
+        Visit visit3 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am)
+                .venueCategory1(2)
+                .build();
         service.logStats(visit3);
         assertThat(repository.count()).isEqualTo(3L);
 
         // changing just venueCategory2 => new context
-        Visit visit4 = createVisit(
-                todayAt8am,
-                4,
-                1,
-                3
-        );
+        Visit visit4 = defaultVisit().toBuilder()
+                .qrCodeScanTime(todayAt8am)
+                .venueCategory2(3)
+                .build();
         service.logStats(visit4);
         assertThat(repository.count()).isEqualTo(4L);
 
     }
 
-    private Visit createVisit(Instant qrCodeScanTime, int venueType, int venueCategory1, int venueCategory2) {
+    private Visit defaultVisit() {
         return Visit.builder()
                 .version(0)
                 .type(0)
                 .staff(true)
                 .locationTemporaryPublicId(uuid)
                 .qrCodeRenewalIntervalExponentCompact(2)
-                .venueType(venueType)
-                .venueCategory1(venueCategory1)
-                .venueCategory2(venueCategory2)
+                .venueType(4)
+                .venueCategory1(1)
+                .venueCategory2(2)
                 .periodDuration(24)
                 .compressedPeriodStartTime((int) (todayAtMidnightAsNtp / 3600))
                 .qrCodeValidityStartTime(Instant.now())
                 .locationTemporarySecretKey(locationTemporarySecretKey)
                 .encryptedLocationContactMessage(encryptedLocationContactMessage)
-                .qrCodeScanTime(qrCodeScanTime)
                 .isBackward(true)
                 .build();
     }
