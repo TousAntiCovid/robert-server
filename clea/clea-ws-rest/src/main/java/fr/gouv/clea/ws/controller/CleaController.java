@@ -4,7 +4,6 @@ import fr.gouv.clea.ws.api.CleaWsRestAPI;
 import fr.gouv.clea.ws.dto.ReportResponse;
 import fr.gouv.clea.ws.exception.CleaBadRequestException;
 import fr.gouv.clea.ws.model.DecodedVisit;
-import fr.gouv.clea.ws.service.IAuthorizationService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.utils.BadArgumentsLoggerService;
 import fr.gouv.clea.ws.utils.UriConstants;
@@ -33,7 +32,6 @@ public class CleaController implements CleaWsRestAPI {
 
     public static final String MALFORMED_VISIT_LOG_MESSAGE = "Filtered out %d malformed visits of %d while Exposure Status Request";
     private final IReportService reportService;
-    private final IAuthorizationService authorizationService;
     private final BadArgumentsLoggerService badArgumentsLoggerService;
     private final WebRequest webRequest;
     private final Validator validator;
@@ -41,13 +39,11 @@ public class CleaController implements CleaWsRestAPI {
     @Autowired
     public CleaController(
             IReportService reportService,
-            IAuthorizationService authorizationService,
             BadArgumentsLoggerService badArgumentsLoggerService,
             WebRequest webRequest,
             Validator validator
     ) {
         this.reportService = reportService;
-        this.authorizationService = authorizationService;
         this.badArgumentsLoggerService = badArgumentsLoggerService;
         this.webRequest = webRequest;
         this.validator = validator;
@@ -59,10 +55,7 @@ public class CleaController implements CleaWsRestAPI {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    // TODO: Also we should switch from AuthorizationService to SpringSecurity using jwtDecoder
     public ReportResponse report(@RequestBody ReportRequest reportRequestVo) {
-        String auth = webRequest.getHeader("Authorization");
-        this.authorizationService.checkAuthorization(auth);
         ReportRequest filtered = this.filterReports(reportRequestVo, webRequest);
         List<DecodedVisit> reported = List.of();
         if (!filtered.getVisits().isEmpty()) {

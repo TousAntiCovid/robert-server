@@ -5,7 +5,7 @@ clea:
     security:
       report:
         checkAuthorization: false
-        robertJwtPublicKey: TODO
+        robertJwtPublicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkp8sKCbrG1elGGG8n/Cq0OVeTA9V/M6ONKArheSEWEOJm/vW60tdQW7hJ+lCQ1Lgg4gLNL3Lp8Gu9R7+nWpCnKnwGWiL0BKWnG31SQ2O01/UMa2yWFJRJCbG49szgPt4PhvrWsNNOyO+Kz1HwO2sTfXkRpJ5dvqZF0Et2wqJy2UeVOzE//a/ZnuBzwuGfJEXBOT774eFEvQWnfX2ZEWOavimiPKsb46Hqg4LpmVR0Q7iH8Dj3D05Hn03O80692tmNjGl4nWn5P/b9YEdJIAWHcTBFiRMgbsKRG2KNAg+04rcZnx/w+xcNqskKvcR11TCzUuNPsKBCpZ4orAtr4O/7QIDAQAB
 
 controller:
   path:

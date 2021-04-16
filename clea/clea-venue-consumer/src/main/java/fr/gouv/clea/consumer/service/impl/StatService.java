@@ -1,5 +1,6 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.StatLocation;
 import fr.gouv.clea.consumer.model.StatLocationKey;
 import fr.gouv.clea.consumer.model.Visit;
@@ -7,7 +8,6 @@ import fr.gouv.clea.consumer.repository.IStatLocationRepository;
 import fr.gouv.clea.consumer.service.IStatService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -21,22 +21,20 @@ public class StatService implements IStatService {
 
     private final IStatLocationRepository repository;
 
-    private final int durationUnitInSeconds;
+    private final VenueConsumerConfiguration config;
 
     @Autowired
     public StatService(
             IStatLocationRepository repository,
-            @Value("${clea.conf.durationUnitInSeconds}") int durationUnitInSeconds
-    ) {
+            VenueConsumerConfiguration configuration) {
         this.repository = repository;
-        this.durationUnitInSeconds = durationUnitInSeconds;
+        this.config = configuration;
     }
 
     @Override
     public void logStats(Visit visit) {
-        Instant periodStartAsInstant = VisitExpositionAggregatorService.periodStartFromCompressedPeriodStartAsInstant(visit.getCompressedPeriodStartTime());
-        long scanTimeSlot = Duration.between(periodStartAsInstant, visit.getQrCodeScanTime()).toSeconds() / durationUnitInSeconds;
-        Instant period = periodStartAsInstant.plus(scanTimeSlot * durationUnitInSeconds, ChronoUnit.SECONDS);
+        long scanTimeSlot = Duration.between(visit.getPeriodStartTime(), visit.getQrCodeScanTime()).toSeconds() / config.getDurationUnitInSeconds();
+        Instant period = visit.getPeriodStartTime().plus(scanTimeSlot * config.getDurationUnitInSeconds(), ChronoUnit.SECONDS);
 
         StatLocationKey statLocationKey = StatLocationKey.builder()
                 .period(period)
