@@ -1,15 +1,5 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.consumer.model.ExposedVisitEntity;
-import fr.gouv.clea.consumer.model.Visit;
-import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
-import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
-import fr.inria.clea.lsp.utils.TimeUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -19,32 +9,42 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
+import fr.gouv.clea.consumer.model.ExposedVisitEntity;
+import fr.gouv.clea.consumer.model.Visit;
+import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
+import fr.inria.clea.lsp.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
+
 @Component
 @Slf4j
 public class VisitExpositionAggregatorService implements IVisitExpositionAggregatorService {
 
     private final IExposedVisitRepository repository;
 
-    private final int durationUnitInSeconds;
+    private final VenueConsumerConfiguration configuration;
 
     @Autowired
     public VisitExpositionAggregatorService(
             IExposedVisitRepository repository,
-            @Value("${clea.conf.durationUnitInSeconds}") int durationUnitInSeconds
-    ) {
+            VenueConsumerConfiguration  configuration) {
         this.repository = repository;
-        this.durationUnitInSeconds = durationUnitInSeconds;
+        this.configuration = configuration;
     }
 
     @Override
     public void updateExposureCount(Visit visit) {
         Instant periodStartAsInstant = this.periodStartFromCompressedPeriodStartAsInstant(visit.getCompressedPeriodStartTime());
-        long scanTimeSlot = Duration.between(periodStartAsInstant, visit.getQrCodeScanTime()).toSeconds() / durationUnitInSeconds;
+        long scanTimeSlot = Duration.between(periodStartAsInstant, visit.getQrCodeScanTime()).toSeconds() / configuration.getDurationUnitInSeconds();
         if (scanTimeSlot < 0) {
             log.warn("LTId: {}, qrScanTime: {} should not before periodStartTime: {}", visit.getLocationTemporaryPublicId(), visit.getQrCodeScanTime(), periodStartAsInstant);
             return;
         }
-        int exposureTime = this.getExposureTimeSlots(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
+        int exposureTime = this.getExposureTime(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(this.getPeriodMaxSlot(visit.getPeriodDuration()), (int) scanTimeSlot + exposureTime);
 
@@ -87,19 +87,19 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         if (periodDuration == 255) {
             return Integer.MAX_VALUE;
         }
-        int nbSlotsInPeriod = (int) Duration.of(periodDuration, ChronoUnit.HOURS).dividedBy(Duration.of(durationUnitInSeconds, ChronoUnit.SECONDS));
+        int nbSlotsInPeriod = (int) Duration.of(periodDuration, ChronoUnit.HOURS).dividedBy(Duration.of(configuration.getDurationUnitInSeconds(), ChronoUnit.SECONDS));
         return nbSlotsInPeriod - 1; // 0 based index
     }
 
-    private long periodStartFromCompressedPeriodStart(long compressedPeriodStartTime) {
+    protected long periodStartFromCompressedPeriodStart(long compressedPeriodStartTime) {
         return compressedPeriodStartTime * TimeUtils.NB_SECONDS_PER_HOUR;
     }
 
-    private Instant periodStartFromCompressedPeriodStartAsInstant(long compressedPeriodStartTime) {
+    protected Instant periodStartFromCompressedPeriodStartAsInstant(long compressedPeriodStartTime) {
         return TimeUtils.instantFromTimestamp(this.periodStartFromCompressedPeriodStart(compressedPeriodStartTime));
     }
 
-    private ExposedVisitEntity updateExposedVisit(Visit visit, ExposedVisitEntity exposedVisit) {
+    protected ExposedVisitEntity updateExposedVisit(Visit visit, ExposedVisitEntity exposedVisit) {
         if (visit.isBackward()) {
             exposedVisit.setBackwardVisits(exposedVisit.getBackwardVisits() + 1);
         } else {
@@ -108,7 +108,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         return exposedVisit;
     }
 
-    private ExposedVisitEntity newExposedVisit(Visit visit, int slotIndex) {
+    protected ExposedVisitEntity newExposedVisit(Visit visit, int slotIndex) {
         // TODO: visit.getPeriodStart returning an Instant
         long periodStart = this.periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime());
         return ExposedVisitEntity.builder()
@@ -128,7 +128,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
      * e.g. if EXPOSURE_TIME_UNIT is 3600 sec (one hour), an exposure time equals to 3 means 3 hours
      * if EXPOSURE_TIME_UNIT is 1800 sec (30 minutes), an exposure time equals to 3 means 1,5 hour.
      */
-    private int getExposureTimeSlots(int venueType, int venueCategory1, int venueCategory2, boolean staff) {
+    protected int getExposureTime(int venueType, int venueCategory1, int venueCategory2, boolean staff) {
         return 3;
     }
 }
