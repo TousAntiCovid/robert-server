@@ -2,6 +2,7 @@ package fr.gouv.clea.ws.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -22,10 +23,8 @@ import static springfox.documentation.builders.RequestHandlerSelectors.basePacka
 @EnableSwagger2
 public class SwaggerConfiguration {
 
-    private static final String AUTHORIZATION = "Authorization";
-
     private ApiKey apiKey() {
-        return new ApiKey(AUTHORIZATION, AUTHORIZATION, "header");
+        return new ApiKey(HttpHeaders.AUTHORIZATION, HttpHeaders.AUTHORIZATION, "header");
     }
 
     private SecurityContext securityContext() {
@@ -36,7 +35,7 @@ public class SwaggerConfiguration {
         AuthorizationScope authorizationScope = new AuthorizationScope("global", "accessEverything");
         AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
         authorizationScopes[0] = authorizationScope;
-        return List.of(new SecurityReference(AUTHORIZATION, authorizationScopes));
+        return List.of(new SecurityReference(HttpHeaders.AUTHORIZATION, authorizationScopes));
     }
 
     @Bean
