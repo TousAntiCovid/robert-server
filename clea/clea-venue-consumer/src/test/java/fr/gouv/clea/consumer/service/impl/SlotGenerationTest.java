@@ -1,81 +1,60 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.when;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import org.apache.commons.lang3.RandomUtils;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.verify;
 
 import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.inria.clea.lsp.utils.TimeUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
 public class SlotGenerationTest {
-    @Mock
-    private VenueConsumerConfiguration config;
+
+    static final Instant TODAY_AT_MIDNIGHT =  Instant.now().truncatedTo(DAYS);
+    static final Instant TODAY_AT_8AM =  TODAY_AT_MIDNIGHT.plus(8, HOURS);
+
+     final VenueConsumerConfiguration config = new VenueConsumerConfiguration();
     
     @Mock
-    private IExposedVisitRepository repository;
+    IExposedVisitRepository repository;
 
     @Captor
     ArgumentCaptor<List<ExposedVisitEntity>> exposedVisitEntitiesCaptor;
-    
-    @InjectMocks
-    @Spy
-    private VisitExpositionAggregatorService service;
 
-    private Instant todayAtMidnight;
-    private Instant todayAt8am;
-    private UUID uuid;
-    private byte[] locationTemporarySecretKey;
-    private byte[] encryptedLocationContactMessage;
+    VisitExpositionAggregatorService service;
 
     @BeforeEach
     void init() {
-        when(config.getDurationUnitInSeconds()).thenReturn((int) Duration.ofMinutes(30).toSeconds());
-        todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
-        todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
-        uuid = UUID.randomUUID();
-        locationTemporarySecretKey = RandomUtils.nextBytes(20);
-        encryptedLocationContactMessage = RandomUtils.nextBytes(20);
+        config.setDurationUnitInSeconds(Duration.ofMinutes(30).toSeconds());
+        service = new VisitExpositionAggregatorService(repository, config);
     }
 
     @Test
-    @DisplayName("test how many slots are generated for a given visit with a period duration of 24 hour")
-    void testSlotGeneration() {
-        Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
-        Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+    void a_period_duration_of_24_hours_generates_5_slots() {
         Visit visit = defaultVisit().toBuilder()
                 .periodDuration(24)
-                .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAtMidnight))
-                .qrCodeValidityStartTime(todayAtMidnight)
-                .qrCodeScanTime(todayAt8am)
+                .compressedPeriodStartTime(getCompressedPeriodStartTime(TODAY_AT_MIDNIGHT))
+                .qrCodeValidityStartTime(TODAY_AT_MIDNIGHT)
+                .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
-        Mockito.doReturn(3).when(service).getExposureTime(Mockito.anyInt(), anyInt(), anyInt(), anyBoolean());
         
         service.updateExposureCount(visit);
 
@@ -84,21 +63,19 @@ public class SlotGenerationTest {
          *  => firstExposedSlot = 16-2 = 14
          *  => lastExposedSlot = 16+2 = 18
          */
-        Mockito.verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
-        assertThat(exposedVisitEntitiesCaptor.getValue()).hasSize(5);
-        List<ExposedVisitEntity> entities = exposedVisitEntitiesCaptor.getValue();
-        List<Integer> expectedSlots = IntStream.rangeClosed(14, 18).boxed().collect(Collectors.toList());
-        assertThat(entities).extracting(ExposedVisitEntity::getTimeSlot).hasSameElementsAs(expectedSlots);
+        verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
+        assertThat(exposedVisitEntitiesCaptor.getValue())
+                .extracting(ExposedVisitEntity::getTimeSlot)
+                .containsExactly(14, 15, 16, 17, 18);
     }
     
     @Test
-    @DisplayName("test how many slots are generated for a visit at first slot with a period duration of 1 hour")
-    void testSlotGenerationDoesNotGoOverPeriodValidity() {
+    void a_period_duration_of_1_hour_generates_2_slots() {
         Visit visit = defaultVisit().toBuilder()
                 .periodDuration(1)
-                .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAt8am))
-                .qrCodeValidityStartTime(todayAt8am)
-                .qrCodeScanTime(todayAt8am)
+                .compressedPeriodStartTime(getCompressedPeriodStartTime(TODAY_AT_8AM))
+                .qrCodeValidityStartTime(TODAY_AT_8AM)
+                .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
         
         service.updateExposureCount(visit);
@@ -108,20 +85,19 @@ public class SlotGenerationTest {
          *  => firstExposedSlot = 0
          *  => lastExposedSlot = 0+1 = 1
          */
-        Mockito.verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
-        assertThat(exposedVisitEntitiesCaptor.getValue()).hasSize(2);
-        List<ExposedVisitEntity> entities = exposedVisitEntitiesCaptor.getValue();
-        assertThat(entities).extracting(ExposedVisitEntity::getTimeSlot).hasSameElementsAs(List.of(0, 1));
+        verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
+        assertThat(exposedVisitEntitiesCaptor.getValue())
+                .extracting(ExposedVisitEntity::getTimeSlot)
+                .containsExactly(0, 1);
     }
 
     @Test
-    @DisplayName("test how many slots are generated for a visit at first slot with an unlimited period duration")
-    void testSlotGenerationWithUnlimitedPeriodDuration() {
+    void a_visit_at_first_slot_with_an_unlimited_period_duration_generates_3_slots() {
         Visit visit = defaultVisit().toBuilder()
                 .periodDuration(255)
-                .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAt8am))
-                .qrCodeValidityStartTime(todayAt8am)
-                .qrCodeScanTime(todayAt8am)
+                .compressedPeriodStartTime(getCompressedPeriodStartTime(TODAY_AT_8AM))
+                .qrCodeValidityStartTime(TODAY_AT_8AM)
+                .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
         
         service.updateExposureCount(visit);
@@ -132,38 +108,36 @@ public class SlotGenerationTest {
          *  => firstExposedSlot = 0
          *  => lastExposedSlot = 0+3-1 = 2
          */
-        Mockito.verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
-        assertThat(exposedVisitEntitiesCaptor.getValue()).hasSize(3);
-        List<ExposedVisitEntity> entities = exposedVisitEntitiesCaptor.getValue();
-        assertThat(entities).extracting(ExposedVisitEntity::getTimeSlot).hasSameElementsAs(List.of(0, 1, 2));
+        verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
+        assertThat(exposedVisitEntitiesCaptor.getValue())
+                .extracting(ExposedVisitEntity::getTimeSlot)
+                .containsExactly(0, 1, 2);
     }
 
     @Test
-    @DisplayName("no slot should be generated when qrScanTime is after period validity")
-    void testSlotGenerationWithQrScanTimeAfterPeriodValidity() {
+    void a_qrScanTime_after_period_validity_doesnt_generate_slots() {
         Visit visit = defaultVisit().toBuilder()
-                .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAtMidnight))
+                .compressedPeriodStartTime(getCompressedPeriodStartTime(TODAY_AT_MIDNIGHT))
                 .periodDuration(6)
-                .qrCodeValidityStartTime(todayAtMidnight)
-                .qrCodeScanTime(todayAt8am)
+                .qrCodeValidityStartTime(TODAY_AT_MIDNIGHT)
+                .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
         
         service.updateExposureCount(visit);
 
-        Mockito.verify(repository, never()).saveAll(exposedVisitEntitiesCaptor.capture());
+        verify(repository, never()).saveAll(exposedVisitEntitiesCaptor.capture());
     }
 
     @Test
-    @DisplayName("test how many slots are generated for a visit at first slot when qrScanTime is after qr validity")
-    void testSlotGenerationWithQrScanTimeAfterQrValidity() {
+    void a_visit_at_first_slot_when_qrScanTime_is_after_qr_validity_generates_5_slots() {
         // This case can happen with authorized drift
-        when(config.getDurationUnitInSeconds()).thenReturn((int) Duration.ofHours(1).toSeconds());
+        config.setDurationUnitInSeconds(Duration.ofHours(1).toSeconds());
         Visit visit = defaultVisit().toBuilder()
-                .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAtMidnight))
+                .compressedPeriodStartTime(getCompressedPeriodStartTime(TODAY_AT_MIDNIGHT))
                 .periodDuration(24)
-                .qrCodeValidityStartTime(todayAtMidnight)
+                .qrCodeValidityStartTime(TODAY_AT_MIDNIGHT)
                 .qrCodeRenewalIntervalExponentCompact(14) // 2^14 seconds = 4.55 hours 
-                .qrCodeScanTime(todayAt8am)
+                .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
         
         service.updateExposureCount(visit);
@@ -174,10 +148,10 @@ public class SlotGenerationTest {
          *  => firstExposedSlot = 10
          *  => lastExposedSlot = 6
          */
-        Mockito.verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
-        assertThat(exposedVisitEntitiesCaptor.getValue()).hasSize(5);
-        List<ExposedVisitEntity> entities = exposedVisitEntitiesCaptor.getValue();
-        assertThat(entities).extracting(ExposedVisitEntity::getTimeSlot).hasSameElementsAs(List.of(6, 7, 8, 9, 10));
+        verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
+        assertThat(exposedVisitEntitiesCaptor.getValue())
+                .extracting(ExposedVisitEntity::getTimeSlot)
+                .containsExactly(6, 7, 8, 9, 10);
     }
     
     protected Visit defaultVisit() {
@@ -185,17 +159,17 @@ public class SlotGenerationTest {
                 .version(0)
                 .type(0)
                 .staff(true)
-                .locationTemporaryPublicId(uuid)
+                .locationTemporaryPublicId(UUID.randomUUID())
                 .qrCodeRenewalIntervalExponentCompact(2)
                 .venueType(4)
                 .venueCategory1(1)
                 .venueCategory2(1)
                 .periodDuration(24)
-                .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAtMidnight))
+                .compressedPeriodStartTime(getCompressedPeriodStartTime(TODAY_AT_MIDNIGHT))
                 .qrCodeValidityStartTime(Instant.now())
-                .locationTemporarySecretKey(locationTemporarySecretKey)
-                .encryptedLocationContactMessage(encryptedLocationContactMessage)
-                .qrCodeScanTime(todayAt8am)
+                .locationTemporarySecretKey(RandomUtils.nextBytes(20))
+                .encryptedLocationContactMessage(RandomUtils.nextBytes(20))
+                .qrCodeScanTime(TODAY_AT_8AM)
                 .isBackward(true)
                 .build();
     }

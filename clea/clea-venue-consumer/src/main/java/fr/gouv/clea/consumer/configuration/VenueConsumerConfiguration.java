@@ -9,5 +9,5 @@ import lombok.Data;
 @Configuration
 @ConfigurationProperties(prefix = "clea.conf")
 public class VenueConsumerConfiguration {
-    private int durationUnitInSeconds;
+    private long durationUnitInSeconds;
 }
