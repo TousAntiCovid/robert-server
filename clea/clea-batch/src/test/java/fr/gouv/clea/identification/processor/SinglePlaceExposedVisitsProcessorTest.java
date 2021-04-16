@@ -7,7 +7,6 @@ import fr.gouv.clea.dto.SinglePlaceExposedVisits;
 import fr.gouv.clea.entity.ExposedVisit;
 import fr.gouv.clea.identification.RiskConfigurationService;
 import fr.gouv.clea.identification.RiskLevelConfig;
-import fr.gouv.clea.identification.processor.SinglePlaceExposedVisitsProcessor;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

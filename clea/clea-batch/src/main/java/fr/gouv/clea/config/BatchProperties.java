@@ -27,4 +27,6 @@ public class BatchProperties {
     private int identificationStepChunkSize;
 
     private int indexationStepChunkSize;
+
+    private int prefixesComputingStepChunkSize;
 }

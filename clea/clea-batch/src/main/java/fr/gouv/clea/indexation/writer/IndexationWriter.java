@@ -1,7 +1,6 @@
 package fr.gouv.clea.indexation.writer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.indexation.model.output.ClusterFile;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static fr.gouv.clea.config.BatchConstants.JSON_FILE_EXTENSION;
@@ -48,16 +46,14 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
         log.info("Creating directories if not exists: {}", jobDirectoryOutputPath);
         Files.createDirectories(jobDirectoryOutputPath);
 
-
         clusterFile.forEach(clusterFile1 -> generateClusterFile(clusterFile1, jobDirectoryOutputPath));
     }
 
-    private void generateClusterFile(final ClusterFile clusterFile, final Path directoryOutputPath) {
+    void generateClusterFile(final ClusterFile clusterFile, final Path directoryOutputPath) {
 
-        final Path jsonClusterPath = Path.of(directoryOutputPath.toString(), clusterFile.getName()+JSON_FILE_EXTENSION);
+        final Path jsonClusterPath = Path.of(directoryOutputPath.toString(), clusterFile.getName() + JSON_FILE_EXTENSION);
         log.debug("Generating cluster file : {}", jsonClusterPath);
         File jsonClusterFile = jsonClusterPath.toFile();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         try {
             objectMapper.writeValue(jsonClusterFile, clusterFile.getItems());
         } catch (IOException e) {
@@ -65,5 +61,4 @@ public class IndexationWriter implements ItemWriter<ClusterFile> {
             e.printStackTrace();
         }
     }
-
 }
