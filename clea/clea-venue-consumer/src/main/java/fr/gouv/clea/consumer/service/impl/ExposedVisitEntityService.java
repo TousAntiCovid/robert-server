@@ -1,17 +1,20 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import javax.transaction.Transactional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
 import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IExposedVisitEntityService;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
-import javax.transaction.Transactional;
 
 @Component
+@RefreshScope
 @Slf4j
 public class ExposedVisitEntityService implements IExposedVisitEntityService {
 
