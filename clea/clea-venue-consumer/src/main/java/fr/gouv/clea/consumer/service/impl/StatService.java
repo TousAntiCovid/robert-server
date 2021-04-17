@@ -33,33 +33,20 @@ public class StatService implements IStatService {
 
     @Override
     public void logStats(Visit visit) {
-        long scanTimeSlot = Duration.between(visit.getPeriodStartTime(), visit.getQrCodeScanTime()).toSeconds() / config.getDurationUnitInSeconds();
-        Instant period = visit.getPeriodStartTime().plus(scanTimeSlot * config.getDurationUnitInSeconds(), ChronoUnit.SECONDS);
-
         StatLocationKey statLocationKey = StatLocationKey.builder()
-                .period(period)
+                .period(this.getStatPeriod(visit))
                 .venueType(visit.getVenueType())
                 .venueCategory1(visit.getVenueCategory1())
                 .venueCategory2(visit.getVenueCategory2())
                 .build();
 
         Optional<StatLocation> optional = repository.findById(statLocationKey);
-        StatLocation statLocation;
 
+        StatLocation statLocation;
         if (optional.isEmpty()) {
-            statLocation = StatLocation.builder()
-                    .statLocationKey(statLocationKey)
-                    .backwardVisits(visit.isBackward() ? 1 : 0)
-                    .forwardVisits(visit.isBackward() ? 0 : 1)
-                    .build();
+            statLocation = newStatLocation(statLocationKey, visit);
         } else {
-            statLocation = optional.get();
-            if (visit.isBackward()) {
-                statLocation.setBackwardVisits(statLocation.getBackwardVisits() + 1);
-            } else {
-                statLocation.setForwardVisits(statLocation.getForwardVisits() + 1);
-            }
-            repository.save(statLocation);
+            statLocation = updateStatLocation(optional.get(), visit);
         }
 
         repository.save(statLocation);
@@ -71,5 +58,28 @@ public class StatService implements IStatService {
                 statLocation.getBackwardVisits(),
                 statLocation.getForwardVisits()
         );
+    }
+
+    protected StatLocation newStatLocation(StatLocationKey statLocationKey, Visit visit) {
+        return StatLocation.builder()
+                .statLocationKey(statLocationKey)
+                .backwardVisits(visit.isBackward() ? 1 : 0)
+                .forwardVisits(visit.isBackward() ? 0 : 1)
+                .build();
+    }
+
+    protected StatLocation updateStatLocation(StatLocation statLocation, Visit visit) {
+        if (visit.isBackward()) {
+            statLocation.setBackwardVisits(statLocation.getBackwardVisits() + 1);
+        } else {
+            statLocation.setForwardVisits(statLocation.getForwardVisits() + 1);
+        }
+        return statLocation;
+    }
+
+    protected Instant getStatPeriod(Visit visit) {
+        long scanTimeSlot = Duration.between(visit.getPeriodStartTime(), visit.getQrCodeScanTime()).toSeconds() / config.getDurationUnitInSeconds();
+        Instant period = visit.getPeriodStartTime().plus(scanTimeSlot * config.getDurationUnitInSeconds(), ChronoUnit.SECONDS);
+        return period;
     }
 }
