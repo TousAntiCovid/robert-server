@@ -17,6 +17,8 @@ import java.time.Instant;
 @Embeddable
 public class StatLocationKey implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Column(name = "period")
     private Instant period;
 
