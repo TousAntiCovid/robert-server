@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -78,8 +77,7 @@ public class StatService implements IStatService {
     }
 
     protected Instant getStatPeriod(Visit visit) {
-        long scanTimeSlot = Duration.between(visit.getPeriodStartTime(), visit.getQrCodeScanTime()).toSeconds() / config.getDurationUnitInSeconds();
-        Instant period = visit.getPeriodStartTime().plus(scanTimeSlot * config.getDurationUnitInSeconds(), ChronoUnit.SECONDS);
-        return period;
+        long secondsToRemove = visit.getQrCodeScanTime().getEpochSecond() % config.getStatSlotDurationInSeconds();
+        return visit.getQrCodeScanTime().minus(secondsToRemove, ChronoUnit.SECONDS);
     }
 }

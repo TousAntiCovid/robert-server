@@ -56,6 +56,7 @@ class StatServiceTest {
     @BeforeEach
     void init() {
         config.setDurationUnitInSeconds(Duration.ofMinutes(30).toSeconds());
+        config.setStatSlotDurationInSeconds(Duration.ofMinutes(30).toSeconds());
         service = Mockito.spy(new StatService(repositoryService, config));
     }
     
@@ -137,15 +138,15 @@ class StatServiceTest {
     }
 
     @Test
-    void should_get_same_stat_period_when_visits_scantime_are_in_same_slot() {
+    void should_get_same_stat_period_when_visits_scantimes_are_in_same_stat_slot() {
         Visit visit1 = defaultVisit().toBuilder()
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
         Visit visit2 = defaultVisit().toBuilder()
-                .qrCodeScanTime(TODAY_AT_8AM.plus(15, ChronoUnit.MINUTES)) // same slot
+                .qrCodeScanTime(TODAY_AT_8AM.plus(15, ChronoUnit.MINUTES)) // same stat slot
                 .build();
         Visit visit3 = defaultVisit().toBuilder()
-                .qrCodeScanTime(TODAY_AT_8AM.plus(28, ChronoUnit.MINUTES)) // same slot
+                .qrCodeScanTime(TODAY_AT_8AM.plus(28, ChronoUnit.MINUTES)) // same stat slot
                 .build();
 
         assertThat(service.getStatPeriod(visit1))
@@ -154,12 +155,12 @@ class StatServiceTest {
     }
 
     @Test
-    void should_get_new_period_when_different_visit_slots() {
+    void should_get_new_period_when_scantimes_are_in_different_stat_slot() {
         Visit visit1 = defaultVisit().toBuilder()
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
         Visit visit2 = defaultVisit().toBuilder()
-                .qrCodeScanTime(TODAY_AT_8AM.plus(31, ChronoUnit.MINUTES)) // different slot
+                .qrCodeScanTime(TODAY_AT_8AM.plus(31, ChronoUnit.MINUTES)) // different stat slot
                 .build();
         assertThat(service.getStatPeriod(visit1))
             .isNotEqualTo(service.getStatPeriod(visit2));

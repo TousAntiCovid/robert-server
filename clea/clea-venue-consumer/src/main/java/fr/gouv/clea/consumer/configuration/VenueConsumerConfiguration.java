@@ -10,4 +10,5 @@ import lombok.Data;
 @ConfigurationProperties(prefix = "clea.conf")
 public class VenueConsumerConfiguration {
     private long durationUnitInSeconds;
+    private long statSlotDurationInSeconds;
 }
