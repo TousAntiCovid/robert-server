@@ -1,7 +1,9 @@
 package fr.gouv.clea.consumer.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,7 +31,6 @@ import fr.gouv.clea.consumer.model.StatLocation;
 import fr.gouv.clea.consumer.model.StatLocationKey;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IStatLocationRepository;
-import fr.gouv.clea.consumer.service.IStatService;
 import fr.inria.clea.lsp.utils.TimeUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,7 +42,7 @@ class StatServiceTest {
     @Captor
     ArgumentCaptor<StatLocation> statLocationCaptor;
     
-    IStatService service;
+    StatService service;
 
     final VenueConsumerConfiguration config = new VenueConsumerConfiguration();
     
@@ -55,7 +56,7 @@ class StatServiceTest {
     @BeforeEach
     void init() {
         config.setDurationUnitInSeconds(Duration.ofMinutes(30).toSeconds());
-        service = new StatService(repositoryService, config);
+        service = Mockito.spy(new StatService(repositoryService, config));
     }
     
     @Test
@@ -80,6 +81,8 @@ class StatServiceTest {
 
         service.logStats(visit);
 
+        verify(service).newStatLocation(any(StatLocationKey.class), eq(visit));
+        verify(service, never()).updateStatLocation(any(StatLocation.class), any(Visit.class));
         verify(repositoryService).save(statLocationCaptor.capture());
         StatLocation statLocation = statLocationCaptor.getValue();
         assertThat(statLocation.getStatLocationKey().getPeriod()).isEqualTo(TODAY_AT_8AM);
@@ -91,7 +94,7 @@ class StatServiceTest {
     }
 
     @Test
-    void should_update_an_existing_stat_when_visit_has_exising_context() {
+    void should_update_an_existing_stat_when_visit_has_existing_context() {
         /*
          * if:
          * periodStartTime = today at 00:00:00
@@ -121,6 +124,8 @@ class StatServiceTest {
         
         service.logStats(visit2);
         
+        verify(service).newStatLocation(any(StatLocationKey.class), eq(visit1));
+        verify(service).updateStatLocation(any(StatLocation.class), eq(visit2));
         verify(repositoryService, times(2)).save(statLocationCaptor.capture());
         StatLocation statLocation = statLocationCaptor.getAllValues().get(statLocationCaptor.getAllValues().size() - 1);
         assertThat(statLocation.getStatLocationKey().getPeriod()).isEqualTo(TODAY_AT_8AM);
@@ -133,7 +138,6 @@ class StatServiceTest {
 
     @Test
     void should_get_same_stat_period_when_visits_scantime_are_in_same_slot() {
-        StatService statService = (StatService) service;
         Visit visit1 = defaultVisit().toBuilder()
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
@@ -144,22 +148,21 @@ class StatServiceTest {
                 .qrCodeScanTime(TODAY_AT_8AM.plus(28, ChronoUnit.MINUTES)) // same slot
                 .build();
 
-        assertThat(statService.getStatPeriod(visit1))
-            .isEqualTo(statService.getStatPeriod(visit2))
-            .isEqualTo(statService.getStatPeriod(visit3));
+        assertThat(service.getStatPeriod(visit1))
+            .isEqualTo(service.getStatPeriod(visit2))
+            .isEqualTo(service.getStatPeriod(visit3));
     }
 
     @Test
-    void should_get_new_perio_when_different_visit_slots() {
-        StatService statService = (StatService) service;
+    void should_get_new_period_when_different_visit_slots() {
         Visit visit1 = defaultVisit().toBuilder()
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
         Visit visit2 = defaultVisit().toBuilder()
                 .qrCodeScanTime(TODAY_AT_8AM.plus(31, ChronoUnit.MINUTES)) // different slot
                 .build();
-        assertThat(statService.getStatPeriod(visit1))
-            .isNotEqualTo(statService.getStatPeriod(visit2));
+        assertThat(service.getStatPeriod(visit1))
+            .isNotEqualTo(service.getStatPeriod(visit2));
     }
 
     @Test
@@ -170,7 +173,8 @@ class StatServiceTest {
         service.logStats(visit1);
         service.logStats(visit2);
         
-        verify(repositoryService, times(2)).save(any(StatLocation.class));
+        verify(service, times(2)).newStatLocation(any(StatLocationKey.class), any(Visit.class));
+        verify(service, never()).updateStatLocation(any(StatLocation.class), any(Visit.class));
     }
     
     @Test
@@ -181,7 +185,8 @@ class StatServiceTest {
         service.logStats(visit1);
         service.logStats(visit2);
         
-        verify(repositoryService, times(2)).save(any(StatLocation.class));
+        verify(service, times(2)).newStatLocation(any(StatLocationKey.class), any(Visit.class));
+        verify(service, never()).updateStatLocation(any(StatLocation.class), any(Visit.class));
     }
     
     @Test
@@ -192,7 +197,8 @@ class StatServiceTest {
         service.logStats(visit1);
         service.logStats(visit2);
         
-        verify(repositoryService, times(2)).save(any(StatLocation.class));
+        verify(service, times(2)).newStatLocation(any(StatLocationKey.class), any(Visit.class));
+        verify(service, never()).updateStatLocation(any(StatLocation.class), any(Visit.class));
     }
     
     private Visit defaultVisit() {
