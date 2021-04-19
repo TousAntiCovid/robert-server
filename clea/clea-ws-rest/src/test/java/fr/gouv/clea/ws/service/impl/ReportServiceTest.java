@@ -114,7 +114,7 @@ class ReportServiceTest {
         UUID uuid2 = UUID.randomUUID();
         List<Visit> visits = List.of(
                 newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now)), // pass
-                newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.SECONDS))) /* don't pass */);
+                newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.plus(2, ChronoUnit.SECONDS))) /* don't pass */);
 
         List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, 0L));
 
