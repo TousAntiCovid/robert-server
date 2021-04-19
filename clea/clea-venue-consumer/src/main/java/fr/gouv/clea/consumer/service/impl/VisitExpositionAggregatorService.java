@@ -1,5 +1,16 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import fr.gouv.clea.clea.scoring.configuration.domain.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.domain.exposure.ExposureTimeRule;
+import fr.gouv.clea.consumer.model.ExposedVisitEntity;
+import fr.gouv.clea.consumer.model.Visit;
+import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
+import fr.inria.clea.lsp.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -8,19 +19,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import fr.gouv.clea.consumer.model.ExposedVisitEntity;
-import fr.gouv.clea.consumer.model.Visit;
-import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
-import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
-import fr.inria.clea.lsp.utils.TimeUtils;
-import lombok.extern.slf4j.Slf4j;
-
 @Component
 @Slf4j
 public class VisitExpositionAggregatorService implements IVisitExpositionAggregatorService {
+
+    @Autowired
+    private ExposureTimeConfiguration configuration;
 
     private final static long EXPOSURE_TIME_UNIT = TimeUtils.NB_SECONDS_PER_HOUR;
     private final IExposedVisitRepository repository;
@@ -34,7 +38,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
     public void updateExposureCount(Visit visit) {
         Instant periodStartInstant = periodStartInstant(visit);
         long scanTimeSlot = Duration.between(periodStartInstant, visit.getQrCodeScanTime()).toSeconds() / EXPOSURE_TIME_UNIT;
-        int exposureTime = this.getExposureTime(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff());
+        int exposureTime = this.getExposureTime(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff(), visit.isBackward());
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
         int lastExposedSlot = Math.min(visit.getPeriodDuration(), (int) scanTimeSlot + exposureTime);
 
@@ -100,7 +104,18 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
      * e.g. if EXPOSURE_TIME_UNIT is 3600 sec (one hour), an exposure time equals to 3 means 3 hours
      * if EXPOSURE_TIME_UNIT is 1800 sec (30 minutes), an exposure time equals to 3 means 1,5 hour.
      */
-    protected int getExposureTime(int venueType, int venueCategory1, int venueCategory2, boolean staff) {
-        return 3;
+    protected int getExposureTime(int venueType, int venueCategory1, int venueCategory2, boolean staff, boolean isBackward) {
+        ExposureTimeRule rule = configuration.getConfigurationFor(venueType, venueCategory1, venueCategory2);
+        int exposureTime = 3; //default
+        if (staff && isBackward) {
+            exposureTime = rule.getExposureTimeStaffBackward();
+        } else if (staff && !isBackward) {
+            exposureTime = rule.getExposureTimeStaffForward();
+        } else if (!staff && isBackward) {
+            exposureTime = rule.getExposureTimeBackward();
+        } else if (!staff && !isBackward) {
+            exposureTime = rule.getExposureTimeForward();
+        }
+        return exposureTime;
     }
 }
