@@ -126,16 +126,30 @@ class ReportServiceTest {
     @Test
     @DisplayName("test report with duplicated qr codes")
     void testWithDuplicates() throws CleaEncodingException {
-        UUID uuidA = UUID.randomUUID();
-        UUID uuidB = UUID.randomUUID();
-        UUID uuidC = UUID.randomUUID();
+        UUID uuidA = UUID.fromString("60f5ebf7-d2af-4451-a575-7d1a2de7a9fd");
+        UUID uuidA2 = UUID.fromString("60f5ebf7-d2af-4451-a575-7d1a2de7a9fd");
+        UUID uuidB = UUID.fromString("de4c7b16-d5a2-45fa-a4f4-50fbf1e3880b");
+        UUID uuidB2 = UUID.fromString("de4c7b16-d5a2-45fa-a4f4-50fbf1e3880b");
+        UUID uuidC = UUID.fromString("bdbf9725-c1ad-42e3-b725-e475272b7f54");
+        UUID uuidC2 = UUID.fromString("bdbf9725-c1ad-42e3-b725-e475272b7f54");
+        
+        assertThat(uuidA).isEqualTo(uuidA2);
+        assertThat(uuidB).isEqualTo(uuidB2);
+        assertThat(uuidC).isEqualTo(uuidC2);
+
+        assertThat(uuidA != uuidA2).isTrue();
+        assertThat(uuidB != uuidB2).isTrue();
+        assertThat(uuidC != uuidC2).isTrue();
         List<Visit> visits = List.of(
                 newVisit(uuidA, TimeUtils.ntpTimestampFromInstant(now.minus(4, ChronoUnit.HOURS))), // pass
-                newVisit(uuidA, TimeUtils.ntpTimestampFromInstant(now)), // pass
+                newVisit(uuidA2, TimeUtils.ntpTimestampFromInstant(now)), // pass
+                newVisit(uuidA2, TimeUtils.ntpTimestampFromInstant(now.plus(15, ChronoUnit.MINUTES))), // don't pass
                 newVisit(uuidB, TimeUtils.ntpTimestampFromInstant(now.minus(3, ChronoUnit.HOURS))), // pass
-                newVisit(uuidB, TimeUtils.ntpTimestampFromInstant(now)), // don't pass
+                newVisit(uuidB2, TimeUtils.ntpTimestampFromInstant(now)), // don't pass
+                newVisit(uuidB, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.HOURS))), // don't pass
                 newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)), // pass
-                newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */);
+                newVisit(uuidC2, TimeUtils.ntpTimestampFromInstant(now)), /* don't pass */
+                newVisit(uuidC2, TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */);
 
         List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, 0L));
 
