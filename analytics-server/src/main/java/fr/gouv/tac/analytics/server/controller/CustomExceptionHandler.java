@@ -2,13 +2,15 @@ package fr.gouv.tac.analytics.server.controller;
 
 import java.time.ZonedDateTime;
 
+import javax.validation.ConstraintViolationException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.gouv.tac.analytics.server.controller.vo.ErrorVo;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,8 +25,8 @@ public class CustomExceptionHandler {
         return errorVoBuilder(e, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorVo> exception(final MethodArgumentNotValidException e) {
+    @ExceptionHandler(value = ConstraintViolationException.class)
+    public ResponseEntity<ErrorVo> exception(final ConstraintViolationException e) {
 
         if (e.getMessage().contains(PAYLOAD_TOO_LARGE)) {
             // log dedicated to raised an alarm from supervision
@@ -33,6 +35,11 @@ public class CustomExceptionHandler {
         } else {
             return errorVoBuilder(e, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @ExceptionHandler(value = JsonProcessingException.class)
+    public ResponseEntity<ErrorVo> exception(final JsonProcessingException e) {
+        return errorVoBuilder(e, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(value = Exception.class)
