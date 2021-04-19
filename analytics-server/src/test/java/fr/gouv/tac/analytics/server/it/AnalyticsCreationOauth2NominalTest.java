@@ -1,14 +1,21 @@
 package fr.gouv.tac.analytics.server.it;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.tac.analytics.server.AnalyticsServerApplication;
-import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
-import fr.gouv.tac.analytics.server.model.kafka.Analytics;
-import fr.gouv.tac.analytics.server.utils.UriConstants;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -20,7 +27,6 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
@@ -29,21 +35,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.gouv.tac.analytics.server.AnalyticsServerApplication;
+import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
+import fr.gouv.tac.analytics.server.utils.UriConstants;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @ActiveProfiles(value = "test")
 @SpringBootTest(classes = AnalyticsServerApplication.class)
@@ -73,19 +72,19 @@ public class AnalyticsCreationOauth2NominalTest {
 
     private JwtTokenHelper jwtTokenHelper;
 
-    private KafkaMessageListenerContainer<String, Analytics> container;
+    private KafkaMessageListenerContainer<String, String> container;
 
-    private final List<Analytics> records = new ArrayList<>();
+    private final List<String> records = new ArrayList<>();
 
     @BeforeEach
     public void setUp() throws InvalidKeySpecException, NoSuchAlgorithmException {
         records.clear();
         jwtTokenHelper = new JwtTokenHelper(jwtPrivateKey);
         final Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaProperties.getConsumer().getGroupId(), "false", embeddedKafkaBroker);
-        final DefaultKafkaConsumerFactory<String, Analytics> defaultKafkaConsumerFactory = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new JsonDeserializer<>(Analytics.class, objectMapper));
+        final DefaultKafkaConsumerFactory<String, String> defaultKafkaConsumerFactory = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
         final ContainerProperties containerProperties = new ContainerProperties(kafkaProperties.getTemplate().getDefaultTopic());
         container = new KafkaMessageListenerContainer<>(defaultKafkaConsumerFactory, containerProperties);
-        container.setupMessageListener((MessageListener<String, Analytics>) message -> records.add(message.value()));
+        container.setupMessageListener((MessageListener<String, String>) message -> records.add(message.value()));
         container.start();
         ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
     }

@@ -8,7 +8,7 @@ services:
       restart_policy:
         condition: on-failure      
   robert-server-ws-rest:
-    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/robert-server-ws-rest:${ROBERT_SERVER_TAG}
+    image: registry.gitlab.inria.fr/stopcovid19/backend-server/robert-server-ws-rest:${ROBERT_SERVER_TAG}
     container_name: robert-server-ws-rest
     environment:
       - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY}

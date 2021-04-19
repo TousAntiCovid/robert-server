@@ -7,7 +7,7 @@ services:
       - POSTGRES_DB=qr
       - POSTGRES_USER=robert
   captcha-orange-server:
-    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/deploy-captcha-orange-rest:latest
+    image: registry.gitlab.inria.fr/stopcovid19/backend-server/deploy-captcha-orange-rest:latest
     container_name: captcha-orange-server
     ports:
       - "8055:8055"
