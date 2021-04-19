@@ -10,7 +10,7 @@ services:
       restart_policy:
         condition: on-failure
   robert-crypto-grpc-server:
-    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/robert-crypto-grpc-server:${ROBERT_CRYPTO_TAG}
+    image: registry.gitlab.inria.fr/stopcovid19/backend-server/robert-crypto-grpc-server:${ROBERT_CRYPTO_TAG}
     container_name: robert-crypto-grpc-server
     ports:
       - "9090:9090"

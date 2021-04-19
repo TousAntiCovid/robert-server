@@ -10,7 +10,7 @@ services:
       restart_policy:
         condition: on-failure
   robert-warning-ws-rest:
-    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/tac-warning-ws-rest:${TACW_TAG}
+    image: registry.gitlab.inria.fr/stopcovid19/backend-server/tac-warning-ws-rest:${TACW_TAG}
     container_name: robert-warning-ws-rest
     ports:
       - "8088:8088"

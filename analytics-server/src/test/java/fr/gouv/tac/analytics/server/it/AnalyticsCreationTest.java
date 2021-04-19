@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +24,6 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
@@ -39,9 +37,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.tac.analytics.server.AnalyticsServerApplication;
 import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
 import fr.gouv.tac.analytics.server.controller.vo.TimestampedEventVo;
-import fr.gouv.tac.analytics.server.model.kafka.Analytics;
-import fr.gouv.tac.analytics.server.model.kafka.TimestampedEvent;
-import fr.gouv.tac.analytics.server.utils.TestUtils;
 import fr.gouv.tac.analytics.server.utils.UriConstants;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
@@ -71,18 +66,18 @@ public class AnalyticsCreationTest {
     @Value("${analyticsserver.controller.path.prefix}"+ UriConstants.API_V1 + UriConstants.ANALYTICS)
     private String analyticsControllerPath;
 
-    private KafkaMessageListenerContainer<String, Analytics> container;
+    private KafkaMessageListenerContainer<String, String> container;
 
-    private final List<Analytics> records = new ArrayList<>();
+    private final List<String> records = new ArrayList<>();
 
     @BeforeEach
     public void setUp() {
         records.clear();
         final Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaProperties.getConsumer().getGroupId(), "false", embeddedKafkaBroker);
-        final DefaultKafkaConsumerFactory<String, Analytics> defaultKafkaConsumerFactory = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new JsonDeserializer<>(Analytics.class, objectMapper));
+        final DefaultKafkaConsumerFactory<String, String> defaultKafkaConsumerFactory = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
         final ContainerProperties containerProperties = new ContainerProperties(kafkaProperties.getTemplate().getDefaultTopic());
         container = new KafkaMessageListenerContainer<>(defaultKafkaConsumerFactory, containerProperties);
-        container.setupMessageListener((MessageListener<String, Analytics>) message -> records.add(message.value()));
+        container.setupMessageListener((MessageListener<String, String>) message -> records.add(message.value()));
         container.start();
         ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
     }
@@ -97,14 +92,6 @@ public class AnalyticsCreationTest {
     public void itShouldStoreValidAnalytics() throws Exception {
         final AnalyticsVo analyticsVo = buildAnalyticsVo();
 
-        final List<TimestampedEvent> expectedEvents = analyticsVo.getEvents().stream()
-                .map(TestUtils::convertTimestampedEvent)
-                .collect(Collectors.toList());
-
-        final List<TimestampedEvent> expectedErrors = analyticsVo.getErrors().stream()
-                .map(TestUtils::convertTimestampedEvent)
-                .collect(Collectors.toList());
-
         final String analyticsAsJson = objectMapper.writeValueAsString(analyticsVo);
 
         // WHEN
@@ -118,14 +105,16 @@ public class AnalyticsCreationTest {
         await().atMost(QUEUE_READ_TIMEOUT, SECONDS).untilAsserted(() -> assertThat(records).isNotEmpty());
 
         assertThat(records).hasSize(1);
-        final Analytics analyticsResult = records.get(0);
+        final String analyticsResultAsString = records.get(0);
 
-        assertThat(analyticsResult.getCreationDate()).isEqualToIgnoringSeconds(ZonedDateTime.now());
+        assertThat(analyticsResultAsString).isEqualTo(analyticsAsJson);
+
+        final AnalyticsVo analyticsResult = objectMapper.readValue(analyticsResultAsString, AnalyticsVo.class);
 
         assertThat(analyticsResult.getInstallationUuid()).isEqualTo(analyticsVo.getInstallationUuid());
         assertThat(analyticsResult.getInfos()).containsExactlyInAnyOrderEntriesOf(analyticsVo.getInfos());
-        assertThat(analyticsResult.getEvents()).containsExactlyInAnyOrderElementsOf(expectedEvents);
-        assertThat(analyticsResult.getErrors()).containsExactlyInAnyOrderElementsOf(expectedErrors);
+        assertThat(analyticsResult.getEvents()).containsExactlyInAnyOrderElementsOf(analyticsVo.getEvents());
+        assertThat(analyticsResult.getErrors()).containsExactlyInAnyOrderElementsOf(analyticsVo.getErrors());
 
     }
 
