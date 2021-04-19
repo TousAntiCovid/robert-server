@@ -1,7 +1,8 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import fr.gouv.clea.clea.scoring.configuration.domain.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.domain.exposure.ExposureTimeConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.domain.exposure.ExposureTimeRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(value = ExposureTimeConfiguration.class)
@@ -25,7 +28,7 @@ public class ExposureTimeConfigurationTest {
     
     @Test
     void testExposureTimeConfigurationHasExpectedData() {
-        ExposureTimeConfigurationItem scoring = (ExposureTimeConfigurationItem) configuration.getScorings().get(2);
+        ExposureTimeRule scoring = (ExposureTimeRule) configuration.getScorings().get(2);
         
         assertThat(scoring.getVenueType()).isEqualTo(3);
         assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringConfigurationItem.wildcardValue);
@@ -38,7 +41,7 @@ public class ExposureTimeConfigurationTest {
     
     @Test
     void testGetMostSpecificConfiguration() {
-        ExposureTimeConfigurationItem scoring = configuration.getConfigurationFor(1, 1, 1);
+        ExposureTimeRule scoring = configuration.getConfigurationFor(1, 1, 1);
         
         assertThat(scoring.getExposureTimeBackward()).isEqualTo(3);
         assertThat(scoring.getExposureTimeForward()).isEqualTo(13);

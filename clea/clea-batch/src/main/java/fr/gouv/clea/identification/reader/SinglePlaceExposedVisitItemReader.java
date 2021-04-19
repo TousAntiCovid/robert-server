@@ -1,19 +1,18 @@
 package fr.gouv.clea.identification.reader;
 
-import static java.util.Optional.ofNullable;
-
-import java.util.ArrayList;
-import java.util.Collections;
-
+import fr.gouv.clea.dto.SinglePlaceExposedVisits;
+import fr.gouv.clea.entity.ExposedVisit;
+import lombok.Setter;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemStream;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.database.JdbcPagingItemReader;
 
-import fr.gouv.clea.dto.SinglePlaceExposedVisits;
-import fr.gouv.clea.entity.ExposedVisit;
-import lombok.Setter;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import static java.util.Optional.ofNullable;
 
 public class SinglePlaceExposedVisitItemReader implements ItemReader<SinglePlaceExposedVisits>, ItemStream {
 
@@ -37,6 +36,7 @@ public class SinglePlaceExposedVisitItemReader implements ItemReader<SinglePlace
 
     private SinglePlaceExposedVisits createNewPlace(final ExposedVisit exposedVisit) {
         return SinglePlaceExposedVisits.builder()
+                .venueType(exposedVisit.getVenueType())
                 .venueCategory1(exposedVisit.getVenueCategory1())
                 .venueCategory2(exposedVisit.getVenueCategory2())
                 .locationTemporaryPublicId(exposedVisit.getLocationTemporaryPublicId())

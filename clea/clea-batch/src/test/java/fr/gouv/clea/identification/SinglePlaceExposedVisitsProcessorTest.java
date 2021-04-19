@@ -1,5 +1,6 @@
 package fr.gouv.clea.identification;
 
+import fr.gouv.clea.clea.scoring.configuration.domain.risk.RiskRule;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
@@ -8,10 +9,7 @@ import fr.gouv.clea.entity.ExposedVisit;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import javax.sql.DataSource;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -133,8 +131,8 @@ class SinglePlaceExposedVisitsProcessorTest {
 		assertThat(res.getPeriods()).hasSize(1);
 
 		ClusterPeriod p = res.getPeriods().get(0);
-		Optional<RiskLevelConfig> riskLevelEvaluation = eval.evaluate(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
-		riskLevelEvaluation.ifPresent(evaluatedRiskLevel -> assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getForwardRisk(), Offset.offset(0.01f)));
+		Optional<RiskRule> riskLevelEvaluation = eval.evaluate(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
+		riskLevelEvaluation.ifPresent(evaluatedRiskLevel -> assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getRiskLevelForward(), Offset.offset(0.01f)));
 	}
 
 	@Test
@@ -151,8 +149,8 @@ class SinglePlaceExposedVisitsProcessorTest {
 		assertThat(res.getPeriods()).hasSize(1);
 
 		ClusterPeriod p = res.getPeriods().get(0);
-		Optional<RiskLevelConfig> riskLevelEvaluation = eval.evaluate(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
-		riskLevelEvaluation.ifPresent(evaluatedRiskLevel -> assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getBackwardRisk(), Offset.offset(0.01f)));
+		Optional<RiskRule> riskLevelEvaluation = eval.evaluate(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
+		riskLevelEvaluation.ifPresent(evaluatedRiskLevel -> assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getRiskLevelBackward(), Offset.offset(0.01f)));
 	}
 
 }

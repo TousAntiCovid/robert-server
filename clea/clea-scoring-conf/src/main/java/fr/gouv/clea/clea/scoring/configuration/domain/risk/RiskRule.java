@@ -1,17 +1,18 @@
-package fr.gouv.clea.clea.scoring.configuration;
+package fr.gouv.clea.clea.scoring.configuration.domain.risk;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Positive;
-
+import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import javax.validation.Valid;
+import javax.validation.constraints.Positive;
 
 @Valid
 @SuperBuilder
 @ToString(callSuper = true)
 @Getter
-public class RiskConfigurationItem extends ScoringConfigurationItem {
+public class RiskRule extends ScoringConfigurationItem {
     @Positive
     private int clusterThresholdBackward;
     @Positive
@@ -21,9 +22,9 @@ public class RiskConfigurationItem extends ScoringConfigurationItem {
     @Positive
     private float riskLevelForward;
 
-    public RiskConfigurationItem(int venueType, int venueCategory1, int venueCategory2,
-            int clusterThresholdBackward, int clusterThresholdForward,
-            float riskLevelBackward, float riskLevelForward) {
+    public RiskRule(int venueType, int venueCategory1, int venueCategory2,
+                    int clusterThresholdBackward, int clusterThresholdForward,
+                    float riskLevelBackward, float riskLevelForward) {
         super(venueType, venueCategory1, venueCategory2);
         this.clusterThresholdBackward = clusterThresholdBackward;
         this.clusterThresholdForward = clusterThresholdForward;

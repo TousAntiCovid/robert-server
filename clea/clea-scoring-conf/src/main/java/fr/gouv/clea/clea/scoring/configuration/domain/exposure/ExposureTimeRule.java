@@ -1,17 +1,18 @@
-package fr.gouv.clea.clea.scoring.configuration;
+package fr.gouv.clea.clea.scoring.configuration.domain.exposure;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Positive;
-
+import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import javax.validation.Valid;
+import javax.validation.constraints.Positive;
 
 @Valid
 @SuperBuilder
 @ToString(callSuper = true)
 @Getter
-public class ExposureTimeConfigurationItem extends ScoringConfigurationItem {
+public class ExposureTimeRule extends ScoringConfigurationItem {
     @Positive
     private int exposureTimeBackward;
     @Positive
@@ -21,9 +22,9 @@ public class ExposureTimeConfigurationItem extends ScoringConfigurationItem {
     @Positive
     private int exposureTimeStaffForward;
 
-    public ExposureTimeConfigurationItem(int venueType, int venueCategory1, int venueCategory2,
-            int exposureTimeBackward, int exposureTimeForward,
-            int exposureTimeStaffBackward, int exposureTimeStaffForward) {
+    public ExposureTimeRule(int venueType, int venueCategory1, int venueCategory2,
+                            int exposureTimeBackward, int exposureTimeForward,
+                            int exposureTimeStaffBackward, int exposureTimeStaffForward) {
         super(venueType, venueCategory1, venueCategory2);
         this.exposureTimeBackward = exposureTimeBackward;
         this.exposureTimeForward = exposureTimeForward;

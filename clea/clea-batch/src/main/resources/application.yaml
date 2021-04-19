@@ -20,6 +20,17 @@ spring:
     locations: classpath:db/migration/{vendor}
 
 clea:
+  conf:
+    exposure:
+      enabled: "false"
+    risk:
+      enabled: "true"
+      rules:
+        # venueType, venueCat1, venueCat2, clusterThresholdBackward, clusterThresholdForward, riskLevelBackward, riskLevelForward
+        - '1,1,1,3,1,3.0,2.0'
+        - '*,*,*,3,1,3.0,2.0'
+        - '3,*,*,3,1,3.0,2.0'
+        - '*,*,*,1,1,3.0,2.0'
   batch:
     duration-unit-in-seconds: 3600
     cluster:
@@ -28,4 +39,3 @@ clea:
       #TODO: totally arbitrary values, find out actual plausible values
       grid-size: ${CLEA_BATCH_CLUSTER_GRID_SIZE:4}
       chunk-size: ${CLEA_BATCH_CLUSTER_CHUNK_SIZE:1000}
-

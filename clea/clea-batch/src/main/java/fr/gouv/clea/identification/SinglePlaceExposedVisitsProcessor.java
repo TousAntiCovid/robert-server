@@ -1,5 +1,6 @@
 package fr.gouv.clea.identification;
 
+import fr.gouv.clea.clea.scoring.configuration.domain.risk.RiskRule;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;
@@ -34,23 +35,23 @@ public class SinglePlaceExposedVisitsProcessor implements ItemProcessor<SinglePl
         ClusterPeriod backPeriod = null;
         ClusterPeriod forwardPeriod = null;
 
-        Optional<RiskLevelConfig> riskLevelConfigOptional = riskConfigurationService.evaluate(cluster.getVenueType(), cluster.getVenueCategory1(), cluster.getVenueCategory2());
-        if (riskLevelConfigOptional.isEmpty()) {
+        Optional<RiskRule> riskRuleOptional = riskConfigurationService.evaluate(cluster.getVenueType(), cluster.getVenueCategory1(), cluster.getVenueCategory2());
+        if (riskRuleOptional.isEmpty()) {
             log.warn("No Risk configuration for [type={},categ1={},categ2={}]", cluster.getVenueType(), cluster.getVenueCategory1(), cluster.getVenueCategory2());
             return null;
         }
-        final RiskLevelConfig riskLevelConfig = riskLevelConfigOptional.get();
+        final RiskRule riskRule = riskRuleOptional.get();
 
         // Sorted visits by period then slot
         record.getVisits().sort(new ExposedVisitComparator());
 
         for (ExposedVisit visit : record.getVisits()) {
             // Backward
-            backPeriod = processVisit(visit, cluster, backPeriod, visit.getBackwardVisits(), 
-                    riskLevelConfig.getBackwardTheshold(), riskLevelConfig.getBackwardRisk());
+            backPeriod = processVisit(visit, cluster, backPeriod, visit.getBackwardVisits(),
+                    riskRule.getClusterThresholdBackward(), riskRule.getRiskLevelBackward());
             // Forward
             forwardPeriod = processVisit(visit, cluster, forwardPeriod, visit.getForwardVisits(), 
-                    riskLevelConfig.getForwardTheshold(), riskLevelConfig.getForwardRisk());
+                    riskRule.getClusterThresholdForward(), riskRule.getRiskLevelForward());
         }
 
         // Finalize last periods after the loop
