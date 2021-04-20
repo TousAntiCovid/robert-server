@@ -68,6 +68,7 @@ public class VenueConsumerConfigurationValidationTest {
     VenueConsumerConfiguration getValidVenueConsumerConfiguration() {
         return VenueConsumerConfiguration.builder()
             .durationUnitInSeconds(1800)
+            .statSlotDurationInSeconds(1800)
             .driftBetweenDeviceAndOfficialTimeInSecs(300)
             .cleaClockDriftInSecs(300)
             .retentionDurationInDays(14)
