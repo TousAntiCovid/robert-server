@@ -2,15 +2,14 @@ package fr.gouv.clea.ws.service.impl;
 
 import fr.gouv.clea.ws.model.DecodedVisit;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 
+import java.time.Duration;
 import java.time.Instant;
 
 @Data
 public class VisitsInSameUnitCounter {
 
-    @Value("${clea.conf.exposureTimeUnitInSeconds}")
-    private long exposureTimeUnit;
+    private final long exposureTimeUnit;
 
     private int count;
 
@@ -24,30 +23,13 @@ public class VisitsInSameUnitCounter {
         final Instant qrCodeScanTime = decodedVisit.getQrCodeScanTime();
         if (this.getLastScanTime() == null) {
             this.setLastScanTime(qrCodeScanTime);
-        } else {
-            if (decodedVisit.isBackward()) {
-                if (backwardsVisitIsScannedAfterLessThanExposureTime(qrCodeScanTime)) {
-                    this.incrementScanInSameUnitCount();
-                } else {
-                    this.setLastScanTime(qrCodeScanTime);
-                }
-            } else {
-                if (forwardVisitIsScannedAfterLessThanExposureTime(qrCodeScanTime)) {
-                    this.incrementScanInSameUnitCount();
-                } else {
-                    this.setLastScanTime(qrCodeScanTime);
-                }
-
-            }
+        } else if (visitIsScannedAfterLessThanExposureTime(qrCodeScanTime)) {
+            this.incrementScanInSameUnitCount();
         }
         return decodedVisit;
     }
 
-    private boolean forwardVisitIsScannedAfterLessThanExposureTime(Instant qrCodeScanTime) {
-        return this.getLastScanTime().compareTo(qrCodeScanTime) >= exposureTimeUnit;
-    }
-
-    private boolean backwardsVisitIsScannedAfterLessThanExposureTime(Instant qrCodeScanTime) {
-        return this.getLastScanTime().compareTo(qrCodeScanTime) < exposureTimeUnit;
+    private boolean visitIsScannedAfterLessThanExposureTime(Instant qrCodeScanTime) {
+        return Duration.between(this.getLastScanTime(), qrCodeScanTime).getSeconds() < exposureTimeUnit;
     }
 }

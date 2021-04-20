@@ -37,21 +37,25 @@ public class ReportService implements IReportService {
 
     private final IDecodedVisitProducerService processService;
 
+    private final long exposureTimeUnit;
+
     @Autowired
     public ReportService(
             @Value("${clea.conf.retentionDurationInDays}") int retentionDuration,
             @Value("${clea.conf.duplicateScanThresholdInSeconds}") long duplicateScanThreshold,
-            LocationSpecificPartDecoder decoder,
+            @Value("${clea.conf.exposureTimeUnitInSeconds}") long exposureTimeUnit,
+                    LocationSpecificPartDecoder decoder,
             IDecodedVisitProducerService processService) {
         this.retentionDurationInDays = retentionDuration;
         this.duplicateScanThresholdInSeconds = duplicateScanThreshold;
+        this.exposureTimeUnit = exposureTimeUnit;
         this.decoder = decoder;
         this.processService = processService;
     }
 
     @Override
     public List<DecodedVisit> report(ReportRequest reportRequestVo) {
-        final VisitsInSameUnitCounter closeScanTimeVisits = new VisitsInSameUnitCounter();
+        final VisitsInSameUnitCounter closeScanTimeVisits = new VisitsInSameUnitCounter(exposureTimeUnit);
 
         List<Visit> reportVisits = reportRequestVo.getVisits();
         List<DecodedVisit> verified = reportVisits.stream()
