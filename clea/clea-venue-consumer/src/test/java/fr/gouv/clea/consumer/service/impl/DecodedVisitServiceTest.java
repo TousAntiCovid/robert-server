@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 
+import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
@@ -34,7 +35,11 @@ class DecodedVisitServiceTest {
     private final CleaEciesEncoder cleaEciesEncoder = mock(CleaEciesEncoder.class);
     private final int driftBetweenDeviceAndOfficialTimeInSecs = 300;
     private final int cleaClockDriftInSecs = 300;
-    private final IDecodedVisitService decodedVisitService = new DecodedVisitService(decoder, cleaEciesEncoder, driftBetweenDeviceAndOfficialTimeInSecs, cleaClockDriftInSecs);
+    private final VenueConsumerConfiguration config = VenueConsumerConfiguration.builder()
+                .driftBetweenDeviceAndOfficialTimeInSecs(driftBetweenDeviceAndOfficialTimeInSecs)
+                .cleaClockDriftInSecs(cleaClockDriftInSecs)
+                .build();
+    private final IDecodedVisitService decodedVisitService = new DecodedVisitService(decoder, cleaEciesEncoder, config);
     private Instant now;
     private UUID uuid;
     private byte[] locationTemporarySecretKey;
