@@ -32,7 +32,7 @@ class ExposureTimeConfigurationTest {
     @Test
     void testExposureTimeConfigurationHasExpectedData() {
         ExposureTimeRule scoring = (ExposureTimeRule) configuration.getScorings().get(2);
-        //'1,2,3,2,12,22,32'
+
         assertThat(scoring.getVenueType()).isEqualTo(3);
         assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringConfigurationItem.wildcardValue);
         assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringConfigurationItem.wildcardValue);

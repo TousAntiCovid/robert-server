@@ -4,6 +4,7 @@ import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguratio
 import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
 import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
 import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,7 +57,7 @@ class ScoringConfigurationItemTest {
 
     @Test
     void should_return_the_rule_three_one_wildcard() {
-        assertThat(riskConfiguration.getConfigurationFor(3, 1, 2))
+        assertThat(riskConfiguration.getConfigurationFor(3, 1, 3))
                 .isEqualTo(riskConfiguration.getScorings().get(4));
     }
 
@@ -70,6 +71,20 @@ class ScoringConfigurationItemTest {
     void should_return_the_rule_three_one_two() {
         assertThat(riskConfiguration.getConfigurationFor(3, 1, 2))
                 .isEqualTo(riskConfiguration.getScorings().get(6));
+    }
+
+    private ScoringConfigurationItem buildRiskRule(int venueType, int venueCategory1, int venueCategory2,
+                                                   int clusterThresholdBackward, int clusterThresholdForward,
+                                                   float riskLevelBackward, float riskLevelForward) {
+        return RiskRule.builder()
+                .venueType(venueType)
+                .venueCategory1(venueCategory1)
+                .venueCategory2(venueCategory2)
+                .clusterThresholdBackward(clusterThresholdBackward)
+                .clusterThresholdForward(clusterThresholdForward)
+                .riskLevelBackward(riskLevelBackward)
+                .riskLevelForward(riskLevelForward)
+                .build();
     }
 
 

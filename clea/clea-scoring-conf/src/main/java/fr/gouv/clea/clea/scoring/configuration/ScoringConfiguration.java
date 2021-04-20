@@ -11,16 +11,16 @@ public abstract class ScoringConfiguration {
     public abstract List<? extends ScoringConfigurationItem> getScorings();
 
     public ScoringConfigurationItem getConfigurationFor(int venueType, int venueCategory1, int venueCategory2) {
-        log.info("Fetching rules candidates for venueType : {}, venueCategory1 : {}, venuCategory2: {}", venueType, venueCategory1, venueCategory2);
+        log.debug("Fetching rules candidates for venueType : {}, venueCategory1 : {}, venuCategory2: {}", venueType, venueCategory1, venueCategory2);
         List<ScoringConfigurationItem> compatibleRules = this.getScorings().stream()
                 .filter(scoring -> scoring.isCompatibleWith(venueType, venueCategory1, venueCategory2))
                 .collect(Collectors.toList());
 
-        log.info("Found {} compatibles rules", compatibleRules.size());
+        log.debug("Found {} compatibles rules", compatibleRules.size());
 
         //Only one match found
         if (compatibleRules.size() == 1) {
-            log.info("Found suitable rule {}", compatibleRules.get(0));
+            log.debug("Found suitable rule {}", compatibleRules.get(0));
             return compatibleRules.get(0);
         }
 
@@ -35,17 +35,17 @@ public abstract class ScoringConfiguration {
         ScoringConfigurationItem bestRuleCandidate = compatibleRules.get(0);
         for (ScoringConfigurationItem rule : compatibleRules) {
             if (rule.isFullMatch()) {
-                log.info("Found matching rule {}", rule);
+                log.debug("Found full matching rule {}", rule);
                 return rule;
             } else if (bothCategoryAreWildcard(bestRuleCandidate) && firstCategoryIsNotWildcarded(rule)) {
                 bestRuleCandidate = rule;
             } else if (eitherOneCategoryIsWildcard(bestRuleCandidate) && firstCategoryIsNotWildcarded(rule)) {
                 bestRuleCandidate = rule;
             } else if (firstCategoryIsNotWildcarded(bestRuleCandidate) && secondCategoryIsNotWildcarded(bestRuleCandidate)) {
-                return bestRuleCandidate;
+                bestRuleCandidate = rule;
             }
         }
-        log.info("Retrieving best rule {}", bestRuleCandidate);
+        log.info("Retrieving best rule {} for venueType : {}, venueCategory1 : {}, venuCategory2: {}", bestRuleCandidate, venueType, venueCategory1, venueCategory2);
         return bestRuleCandidate;
 
     }
