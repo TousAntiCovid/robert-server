@@ -50,10 +50,11 @@ public class ReportService implements IReportService {
 
     @Override
     public List<DecodedVisit> report(ReportRequest reportRequestVo) {
+        long validatedPivotDate = this.validatePivotDate(reportRequestVo.getPivotDateAsNtpTimestamp());
         List<DecodedVisit> verified = reportRequestVo.getVisits().stream()
                 .filter(visit -> !this.isOutdated(visit))
                 .filter(visit -> !this.isFuture(visit))
-                .map(it -> this.decode(it, reportRequestVo.getPivotDateAsNtpTimestamp()))
+                .map(it -> this.decode(it, validatedPivotDate))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         List<DecodedVisit> pruned = this.pruneDuplicates(verified);
@@ -114,5 +115,18 @@ public class ReportService implements IReportService {
             }
         });
         return cleaned;
+    }
+
+    private long validatePivotDate(long pivotDate) {
+        Instant pivotDateAsInstant = TimeUtils.instantFromTimestamp(pivotDate);
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant retentionDateLimit = now.minus(retentionDurationInDays, ChronoUnit.DAYS);
+        if (pivotDateAsInstant.isAfter(now) || pivotDateAsInstant.isBefore(retentionDateLimit)) {
+            long retentionDateLimitAsNtp = TimeUtils.ntpTimestampFromInstant(retentionDateLimit);
+            log.warn("pivotDate: {} not between retentionLimitDate: {} and now: {}", pivotDateAsInstant, retentionDateLimit, now);
+            return retentionDateLimitAsNtp;
+        } else {
+            return pivotDate;
+        }
     }
 }
