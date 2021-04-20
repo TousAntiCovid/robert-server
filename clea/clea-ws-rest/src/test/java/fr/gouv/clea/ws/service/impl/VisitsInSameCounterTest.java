@@ -7,13 +7,10 @@ import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
 
@@ -39,7 +36,7 @@ class VisitsInSameCounterTest {
 
         counter.incrementIfScannedInSameTimeUnitThanLastScanTime(decodedVisit);
 
-        Assertions.assertThat(counter.getCount()).isEqualTo(initialCount+1);
+        Assertions.assertThat(counter.getCount()).isEqualTo(initialCount + 1);
     }
 
     @Test
