@@ -25,6 +25,8 @@ import lombok.NoArgsConstructor;
 public class VenueConsumerConfiguration {
     @Min(value = 600)
     private long durationUnitInSeconds;
+    @Min(value = 1800)
+    private long statSlotDurationInSeconds;
     @Positive
     private int driftBetweenDeviceAndOfficialTimeInSecs;
     @Positive
