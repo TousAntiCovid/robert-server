@@ -23,15 +23,17 @@ import java.util.stream.Stream;
 @Slf4j
 public class VisitExpositionAggregatorService implements IVisitExpositionAggregatorService {
 
-    @Autowired
-    private ExposureTimeConfiguration configuration;
-
-    private final static long EXPOSURE_TIME_UNIT = TimeUtils.NB_SECONDS_PER_HOUR;
+    private static final long EXPOSURE_TIME_UNIT = TimeUtils.NB_SECONDS_PER_HOUR;
     private final IExposedVisitRepository repository;
+    private final ExposureTimeConfiguration configuration;
 
     @Autowired
-    public VisitExpositionAggregatorService(IExposedVisitRepository repository) {
+    public VisitExpositionAggregatorService(
+            IExposedVisitRepository repository,
+            ExposureTimeConfiguration configuration
+    ) {
         this.repository = repository;
+        this.configuration = configuration;
     }
 
     @Override
@@ -70,7 +72,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         return TimeUtils.instantFromTimestamp((long) visit.getCompressedPeriodStartTime() * TimeUtils.NB_SECONDS_PER_HOUR);
     }
 
-    protected long periodStartTimeNTPTimestamp(Visit visit){
+    protected long periodStartTimeNTPTimestamp(Visit visit) {
         return ((long) visit.getCompressedPeriodStartTime()) * TimeUtils.NB_SECONDS_PER_HOUR;
     }
 
@@ -84,7 +86,6 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
     }
 
     protected ExposedVisitEntity newExposedVisit(Visit visit, int slotIndex) {
-        // TODO: visit.getPeriodStart returning an Instant
         long periodStart = periodStartTimeNTPTimestamp(visit);
         return ExposedVisitEntity.builder()
                 .locationTemporaryPublicId(visit.getLocationTemporaryPublicId())
@@ -106,15 +107,19 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
      */
     protected int getExposureTime(int venueType, int venueCategory1, int venueCategory2, boolean staff, boolean isBackward) {
         ExposureTimeRule rule = configuration.getConfigurationFor(venueType, venueCategory1, venueCategory2);
-        int exposureTime = 3; //default
-        if (staff && isBackward) {
-            exposureTime = rule.getExposureTimeStaffBackward();
-        } else if (staff && !isBackward) {
-            exposureTime = rule.getExposureTimeStaffForward();
-        } else if (!staff && isBackward) {
-            exposureTime = rule.getExposureTimeBackward();
-        } else if (!staff && !isBackward) {
-            exposureTime = rule.getExposureTimeForward();
+        int exposureTime;
+        if (staff) {
+            if (isBackward) {
+                exposureTime = rule.getExposureTimeStaffBackward();
+            } else {
+                exposureTime = rule.getExposureTimeStaffForward();
+            }
+        } else {
+            if (isBackward) {
+                exposureTime = rule.getExposureTimeBackward();
+            } else {
+                exposureTime = rule.getExposureTimeForward();
+            }
         }
         return exposureTime;
     }

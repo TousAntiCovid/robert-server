@@ -1,5 +1,7 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Instant;
@@ -21,6 +24,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @DirtiesContext
@@ -31,6 +36,9 @@ class VisitExpositionAggregatorServiceTest {
 
     @Autowired
     private IVisitExpositionAggregatorService service;
+
+    @MockBean
+    private ExposureTimeConfiguration exposureTimeConfiguration;
 
     private Instant yesterday;
     private UUID uuid;
@@ -43,6 +51,15 @@ class VisitExpositionAggregatorServiceTest {
         uuid = UUID.randomUUID();
         locationTemporarySecretKey = RandomUtils.nextBytes(20);
         encryptedLocationContactMessage = RandomUtils.nextBytes(20);
+        when(exposureTimeConfiguration.getConfigurationFor(anyInt(), anyInt(), anyInt()))
+                .thenReturn(
+                        ExposureTimeRule.builder()
+                                .exposureTimeBackward(3)
+                                .exposureTimeStaffBackward(3)
+                                .exposureTimeForward(3)
+                                .exposureTimeStaffForward(3)
+                                .build()
+                );
     }
 
     @AfterEach
