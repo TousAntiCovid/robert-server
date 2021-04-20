@@ -19,15 +19,15 @@ public class VenueTypeValidator implements ConstraintValidator<ValidateWildcards
     }
 
     private boolean venueTypeIsNotWildcarded(ScoringRule scoringRule) {
-        return scoringRule.getVenueType() != ScoringRule.wildcardValue ||
-                (scoringRule.getVenueCategory1() != ScoringRule.wildcardValue &&
-                        scoringRule.getVenueCategory2() != ScoringRule.wildcardValue);
+        return scoringRule.getVenueType() != ScoringRule.WILDCARD_VALUE ||
+                (scoringRule.getVenueCategory1() != ScoringRule.WILDCARD_VALUE &&
+                        scoringRule.getVenueCategory2() != ScoringRule.WILDCARD_VALUE);
     }
 
     private boolean allFieldsAreWildcards(ScoringRule scoringRule) {
-        return scoringRule.getVenueType() == ScoringRule.wildcardValue &&
-                scoringRule.getVenueCategory1() == ScoringRule.wildcardValue &&
-                scoringRule.getVenueCategory2() == ScoringRule.wildcardValue;
+        return scoringRule.getVenueType() == ScoringRule.WILDCARD_VALUE &&
+                scoringRule.getVenueCategory1() == ScoringRule.WILDCARD_VALUE &&
+                scoringRule.getVenueCategory2() == ScoringRule.WILDCARD_VALUE;
     }
 
 

@@ -2,27 +2,41 @@ package fr.gouv.clea.clea.scoring.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
+import org.junit.jupiter.api.Test;
+
 import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
 import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
 
-@SpringBootTest()
-@ExtendWith(SpringExtension.class)
-@EnableConfigurationProperties(value = {RiskConfiguration.class, ExposureTimeConfiguration.class})
-@ContextConfiguration(classes = {RiskConfigurationConverter.class, ExposureTimeConfigurationConverter.class})
-class ScoringRuleTest {
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+class ScoringRuleSelectionTest {
 
-    @Autowired
     private RiskConfiguration riskConfiguration;
+    
+    final static List<String> rawRules = List.of( 
+            "*,*,*,3,1,3.0,2.0", // 0
+            "1,1,1,3,1,3.0,2.0", // 1
+            "1,2,3,3,1,3.0,2.0", // 2
+            "3,*,*,3,1,3.0,2.0", // 3
+            "3,1,*,3,1,3.0,2.0", // 4
+            "3,*,2,3,1,3.0,2.0", // 5
+            "3,*,3,3,1,3.0,2.0", // 6
+            "3,1,2,3,1,3.0,2.0"  // 7
+        );
+    final static RiskConfigurationConverter converter = new RiskConfigurationConverter();
+    final static List<RiskRule> rules = rawRules.stream().map(converter::convert).collect(Collectors.toList());
+    
+    @BeforeEach
+    void setUp() {
+        riskConfiguration = new RiskConfiguration();
+        riskConfiguration.setRules(rules);
+    }
 
     @Test
     void should_return_the_full_wildcard_rule() {
@@ -50,7 +64,7 @@ class ScoringRuleTest {
 
     @Test
     void should_return_the_rule_three_one_wildcard() {
-        assertThat(riskConfiguration.getConfigurationFor(3, 1, 3))
+        assertThat(riskConfiguration.getConfigurationFor(3, 1, 5))
                 .isEqualTo(riskConfiguration.getScorings().get(4));
     }
 
@@ -63,7 +77,13 @@ class ScoringRuleTest {
     @Test
     void should_return_the_rule_three_one_two() {
         assertThat(riskConfiguration.getConfigurationFor(3, 1, 2))
-                .isEqualTo(riskConfiguration.getScorings().get(6));
+                .isEqualTo(riskConfiguration.getScorings().get(7));
+    }
+
+    @Test
+    void should_return_the_rule_with_specific_cat1_when_rule_with_cat1_wildcard_and_rule_with_cat2_wildcard_matching() {
+        assertThat(riskConfiguration.getConfigurationFor(3, 1, 3))
+                .isEqualTo(riskConfiguration.getScorings().get(4));
     }
 
 }

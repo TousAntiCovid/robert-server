@@ -25,7 +25,7 @@ public class RiskConfigurationConverter implements Converter<String, RiskRule>{
     }
     
     public int stringToInt(String s) {
-        return s.equals(WILDCARD) ? RiskRule.wildcardValue : Integer.parseInt(s);
+        return s.equals(WILDCARD) ? RiskRule.WILDCARD_VALUE : Integer.parseInt(s);
     }
 
 }

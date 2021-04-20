@@ -34,8 +34,8 @@ class ExposureTimeConfigurationTest {
         ExposureTimeRule scoring = (ExposureTimeRule) configuration.getScorings().get(2);
 
         assertThat(scoring.getVenueType()).isEqualTo(3);
-        assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringRule.wildcardValue);
-        assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringRule.wildcardValue);
+        assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringRule.WILDCARD_VALUE);
+        assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringRule.WILDCARD_VALUE);
         assertThat(scoring.getExposureTimeBackward()).isEqualTo(1);
         assertThat(scoring.getExposureTimeForward()).isEqualTo(11);
         assertThat(scoring.getExposureTimeStaffBackward()).isEqualTo(21);
