@@ -19,7 +19,7 @@ import java.util.Objects;
 @Valid
 @ValidateWildcards
 @NoDuplicates
-public class ScoringConfigurationItem {
+public class ScoringRule {
 
     public static int wildcardValue = -1;
 
@@ -39,26 +39,26 @@ public class ScoringConfigurationItem {
     }
 
     public boolean hasVenueTypeCompatibleWith(int venueType) {
-        return this.getVenueType() == venueType || this.getVenueType() == ScoringConfigurationItem.wildcardValue;
+        return this.getVenueType() == venueType || this.getVenueType() == ScoringRule.wildcardValue;
     }
 
     public boolean hasVenueCategory1CompatibleWith(int venueCategory1) {
-        return this.getVenueCategory1() == venueCategory1 || this.getVenueCategory1() == ScoringConfigurationItem.wildcardValue;
+        return this.getVenueCategory1() == venueCategory1 || this.getVenueCategory1() == ScoringRule.wildcardValue;
     }
 
     public boolean hasVenueCategory2CompatibleWith(int venueCategory2) {
-        return this.getVenueCategory2() == venueCategory2 || this.getVenueCategory2() == ScoringConfigurationItem.wildcardValue;
+        return this.getVenueCategory2() == venueCategory2 || this.getVenueCategory2() == ScoringRule.wildcardValue;
     }
 
     public int getWildCardCount() {
         int count = 0;
-        if (this.venueType == ScoringConfigurationItem.wildcardValue) {
+        if (this.venueType == ScoringRule.wildcardValue) {
             count++;
         }
-        if (this.venueCategory1 == ScoringConfigurationItem.wildcardValue) {
+        if (this.venueCategory1 == ScoringRule.wildcardValue) {
             count++;
         }
-        if (this.venueCategory2 == ScoringConfigurationItem.wildcardValue) {
+        if (this.venueCategory2 == ScoringRule.wildcardValue) {
             count++;
         }
         return count;
@@ -72,7 +72,7 @@ public class ScoringConfigurationItem {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ScoringConfigurationItem that = (ScoringConfigurationItem) o;
+        ScoringRule that = (ScoringRule) o;
         return getVenueType() == that.getVenueType() && getVenueCategory1() == that.getVenueCategory1() && getVenueCategory2() == that.getVenueCategory2();
     }
 

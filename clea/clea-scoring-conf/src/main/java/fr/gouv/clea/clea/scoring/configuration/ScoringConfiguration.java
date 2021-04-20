@@ -8,11 +8,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class ScoringConfiguration {
 
-    public abstract List<? extends ScoringConfigurationItem> getScorings();
+    public abstract List<? extends ScoringRule> getScorings();
 
-    public ScoringConfigurationItem getConfigurationFor(int venueType, int venueCategory1, int venueCategory2) {
+    public ScoringRule getConfigurationFor(int venueType, int venueCategory1, int venueCategory2) {
         log.debug("Fetching rules candidates for venueType : {}, venueCategory1 : {}, venuCategory2: {}", venueType, venueCategory1, venueCategory2);
-        List<ScoringConfigurationItem> compatibleRules = this.getScorings().stream()
+        List<ScoringRule> compatibleRules = this.getScorings().stream()
                 .filter(scoring -> scoring.isCompatibleWith(venueType, venueCategory1, venueCategory2))
                 .collect(Collectors.toList());
 
@@ -27,13 +27,13 @@ public abstract class ScoringConfiguration {
         //All are wildcarded, then rule to apply is the default one
         if (allAreWilcarded(venueType, venueCategory1, venueCategory2)) {
             getConfigurationFor(
-                    ScoringConfigurationItem.wildcardValue,
-                    ScoringConfigurationItem.wildcardValue,
-                    ScoringConfigurationItem.wildcardValue);
+                    ScoringRule.wildcardValue,
+                    ScoringRule.wildcardValue,
+                    ScoringRule.wildcardValue);
         }
 
-        ScoringConfigurationItem bestRuleCandidate = compatibleRules.get(0);
-        for (ScoringConfigurationItem rule : compatibleRules) {
+        ScoringRule bestRuleCandidate = compatibleRules.get(0);
+        for (ScoringRule rule : compatibleRules) {
             if (rule.isFullMatch()) {
                 log.debug("Found full matching rule {}", rule);
                 return rule;
@@ -52,36 +52,36 @@ public abstract class ScoringConfiguration {
 
     private boolean allAreWilcarded(int venueType, int venueCategory1, int venueCategory2) {
         int count = 0;
-        if (venueType == ScoringConfigurationItem.wildcardValue) {
+        if (venueType == ScoringRule.wildcardValue) {
             count++;
         }
-        if (venueCategory1 == ScoringConfigurationItem.wildcardValue) {
+        if (venueCategory1 == ScoringRule.wildcardValue) {
             count++;
         }
-        if (venueCategory2 == ScoringConfigurationItem.wildcardValue) {
+        if (venueCategory2 == ScoringRule.wildcardValue) {
             count++;
         }
         return count == 3;
     }
 
 
-    private boolean eitherOneCategoryIsWildcard(ScoringConfigurationItem rule) {
+    private boolean eitherOneCategoryIsWildcard(ScoringRule rule) {
         return isWildcarded(rule.getVenueCategory1()) || isWildcarded(rule.getVenueCategory2());
     }
 
-    private boolean bothCategoryAreWildcard(ScoringConfigurationItem rule) {
+    private boolean bothCategoryAreWildcard(ScoringRule rule) {
         return isWildcarded(rule.getVenueCategory1()) && isWildcarded(rule.getVenueCategory2());
     }
 
     private boolean isWildcarded(int venueItem) {
-        return venueItem == ScoringConfigurationItem.wildcardValue;
+        return venueItem == ScoringRule.wildcardValue;
     }
 
-    private boolean firstCategoryIsNotWildcarded(ScoringConfigurationItem rule) {
+    private boolean firstCategoryIsNotWildcarded(ScoringRule rule) {
         return isWildcarded(rule.getVenueCategory1());
     }
 
-    private boolean secondCategoryIsNotWildcarded(ScoringConfigurationItem rule) {
+    private boolean secondCategoryIsNotWildcarded(ScoringRule rule) {
         return isWildcarded(rule.getVenueCategory2());
     }
 

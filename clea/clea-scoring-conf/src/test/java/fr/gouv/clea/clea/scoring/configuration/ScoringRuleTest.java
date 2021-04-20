@@ -1,11 +1,7 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,15 +11,18 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
 
 @SpringBootTest()
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(value = {RiskConfiguration.class, ExposureTimeConfiguration.class})
 @ContextConfiguration(classes = {RiskConfigurationConverter.class, ExposureTimeConfigurationConverter.class})
 @ActiveProfiles("test")
-@Slf4j
-class ScoringConfigurationItemTest {
+class ScoringRuleTest {
 
     @Autowired
     private RiskConfiguration riskConfiguration;
@@ -73,7 +72,7 @@ class ScoringConfigurationItemTest {
                 .isEqualTo(riskConfiguration.getScorings().get(6));
     }
 
-    private ScoringConfigurationItem buildRiskRule(int venueType, int venueCategory1, int venueCategory2,
+    private ScoringRule buildRiskRule(int venueType, int venueCategory1, int venueCategory2,
                                                    int clusterThresholdBackward, int clusterThresholdForward,
                                                    float riskLevelBackward, float riskLevelForward) {
         return RiskRule.builder()

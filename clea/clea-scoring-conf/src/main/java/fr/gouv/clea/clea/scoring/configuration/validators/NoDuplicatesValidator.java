@@ -1,6 +1,6 @@
 package fr.gouv.clea.clea.scoring.configuration.validators;
 
-import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;
+import fr.gouv.clea.clea.scoring.configuration.ScoringRule;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -9,7 +9,7 @@ import java.util.List;
 
 public class NoDuplicatesValidator implements ConstraintValidator<NoDuplicates, Object> {
 
-    private List<ScoringConfigurationItem> list;
+    private List<ScoringRule> list;
 
     @Override
     public void initialize(NoDuplicates noDuplicates) {
@@ -19,11 +19,11 @@ public class NoDuplicatesValidator implements ConstraintValidator<NoDuplicates, 
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
 
-        ScoringConfigurationItem scoringConfigurationItem = (ScoringConfigurationItem) value;
-        if (list.contains(scoringConfigurationItem)) {
+        ScoringRule scoringRule = (ScoringRule) value;
+        if (list.contains(scoringRule)) {
             return false;
         } else {
-            list.add(scoringConfigurationItem);
+            list.add(scoringRule);
             return true;
         }
     }

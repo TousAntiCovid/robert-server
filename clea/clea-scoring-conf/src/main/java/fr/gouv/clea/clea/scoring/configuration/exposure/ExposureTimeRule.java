@@ -1,6 +1,6 @@
 package fr.gouv.clea.clea.scoring.configuration.exposure;
 
-import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;
+import fr.gouv.clea.clea.scoring.configuration.ScoringRule;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
@@ -12,7 +12,7 @@ import javax.validation.constraints.Positive;
 @SuperBuilder
 @ToString(callSuper = true)
 @Getter
-public class ExposureTimeRule extends ScoringConfigurationItem {
+public class ExposureTimeRule extends ScoringRule {
     @Positive
     private int exposureTimeBackward;
     @Positive
