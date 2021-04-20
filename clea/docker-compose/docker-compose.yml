@@ -41,7 +41,7 @@ services:
       BUCKET: clea-batch
       CLEA_BATCH_LOG_FILE_PATH: -/logs
       CLEA_BATCHLOG_FILE_NAME: -clea-batch
-      ports:
+    ports:
       - "15000:15000"
     depends_on:
       - postgres
