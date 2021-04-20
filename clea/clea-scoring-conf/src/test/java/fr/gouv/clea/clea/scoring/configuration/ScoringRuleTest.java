@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -15,20 +14,15 @@ import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguratio
 import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
 import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
 import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
 
 @SpringBootTest()
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(value = {RiskConfiguration.class, ExposureTimeConfiguration.class})
 @ContextConfiguration(classes = {RiskConfigurationConverter.class, ExposureTimeConfigurationConverter.class})
-@ActiveProfiles("test")
 class ScoringRuleTest {
 
     @Autowired
     private RiskConfiguration riskConfiguration;
-
-    @Autowired
-    private ExposureTimeConfiguration exposureTimeConfiguration;
 
     @Test
     void should_return_the_full_wildcard_rule() {
@@ -71,20 +65,5 @@ class ScoringRuleTest {
         assertThat(riskConfiguration.getConfigurationFor(3, 1, 2))
                 .isEqualTo(riskConfiguration.getScorings().get(6));
     }
-
-    private ScoringRule buildRiskRule(int venueType, int venueCategory1, int venueCategory2,
-                                                   int clusterThresholdBackward, int clusterThresholdForward,
-                                                   float riskLevelBackward, float riskLevelForward) {
-        return RiskRule.builder()
-                .venueType(venueType)
-                .venueCategory1(venueCategory1)
-                .venueCategory2(venueCategory2)
-                .clusterThresholdBackward(clusterThresholdBackward)
-                .clusterThresholdForward(clusterThresholdForward)
-                .riskLevelBackward(riskLevelBackward)
-                .riskLevelForward(riskLevelForward)
-                .build();
-    }
-
 
 }
