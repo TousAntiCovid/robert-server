@@ -1,8 +1,8 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
-import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeConfigurationConverter;
-import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeRule;
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

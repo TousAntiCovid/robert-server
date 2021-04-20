@@ -11,15 +11,16 @@ public abstract class ScoringConfiguration {
     abstract public List<? extends ScoringConfigurationItem> getScorings();
 
     public ScoringConfigurationItem getConfigurationFor(int venueType, int venueCategory1, int venueCategory2) {
-        log.info("Fetching rules candidates for venueType : {}, venueCategory1 : {}, venuCategory2: {}", venueType, venueCategory1, venueCategory2);
+        log.debug("Fetching rules candidates for venueType : {}, venueCategory1 : {}, venuCategory2: {}", venueType, venueCategory1, venueCategory2);
         List<ScoringConfigurationItem> compatibleRules = this.getScorings().stream()
                 .filter(scoring -> scoring.isCompatibleWith(venueType, venueCategory1, venueCategory2))
                 .collect(Collectors.toList());
 
-        log.info("Found {} compatibles rules", compatibleRules.size());
+        log.debug("Found {} compatibles rules", compatibleRules.size());
         ScoringConfigurationItem selectedRule = null;
 
         if (compatibleRules.size() == 1) {
+            log.info("Found suitable rule {}", compatibleRules.get(0));
             return compatibleRules.get(0);
         }
 

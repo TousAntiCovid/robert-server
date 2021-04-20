@@ -1,7 +1,7 @@
 package fr.gouv.clea.identification;
 
-import fr.gouv.clea.clea.scoring.configuration.scoring.risk.RiskConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.scoring.risk.RiskRule;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

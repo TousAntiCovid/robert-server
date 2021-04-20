@@ -1,4 +1,4 @@
-package fr.gouv.clea.clea.scoring.configuration.scoring.exposure;
+package fr.gouv.clea.clea.scoring.configuration.exposure;
 
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.convert.converter.Converter;

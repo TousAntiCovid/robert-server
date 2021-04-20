@@ -1,4 +1,4 @@
-package fr.gouv.clea.clea.scoring.configuration.scoring.risk;
+package fr.gouv.clea.clea.scoring.configuration.risk;
 
 import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;
 import lombok.Getter;

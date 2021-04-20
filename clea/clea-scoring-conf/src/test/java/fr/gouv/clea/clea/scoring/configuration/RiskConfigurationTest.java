@@ -1,8 +1,8 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
-import fr.gouv.clea.clea.scoring.configuration.scoring.risk.RiskConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.scoring.risk.RiskConfigurationConverter;
-import fr.gouv.clea.clea.scoring.configuration.scoring.risk.RiskRule;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

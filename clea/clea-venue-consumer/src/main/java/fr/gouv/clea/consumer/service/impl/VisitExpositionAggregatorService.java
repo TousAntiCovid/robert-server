@@ -1,7 +1,7 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeRule;
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;

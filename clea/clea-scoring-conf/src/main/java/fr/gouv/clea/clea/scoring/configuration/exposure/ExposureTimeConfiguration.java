@@ -1,4 +1,4 @@
-package fr.gouv.clea.clea.scoring.configuration.scoring.exposure;
+package fr.gouv.clea.clea.scoring.configuration.exposure;
 
 import fr.gouv.clea.clea.scoring.configuration.ScoringConfiguration;
 import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;
