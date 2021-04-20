@@ -1,6 +1,6 @@
 package fr.gouv.clea.identification;
 
-import fr.gouv.clea.clea.scoring.configuration.domain.risk.RiskRule;
+import fr.gouv.clea.clea.scoring.configuration.scoring.risk.RiskRule;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.dto.ClusterPeriod;
 import fr.gouv.clea.dto.SinglePlaceCluster;

@@ -1,4 +1,4 @@
-package fr.gouv.clea.clea.scoring.configuration.domain.exposure;
+package fr.gouv.clea.clea.scoring.configuration.scoring.exposure;
 
 import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;
 import lombok.Getter;

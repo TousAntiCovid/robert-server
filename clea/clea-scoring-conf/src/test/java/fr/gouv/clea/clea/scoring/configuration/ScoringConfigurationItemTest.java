@@ -1,163 +1,46 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
+import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.scoring.risk.RiskConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.scoring.risk.RiskConfigurationConverter;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Test;
-
+@SpringBootTest()
+@ExtendWith(SpringExtension.class)
+@EnableConfigurationProperties(value = {RiskConfiguration.class, ExposureTimeConfiguration.class})
+@ContextConfiguration(classes = {RiskConfigurationConverter.class, ExposureTimeConfigurationConverter.class})
+@ActiveProfiles("test")
 public class ScoringConfigurationItemTest {
+
+    @Autowired
+    private RiskConfiguration riskConfiguration;
+
+    @Autowired
+    private ExposureTimeConfiguration exposureTimeConfiguration;
+
     @Test
-    void testConfigurationWithNoWildcardHasMaxPriority() {
-        ScoringConfigurationItem scoring = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(1)
-                .venueCategory2(1)
-                .build();
-        
-        assertThat(scoring.getPriority()).isEqualTo(100);
+    void should_return_the_most_specified_rule() {
+        assertThat(riskConfiguration.getConfigurationFor(1, 1, 1))
+                .isEqualTo(riskConfiguration.getScorings().get(1));
     }
 
     @Test
-    void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithNoWildcard() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(ScoringConfigurationItem.wildcardValue)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(1)
-                .venueCategory2(1)
-                .build();
-        
-        assertThat(scoring1.getPriority()).isLessThan(scoring2.getPriority());
+    void should_return_the_full_wildcard_rule() {
+        assertThat(riskConfiguration.getConfigurationFor(2, 1, 1))
+                .isEqualTo(riskConfiguration.getScorings().get(0));
     }
 
-    @Test
-    void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithCategory1Wildcard() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(ScoringConfigurationItem.wildcardValue)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(1)
-                .build();
-        
-        assertThat(scoring1.getPriority()).isLessThan(scoring2.getPriority());
-    }
-
-    @Test
-    void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithCategory2Wildcard() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(ScoringConfigurationItem.wildcardValue)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(1)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();
-        
-        assertThat(scoring1.getPriority()).isLessThan(scoring2.getPriority());
-    }
-
-    @Test
-    void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithCategory1And2Wildcard() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(ScoringConfigurationItem.wildcardValue)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();
-        
-        assertThat(scoring1.getPriority()).isLessThan(scoring2.getPriority());
-    }
+    //TODO: add more tests according to rules set
 
 
-    @Test
-    void testConfigurationWithWildcardDoesNotHavePriorityOverConfigurationWithTypeAndCategory1Wildcard() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(ScoringConfigurationItem.wildcardValue)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(ScoringConfigurationItem.wildcardValue)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(1)
-                .build();
-        
-        assertThat(scoring1.getPriority()).isLessThan(scoring2.getPriority());
-    }
-    
-    @Test
-    void testConfigurationWithCategory1WithNoWildcardHasPriorityOverConfigurationWithCategory2WithNoWildcard() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(1)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();       
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(1)
-                .build();
-        
-        assertThat(scoring1.getPriority()).isGreaterThan(scoring2.getPriority());
-    }
-    
-    @Test
-    void testConfigurationWithCategory1HasPriorityOverConfigurationWithWildcard() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(1)
-                .venueCategory2(1)
-                .build();
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(1)
-                .build();       
-        
-        assertThat(scoring1.getPriority()).isGreaterThan(scoring2.getPriority());
-    }
-
-    @Test
-    void testConfigurationWithTypeHasPriorityOverConfigurationWithWildcard() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(1)
-                .venueCategory2(1)
-                .build();
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(ScoringConfigurationItem.wildcardValue)
-                .venueCategory1(1)
-                .venueCategory2(1)
-                .build();       
-        
-        assertThat(scoring1.getPriority()).isGreaterThan(scoring2.getPriority());
-    }
-
-    @Test
-    void testConfigurationWithTypeHasPriorityOverConfigurationWithWildcards() {
-        ScoringConfigurationItem scoring1 = ScoringConfigurationItem.builder()
-                .venueType(1)
-                .venueCategory1(ScoringConfigurationItem.wildcardValue)
-                .venueCategory2(ScoringConfigurationItem.wildcardValue)
-                .build();
-        ScoringConfigurationItem scoring2 = ScoringConfigurationItem.builder()
-                .venueType(ScoringConfigurationItem.wildcardValue)
-                .venueCategory1(1)
-                .venueCategory2(1)
-                .build();       
-        
-        assertThat(scoring1.getPriority()).isGreaterThan(scoring2.getPriority());
-    }
 }

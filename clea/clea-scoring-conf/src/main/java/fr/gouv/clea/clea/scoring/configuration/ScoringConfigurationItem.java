@@ -1,11 +1,11 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
-import javax.validation.constraints.Min;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import javax.validation.constraints.Min;
 
 // @Valid
 @SuperBuilder
@@ -20,7 +20,7 @@ public class ScoringConfigurationItem {
     private int venueCategory1;
     @Min(value = -1)
     private int venueCategory2;
-    
+
     /**
      * @return the scoring configuration priority. The greater it is, the most priority it has.
      *  It allows to select a scoring configuration between many that are compatible for a 
@@ -50,14 +50,32 @@ public class ScoringConfigurationItem {
 
     public boolean hasVenueTypeCompatibleWith(int venueType) {
         return this.getVenueType() == venueType || this.getVenueType() == ScoringConfigurationItem.wildcardValue;
-    } 
+    }
 
     public boolean hasVenueCategory1CompatibleWith(int venueCategory1) {
-        return this.getVenueCategory1() == venueType || this.getVenueCategory1() == ScoringConfigurationItem.wildcardValue;
-    } 
+        return this.getVenueCategory1() == venueCategory1 || this.getVenueCategory1() == ScoringConfigurationItem.wildcardValue;
+    }
 
     public boolean hasVenueCategory2CompatibleWith(int venueCategory2) {
-        return this.getVenueCategory2() == venueType || this.getVenueCategory2() == ScoringConfigurationItem.wildcardValue;
-    } 
-    
+        return this.getVenueCategory2() == venueCategory2 || this.getVenueCategory2() == ScoringConfigurationItem.wildcardValue;
+    }
+
+    public int getWildCardCount() {
+        int count = 0;
+        if (this.venueType == ScoringConfigurationItem.wildcardValue) {
+            count++;
+        }
+        if (this.venueCategory1 == ScoringConfigurationItem.wildcardValue) {
+            count++;
+        }
+        if (this.venueCategory2 == ScoringConfigurationItem.wildcardValue) {
+            count++;
+        }
+        return count;
+    }
+
+    public boolean isFullMatch() {
+        return this.getWildCardCount() == 0;
+    }
+
 }

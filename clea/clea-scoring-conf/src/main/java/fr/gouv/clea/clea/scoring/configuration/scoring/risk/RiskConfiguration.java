@@ -1,4 +1,4 @@
-package fr.gouv.clea.clea.scoring.configuration.domain.risk;
+package fr.gouv.clea.clea.scoring.configuration.scoring.risk;
 
 import fr.gouv.clea.clea.scoring.configuration.ScoringConfiguration;
 import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;

@@ -1,35 +1,38 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
-import fr.gouv.clea.clea.scoring.configuration.domain.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.domain.exposure.ExposureTimeConfigurationConverter;
-import fr.gouv.clea.clea.scoring.configuration.domain.exposure.ExposureTimeRule;
+import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.scoring.exposure.ExposureTimeRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest()
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(value = ExposureTimeConfiguration.class)
-@ContextConfiguration(classes = { ExposureTimeConfigurationConverter.class })
-@SpringBootTest
-public class ExposureTimeConfigurationTest {
+@ContextConfiguration(classes = {ExposureTimeConfigurationConverter.class})
+@ActiveProfiles("test")
+class ExposureTimeConfigurationTest {
+
     @Autowired
     private ExposureTimeConfiguration configuration;
-    
+
     @Test
     void testExposureTimeConfigurationHasExpectedSize() {
-        assertThat(configuration.getScorings()).hasSize(4);
+        assertThat(configuration.getScorings()).hasSize(6);
     }
-    
+
     @Test
     void testExposureTimeConfigurationHasExpectedData() {
         ExposureTimeRule scoring = (ExposureTimeRule) configuration.getScorings().get(2);
-        
+        //'1,2,3,2,12,22,32'
         assertThat(scoring.getVenueType()).isEqualTo(3);
         assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringConfigurationItem.wildcardValue);
         assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringConfigurationItem.wildcardValue);
@@ -38,20 +41,20 @@ public class ExposureTimeConfigurationTest {
         assertThat(scoring.getExposureTimeStaffBackward()).isEqualTo(21);
         assertThat(scoring.getExposureTimeStaffForward()).isEqualTo(31);
     }
-    
+
     @Test
     void testGetMostSpecificConfiguration() {
         ExposureTimeRule scoring = configuration.getConfigurationFor(1, 1, 1);
-        
+
         assertThat(scoring.getExposureTimeBackward()).isEqualTo(3);
         assertThat(scoring.getExposureTimeForward()).isEqualTo(13);
         assertThat(scoring.getExposureTimeStaffBackward()).isEqualTo(23);
         assertThat(scoring.getExposureTimeStaffForward()).isEqualTo(33);
     }
-    
+
     @Test
     void testValidation() {
         // test empty configuration
     }
-    
+
 }
