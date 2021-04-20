@@ -31,9 +31,10 @@ class ReportServiceTest {
 
     private final int retentionDuration = 14;
     private final long duplicateScanThresholdInSeconds = 10800L;
+    private final long exposureTimeUnit = 1800L;
     private final LocationSpecificPartDecoder decoder = mock(LocationSpecificPartDecoder.class);
     private final IDecodedVisitProducerService processService = mock(IDecodedVisitProducerService.class);
-    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, decoder, processService);
+    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, exposureTimeUnit, decoder, processService);
     private Instant now;
 
     @BeforeEach

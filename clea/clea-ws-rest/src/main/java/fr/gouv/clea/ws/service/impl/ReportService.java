@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,29 +37,44 @@ public class ReportService implements IReportService {
 
     private final IDecodedVisitProducerService processService;
 
+    private final long exposureTimeUnit;
+
     @Autowired
     public ReportService(
             @Value("${clea.conf.retentionDurationInDays}") int retentionDuration,
             @Value("${clea.conf.duplicateScanThresholdInSeconds}") long duplicateScanThreshold,
-            LocationSpecificPartDecoder decoder,
+            @Value("${clea.conf.exposureTimeUnitInSeconds}") long exposureTimeUnit,
+                    LocationSpecificPartDecoder decoder,
             IDecodedVisitProducerService processService) {
         this.retentionDurationInDays = retentionDuration;
         this.duplicateScanThresholdInSeconds = duplicateScanThreshold;
+        this.exposureTimeUnit = exposureTimeUnit;
         this.decoder = decoder;
         this.processService = processService;
     }
 
     @Override
     public List<DecodedVisit> report(ReportRequest reportRequestVo) {
+        final VisitsInSameUnitCounter closeScanTimeVisits = new VisitsInSameUnitCounter(exposureTimeUnit);
         long validatedPivotDate = this.validatePivotDate(reportRequestVo.getPivotDateAsNtpTimestamp());
-        List<DecodedVisit> verified = reportRequestVo.getVisits().stream()
-                .filter(visit -> !this.isOutdated(visit))
-                .filter(visit -> !this.isFuture(visit))
+        List<Visit> reportVisits = reportRequestVo.getVisits();
+        List<DecodedVisit> verified = reportVisits.stream()
+                .filter(visit -> !isOutdated(visit))
+                .filter(visit -> !isFuture(visit))
                 .map(it -> this.decode(it, validatedPivotDate))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         List<DecodedVisit> pruned = this.pruneDuplicates(verified);
         processService.produce(pruned);
+
+        // evaluate produced visits and count close scan time visits
+        pruned.stream().sorted(Comparator.comparing((DecodedVisit::getQrCodeScanTime)))
+                .forEach(closeScanTimeVisits::incrementIfScannedInSameTimeUnitThanLastScanTime);
+
+        log.info("BATCH_REPORT {}#{}#{}#{}#{}", reportVisits.size(), reportVisits.size() - pruned.size(),
+                pruned.stream().filter(DecodedVisit::isBackward).count(),
+                pruned.stream().filter(visit -> !visit.isBackward()).count(),
+                closeScanTimeVisits.getCount());
         return pruned;
     }
 
