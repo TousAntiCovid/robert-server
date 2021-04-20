@@ -35,7 +35,7 @@ public class SlotGenerationTest {
     final VenueConsumerConfiguration config = new VenueConsumerConfiguration();
     
     @Mock
-    IExposedVisitRepository repositoryService;
+    IExposedVisitRepository repository;
     
     @Mock
     IStatService statService;
@@ -48,7 +48,7 @@ public class SlotGenerationTest {
     @BeforeEach
     void init() {
         config.setDurationUnitInSeconds(Duration.ofMinutes(30).toSeconds());
-        service = new VisitExpositionAggregatorService(repositoryService, config, statService);
+        service = new VisitExpositionAggregatorService(repository, config, statService);
     }
 
     @Test
@@ -67,7 +67,7 @@ public class SlotGenerationTest {
          *  => firstExposedSlot = 16-2 = 14
          *  => lastExposedSlot = 16+2 = 18
          */
-        verify(repositoryService).saveAll(exposedVisitEntitiesCaptor.capture());
+        verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
         assertThat(exposedVisitEntitiesCaptor.getValue())
                 .extracting(ExposedVisitEntity::getTimeSlot)
                 .containsExactly(14, 15, 16, 17, 18);
@@ -89,7 +89,7 @@ public class SlotGenerationTest {
          *  => firstExposedSlot = 0
          *  => lastExposedSlot = 0+1 = 1
          */
-        verify(repositoryService).saveAll(exposedVisitEntitiesCaptor.capture());
+        verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
         assertThat(exposedVisitEntitiesCaptor.getValue())
                 .extracting(ExposedVisitEntity::getTimeSlot)
                 .containsExactly(0, 1);
@@ -112,7 +112,7 @@ public class SlotGenerationTest {
          *  => firstExposedSlot = 0
          *  => lastExposedSlot = 0+3-1 = 2
          */
-        verify(repositoryService).saveAll(exposedVisitEntitiesCaptor.capture());
+        verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
         assertThat(exposedVisitEntitiesCaptor.getValue())
                 .extracting(ExposedVisitEntity::getTimeSlot)
                 .containsExactly(0, 1, 2);
@@ -129,7 +129,7 @@ public class SlotGenerationTest {
         
         service.updateExposureCount(visit);
 
-        verify(repositoryService, never()).saveAll(exposedVisitEntitiesCaptor.capture());
+        verify(repository, never()).saveAll(exposedVisitEntitiesCaptor.capture());
     }
 
     @Test
@@ -152,7 +152,7 @@ public class SlotGenerationTest {
          *  => firstExposedSlot = 10
          *  => lastExposedSlot = 6
          */
-        verify(repositoryService).saveAll(exposedVisitEntitiesCaptor.capture());
+        verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
         assertThat(exposedVisitEntitiesCaptor.getValue())
                 .extracting(ExposedVisitEntity::getTimeSlot)
                 .containsExactly(6, 7, 8, 9, 10);
