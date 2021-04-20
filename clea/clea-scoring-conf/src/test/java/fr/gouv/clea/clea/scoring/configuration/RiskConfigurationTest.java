@@ -26,12 +26,12 @@ public class RiskConfigurationTest {
 
     @Test
     void testRiskConfigurationHasExpectedSize() {
-        assertThat(configuration.getScorings()).hasSize(6);
+        assertThat(configuration.getScorings()).hasSize(7);
     }
 
     @Test
     void testExposureTimeConfigurationHasExpectedData() {
-        RiskRule scoring = (RiskRule) configuration.getScorings().get(5);
+        RiskRule scoring = (RiskRule) configuration.getScorings().get(3);
 
         assertThat(scoring.getVenueType()).isEqualTo(3);
         assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringConfigurationItem.wildcardValue);

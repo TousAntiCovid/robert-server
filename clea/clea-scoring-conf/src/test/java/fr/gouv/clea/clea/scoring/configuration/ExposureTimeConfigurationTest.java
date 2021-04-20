@@ -26,7 +26,7 @@ class ExposureTimeConfigurationTest {
 
     @Test
     void testExposureTimeConfigurationHasExpectedSize() {
-        assertThat(configuration.getScorings()).hasSize(6);
+        assertThat(configuration.getScorings()).hasSize(4);
     }
 
     @Test

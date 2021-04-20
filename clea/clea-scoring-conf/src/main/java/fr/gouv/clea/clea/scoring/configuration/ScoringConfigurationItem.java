@@ -1,46 +1,36 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
+import fr.gouv.clea.clea.scoring.configuration.validators.NoDuplicates;
+import fr.gouv.clea.clea.scoring.configuration.validators.ValidateWildcards;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import java.util.Objects;
 
 // @Valid
 @SuperBuilder
 @AllArgsConstructor
 @ToString
 @Getter
+@Valid
+@ValidateWildcards
+@NoDuplicates
 public class ScoringConfigurationItem {
+
     public static int wildcardValue = -1;
+
     @Min(value = -1)
     private int venueType;
+
     @Min(value = -1)
     private int venueCategory1;
+
     @Min(value = -1)
     private int venueCategory2;
-
-    /**
-     * @return the scoring configuration priority. The greater it is, the most priority it has.
-     *  It allows to select a scoring configuration between many that are compatible for a 
-     *  tuple(venueType, venueCategory1, venueCategory2).
-     */
-    public int getPriority() {
-        int priority = 100;
-        if (venueType == wildcardValue) {
-            // venueType is the most important part for configuration selection
-            priority -= 51;
-        }
-        if (venueCategory1 == wildcardValue) {
-            // venueCategory1 has priority over venueCategory2
-            priority -= 25;
-        }
-        if (venueCategory2 == wildcardValue) {
-            priority -= 20;
-        }
-        return priority;
-    }
 
     public boolean isCompatibleWith(int venueType, int venueCategory1, int venueCategory2) {
         return this.hasVenueTypeCompatibleWith(venueType)
@@ -78,4 +68,16 @@ public class ScoringConfigurationItem {
         return this.getWildCardCount() == 0;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ScoringConfigurationItem that = (ScoringConfigurationItem) o;
+        return getVenueType() == that.getVenueType() && getVenueCategory1() == that.getVenueCategory1() && getVenueCategory2() == that.getVenueCategory2();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getVenueType(), getVenueCategory1(), getVenueCategory2());
+    }
 }
