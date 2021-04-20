@@ -77,7 +77,11 @@ public class DecodedVisitService implements IDecodedVisitService {
         if (qrCodeRenewalInterval == 0) {
             return false;
         }
-        return Duration.between(visit.getQrCodeScanTime(), visit.getQrCodeValidityStartTime()).abs().toSeconds() 
-                > (qrCodeRenewalInterval + config.getDriftBetweenDeviceAndOfficialTimeInSecs() + config.getCleaClockDriftInSecs());
+        boolean isDrifting = Duration.between(visit.getQrCodeScanTime(), visit.getQrCodeValidityStartTime()).abs().toSeconds() 
+                 > (qrCodeRenewalInterval + config.getDriftBetweenDeviceAndOfficialTimeInSecs() + config.getCleaClockDriftInSecs());
+        if (!isDrifting && visit.getQrCodeScanTime().isBefore(visit.getQrCodeValidityStartTime())) {
+            visit.setQrCodeScanTime(visit.getQrCodeValidityStartTime());
+        }
+        return isDrifting;
     }
 }

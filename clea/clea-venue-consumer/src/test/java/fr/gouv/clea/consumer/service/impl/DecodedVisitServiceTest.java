@@ -1,5 +1,22 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
+import org.junit.jupiter.api.Test;
+
 import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.model.Visit;
@@ -10,21 +27,8 @@ import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.exception.CleaEncodingException;
 import fr.inria.clea.lsp.exception.CleaEncryptionException;
-import org.apache.commons.lang3.RandomUtils;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class DecodedVisitServiceTest {
 
     private final LocationSpecificPartDecoder decoder = mock(LocationSpecificPartDecoder.class);
@@ -51,7 +55,6 @@ class DecodedVisitServiceTest {
     @DisplayName("check with max CRIexp for LSP")
     void maxCRIexp() throws CleaEncryptionException, CleaEncodingException {
         int CRIexp = 0x1F; // qrCodeRenewalInterval = 0
-
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
                         LocationSpecificPart.builder()
@@ -60,7 +63,6 @@ class DecodedVisitServiceTest {
                                 .locationTemporarySecretKey(locationTemporarySecretKey)
                                 .build()
                 );
-
         when(cleaEciesEncoder.computeLocationTemporaryPublicId(locationTemporarySecretKey))
                 .thenReturn(uuid);
 
@@ -76,11 +78,9 @@ class DecodedVisitServiceTest {
     }
 
     @Test
-    @DisplayName("check with drifting LSP")
-    void testDrifting() throws CleaEncryptionException, CleaEncodingException {
+    void should_visit_be_rejected_when_scantime_over_allowed_drift() throws CleaEncryptionException, CleaEncodingException {
         int CRIexp = 10; // qrCodeRenewalInterval=2^10(=1024). 1024+300+300=1624
         Instant qrCodeValidityStartTime = now.truncatedTo(ChronoUnit.SECONDS).plus(2000, ChronoUnit.SECONDS);
-
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
                         LocationSpecificPart.builder()
@@ -90,7 +90,6 @@ class DecodedVisitServiceTest {
                                 .locationTemporarySecretKey(locationTemporarySecretKey)
                                 .build()
                 );
-
         when(cleaEciesEncoder.computeLocationTemporaryPublicId(locationTemporarySecretKey))
                 .thenReturn(uuid);
 
@@ -103,14 +102,12 @@ class DecodedVisitServiceTest {
         );
 
         assertThat(optional).isEmpty();
-    }
+   }
 
     @Test
-    @DisplayName("check with non drifting LSP")
-    void testNonDrifting() throws CleaEncryptionException, CleaEncodingException {
+    void should_visit_be_accepted_and_scantime_updated_when_scantime_inside_allowed_drift_and_scantime_before_qr_validity_start() throws CleaEncryptionException, CleaEncodingException {
         int CRIexp = 10; // qrCodeRenewalInterval=2^10(=1024). 1024+300+300=1624
-        Instant qrCodeValidityStartTime = Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(1600, ChronoUnit.SECONDS);
-
+        Instant qrCodeValidityStartTime = now.truncatedTo(ChronoUnit.SECONDS).plus(1600, ChronoUnit.SECONDS);
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
                         LocationSpecificPart.builder()
@@ -120,7 +117,6 @@ class DecodedVisitServiceTest {
                                 .locationTemporarySecretKey(locationTemporarySecretKey)
                                 .build()
                 );
-
         when(cleaEciesEncoder.computeLocationTemporaryPublicId(locationTemporarySecretKey))
                 .thenReturn(uuid);
 
@@ -133,8 +129,9 @@ class DecodedVisitServiceTest {
         );
 
         assertThat(optional).isPresent();
+        assertThat(optional.get().getQrCodeScanTime()).isEqualTo(optional.get().getQrCodeValidityStartTime());
     }
-
+    
     @Test
     @DisplayName("check with non valid temporaryLocationPublicId")
     void nonValidTemporaryLocationPublicId() throws CleaEncryptionException, CleaEncodingException {

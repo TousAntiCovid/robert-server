@@ -36,7 +36,6 @@ import fr.gouv.tac.analytics.server.AnalyticsServerApplication;
 import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
 import fr.gouv.tac.analytics.server.controller.vo.ErrorVo;
 import fr.gouv.tac.analytics.server.controller.vo.TimestampedEventVo;
-import fr.gouv.tac.analytics.server.model.kafka.Analytics;
 import fr.gouv.tac.analytics.server.utils.UriConstants;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
@@ -58,10 +57,10 @@ public class AnalyticsCreationValidationTest {
     private String analyticsControllerPath;
 
     @MockBean
-    private KafkaTemplate<String, Analytics> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @Mock
-    private ListenableFuture<SendResult<String, Analytics>> listenableFutureMock;
+    private ListenableFuture<SendResult<String, String>> listenableFutureMock;
 
     /****************
      * ROOT
@@ -74,13 +73,32 @@ public class AnalyticsCreationValidationTest {
         final AnalyticsVo analyticsVo = buildAnalyticsVo();
         final String analyticsAsJson = objectMapper.writeValueAsString(analyticsVo);
 
-        when(kafkaTemplate.sendDefault(any(Analytics.class))).thenReturn(listenableFutureMock);
+        when(kafkaTemplate.sendDefault(any(String.class))).thenReturn(listenableFutureMock);
 
         mockMvc.perform(MockMvcRequestBuilders.post(analyticsControllerPath)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(analyticsAsJson))
                 .andExpect(status().isOk())
                 .andExpect(content().string(is(emptyString())));
+    }
+
+    @Test
+    @WithMockUser
+    public void itShouldRejectAnalyticsWithJsonError() throws Exception {
+
+        final String analyticsAsJson = "{";
+
+        final MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post(analyticsControllerPath)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(analyticsAsJson))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
+        Assertions.assertThat(errorVo.getMessage()).contains("Unexpected end-of-input: expected close marker for Object");
+        Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
+
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -99,10 +117,10 @@ public class AnalyticsCreationValidationTest {
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains("'analyticsVo' on field 'installationUuid': rejected value [null]");
+        Assertions.assertThat(errorVo.getMessage()).contains("installationUuid: must not be blank");
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -121,10 +139,10 @@ public class AnalyticsCreationValidationTest {
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains("'analyticsVo' on field 'installationUuid': rejected value []");
+        Assertions.assertThat(errorVo.getMessage()).contains("installationUuid: must not be blank");
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -143,10 +161,10 @@ public class AnalyticsCreationValidationTest {
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains("Field error in object 'analyticsVo' on field 'installationUuid': rejected value");
+        Assertions.assertThat(errorVo.getMessage()).contains("installationUuid: size must be between 0 and 64");
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     /****************
@@ -172,7 +190,7 @@ public class AnalyticsCreationValidationTest {
         Assertions.assertThat(errorVo.getMessage()).contains(String.format(TOO_MANY_INFO_ERROR_MESSAGE, PAYLOAD_TOO_LARGE, 3, 2));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -194,7 +212,7 @@ public class AnalyticsCreationValidationTest {
         Assertions.assertThat(errorVo.getMessage()).contains(String.format(KEY_TOO_LONG_ERROR_MESSAGE, 10, 12));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -216,7 +234,7 @@ public class AnalyticsCreationValidationTest {
         Assertions.assertThat(errorVo.getMessage()).contains(String.format(VALUE_TOO_LONG_ERROR_MESSAGE, 12, 17));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     /****************
@@ -239,10 +257,10 @@ public class AnalyticsCreationValidationTest {
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains("Field error in object 'analyticsVo' on field 'events[0].name': rejected value []");
+        Assertions.assertThat(errorVo.getMessage()).contains("events[0].name: must not be blank");
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -264,7 +282,7 @@ public class AnalyticsCreationValidationTest {
         Assertions.assertThat(errorVo.getMessage()).contains(String.format(NAME_TOO_LONG_ERROR_MESSAGE, "EVENT", 10, 18));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -283,10 +301,10 @@ public class AnalyticsCreationValidationTest {
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains("Field error in object 'analyticsVo' on field 'events[0].timestamp': rejected value [null]");
+        Assertions.assertThat(errorVo.getMessage()).contains("events[0].timestamp: must not be null");
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -308,7 +326,7 @@ public class AnalyticsCreationValidationTest {
         Assertions.assertThat(errorVo.getMessage()).contains(String.format(DESCRIPTION_TOO_LONG_ERROR_MESSAGE, "EVENT", 20, 26));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     /****************
@@ -332,10 +350,10 @@ public class AnalyticsCreationValidationTest {
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains("Field error in object 'analyticsVo' on field 'errors[0].name': rejected value []");
+        Assertions.assertThat(errorVo.getMessage()).contains("errors[0].name: must not be blank");
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -357,7 +375,7 @@ public class AnalyticsCreationValidationTest {
         Assertions.assertThat(errorVo.getMessage()).contains(String.format(NAME_TOO_LONG_ERROR_MESSAGE, "ERROR", 10, 19));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -376,10 +394,10 @@ public class AnalyticsCreationValidationTest {
                 .andReturn();
 
         final ErrorVo errorVo = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorVo.class);
-        Assertions.assertThat(errorVo.getMessage()).contains("Field error in object 'analyticsVo' on field 'errors[0].timestamp': rejected value [null]");
+        Assertions.assertThat(errorVo.getMessage()).contains("errors[0].timestamp: must not be null");
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -401,7 +419,7 @@ public class AnalyticsCreationValidationTest {
         Assertions.assertThat(errorVo.getMessage()).contains(String.format(DESCRIPTION_TOO_LONG_ERROR_MESSAGE, "ERROR", 20, 26));
         Assertions.assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     private AnalyticsVo buildAnalyticsVo() {
