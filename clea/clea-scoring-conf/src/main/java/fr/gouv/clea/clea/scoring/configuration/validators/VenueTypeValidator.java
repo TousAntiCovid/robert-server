@@ -25,9 +25,7 @@ public class VenueTypeValidator implements ConstraintValidator<ValidateWildcards
     }
 
     private boolean allFieldsAreWildcards(ScoringRule scoringRule) {
-        return scoringRule.getVenueType() == ScoringRule.WILDCARD_VALUE &&
-                scoringRule.getVenueCategory1() == ScoringRule.WILDCARD_VALUE &&
-                scoringRule.getVenueCategory2() == ScoringRule.WILDCARD_VALUE;
+        return scoringRule.isDefaultRule();
     }
 
 
