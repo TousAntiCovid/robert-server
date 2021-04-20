@@ -20,7 +20,8 @@ clea:
         - '1,2,3,2,12,22,32'
         - '*,2,*,2,12,22,32'
         - '*,*,3,2,12,22,32'
-
+      risk:
+        enabled: "false"
 logging:
   level:
     fr.gouv.clea.consumer: INFO
