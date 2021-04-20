@@ -16,6 +16,7 @@ import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.gouv.clea.consumer.service.IStatService;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,12 +29,16 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
 
     private final VenueConsumerConfiguration configuration;
 
+    private final IStatService statService;
+
     @Autowired
     public VisitExpositionAggregatorService(
             IExposedVisitRepository repository,
-            VenueConsumerConfiguration  configuration) {
+            VenueConsumerConfiguration configuration,
+            IStatService statService) {
         this.repository = repository;
         this.configuration = configuration;
+        this.statService = statService;
     }
 
     @Override
@@ -48,7 +53,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime + 1);
         int lastExposedSlot = Math.min(this.getPeriodMaxSlot(visit.getPeriodDuration()), (int) scanTimeSlot + exposureTime - 1);
 
-        List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), this.periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime()));
+        List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime()));
 
         List<ExposedVisitEntity> toUpdate = new ArrayList<>();
         List<ExposedVisitEntity> toPersist = new ArrayList<>();
@@ -71,6 +76,8 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
             repository.saveAll(merged);
             log.info("Persisting {} new visits!", toPersist.size());
             log.info("Updating {} existing visits!", toUpdate.size());
+
+            statService.logStats(visit);
         } else {
             log.info("LTId: {}, qrScanTime: {} - No visit to persist / update", visit.getLocationTemporaryPublicId(), visit.getQrCodeScanTime());
         }
@@ -110,7 +117,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
 
     protected ExposedVisitEntity newExposedVisit(Visit visit, int slotIndex) {
         // TODO: visit.getPeriodStart returning an Instant
-        long periodStart = this.periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime());
+        long periodStart = periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime());
         return ExposedVisitEntity.builder()
                 .locationTemporaryPublicId(visit.getLocationTemporaryPublicId())
                 .venueType(visit.getVenueType())

@@ -1,6 +1,8 @@
 package fr.gouv.clea.consumer.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -14,11 +16,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.gouv.clea.consumer.service.IStatService;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
 import fr.inria.clea.lsp.utils.TimeUtils;
 
@@ -31,6 +35,9 @@ class VisitExpositionAggregatorServiceTest {
 
     @Autowired
     private IVisitExpositionAggregatorService service;
+
+    @MockBean
+    private IStatService statService;
 
     private Instant todayAtMidnight;
     private Instant todayAt8am;
@@ -45,6 +52,8 @@ class VisitExpositionAggregatorServiceTest {
         uuid = UUID.randomUUID();
         locationTemporarySecretKey = RandomUtils.nextBytes(20);
         encryptedLocationContactMessage = RandomUtils.nextBytes(20);
+
+        doNothing().when(statService).logStats(any(Visit.class));
     }
 
     @AfterEach
@@ -140,7 +149,7 @@ class VisitExpositionAggregatorServiceTest {
                 .qrCodeValidityStartTime(todayAt8am)
                 .qrCodeScanTime(todayAtMidnight)
                 .build();
-        
+
         service.updateExposureCount(visit);
 
         assertThat(repository.count()).isZero();

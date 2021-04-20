@@ -4,6 +4,7 @@ clea:
     driftBetweenDeviceAndOfficialTimeInSecs: 300
     retentionDurationInDays: 14
     durationUnitInSeconds: 1800
+    statSlotDurationInSeconds: 3600
     scheduling:
       purge:
         cron: "0 0 1 * * *"

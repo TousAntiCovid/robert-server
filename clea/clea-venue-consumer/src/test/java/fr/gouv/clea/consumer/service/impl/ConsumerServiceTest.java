@@ -77,7 +77,7 @@ class ConsumerServiceTest {
         producer.send(new ProducerRecord<>(topicName, decodedVisit));
         producer.flush();
 
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(60, TimeUnit.SECONDS)
                 .untilAsserted(
                         () -> verify(consumerService, times(1))
                                 .consume(any(DecodedVisit.class))
