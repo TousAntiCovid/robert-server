@@ -1,9 +1,10 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
+import fr.gouv.clea.clea.scoring.configuration.exceptions.NoScoringConfigurationFoundException;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.List;
 import java.util.Optional;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class ScoringConfiguration {
@@ -19,8 +20,15 @@ public abstract class ScoringConfiguration {
             log.debug("Found matching rulefor venueType : {}, venueCategory1 : {}, venuCategory2: {}", matchingRule.get(), venueType, venueCategory1, venueCategory2);
             return matchingRule.get();
         } else {
-            log.error("No scoring matching found for venueType : {}, venueCategory1 : {}, venuCategory2: {}", venueType, venueCategory1, venueCategory2);
-            return null;
+            StringBuilder errorMessageBuilder = new StringBuilder()
+                    .append("No scoring matching found for venueType : ")
+                    .append(venueType)
+                    .append(", venueCategory1 : ")
+                    .append(venueCategory1)
+                    .append(", venuCategory2: ")
+                    .append(venueCategory2);
+            log.error(errorMessageBuilder.toString());
+            throw new NoScoringConfigurationFoundException(errorMessageBuilder.toString());
         }
     }
 

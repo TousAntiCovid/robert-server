@@ -1,18 +1,17 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class ScoringRuleSelectionTest {

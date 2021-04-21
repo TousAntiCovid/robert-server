@@ -67,7 +67,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties, riskConfigurationServiceMock).process(spe);
 		assertThat(res).isNull();
 
-	}	
+	}
 
 	@Test
 	void oneClusterPeriod() {
@@ -98,7 +98,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(2 * properties.durationUnitInSeconds);
 
 	}
-	
+
 	@Test
 	void manyClusterPeriodSlots() {
 
@@ -132,9 +132,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(1* properties.durationUnitInSeconds);
 	}
 
-	
-	
-	
+
 	@Test
 	void forwardRiskLevel() {
 
