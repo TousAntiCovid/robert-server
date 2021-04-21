@@ -10,8 +10,9 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfigurationConverter;
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
+import fr.gouv.clea.scoring.configuration.ScoringRuleComparator;
+import fr.gouv.clea.scoring.configuration.risk.RiskConfigurationConverter;
+import fr.gouv.clea.scoring.configuration.risk.RiskRule;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public class ScoringRuleComparatorTest {

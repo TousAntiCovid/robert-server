@@ -10,7 +10,6 @@
     </parent>
     
 	<artifactId>clea-scoring-conf</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>clea-scoring-conf</name>
 	<description>Configuration of the cluster detection scoring</description>
 	<packaging>jar</packaging>

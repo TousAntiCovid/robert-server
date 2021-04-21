@@ -1,20 +1,22 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import java.time.Duration;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
 import fr.gouv.clea.consumer.utils.MessageFormatter;
 import fr.inria.clea.lsp.CleaEciesEncoder;
-import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.exception.CleaEncryptionException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -24,21 +26,16 @@ public class DecodedVisitService implements IDecodedVisitService {
 
     private final CleaEciesEncoder cleaEciesEncoder;
 
-    private final int driftBetweenDeviceAndOfficialTimeInSecs;
-
-    private final int cleaClockDriftInSecs;
+    private final VenueConsumerConfiguration config;
 
     @Autowired
     public DecodedVisitService(
             LocationSpecificPartDecoder decoder,
             CleaEciesEncoder cleaEciesEncoder,
-            @Value("${clea.conf.driftBetweenDeviceAndOfficialTimeInSecs}") int driftBetweenDeviceAndOfficialTimeInSecs,
-            @Value("${clea.conf.cleaClockDriftInSecs}") int cleaClockDriftInSecs
-    ) {
+            VenueConsumerConfiguration config) {
         this.decoder = decoder;
         this.cleaEciesEncoder = cleaEciesEncoder;
-        this.driftBetweenDeviceAndOfficialTimeInSecs = driftBetweenDeviceAndOfficialTimeInSecs;
-        this.cleaClockDriftInSecs = cleaClockDriftInSecs;
+        this.config = config;
     }
 
     @Override
@@ -54,7 +51,7 @@ public class DecodedVisitService implements IDecodedVisitService {
     }
 
     private Optional<Visit> verify(Visit visit) {
-        if (!this.isFresh(visit)) {
+        if (this.isDrifting(visit)) {
             log.warn("drift check failed for [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(visit.getStringLocationTemporaryPublicId()), visit.getQrCodeScanTime());
             return Optional.empty();
         } else if (!this.hasValidTemporaryLocationPublicId(visit)) {
@@ -74,14 +71,17 @@ public class DecodedVisitService implements IDecodedVisitService {
         }
     }
 
-    private boolean isFresh(Visit visit) {
-        return true;
-        /*
+    private boolean isDrifting(Visit visit) {
         double qrCodeRenewalInterval = (visit.getQrCodeRenewalIntervalExponentCompact() == 0x1F)
                 ? 0 : Math.pow(2, visit.getQrCodeRenewalIntervalExponentCompact());
-        if (qrCodeRenewalInterval == 0)
-            return true;
-        return Math.abs(TimeUtils.ntpTimestampFromInstant(visit.getQrCodeScanTime()) - visit.getQrCodeValidityStartTime()) < (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
-         */
+        if (qrCodeRenewalInterval == 0) {
+            return false;
+        }
+        boolean isDrifting = Duration.between(visit.getQrCodeScanTime(), visit.getQrCodeValidityStartTime()).abs().toSeconds() 
+                 > (qrCodeRenewalInterval + config.getDriftBetweenDeviceAndOfficialTimeInSecs() + config.getCleaClockDriftInSecs());
+        if (!isDrifting && visit.getQrCodeScanTime().isBefore(visit.getQrCodeValidityStartTime())) {
+            visit.setQrCodeScanTime(visit.getQrCodeValidityStartTime());
+        }
+        return isDrifting;
     }
 }

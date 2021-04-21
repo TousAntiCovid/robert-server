@@ -1,11 +1,10 @@
 package fr.gouv.clea.indexation.model.output;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.Set;
-
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.Set;
 
 @Data
 @Builder

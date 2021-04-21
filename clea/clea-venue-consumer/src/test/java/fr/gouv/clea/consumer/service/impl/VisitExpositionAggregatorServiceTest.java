@@ -1,27 +1,34 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeRule;
-import fr.gouv.clea.consumer.model.ExposedVisitEntity;
-import fr.gouv.clea.consumer.model.Visit;
-import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
-import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
-import org.apache.commons.lang3.RandomUtils;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.annotation.DirtiesContext;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.when;
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
+
+import fr.gouv.clea.consumer.model.ExposedVisitEntity;
+import fr.gouv.clea.consumer.model.Visit;
+import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.gouv.clea.consumer.service.IStatService;
+import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
+import fr.inria.clea.lsp.utils.TimeUtils;
 
 @SpringBootTest
 @DirtiesContext
@@ -36,14 +43,19 @@ class VisitExpositionAggregatorServiceTest {
     @MockBean
     private ExposureTimeConfiguration exposureTimeConfiguration;
 
-    private Instant yesterday;
+    @MockBean
+    private IStatService statService;
+
+    private Instant todayAtMidnight;
+    private Instant todayAt8am;
     private UUID uuid;
     private byte[] locationTemporarySecretKey;
     private byte[] encryptedLocationContactMessage;
 
     @BeforeEach
     void init() {
-        yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
+        todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
         uuid = UUID.randomUUID();
         locationTemporarySecretKey = RandomUtils.nextBytes(20);
         encryptedLocationContactMessage = RandomUtils.nextBytes(20);
@@ -56,6 +68,8 @@ class VisitExpositionAggregatorServiceTest {
                                 .exposureTimeStaffForward(3)
                                 .build()
                 );
+
+        doNothing().when(statService).logStats(any(Visit.class));
     }
 
     @AfterEach
@@ -66,27 +80,13 @@ class VisitExpositionAggregatorServiceTest {
     @Test
     @DisplayName("visits with no existing context should be saved in DB")
     void saveWithNoContext() {
-        Visit visit = Visit.builder()
-                .version(0)
-                .type(0)
-                .countryCode(33)
-                .staff(true)
+        Visit visit = defaultVisit().toBuilder()
                 .locationTemporaryPublicId(uuid)
-                .qrCodeRenewalIntervalExponentCompact(2)
-                .venueType(4)
-                .venueCategory1(0)
-                .venueCategory2(0)
-                .periodDuration(3)
-                .compressedPeriodStartTime(1062707)
-                .qrCodeValidityStartTime(0)
-                .locationTemporarySecretKey(locationTemporarySecretKey)
-                .encryptedLocationContactMessage(encryptedLocationContactMessage)
-                .qrCodeScanTime(yesterday)
                 .isBackward(true)
                 .build();
+        
         service.updateExposureCount(visit);
 
-        // assertThat(repository.count()).isEqualTo(21L);
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.forEach(it -> {
                     assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid);
@@ -98,28 +98,17 @@ class VisitExpositionAggregatorServiceTest {
     @Test
     @DisplayName("visits with existing context should be updated in DB")
     void updateWithExistingContext() {
-        Visit visit = Visit.builder()
-                .version(0)
-                .type(0)
-                .countryCode(33)
-                .staff(true)
+        Visit visit = defaultVisit().toBuilder()
                 .locationTemporaryPublicId(uuid)
-                .qrCodeRenewalIntervalExponentCompact(2)
-                .venueType(4)
-                .venueCategory1(0)
-                .venueCategory2(0)
-                .periodDuration(3)
-                .compressedPeriodStartTime(1062707)
-                .qrCodeValidityStartTime(0)
-                .locationTemporarySecretKey(locationTemporarySecretKey)
-                .encryptedLocationContactMessage(encryptedLocationContactMessage)
-                .qrCodeScanTime(yesterday)
                 .isBackward(true)
                 .build();
         service.updateExposureCount(visit);
-        service.updateExposureCount(visit);
+        long before = repository.count();
 
-        // assertThat(repository.count()).isEqualTo(21L);
+        service.updateExposureCount(visit);
+        
+        long after = repository.count();
+        assertThat(before).isEqualTo(after);
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.forEach(it -> {
                     assertThat(it.getLocationTemporaryPublicId()).isEqualTo(uuid);
@@ -131,35 +120,21 @@ class VisitExpositionAggregatorServiceTest {
     @Test
     @DisplayName("new visits should be saved while existing be updated in DB")
     void mixedContext() {
-        Visit visit = Visit.builder()
-                .version(0)
-                .type(0)
-                .countryCode(33)
-                .staff(true)
+        Visit visit = defaultVisit().toBuilder()
                 .locationTemporaryPublicId(uuid)
-                .qrCodeRenewalIntervalExponentCompact(2)
-                .venueType(4)
-                .venueCategory1(0)
-                .venueCategory2(0)
-                .periodDuration(3)
-                .compressedPeriodStartTime(1062707)
-                .qrCodeValidityStartTime(0)
-                .locationTemporarySecretKey(locationTemporarySecretKey)
-                .encryptedLocationContactMessage(encryptedLocationContactMessage)
-                .qrCodeScanTime(yesterday)
                 .isBackward(true)
                 .build();
         service.updateExposureCount(visit);
-
         visit.setBackward(false);
-        service.updateExposureCount(visit);
-
         UUID newUUID = UUID.randomUUID();
-        visit.setLocationTemporaryPublicId(newUUID);
-        visit.setBackward(true);
+        Visit visit2 = visit.toBuilder()
+                .locationTemporaryPublicId(newUUID)
+                .isBackward(true)
+                .build();
+        
         service.updateExposureCount(visit);
+        service.updateExposureCount(visit2);
 
-        // assertThat(repository.count()).isEqualTo(42L);
         List<ExposedVisitEntity> entities = repository.findAll();
         entities.stream()
                 .filter(it -> it.getLocationTemporaryPublicId().equals(uuid))
@@ -169,21 +144,54 @@ class VisitExpositionAggregatorServiceTest {
                             assertThat(it.getForwardVisits()).isEqualTo(1);
                         }
                 );
-
         entities.stream()
                 .filter(it -> it.getLocationTemporaryPublicId().equals(newUUID))
                 .forEach(it -> {
                             assertThat(it.getLocationTemporaryPublicId()).isEqualTo(newUUID);
                             assertThat(it.getBackwardVisits()).isEqualTo(1);
-                            assertThat(it.getForwardVisits()).isEqualTo(0);
+                            assertThat(it.getForwardVisits()).isZero();
                         }
                 );
     }
 
-    @Disabled
     @Test
-    @DisplayName("test how many slots are generated for a given visit")
-    void testSlotGeneration() {
-        fail("Not tested yet");
+    @DisplayName("stop processing if qrCodeScanTime is before periodStartTime")
+    void testWhenQrScanIsBeforePeriodStart() {
+        Instant todayAtMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        Instant todayAt8am = todayAtMidnight.plus(8, ChronoUnit.HOURS);
+        Visit visit = defaultVisit().toBuilder()
+                .periodDuration(24)
+                .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAt8am))
+                .qrCodeValidityStartTime(todayAt8am)
+                .qrCodeScanTime(todayAtMidnight)
+                .build();
+
+        service.updateExposureCount(visit);
+
+        assertThat(repository.count()).isZero();
+    }
+
+    protected Visit defaultVisit() {
+        return Visit.builder()
+                .version(0)
+                .type(0)
+                .staff(true)
+                .locationTemporaryPublicId(uuid)
+                .qrCodeRenewalIntervalExponentCompact(2)
+                .venueType(4)
+                .venueCategory1(1)
+                .venueCategory2(1)
+                .periodDuration(24)
+                .compressedPeriodStartTime(getCompressedPeriodStartTime(todayAtMidnight))
+                .qrCodeValidityStartTime(Instant.now())
+                .locationTemporarySecretKey(locationTemporarySecretKey)
+                .encryptedLocationContactMessage(encryptedLocationContactMessage)
+                .qrCodeScanTime(todayAt8am)
+                .isBackward(true)
+                .build();
+    }
+
+    protected int getCompressedPeriodStartTime(Instant instant) {
+        return (int) (TimeUtils.ntpTimestampFromInstant(instant) / 3600);
     }
 }

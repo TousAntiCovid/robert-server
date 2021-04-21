@@ -8,7 +8,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @Setter
 @ToString
@@ -21,7 +21,6 @@ public class Visit extends LocationSpecificPart {
         return builder()
                 .version(lsp.getVersion())
                 .type(lsp.getType())
-                .countryCode(lsp.getCountryCode())
                 .locationTemporaryPublicId(lsp.getLocationTemporaryPublicId())
                 .qrCodeRenewalIntervalExponentCompact(lsp.getQrCodeRenewalIntervalExponentCompact())
                 .venueType(lsp.getVenueType())
