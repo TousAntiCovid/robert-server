@@ -6,8 +6,8 @@ services:
     build: ../clea-ws-rest/
     environment:
       SPRING_PROFILES_ACTIVE: dev,docker
-      CLEA_WS_REST_LOG_FILE_PATH: -/logs
-      CLEA_WS_REST_LOG_FILE_NAME: -clea-ws-rest
+      CLEA_WS_REST_LOG_FILE_PATH: /logs
+      CLEA_WS_REST_LOG_FILE_NAME: clea-ws-rest
     depends_on:
       - kafka
     ports:
@@ -22,8 +22,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev,docker
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
-      CLEA_VENUE_CONSUMER_LOG_FILE_PATH: -/logs
-      CLEA_VENUE_CONSUMER_LOG_FILE_NAME: -clea-venue-consumer
+      CLEA_VENUE_CONSUMER_LOG_FILE_PATH: /logs
+      CLEA_VENUE_CONSUMER_LOG_FILE_NAME: clea-venue-consumer
     depends_on:
       - postgres
       - kafka
@@ -39,8 +39,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       BUCKET: clea-batch
-      CLEA_BATCH_LOG_FILE_PATH: -/logs
-      CLEA_BATCHLOG_FILE_NAME: -clea-batch
+      CLEA_BATCH_LOG_FILE_PATH: /logs
+      CLEA_BATCH_LOG_FILE_NAME: clea-batch
     ports:
       - "15000:15000"
     depends_on:
