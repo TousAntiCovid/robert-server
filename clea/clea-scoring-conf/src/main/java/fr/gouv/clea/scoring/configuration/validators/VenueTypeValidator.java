@@ -1,9 +1,9 @@
 package fr.gouv.clea.scoring.configuration.validators;
 
+import fr.gouv.clea.scoring.configuration.ScoringRule;
+
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-
-import fr.gouv.clea.scoring.configuration.ScoringRule;
 
 public class VenueTypeValidator implements ConstraintValidator<ValidateWildcards, Object> {
 
@@ -19,9 +19,7 @@ public class VenueTypeValidator implements ConstraintValidator<ValidateWildcards
     }
 
     private boolean venueTypeIsNotWildcarded(ScoringRule scoringRule) {
-        return scoringRule.getVenueType() != ScoringRule.WILDCARD_VALUE ||
-                (scoringRule.getVenueCategory1() != ScoringRule.WILDCARD_VALUE &&
-                        scoringRule.getVenueCategory2() != ScoringRule.WILDCARD_VALUE);
+        return scoringRule.getVenueType() != ScoringRule.WILDCARD_VALUE;
     }
 
     private boolean allFieldsAreWildcards(ScoringRule scoringRule) {
