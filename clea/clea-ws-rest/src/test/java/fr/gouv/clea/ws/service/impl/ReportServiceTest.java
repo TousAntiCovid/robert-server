@@ -1,37 +1,39 @@
 package fr.gouv.clea.ws.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.tomcat.util.codec.binary.Base64;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
 import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
+import fr.inria.clea.lsp.CleaEciesEncoder;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.LocationSpecificPartEncoder;
 import fr.inria.clea.lsp.exception.CleaEncodingException;
 import fr.inria.clea.lsp.utils.TimeUtils;
-import org.apache.tomcat.util.codec.binary.Base64;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class ReportServiceTest {
 
     private final int retentionDuration = 14;
     private final long duplicateScanThresholdInSeconds = 10800L;
-    private final LocationSpecificPartDecoder decoder = mock(LocationSpecificPartDecoder.class);
+    private final LocationSpecificPartDecoder decoder = new LocationSpecificPartDecoder();
     private final IDecodedVisitProducerService processService = mock(IDecodedVisitProducerService.class);
     private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, decoder, processService);
     private Instant now;
@@ -169,9 +171,10 @@ class ReportServiceTest {
         LocationSpecificPart lsp = LocationSpecificPart.builder()
                 .locationTemporaryPublicId(uuid)
                 .build();
-        byte[] qrCodeHeader = new LocationSpecificPartEncoder(null).binaryEncodedHeader(lsp);
-        String qrCode = Base64.encodeBase64URLSafeString(qrCodeHeader);
-        when(decoder.decodeHeader(qrCodeHeader)).thenReturn(createEncryptedLocationSpecificPart(uuid));
+        byte[] qrCodeHeader = new LocationSpecificPartEncoder().binaryEncodedHeader(lsp);
+        byte[] encodedQr = new byte[CleaEciesEncoder.HEADER_BYTES_SIZE + CleaEciesEncoder.MSG_BYTES_SIZE];
+        System.arraycopy(qrCodeHeader, 0, encodedQr, 0, qrCodeHeader.length);
+        String qrCode = Base64.encodeBase64URLSafeString(encodedQr);
         return new Visit(qrCode, qrCodeScanTime);
     }
 
