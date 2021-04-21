@@ -17,7 +17,7 @@ public abstract class ScoringConfiguration {
                 .filter(scoring -> scoring.isCompatibleWith(venueType, venueCategory1, venueCategory2))
                 .max(new ScoringRuleComparator());
         if (matchingRule.isPresent()) {
-            log.debug("Found matching rulefor venueType : {}, venueCategory1 : {}, venuCategory2: {}", matchingRule.get(), venueType, venueCategory1, venueCategory2);
+            log.debug("Found matching rule for venueType : {}, venueCategory1 : {}, venuCategory2: {}", matchingRule.get(), venueType, venueCategory1, venueCategory2);
             return matchingRule.get();
         } else {
             StringBuilder errorMessageBuilder = new StringBuilder()
