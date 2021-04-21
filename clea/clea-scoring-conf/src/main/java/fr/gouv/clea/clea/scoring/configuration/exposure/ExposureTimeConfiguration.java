@@ -2,6 +2,7 @@ package fr.gouv.clea.clea.scoring.configuration.exposure;
 
 import fr.gouv.clea.clea.scoring.configuration.ScoringConfiguration;
 import fr.gouv.clea.clea.scoring.configuration.ScoringRule;
+import fr.gouv.clea.clea.scoring.configuration.validators.CheckDefaultRulePresence;
 import lombok.Setter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -19,6 +20,7 @@ public class ExposureTimeConfiguration extends ScoringConfiguration {
 
     @Setter
     @NotEmpty
+    @CheckDefaultRulePresence
     protected List<ExposureTimeRule> rules;
 
     public List<? extends ScoringRule> getScorings() {
