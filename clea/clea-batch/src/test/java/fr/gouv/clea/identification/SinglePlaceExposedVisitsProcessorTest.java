@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 class SinglePlaceExposedVisitsProcessorTest {
 
 	private BatchProperties properties = new BatchProperties();
-	RiskConfigurationService eval = new RiskConfigurationService();
 
 	@Mock
 	RiskConfigurationService riskConfigurationServiceMock;
@@ -131,8 +130,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 		assertThat(p.getClusterStart()).as("clusterStart").isEqualTo(anotherPeriodStart);
 		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(1* properties.durationUnitInSeconds);
 	}
-
-
+	
 	@Test
 	void forwardRiskLevel() {
 
