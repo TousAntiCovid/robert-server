@@ -193,6 +193,40 @@ class ReportServiceTest {
         assertThat(processed.stream().filter(DecodedVisit::isForward).count()).isEqualTo(3L);
     }
 
+    @Test
+    @DisplayName("if pivot date is before or equal qrScanTime, visits should be marked as forward")
+    void testForward() throws CleaEncodingException {
+        long pivotDate = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
+        long qrScan = TimeUtils.ntpTimestampFromInstant(now);
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
+        List<Visit> visits = List.of(
+                newVisit(uuid1, qrScan),
+                newVisit(uuid2, pivotDate)
+        );
+
+        List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, pivotDate));
+
+        assertThat(processed.size()).isEqualTo(2);
+        assertThat(processed.get(0).isForward()).isTrue();
+        assertThat(processed.get(1).isForward()).isTrue();
+    }
+
+    @Test
+    @DisplayName("if pivot date is strictly after qrScanTime, visits should be marked as backward")
+    void testBackward() throws CleaEncodingException {
+        long pivotDate = TimeUtils.ntpTimestampFromInstant(now);
+        long qrScan = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
+        UUID uuid = UUID.randomUUID();
+        List<Visit> visits = List.of(newVisit(uuid, qrScan));
+
+        List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, pivotDate));
+
+        assertThat(processed.size()).isEqualTo(1);
+        assertThat(processed.get(0).isBackward()).isTrue();
+    }
+
+
     private EncryptedLocationSpecificPart createEncryptedLocationSpecificPart(UUID locationTemporaryPublicId) {
         return EncryptedLocationSpecificPart.builder()
                 .locationTemporaryPublicId(locationTemporaryPublicId)
