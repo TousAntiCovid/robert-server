@@ -1,10 +1,11 @@
-package fr.gouv.clea.clea.scoring.configuration;
+package fr.gouv.clea.scoring.configuration;
 
-import fr.gouv.clea.clea.scoring.configuration.exceptions.NoScoringConfigurationFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
+
+import fr.gouv.clea.scoring.configuration.exceptions.NoScoringConfigurationFoundException;
 
 @Slf4j
 public abstract class ScoringConfiguration {

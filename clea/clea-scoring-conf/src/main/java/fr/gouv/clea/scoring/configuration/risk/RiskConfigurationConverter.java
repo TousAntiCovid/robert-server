@@ -1,4 +1,4 @@
-package fr.gouv.clea.clea.scoring.configuration.risk;
+package fr.gouv.clea.scoring.configuration.risk;
 
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.convert.converter.Converter;

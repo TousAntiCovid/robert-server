@@ -1,4 +1,4 @@
-package fr.gouv.clea.clea.scoring.configuration.validators;
+package fr.gouv.clea.scoring.configuration.validators;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;

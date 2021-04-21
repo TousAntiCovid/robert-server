@@ -1,9 +1,10 @@
-package fr.gouv.clea.clea.scoring.configuration.validators;
-
-import fr.gouv.clea.clea.scoring.configuration.ScoringRule;
+package fr.gouv.clea.scoring.configuration.validators;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
+
+import fr.gouv.clea.scoring.configuration.ScoringRule;
+
 import java.util.List;
 
 public class CheckDefaultRulePresenceValidator implements ConstraintValidator<CheckDefaultRulePresence, List<? extends ScoringRule>> {

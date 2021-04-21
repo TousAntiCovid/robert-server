@@ -1,12 +1,13 @@
-package fr.gouv.clea.clea.scoring.configuration.risk;
+package fr.gouv.clea.scoring.configuration.risk;
 
-import fr.gouv.clea.clea.scoring.configuration.ScoringRule;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
+
+import fr.gouv.clea.scoring.configuration.ScoringRule;
 
 @Valid
 @SuperBuilder

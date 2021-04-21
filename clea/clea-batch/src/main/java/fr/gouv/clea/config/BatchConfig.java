@@ -32,7 +32,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 
-import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
 import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceExposedVisits;
 import fr.gouv.clea.identification.ExposedVisitPartitioner;
@@ -44,6 +43,7 @@ import fr.gouv.clea.indexation.model.output.ClusterFile;
 import fr.gouv.clea.indexation.processors.IndexationProcessor;
 import fr.gouv.clea.indexation.readers.IndexationReader;
 import fr.gouv.clea.indexation.writers.IndexationWriter;
+import fr.gouv.clea.scoring.configuration.risk.RiskConfiguration;
 
 
 @Configuration

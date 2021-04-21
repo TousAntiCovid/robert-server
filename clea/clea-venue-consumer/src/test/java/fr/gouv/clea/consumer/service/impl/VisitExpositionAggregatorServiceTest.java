@@ -21,12 +21,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
 
 @SpringBootTest
 @DirtiesContext

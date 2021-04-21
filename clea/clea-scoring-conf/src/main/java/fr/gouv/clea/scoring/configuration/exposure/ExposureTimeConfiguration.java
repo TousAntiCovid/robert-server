@@ -1,13 +1,14 @@
-package fr.gouv.clea.clea.scoring.configuration.exposure;
+package fr.gouv.clea.scoring.configuration.exposure;
 
-import fr.gouv.clea.clea.scoring.configuration.ScoringConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.ScoringRule;
-import fr.gouv.clea.clea.scoring.configuration.validators.CheckDefaultRulePresence;
 import lombok.Setter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.annotation.Validated;
+
+import fr.gouv.clea.scoring.configuration.ScoringConfiguration;
+import fr.gouv.clea.scoring.configuration.ScoringRule;
+import fr.gouv.clea.scoring.configuration.validators.CheckDefaultRulePresence;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.List;

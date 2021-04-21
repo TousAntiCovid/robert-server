@@ -1,11 +1,11 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

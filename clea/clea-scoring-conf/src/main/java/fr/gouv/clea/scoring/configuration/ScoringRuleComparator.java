@@ -1,4 +1,4 @@
-package fr.gouv.clea.clea.scoring.configuration;
+package fr.gouv.clea.scoring.configuration;
 
 import java.util.Comparator;
 

@@ -1,9 +1,10 @@
 package fr.gouv.clea.consumer.configuration;
 
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
 
 @Configuration
 public class ScoringConfiguration {

@@ -1,10 +1,10 @@
-package fr.gouv.clea.clea.scoring.configuration;
+package fr.gouv.clea.scoring.configuration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 
-import fr.gouv.clea.clea.scoring.configuration.validators.NoDuplicates;
-import fr.gouv.clea.clea.scoring.configuration.validators.ValidateWildcards;
+import fr.gouv.clea.scoring.configuration.validators.NoDuplicates;
+import fr.gouv.clea.scoring.configuration.validators.ValidateWildcards;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
