@@ -88,7 +88,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
     protected int getPeriodMaxSlot(int periodDuration) {
         // This check should go in venue consumer configuration validation
         if (Duration.ofHours(1).toSeconds() % periodDuration == 0) {
-            log.error("durationUnitInSeconds does not have a valid value: {}. 60(secs) / durationUnitInSeconds has a reminder!", periodDuration);
+            log.error("durationUnitInSeconds does not have a valid value: {}. 3600(secs) / durationUnitInSeconds has a reminder!", periodDuration);
         }
         if (periodDuration == 255) {
             return Integer.MAX_VALUE;
