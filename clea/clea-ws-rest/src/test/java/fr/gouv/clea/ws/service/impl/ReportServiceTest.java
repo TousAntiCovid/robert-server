@@ -135,13 +135,6 @@ class ReportServiceTest {
         UUID uuidC = UUID.fromString("bdbf9725-c1ad-42e3-b725-e475272b7f54");
         UUID uuidC2 = UUID.fromString("bdbf9725-c1ad-42e3-b725-e475272b7f54");
         
-        assertThat(uuidA).isEqualTo(uuidA2);
-        assertThat(uuidB).isEqualTo(uuidB2);
-        assertThat(uuidC).isEqualTo(uuidC2);
-
-        assertThat(uuidA != uuidA2).isTrue();
-        assertThat(uuidB != uuidB2).isTrue();
-        assertThat(uuidC != uuidC2).isTrue();
         List<Visit> visits = List.of(
                 newVisit(uuidA, TimeUtils.ntpTimestampFromInstant(now.minus(4, ChronoUnit.HOURS))), // pass
                 newVisit(uuidA2, TimeUtils.ntpTimestampFromInstant(now)), // pass
