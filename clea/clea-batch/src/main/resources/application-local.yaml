@@ -7,5 +7,9 @@ spring:
     test-on-borrow: true
     validation-query: SELECT 1
 
+  batch:
+    # Manage it's batch metadata tables
+    initialize-schema: always
+
   flyway:
-    #enabled: "false"
+    enabled: "true"

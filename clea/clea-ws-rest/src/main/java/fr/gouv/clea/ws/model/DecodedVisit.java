@@ -23,4 +23,8 @@ public class DecodedVisit {
     public String getStringLocationTemporaryPublicId() {
         return this.getLocationTemporaryPublicId().toString();
     }
+
+    public boolean isForward() {
+        return !this.isBackward();
+    }
 }

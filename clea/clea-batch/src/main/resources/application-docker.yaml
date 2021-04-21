@@ -5,8 +5,3 @@ spring:
     username: username
     password: password
 
-  batch:
-    # Manage it's batch metadata tables 
-    initialize-schema: always
-    cluster:
-      output-path: /tmp/v1

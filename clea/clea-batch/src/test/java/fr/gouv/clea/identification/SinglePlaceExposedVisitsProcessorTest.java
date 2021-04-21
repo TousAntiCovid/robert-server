@@ -29,7 +29,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 	RiskConfiguration riskConfigurationMock;
 
 	public SinglePlaceExposedVisitsProcessorTest() {
-		properties.durationUnitInSeconds = 180;
+		properties.setDurationUnitInSeconds(180);
 	}
 
 	private final UUID UUID_SAMPLE = UUID.fromString("fa35fa88-2c44-4f13-9ec9-d38e77324c93");
@@ -93,9 +93,9 @@ class SinglePlaceExposedVisitsProcessorTest {
 
 		ClusterPeriod p = res.getPeriods().get(0);
 		// cluster start at slot 1, not at slot 0
-		assertThat(p.getClusterStart()).as("clusterStart").isEqualTo(periodStart + properties.durationUnitInSeconds);
+		assertThat(p.getClusterStart()).as("clusterStart").isEqualTo(periodStart + properties.getDurationUnitInSeconds());
 		// Cluster for 2 slots
-		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(2 * properties.durationUnitInSeconds);
+		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(2 * properties.getDurationUnitInSeconds());
 
 	}
 
@@ -123,13 +123,13 @@ class SinglePlaceExposedVisitsProcessorTest {
 
 		ClusterPeriod p = res.getPeriods().get(0);
 		// cluster start at slot 1, not at slot 0
-		assertThat(p.getClusterStart()).as("clusterStart").isEqualTo(this.periodStart + properties.durationUnitInSeconds);
-		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(1 * properties.durationUnitInSeconds);
+		assertThat(p.getClusterStart()).as("clusterStart").isEqualTo(this.periodStart + properties.getDurationUnitInSeconds());
+		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(1 * properties.getDurationUnitInSeconds());
 
 		p = res.getPeriods().get(1);
 		// cluster start at slot 0, not at slot 1
 		assertThat(p.getClusterStart()).as("clusterStart").isEqualTo(anotherPeriodStart);
-		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(1* properties.durationUnitInSeconds);
+		assertThat(p.getClusterDurationInSeconds()).as("clusterDuration").isEqualTo(1* properties.getDurationUnitInSeconds());
 	}
 	
 	@Test

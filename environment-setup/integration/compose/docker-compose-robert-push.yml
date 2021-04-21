@@ -10,7 +10,7 @@ services:
       restart_policy:
         condition: on-failure
   robert-push-notif-server-ws-rest:
-    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/robert-push-notif-server-ws-rest:${ROBERT_PUSH_TAG}
+    image: registry.gitlab.inria.fr/stopcovid19/backend-server/robert-push-notif-server-ws-rest:${ROBERT_PUSH_TAG}
     container_name: robert-push-notif-server-ws-rest
     ports:
       - "9096:9096"

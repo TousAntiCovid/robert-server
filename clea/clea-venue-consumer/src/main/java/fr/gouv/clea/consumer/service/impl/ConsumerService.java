@@ -1,5 +1,12 @@
 package fr.gouv.clea.consumer.service.impl;
 
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
 import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IConsumerService;
@@ -7,13 +14,9 @@ import fr.gouv.clea.consumer.service.IDecodedVisitService;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
 import fr.gouv.clea.consumer.utils.MessageFormatter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Component
+@RefreshScope
 @Slf4j
 public class ConsumerService implements IConsumerService {
 
@@ -33,6 +36,11 @@ public class ConsumerService implements IConsumerService {
     public void consume(DecodedVisit decodedVisit) {
         log.info("[locationTemporaryPublicId: {}, qrCodeScanTime: {}] retrieved from queue", MessageFormatter.truncateUUID(decodedVisit.getStringLocationTemporaryPublicId()), decodedVisit.getQrCodeScanTime());
         Optional<Visit> optionalVisit = decodedVisitService.decryptAndValidate(decodedVisit);
-        optionalVisit.ifPresent(visitExpositionAggregatorService::updateExposureCount);
+        optionalVisit.ifPresentOrElse(
+            visit -> {
+                log.debug("Consumer: visit after decrypt + validation: {}, ", visit);
+                visitExpositionAggregatorService.updateExposureCount(visit);
+            }, 
+            () -> log.info("empty visit after decrypt + validation") );
     }
 }

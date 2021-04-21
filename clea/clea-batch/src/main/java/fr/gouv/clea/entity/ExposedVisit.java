@@ -60,8 +60,6 @@ public class ExposedVisit {
 
     private long forwardVisits;
 
-    private Instant qrCodeScanTime; // for purge but not used anymore
-
     private Instant createdAt; // for db ops/maintenance: purge
 
     private Instant updatedAt; // for db ops/maintenance

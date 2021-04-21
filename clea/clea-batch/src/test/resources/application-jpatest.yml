@@ -17,5 +17,5 @@ spring:
     job:
       enabled: false
   flyway:
-    enabled: "true"
+    enabled: "false"
  

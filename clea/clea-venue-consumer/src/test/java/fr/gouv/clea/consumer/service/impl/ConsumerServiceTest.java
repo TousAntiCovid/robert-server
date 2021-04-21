@@ -1,7 +1,7 @@
 package fr.gouv.clea.consumer.service.impl;
 
 import fr.gouv.clea.consumer.model.DecodedVisit;
-import fr.gouv.clea.consumer.service.IConsumerService;
+import fr.gouv.clea.consumer.service.IDecodedVisitService;
 import fr.gouv.clea.consumer.utils.KafkaSerializer;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import org.apache.commons.lang3.RandomUtils;
@@ -44,8 +44,12 @@ class ConsumerServiceTest {
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
+    /*
+     * @RefreshScope beans cannot be spied with @SpyBean
+     * see https://github.com/spring-cloud/spring-cloud-consumerConfig/issues/944
+     */
     @SpyBean
-    private IConsumerService consumerService;
+    private IDecodedVisitService decodedVisitService;
 
     private Producer<String, DecodedVisit> producer;
 
@@ -62,7 +66,7 @@ class ConsumerServiceTest {
 
     @Test
     @DisplayName("test that kafka listener triggers when something is sent to the queue")
-    void testCanConsumeMessageSentinDefaultQueue() {
+    void testCanConsumeMessageSentInDefaultQueue() {
         DecodedVisit decodedVisit = new DecodedVisit(
                 Instant.now(),
                 EncryptedLocationSpecificPart.builder()
@@ -77,10 +81,10 @@ class ConsumerServiceTest {
         producer.send(new ProducerRecord<>(topicName, decodedVisit));
         producer.flush();
 
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(60, TimeUnit.SECONDS)
                 .untilAsserted(
-                        () -> verify(consumerService, times(1))
-                                .consume(any(DecodedVisit.class))
+                        () -> verify(decodedVisitService, times(1))
+                                .decryptAndValidate(any(DecodedVisit.class))
                 );
     }
 }

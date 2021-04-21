@@ -1,213 +1,128 @@
 version: "3.8"
 services:
 
-  nginx:
-    image: nginx:1.19
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-    ports:
-      - "80:80"
-    networks:
-      - public
-      - clea-network
-
-  kong:
-    image: kong:2.3
-    environment:
-      KONG_DATABASE: "off"
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
-      KONG_ADMIN_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr 
-      KONG_ADMIN_ERROR_LOG: /dev/stderr 
-      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
-      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
-    ports:
-      - "8000:8000"
-      - "8001:8001"
-    volumes:
-    - ./kong/kong.yml:/home/kong/kong.yml:ro
-    networks:
-      - clea-network
-  konga:
-    image: pantsel/konga:next
-    environment:
-      BASE_URL: /konga/
-      TOKEN_SECRET: km1GUr4RkcQD7DewhJPNXrCuZwcKmqjb
-      NODE_ENV: production
-    #ports:
-    #  - "1337:1337"
-    networks:
-      - clea-network
-
-  postgres:
-    image: postgres:9
-    hostname: postgres
-    ports:
-      - "5432:5432"
-    environment:
-      #POSTGRES_USER: admin # replace default guest/guest
-      POSTGRES_PASSWORD: "admin123!"
-    volumes:
-    - ./postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-    networks:
-      - clea-network
-
-  pgadmin:
-    image: dpage/pgadmin4:5.1
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@pgadmin.local"
-      PGADMIN_DEFAULT_PASSWORD: "admin123!"
-    networks:
-      - clea-network
-
-  minio:
-    image: minio/minio:edge
-    command: ["server", "/data"]
-    environment:
-       MINIO_ACCESS_KEY: AKIAIOSFODNN7EXAMPLE
-       MINIO_SECRET_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-    #ports:
-    #  - "9000:9000"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    networks:
-      - clea-network
-
-
-  # From https://github.com/confluentinc/cp-all-in-one/blob/6.1.1-post/cp-all-in-one/docker-compose.yml
-  zookeeper:
-    image: confluentinc/cp-zookeeper:6.1.1
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - clea-network
-
-  kafka:
-    image: confluentinc/cp-server:6.1.1
-    hostname: broker
-    container_name: broker
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-      - "9101:9101"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker:9092 #,PLAINTEXT_HOST://broker:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      #KAFKA_JMX_PORT: 9101
-      #KAFKA_JMX_HOSTNAME: localhost
-      #KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:9092
-      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
-      CONFLUENT_METRICS_ENABLE: 'true'
-      #CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
-    networks:
-      - clea-network
-
-  # cmak allow to manage kafka but is not so easy and don't allow to see messages'
-  # kafka-man:
-  #   image: kafkamanager/kafka-manager
-  #   command: ["cmak-3.0.0.4/bin/cmak", "-Dhttp.port=8080","-Dplay.http.context=/cmak"]
-  #   environment:
-  #     ZK_HOSTS: zookeeper
-  #     KAFKA_MANAGER_PASSWORD: "admin123!"
-  #   #ports:
-  #   #  - '9001:8080'
-  #   networks:
-  #     - clea-network
-
-  # kafdrop is a single page console already connected to kafka that allow to see messages 
-  kafdrop:
-    image: "obsidiandynamics/kafdrop:latest"
-    environment:
-      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
-      KAFKA_BROKERCONNECT: "kafka:9092"
-      SERVER_SERVLET_CONTEXTPATH: "/kafdrop"
-    depends_on:
-      - kafka
-    #ports:
-    #  - "9000:9000"
-    networks:
-      - clea-network
-
-
   clea-ws-rest:
-    image: clea-ws-rest:latest
-    container_name: clea-ws-rest
+    image: clea-ws-rest
     build: ../clea-ws-rest/
-    restart: always
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      KAFKA_URL: kafka:9092
+      SPRING_PROFILES_ACTIVE: dev,docker
+      CLEA_WS_REST_LOG_FILE_PATH: -/logs
+      CLEA_WS_REST_LOG_FILE_NAME: -clea-ws-rest
     depends_on:
       - kafka
-    #ports:
-    #  - "8080:8080"
+    ports:
+      - "8080:8080"
     networks:
       - clea-network
-
+    restart: always
 
   clea-venue-consumer:
-    image: clea-venue-consumer:latest
-    container_name: clea-venue-consumer
+    image: clea-venue-consumer
     build: ../clea-venue-consumer/
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      DB_URL: jdbc:postgresql://postgres:5432/clea
-      DB_USER: clea
-      DB_PASSWORD: aelc
-      JPA_DDL_AUTO: none
-      KAFKA_URL: kafka:9092
-      CLEA_CRYPTO_AUTHORITY_SECRET: "c991482ff078a3d83203dfcee763bd33366e0c2c89050e29b05334555964f736"
+      SPRING_PROFILES_ACTIVE: dev,docker
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      CLEA_VENUE_CONSUMER_LOG_FILE_PATH: -/logs
+      CLEA_VENUE_CONSUMER_LOG_FILE_NAME: -clea-venue-consumer
     depends_on:
       - postgres
       - kafka
+    ports:
+      - "7070:8080"
     networks:
       - clea-network
+    restart: always
 
   clea-batch:
     image: clea-batch:latest
     build: ../clea-batch/
-    #entrypoint: ["/bin/tail","-f","/dev/null"]
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      DB_URL: jdbc:postgresql://postgres:5432/clea
-      DB_USER: clea
-      DB_PASSWORD: "aelc"
-      BUCKET: cleacluster-eu-west-3
-      CLEA_BATCH_CLUSTER_OUTPUT_PATH: /tmp/v1
-    volumes:
-    - ./batch/s3cfg:/home/javaapp/.s3cfg
+      BUCKET: clea-batch
+      CLEA_BATCH_LOG_FILE_PATH: -/logs
+      CLEA_BATCHLOG_FILE_NAME: -clea-batch
+      ports:
+      - "15000:15000"
     depends_on:
       - postgres
     networks:
       - clea-network
     restart: "no"
 
+
+  kafka:
+    image: "wurstmeister/kafka:latest"
+    environment:
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - clea-network
+    restart: always
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+    networks:
+      - clea-network
+    restart: always
+
+  kafdrop:
+    image: "obsidiandynamics/kafdrop:latest"
+    environment:
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      SERVER_SERVLET_CONTEXTPATH: "/kafdrop"
+    depends_on:
+      - kafka
+    ports:
+      - "9000:9000"
+    networks:
+      - clea-network
+    restart: always
+
+  postgres:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_DB: cleadb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d"
+    networks:
+      - clea-network
+    restart: always
+
+  pgadmin:
+    image: "dpage/pgadmin4:latest"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@pgadmin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_LISTEN_PORT: 80
+    depends_on:
+      - postgres
+    ports:
+      - "8081:80"
+    networks:
+      - clea-network
+    restart: always
+    logging:
+      driver: none
+
 networks:
-  public: 
-    driver: bridge
-    name: public
   clea-network:
-    #driver: bridge
+    driver: bridge
     name: clea-network
 
-    
