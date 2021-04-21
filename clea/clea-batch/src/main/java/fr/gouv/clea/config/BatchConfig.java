@@ -1,17 +1,18 @@
 package fr.gouv.clea.config;
 
-import fr.gouv.clea.dto.SinglePlaceCluster;
-import fr.gouv.clea.dto.SinglePlaceExposedVisits;
-import fr.gouv.clea.identification.ExposedVisitPartitioner;
-import fr.gouv.clea.identification.RiskConfigurationService;
-import fr.gouv.clea.identification.SinglePlaceExposedVisitsItemWriter;
-import fr.gouv.clea.identification.SinglePlaceExposedVisitsProcessor;
-import fr.gouv.clea.identification.reader.ExposedVisitItemReader;
-import fr.gouv.clea.identification.reader.SinglePlaceExposedVisitItemReader;
-import fr.gouv.clea.indexation.model.output.ClusterFile;
-import fr.gouv.clea.indexation.processors.IndexationProcessor;
-import fr.gouv.clea.indexation.readers.IndexationReader;
-import fr.gouv.clea.indexation.writers.IndexationWriter;
+import static fr.gouv.clea.config.BatchConstants.CLUSTERMAP_JOB_CONTEXT_KEY;
+import static fr.gouv.clea.config.BatchConstants.EXPOSED_VISITS_TABLE;
+import static fr.gouv.clea.config.BatchConstants.LTID_COLUMN;
+import static fr.gouv.clea.config.BatchConstants.PERIOD_COLUMN;
+import static fr.gouv.clea.config.BatchConstants.TIMESLOT_COLUMN;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.sql.DataSource;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -31,13 +32,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 
-import javax.sql.DataSource;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
+import fr.gouv.clea.dto.SinglePlaceCluster;
+import fr.gouv.clea.dto.SinglePlaceExposedVisits;
+import fr.gouv.clea.identification.ExposedVisitPartitioner;
+import fr.gouv.clea.identification.SinglePlaceExposedVisitsItemWriter;
+import fr.gouv.clea.identification.SinglePlaceExposedVisitsProcessor;
+import fr.gouv.clea.identification.reader.ExposedVisitItemReader;
+import fr.gouv.clea.identification.reader.SinglePlaceExposedVisitItemReader;
+import fr.gouv.clea.indexation.model.output.ClusterFile;
+import fr.gouv.clea.indexation.processors.IndexationProcessor;
+import fr.gouv.clea.indexation.readers.IndexationReader;
+import fr.gouv.clea.indexation.writers.IndexationWriter;
 
-import static fr.gouv.clea.config.BatchConstants.*;
 
 @Configuration
 public class BatchConfig {
@@ -49,7 +56,7 @@ public class BatchConfig {
 	private StepBuilderFactory stepBuilderFactory;
 
 	@Autowired
-	private RiskConfigurationService riskConfigurationService;
+	private RiskConfiguration riskConfiguration;
 
 	@Autowired
 	private BatchProperties properties;
@@ -92,7 +99,7 @@ public class BatchConfig {
 				.listener(promotionListener())
 				.<SinglePlaceExposedVisits, SinglePlaceCluster>chunk(properties.getChunkSize())
 				.reader(reader)
-				.processor(new SinglePlaceExposedVisitsProcessor(properties, riskConfigurationService))
+				.processor(new SinglePlaceExposedVisitsProcessor(properties, riskConfiguration))
 				.writer(new SinglePlaceExposedVisitsItemWriter())
 				.build();
 	}

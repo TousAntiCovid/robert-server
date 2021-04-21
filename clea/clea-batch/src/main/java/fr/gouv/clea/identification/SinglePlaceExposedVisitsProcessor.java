@@ -1,5 +1,6 @@
 package fr.gouv.clea.identification;
 
+import fr.gouv.clea.clea.scoring.configuration.risk.RiskConfiguration;
 import fr.gouv.clea.clea.scoring.configuration.risk.RiskRule;
 import fr.gouv.clea.config.BatchProperties;
 import fr.gouv.clea.dto.ClusterPeriod;
@@ -7,20 +8,17 @@ import fr.gouv.clea.dto.SinglePlaceCluster;
 import fr.gouv.clea.dto.SinglePlaceExposedVisits;
 import fr.gouv.clea.entity.ExposedVisit;
 import fr.gouv.clea.utils.ExposedVisitComparator;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
-import java.util.Optional;
 
-@Slf4j
 public class SinglePlaceExposedVisitsProcessor implements ItemProcessor<SinglePlaceExposedVisits, SinglePlaceCluster> {
 
     private final BatchProperties properties;
-    private final RiskConfigurationService riskConfigurationService;
+    private final RiskConfiguration riskConfiguration;
 
-    public SinglePlaceExposedVisitsProcessor(BatchProperties properties, RiskConfigurationService riskConfigurationService) {
+    public SinglePlaceExposedVisitsProcessor(BatchProperties properties, RiskConfiguration riskConfiguration) {
         this.properties = properties;
-        this.riskConfigurationService = riskConfigurationService;
+        this.riskConfiguration = riskConfiguration;
     }
 
     @Override
@@ -34,13 +32,7 @@ public class SinglePlaceExposedVisitsProcessor implements ItemProcessor<SinglePl
 
         ClusterPeriod backPeriod = null;
         ClusterPeriod forwardPeriod = null;
-
-        Optional<RiskRule> riskRuleOptional = riskConfigurationService.evaluate(cluster.getVenueType(), cluster.getVenueCategory1(), cluster.getVenueCategory2());
-        if (riskRuleOptional.isEmpty()) {
-            log.warn("No Risk configuration for [type={},categ1={},categ2={}]", cluster.getVenueType(), cluster.getVenueCategory1(), cluster.getVenueCategory2());
-            return null;
-        }
-        final RiskRule riskRule = riskRuleOptional.get();
+        final RiskRule riskRule = riskConfiguration.getConfigurationFor(cluster.getVenueType(), cluster.getVenueCategory1(), cluster.getVenueCategory2());
 
         // Sorted visits by period then slot
         record.getVisits().sort(new ExposedVisitComparator());
