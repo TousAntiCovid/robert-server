@@ -4,6 +4,7 @@ import fr.gouv.clea.scoring.configuration.ScoringConfiguration;
 import fr.gouv.clea.scoring.configuration.ScoringRule;
 import fr.gouv.clea.scoring.configuration.validators.CheckDefaultRulePresence;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -18,6 +19,7 @@ import java.util.List;
 @Configuration
 @ConfigurationProperties(prefix = "clea.conf.risk")
 @ConditionalOnProperty(value = "clea.conf.risk.enabled", havingValue = "true")
+@ToString
 @Slf4j
 public class RiskConfiguration extends ScoringConfiguration {
 
