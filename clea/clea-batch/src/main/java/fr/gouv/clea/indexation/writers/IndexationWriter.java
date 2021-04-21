@@ -25,8 +25,6 @@ public class IndexationWriter implements ItemWriter<HashMap<String, ClusterFile>
 
     private String outputPath;
 
-    private BatchProperties config;
-
     private Long jobId;
 
     @BeforeStep
@@ -35,7 +33,6 @@ public class IndexationWriter implements ItemWriter<HashMap<String, ClusterFile>
     }
 
     public IndexationWriter(final BatchProperties config) {
-        this.config = config;
         this.outputPath = config.clusterFilesOutputPath;
     }
 
