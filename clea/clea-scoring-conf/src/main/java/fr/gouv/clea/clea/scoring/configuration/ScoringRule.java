@@ -1,27 +1,27 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+
 import fr.gouv.clea.clea.scoring.configuration.validators.NoDuplicates;
 import fr.gouv.clea.clea.scoring.configuration.validators.ValidateWildcards;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import java.util.Objects;
-
-// @Valid
 @SuperBuilder
 @AllArgsConstructor
+@EqualsAndHashCode
 @ToString
 @Getter
 @Valid
 @ValidateWildcards
 @NoDuplicates
-public class ScoringConfigurationItem {
+public class ScoringRule {
 
-    public static int wildcardValue = -1;
+    public final static int WILDCARD_VALUE = -1;
 
     @Min(value = -1)
     private int venueType;
@@ -39,26 +39,26 @@ public class ScoringConfigurationItem {
     }
 
     public boolean hasVenueTypeCompatibleWith(int venueType) {
-        return this.getVenueType() == venueType || this.getVenueType() == ScoringConfigurationItem.wildcardValue;
+        return this.getVenueType() == venueType || this.getVenueType() == ScoringRule.WILDCARD_VALUE;
     }
 
     public boolean hasVenueCategory1CompatibleWith(int venueCategory1) {
-        return this.getVenueCategory1() == venueCategory1 || this.getVenueCategory1() == ScoringConfigurationItem.wildcardValue;
+        return this.getVenueCategory1() == venueCategory1 || this.getVenueCategory1() == ScoringRule.WILDCARD_VALUE;
     }
 
     public boolean hasVenueCategory2CompatibleWith(int venueCategory2) {
-        return this.getVenueCategory2() == venueCategory2 || this.getVenueCategory2() == ScoringConfigurationItem.wildcardValue;
+        return this.getVenueCategory2() == venueCategory2 || this.getVenueCategory2() == ScoringRule.WILDCARD_VALUE;
     }
 
     public int getWildCardCount() {
         int count = 0;
-        if (this.venueType == ScoringConfigurationItem.wildcardValue) {
+        if (this.venueType == ScoringRule.WILDCARD_VALUE) {
             count++;
         }
-        if (this.venueCategory1 == ScoringConfigurationItem.wildcardValue) {
+        if (this.venueCategory1 == ScoringRule.WILDCARD_VALUE) {
             count++;
         }
-        if (this.venueCategory2 == ScoringConfigurationItem.wildcardValue) {
+        if (this.venueCategory2 == ScoringRule.WILDCARD_VALUE) {
             count++;
         }
         return count;
@@ -67,17 +67,17 @@ public class ScoringConfigurationItem {
     public boolean isFullMatch() {
         return this.getWildCardCount() == 0;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ScoringConfigurationItem that = (ScoringConfigurationItem) o;
-        return getVenueType() == that.getVenueType() && getVenueCategory1() == that.getVenueCategory1() && getVenueCategory2() == that.getVenueCategory2();
+    
+    public boolean isDefaultRule() {
+        return this.getWildCardCount() == 3;
+    }
+    
+    public boolean isCategory1Wildcarded() {
+        return this.getVenueCategory1() == ScoringRule.WILDCARD_VALUE;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getVenueType(), getVenueCategory1(), getVenueCategory2());
+    public boolean isCategory2Wildcarded() {
+        return this.getVenueCategory2() == ScoringRule.WILDCARD_VALUE;
     }
+
 }

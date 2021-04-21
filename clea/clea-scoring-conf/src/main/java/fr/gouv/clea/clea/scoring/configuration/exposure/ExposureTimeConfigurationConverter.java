@@ -25,7 +25,7 @@ public class ExposureTimeConfigurationConverter implements Converter<String, Exp
     }
     
     public int stringToInt(String s) {
-        return s.equals(WILDCARD) ? ExposureTimeRule.wildcardValue : Integer.parseInt(s);
+        return s.equals(WILDCARD) ? ExposureTimeRule.WILDCARD_VALUE : Integer.parseInt(s);
     }
 
 }

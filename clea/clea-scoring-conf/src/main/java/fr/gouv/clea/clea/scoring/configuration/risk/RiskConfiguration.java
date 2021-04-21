@@ -1,7 +1,7 @@
 package fr.gouv.clea.clea.scoring.configuration.risk;
 
 import fr.gouv.clea.clea.scoring.configuration.ScoringConfiguration;
-import fr.gouv.clea.clea.scoring.configuration.ScoringConfigurationItem;
+import fr.gouv.clea.clea.scoring.configuration.ScoringRule;
 import lombok.Setter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -21,7 +21,7 @@ public class RiskConfiguration extends ScoringConfiguration {
     @NotEmpty
     protected List<RiskRule> rules;
 
-    public List<? extends ScoringConfigurationItem> getScorings() {
+    public List<? extends ScoringRule> getScorings() {
         return rules;
     }
 

@@ -34,8 +34,8 @@ public class RiskConfigurationTest {
         RiskRule scoring = (RiskRule) configuration.getScorings().get(3);
 
         assertThat(scoring.getVenueType()).isEqualTo(3);
-        assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringConfigurationItem.wildcardValue);
-        assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringConfigurationItem.wildcardValue);
+        assertThat(scoring.getVenueCategory1()).isEqualTo(ScoringRule.WILDCARD_VALUE);
+        assertThat(scoring.getVenueCategory2()).isEqualTo(ScoringRule.WILDCARD_VALUE);
         assertThat(scoring.getClusterThresholdBackward()).isEqualTo(3);
         assertThat(scoring.getClusterThresholdForward()).isEqualTo(1);
         assertThat(scoring.getRiskLevelBackward()).isEqualTo(3.0f);
