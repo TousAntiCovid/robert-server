@@ -3,7 +3,7 @@ package fr.gouv.clea.consumer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = "fr.gouv.clea.consumer")
+@SpringBootApplication(scanBasePackages = {"fr.gouv.clea.consumer", "fr.gouv.clea.scoring"})
 public class CleaVenueConsumerApplication {
 
     public static void main(String[] args) {
