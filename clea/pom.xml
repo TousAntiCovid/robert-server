@@ -31,6 +31,7 @@
         <module>clea-batch</module>
         <module>clea-client</module>
         <module>clea-qr-simulator</module>
+        <module>clea-scoring-conf</module>
     </modules>
 
     <properties>

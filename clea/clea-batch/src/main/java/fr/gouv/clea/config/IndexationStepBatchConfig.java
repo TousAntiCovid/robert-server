@@ -1,14 +1,8 @@
 package fr.gouv.clea.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.clea.indexation.IndexationPartitioner;
-import fr.gouv.clea.indexation.model.output.ClusterFile;
-import fr.gouv.clea.indexation.processor.SinglePlaceClusterBuilder;
-import fr.gouv.clea.indexation.reader.StepExecutionContextReader;
-import fr.gouv.clea.indexation.writer.IndexationWriter;
-import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
-import fr.gouv.clea.service.PrefixesStorageService;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -23,11 +17,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
-import java.util.List;
-import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Slf4j
+import fr.gouv.clea.indexation.IndexationPartitioner;
+import fr.gouv.clea.indexation.model.output.ClusterFile;
+import fr.gouv.clea.indexation.processor.SinglePlaceClusterBuilder;
+import fr.gouv.clea.indexation.reader.StepExecutionContextReader;
+import fr.gouv.clea.indexation.writer.IndexationWriter;
+import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
+import fr.gouv.clea.service.PrefixesStorageService;
+
 @Configuration
 public class IndexationStepBatchConfig {
 

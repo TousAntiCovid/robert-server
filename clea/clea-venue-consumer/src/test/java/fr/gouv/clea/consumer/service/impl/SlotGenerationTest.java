@@ -11,6 +11,9 @@ import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IStatService;
+import fr.gouv.clea.scoring.configuration.ScoringRule;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,10 +32,12 @@ import java.util.UUID;
 @ExtendWith(MockitoExtension.class)
 public class SlotGenerationTest {
 
-    static final Instant TODAY_AT_MIDNIGHT =  Instant.now().truncatedTo(DAYS);
-    static final Instant TODAY_AT_8AM =  TODAY_AT_MIDNIGHT.plus(8, HOURS);
+    static final Instant TODAY_AT_MIDNIGHT = Instant.now().truncatedTo(DAYS);
+    static final Instant TODAY_AT_8AM = TODAY_AT_MIDNIGHT.plus(8, HOURS);
 
-    final VenueConsumerConfiguration config = VenueConsumerConfiguration.builder().build();
+    final VenueConsumerConfiguration consumerConfig = VenueConsumerConfiguration.builder().build();
+    
+    final ExposureTimeConfiguration exposureTimeConfig = new ExposureTimeConfiguration();
     
     @Mock
     IExposedVisitRepository repository;
@@ -47,8 +52,19 @@ public class SlotGenerationTest {
 
     @BeforeEach
     void init() {
-        config.setDurationUnitInSeconds(Duration.ofMinutes(30).toSeconds());
-        service = new VisitExpositionAggregatorService(repository, config, statService);
+        exposureTimeConfig.setRules(List.of(
+                ExposureTimeRule.builder()
+                    .venueType(ScoringRule.WILDCARD_VALUE)
+                    .venueCategory1(ScoringRule.WILDCARD_VALUE)
+                    .venueCategory2(ScoringRule.WILDCARD_VALUE)
+                    .exposureTimeBackward(3)
+                    .exposureTimeForward(3)
+                    .exposureTimeStaffBackward(3)
+                    .exposureTimeStaffForward(3)
+                    .build()
+                ));
+        consumerConfig.setDurationUnitInSeconds(Duration.ofMinutes(30).toSeconds());
+        service = new VisitExpositionAggregatorService(repository, consumerConfig, exposureTimeConfig, statService);
     }
 
     @Test
@@ -135,7 +151,7 @@ public class SlotGenerationTest {
     @Test
     void a_visit_at_first_slot_when_qrScanTime_is_after_qr_validity_generates_5_slots() {
         // This case can happen with authorized drift
-        config.setDurationUnitInSeconds(Duration.ofHours(1).toSeconds());
+        consumerConfig.setDurationUnitInSeconds(Duration.ofHours(1).toSeconds());
         Visit visit = defaultVisit().toBuilder()
                 .compressedPeriodStartTime(getCompressedPeriodStartTime(TODAY_AT_MIDNIGHT))
                 .periodDuration(24)

@@ -46,7 +46,7 @@ class ConsumerServiceTest {
 
     /*
      * @RefreshScope beans cannot be spied with @SpyBean
-     * see https://github.com/spring-cloud/spring-cloud-config/issues/944
+     * see https://github.com/spring-cloud/spring-cloud-consumerConfig/issues/944
      */
     @SpyBean
     private IDecodedVisitService decodedVisitService;

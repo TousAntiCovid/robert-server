@@ -14,6 +14,13 @@ clea:
         serverAuthorityPublicKey: 02c3a58bf668fa3fe2fc206152abd6d8d55102adfee68c8b227676d1fe763f5a06
         serverAuthoritySecretKey: f339df3ad2ff78746845b5bd3e8bfe9862691dc5ae0d6d2b2cf3391b228cc462
 
+    exposure:
+      enabled: "true"
+      rules: # FIXME: change with real values
+        # venueType, venueCat1, venueCat2, exposureTimeBackward, exposureTimeForward, exposureTimeStaffBackward, exposureTimeStaffForward
+        - '*,*,*,3,3,3,3'
+      risk:
+        enabled: "false"
 logging:
   level:
     fr.gouv.clea.consumer: INFO

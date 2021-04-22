@@ -1,8 +1,10 @@
 package fr.gouv.clea.consumer.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -24,6 +26,8 @@ import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
 import fr.gouv.clea.consumer.service.IStatService;
 import fr.gouv.clea.consumer.service.IVisitExpositionAggregatorService;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.inria.clea.lsp.utils.TimeUtils;
 
 @SpringBootTest
@@ -35,6 +39,9 @@ class VisitExpositionAggregatorServiceTest {
 
     @Autowired
     private IVisitExpositionAggregatorService service;
+
+    @MockBean
+    private ExposureTimeConfiguration exposureTimeConfiguration;
 
     @MockBean
     private IStatService statService;
@@ -52,6 +59,15 @@ class VisitExpositionAggregatorServiceTest {
         uuid = UUID.randomUUID();
         locationTemporarySecretKey = RandomUtils.nextBytes(20);
         encryptedLocationContactMessage = RandomUtils.nextBytes(20);
+        when(exposureTimeConfiguration.getConfigurationFor(anyInt(), anyInt(), anyInt()))
+                .thenReturn(
+                        ExposureTimeRule.builder()
+                                .exposureTimeBackward(3)
+                                .exposureTimeStaffBackward(3)
+                                .exposureTimeForward(3)
+                                .exposureTimeStaffForward(3)
+                                .build()
+                );
 
         doNothing().when(statService).logStats(any(Visit.class));
     }

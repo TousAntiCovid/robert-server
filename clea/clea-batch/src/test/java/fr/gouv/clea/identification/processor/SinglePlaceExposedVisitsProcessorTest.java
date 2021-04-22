@@ -1,30 +1,43 @@
 package fr.gouv.clea.identification.processor;
 
-import fr.gouv.clea.config.BatchProperties;
-import fr.gouv.clea.dto.ClusterPeriod;
-import fr.gouv.clea.dto.SinglePlaceCluster;
-import fr.gouv.clea.dto.SinglePlaceExposedVisits;
-import fr.gouv.clea.entity.ExposedVisit;
-import fr.gouv.clea.identification.RiskConfigurationService;
-import fr.gouv.clea.identification.RiskLevelConfig;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.UUID;
+
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import fr.gouv.clea.config.BatchProperties;
+import fr.gouv.clea.dto.ClusterPeriod;
+import fr.gouv.clea.dto.SinglePlaceCluster;
+import fr.gouv.clea.dto.SinglePlaceExposedVisits;
+import fr.gouv.clea.entity.ExposedVisit;
+import fr.gouv.clea.scoring.configuration.ScoringRule;
+import fr.gouv.clea.scoring.configuration.risk.RiskConfiguration;
+import fr.gouv.clea.scoring.configuration.risk.RiskRule;
 
 @ExtendWith(MockitoExtension.class)
 class SinglePlaceExposedVisitsProcessorTest {
 
 	private BatchProperties properties = new BatchProperties();
-	RiskConfigurationService eval = new RiskConfigurationService();
+	RiskConfiguration riskConfig = new RiskConfiguration();
 	
 	public SinglePlaceExposedVisitsProcessorTest() {
 		properties.setDurationUnitInSeconds(180);
+		riskConfig.setRules(List.of(
+                RiskRule.builder()
+                    .venueType(ScoringRule.WILDCARD_VALUE)
+                    .venueCategory1(ScoringRule.WILDCARD_VALUE)
+                    .venueCategory2(ScoringRule.WILDCARD_VALUE)
+                    .clusterThresholdBackward(3)
+		            .clusterThresholdForward(1)
+		            .riskLevelBackward(3.0f)
+		            .riskLevelForward(2.0f)
+                    .build()
+                ));
 	}
 
 	private final UUID UUID_SAMPLE = UUID.fromString("fa35fa88-2c44-4f13-9ec9-d38e77324c93");
@@ -38,7 +51,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 		spe.setVenueCategory1(3);
 		spe.setVenueCategory2(2);
 				
-		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,eval).process(spe);
+		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties, riskConfig).process(spe);
 		assertThat(res).isNull();
 	}
 	
@@ -53,7 +66,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 		spe.addVisit(ExposedVisit.builder().periodStart(periodStart).timeSlot(0).forwardVisits(0).build());
 		spe.addVisit(ExposedVisit.builder().periodStart(periodStart).timeSlot(1).forwardVisits(0).build());
 
-		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,eval).process(spe);
+		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,riskConfig).process(spe);
 		assertThat(res).isNull();
 	}
 
@@ -72,7 +85,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 		spe.addVisit(ExposedVisit.builder().periodStart(periodStart).timeSlot(4).forwardVisits(0).build());
 		
 
-		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,eval).process(spe);
+		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,riskConfig).process(spe);
 		assertThat(res).isNotNull();
 		assertThat(res.getPeriods()).hasSize(1);
 		
@@ -99,7 +112,7 @@ class SinglePlaceExposedVisitsProcessorTest {
 		spe.addVisit(ExposedVisit.builder().periodStart(periodStart).timeSlot(2).forwardVisits(0).build());
 		spe.addVisit(ExposedVisit.builder().periodStart(anotherPeriodStart).timeSlot(0).forwardVisits(1).build());
 		
-		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,eval).process(spe);
+		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,riskConfig).process(spe);
 		assertThat(res).isNotNull();
 		assertThat(res.getPeriods()).hasSize(2);
 
@@ -123,13 +136,13 @@ class SinglePlaceExposedVisitsProcessorTest {
 		spe.setVenueCategory2(2);
 		
 		spe.addVisit(ExposedVisit.builder().periodStart(periodStart).timeSlot(0).forwardVisits(100).build());
-		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,eval).process(spe);
+		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,riskConfig).process(spe);
 		assertThat(res).isNotNull();
 		assertThat(res.getPeriods()).hasSize(1);
 
 		ClusterPeriod p = res.getPeriods().get(0);
-		Optional<RiskLevelConfig> riskLevelEvaluation = eval.evaluate(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
-		riskLevelEvaluation.ifPresent(evaluatedRiskLevel -> assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getForwardRisk(), Offset.offset(0.01f)));
+		RiskRule evaluatedRiskLevel = riskConfig.getConfigurationFor(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
+		assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getRiskLevelForward(), Offset.offset(0.01f));
 	}
 
 	@Test
@@ -141,12 +154,12 @@ class SinglePlaceExposedVisitsProcessorTest {
 		spe.setVenueCategory2(2);
 		
 		spe.addVisit(ExposedVisit.builder().periodStart(periodStart).timeSlot(0).backwardVisits(100).build());
-		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,eval).process(spe);
+		SinglePlaceCluster res = new SinglePlaceExposedVisitsProcessor(properties,riskConfig).process(spe);
 		assertThat(res).isNotNull();
 		assertThat(res.getPeriods()).hasSize(1);
 
 		ClusterPeriod p = res.getPeriods().get(0);
-		Optional<RiskLevelConfig> riskLevelEvaluation = eval.evaluate(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
-		riskLevelEvaluation.ifPresent(evaluatedRiskLevel -> assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getBackwardRisk(), Offset.offset(0.01f)));
+		RiskRule evaluatedRiskLevel = riskConfig.getConfigurationFor(spe.getVenueType(), spe.getVenueCategory1(), spe.getVenueCategory2());
+		assertThat(p.getRiskLevel()).as("riskLevel").isCloseTo(evaluatedRiskLevel.getRiskLevelBackward(), Offset.offset(0.01f));
 	}
 }

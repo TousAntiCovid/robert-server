@@ -1,18 +1,19 @@
 package fr.gouv.clea.consumer.configuration;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.Positive;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.annotation.Validated;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import javax.annotation.PostConstruct;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Positive;
 
 @Data
 @NoArgsConstructor
@@ -22,6 +23,7 @@ import lombok.NoArgsConstructor;
 @RefreshScope
 @Configuration
 @ConfigurationProperties(prefix = "clea.conf")
+@Slf4j
 public class VenueConsumerConfiguration {
     @Min(value = 600)
     private long durationUnitInSeconds;
@@ -34,4 +36,9 @@ public class VenueConsumerConfiguration {
     @Min(value = 10)
     @Max(value = 30)
     private int retentionDurationInDays;
+
+    @PostConstruct
+    private void logConfiguration() {
+        log.info(this.toString());
+    }
 }

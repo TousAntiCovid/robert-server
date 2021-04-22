@@ -1,19 +1,28 @@
 package fr.gouv.clea.identification.writer;
 
-import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static fr.gouv.clea.config.BatchConstants.CLUSTER_DURATION_COL;
+import static fr.gouv.clea.config.BatchConstants.CLUSTER_START_COL;
+import static fr.gouv.clea.config.BatchConstants.FIRST_TIMESLOT_COL;
+import static fr.gouv.clea.config.BatchConstants.LAST_TIMESLOT_COL;
+import static fr.gouv.clea.config.BatchConstants.LTID_COL;
+import static fr.gouv.clea.config.BatchConstants.PERIOD_START_COL;
+import static fr.gouv.clea.config.BatchConstants.RISK_LEVEL_COL;
+import static fr.gouv.clea.config.BatchConstants.SINGLE_PLACE_CLUSTER_PERIOD_TABLE;
+import static fr.gouv.clea.config.BatchConstants.VENUE_CAT1_COL;
+import static fr.gouv.clea.config.BatchConstants.VENUE_CAT2_COL;
+import static fr.gouv.clea.config.BatchConstants.VENUE_TYPE_COL;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
+import lombok.RequiredArgsConstructor;
 
-import static fr.gouv.clea.config.BatchConstants.*;
-
-@Slf4j
 @RequiredArgsConstructor
 public class SinglePlaceClusterPeriodListWriter implements ItemWriter<List<SinglePlaceClusterPeriod>> {
 

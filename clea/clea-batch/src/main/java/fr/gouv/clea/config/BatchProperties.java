@@ -4,13 +4,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import javax.annotation.PostConstruct;
 
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 @ConfigurationProperties(prefix = "clea.batch.cluster")
+@Slf4j
 public class BatchProperties {
 
     /**
@@ -29,4 +33,9 @@ public class BatchProperties {
     private int indexationStepChunkSize;
 
     private int prefixesComputingStepChunkSize;
+
+    @PostConstruct
+    private void logConfiguration() {
+        log.info(this.toString());
+    }
 }

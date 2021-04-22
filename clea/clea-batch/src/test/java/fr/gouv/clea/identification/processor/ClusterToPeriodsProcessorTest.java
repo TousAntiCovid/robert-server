@@ -1,22 +1,21 @@
 package fr.gouv.clea.identification.processor;
 
-import fr.gouv.clea.dto.ClusterPeriod;
-import fr.gouv.clea.dto.SinglePlaceCluster;
-import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
-import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
-import fr.gouv.clea.mapper.ClusterPeriodModelsMapperImpl;
-import org.junit.jupiter.api.Assertions;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import fr.gouv.clea.dto.ClusterPeriod;
+import fr.gouv.clea.dto.SinglePlaceCluster;
+import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
+import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
+import fr.gouv.clea.mapper.ClusterPeriodModelsMapperImpl;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @ExtendWith(MockitoExtension.class)

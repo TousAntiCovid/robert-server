@@ -1,15 +1,11 @@
 package fr.gouv.clea.config;
 
-import fr.gouv.clea.dto.SinglePlaceCluster;
-import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
-import fr.gouv.clea.dto.SinglePlaceExposedVisits;
-import fr.gouv.clea.identification.ExposedVisitRowMapper;
-import fr.gouv.clea.identification.RiskConfigurationService;
-import fr.gouv.clea.identification.processor.ClusterToPeriodsProcessor;
-import fr.gouv.clea.identification.processor.SinglePlaceExposedVisitsBuilder;
-import fr.gouv.clea.identification.processor.SinglePlaceExposedVisitsProcessor;
-import fr.gouv.clea.identification.writer.SinglePlaceClusterPeriodListWriter;
-import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
+import static fr.gouv.clea.config.BatchConstants.SQL_SELECT_DISTINCT_LTID_FROM_EXPOSEDVISITS;
+
+import java.util.List;
+
+import javax.sql.DataSource;
+
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemProcessor;
@@ -24,10 +20,16 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
-import javax.sql.DataSource;
-import java.util.List;
-
-import static fr.gouv.clea.config.BatchConstants.SQL_SELECT_DISTINCT_LTID_FROM_EXPOSEDVISITS;
+import fr.gouv.clea.dto.SinglePlaceCluster;
+import fr.gouv.clea.dto.SinglePlaceClusterPeriod;
+import fr.gouv.clea.dto.SinglePlaceExposedVisits;
+import fr.gouv.clea.identification.ExposedVisitRowMapper;
+import fr.gouv.clea.identification.processor.ClusterToPeriodsProcessor;
+import fr.gouv.clea.identification.processor.SinglePlaceExposedVisitsBuilder;
+import fr.gouv.clea.identification.processor.SinglePlaceExposedVisitsProcessor;
+import fr.gouv.clea.identification.writer.SinglePlaceClusterPeriodListWriter;
+import fr.gouv.clea.mapper.ClusterPeriodModelsMapper;
+import fr.gouv.clea.scoring.configuration.risk.RiskConfiguration;
 
 @Configuration
 public class IdentificationStepBatchConfig {
@@ -45,7 +47,7 @@ public class IdentificationStepBatchConfig {
     private ClusterPeriodModelsMapper mapper;
 
     @Autowired
-    private RiskConfigurationService riskConfigurationService;
+    private RiskConfiguration riskConfig;
 
     @Bean
     public Step clusterIdentification() {
@@ -85,7 +87,7 @@ public class IdentificationStepBatchConfig {
 
     @Bean
     public ItemProcessor<SinglePlaceExposedVisits, SinglePlaceCluster> singleClusterPlaceBuilder() {
-        return new SinglePlaceExposedVisitsProcessor(properties, riskConfigurationService);
+        return new SinglePlaceExposedVisitsProcessor(properties, riskConfig);
     }
 
     @Bean

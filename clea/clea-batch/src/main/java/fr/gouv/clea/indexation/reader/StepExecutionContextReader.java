@@ -1,14 +1,13 @@
 package fr.gouv.clea.indexation.reader;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.item.ItemReader;
-
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
+import org.springframework.batch.item.ItemReader;
+
+import lombok.Getter;
+
 public class StepExecutionContextReader implements ItemReader<Map.Entry<String, List<String>>> {
 
     @Getter

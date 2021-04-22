@@ -1,17 +1,16 @@
 package fr.gouv.clea.prefixes;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemStream;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 
-import java.util.ArrayList;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
-@Slf4j
 @RequiredArgsConstructor
 public class ListItemReader implements ItemReader<List<String>>, ItemStream {
 
