@@ -33,9 +33,10 @@ class ReportServiceTest {
 
     private final int retentionDuration = 14;
     private final long duplicateScanThresholdInSeconds = 10800L;
+    private final long exposureTimeUnit = 1800L;
     private final LocationSpecificPartDecoder decoder = new LocationSpecificPartDecoder();
     private final IDecodedVisitProducerService processService = mock(IDecodedVisitProducerService.class);
-    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, decoder, processService);
+    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, exposureTimeUnit, decoder, processService);
     private Instant now;
 
     @BeforeEach
@@ -56,7 +57,8 @@ class ReportServiceTest {
         List<Visit> visits = List.of(
                 newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))), // pass
                 newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))), // pass
-                newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now)) /* pass */);
+                newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now)) /* pass */
+        );
 
         List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, 0L));
 
@@ -75,7 +77,8 @@ class ReportServiceTest {
         List<Visit> visits = List.of(
                 newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))), // pass
                 newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now)), // pass
-                newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.DAYS))) /* don't pass */);
+                newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.DAYS))) /* don't pass */
+        );
 
 
         List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, 0L));
@@ -97,7 +100,8 @@ class ReportServiceTest {
                 newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(15, ChronoUnit.DAYS))), // don't pass
                 newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.minus(14, ChronoUnit.DAYS))), // pass
                 newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))), // pass
-                newVisit(uuid4, TimeUtils.ntpTimestampFromInstant(now)) /* pass */);
+                newVisit(uuid4, TimeUtils.ntpTimestampFromInstant(now)) /* pass */
+        );
 
 
         List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, 0L));
@@ -116,7 +120,8 @@ class ReportServiceTest {
         UUID uuid2 = UUID.randomUUID();
         List<Visit> visits = List.of(
                 newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now)), // pass
-                newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.SECONDS))) /* don't pass */);
+                newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.plus(2, ChronoUnit.SECONDS))) /* don't pass */
+        );
 
         List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, 0L));
 
@@ -144,7 +149,8 @@ class ReportServiceTest {
                 newVisit(uuidB, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.HOURS))), // don't pass
                 newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)), // pass
                 newVisit(uuidC2, TimeUtils.ntpTimestampFromInstant(now)), /* don't pass */
-                newVisit(uuidC2, TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */);
+                newVisit(uuidC2, TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */
+            );
 
         List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, 0L));
 
@@ -153,6 +159,82 @@ class ReportServiceTest {
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuidB)).count()).isEqualTo(1);
         assertThat(processed.stream().filter(it -> it.getLocationTemporaryPublicId().equals(uuidC)).count()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("if pivot date is in future, set it to retentionDate and check that all visits are forward")
+    void testWithPivotDateInFuture() throws CleaEncodingException {
+        long pivotDateInFutureAsNtp = TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.MINUTES));
+
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
+        UUID uuid3 = UUID.randomUUID();
+        List<Visit> visits = List.of(
+                newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))),
+                newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))),
+                newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now))
+        );
+
+        List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, pivotDateInFutureAsNtp));
+
+        assertThat(processed.size()).isEqualTo(3);
+        assertThat(processed.stream().filter(DecodedVisit::isBackward).count()).isZero();
+        assertThat(processed.stream().filter(DecodedVisit::isForward).count()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("if pivot date is before retentionDate, set it to retentionDate and check that all visits are forward")
+    void testWithPivotDateTooOld() throws CleaEncodingException {
+        long pivotDateTooOldAsNtp = TimeUtils.ntpTimestampFromInstant(now.minus(15, ChronoUnit.DAYS));
+
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
+        UUID uuid3 = UUID.randomUUID();
+        List<Visit> visits = List.of(
+                newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))),
+                newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS))),
+                newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now))
+        );
+
+        List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, pivotDateTooOldAsNtp));
+
+        assertThat(processed.size()).isEqualTo(3);
+        assertThat(processed.stream().filter(DecodedVisit::isBackward).count()).isZero();
+        assertThat(processed.stream().filter(DecodedVisit::isForward).count()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("if pivot date is before or equal qrScanTime, visits should be marked as forward")
+    void testForward() throws CleaEncodingException {
+        long pivotDate = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
+        long qrScan = TimeUtils.ntpTimestampFromInstant(now);
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
+        List<Visit> visits = List.of(
+                newVisit(uuid1, qrScan),
+                newVisit(uuid2, pivotDate)
+        );
+
+        List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, pivotDate));
+
+        assertThat(processed.size()).isEqualTo(2);
+        assertThat(processed.get(0).isForward()).isTrue();
+        assertThat(processed.get(1).isForward()).isTrue();
+    }
+
+    @Test
+    @DisplayName("if pivot date is strictly after qrScanTime, visits should be marked as backward")
+    void testBackward() throws CleaEncodingException {
+        long pivotDate = TimeUtils.ntpTimestampFromInstant(now);
+        long qrScan = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
+        UUID uuid = UUID.randomUUID();
+        List<Visit> visits = List.of(newVisit(uuid, qrScan));
+
+        List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, pivotDate));
+
+        assertThat(processed.size()).isEqualTo(1);
+        assertThat(processed.get(0).isBackward()).isTrue();
+    }
+
 
     private EncryptedLocationSpecificPart createEncryptedLocationSpecificPart(UUID locationTemporaryPublicId) {
         return EncryptedLocationSpecificPart.builder()

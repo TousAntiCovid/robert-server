@@ -10,6 +10,7 @@ import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.repository.IExposedVisitRepository;
+import fr.gouv.clea.consumer.service.IStatService;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,10 +32,13 @@ public class SlotGenerationTest {
     static final Instant TODAY_AT_MIDNIGHT =  Instant.now().truncatedTo(DAYS);
     static final Instant TODAY_AT_8AM =  TODAY_AT_MIDNIGHT.plus(8, HOURS);
 
-    final VenueConsumerConfiguration config = new VenueConsumerConfiguration();
+    final VenueConsumerConfiguration config = VenueConsumerConfiguration.builder().build();
     
     @Mock
     IExposedVisitRepository repository;
+    
+    @Mock
+    IStatService statService;
 
     @Captor
     ArgumentCaptor<List<ExposedVisitEntity>> exposedVisitEntitiesCaptor;
@@ -44,7 +48,7 @@ public class SlotGenerationTest {
     @BeforeEach
     void init() {
         config.setDurationUnitInSeconds(Duration.ofMinutes(30).toSeconds());
-        service = new VisitExpositionAggregatorService(repository, config);
+        service = new VisitExpositionAggregatorService(repository, config, statService);
     }
 
     @Test
