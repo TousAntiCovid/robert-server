@@ -38,7 +38,7 @@
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <clea-crypto.version>0.0.2-SNAPSHOT</clea-crypto.version>
+        <clea-crypto.version>1.0</clea-crypto.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <postgresql.version>42.2.19</postgresql.version>
         <spring-cloud.version>2020.0.1</spring-cloud.version>
