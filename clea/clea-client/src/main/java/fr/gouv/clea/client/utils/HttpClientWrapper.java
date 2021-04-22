@@ -20,7 +20,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import fr.gouv.clea.client.model.HTTPResponse;
 
 public class HttpClientWrapper {
     private HttpClient client;
@@ -61,10 +64,12 @@ public class HttpClientWrapper {
                 .build();
     }
 
-    public <T> T get(String uri, Class<T> returnType) throws IOException, InterruptedException{
+    public <T extends HTTPResponse> T get(String uri, Class<T> returnType) throws IOException, InterruptedException{
         HttpRequest request = HttpRequest.newBuilder(URI.create(uri)).GET().build();
         HttpResponse<String> response =  this.client.send(request, HttpResponse.BodyHandlers.ofString());
-        return (T) new ObjectMapper().readValue(response.body(), returnType);
+        T typedResponse = (T) new ObjectMapper().readValue(response.body(), returnType);
+        typedResponse.statusCode = response.statusCode();
+        return typedResponse;
     } 
 
     public int getStatusCode(String uri) throws IOException, InterruptedException{
@@ -73,7 +78,7 @@ public class HttpClientWrapper {
         return response.statusCode();
     } 
 
-    public <T> T post(String uri, String body, Class<T> returnType) throws IOException, InterruptedException{
+    public <T extends HTTPResponse> T post(String uri, String body, Class<T> returnType) throws IOException, InterruptedException{
         Builder requestBuilder = HttpRequest.newBuilder(URI.create(uri)).POST(HttpRequest.BodyPublishers.ofString(body));
         for(Entry<String, String> header : headers.entrySet()){
             requestBuilder.setHeader(header.getKey(), header.getValue());
@@ -81,7 +86,9 @@ public class HttpClientWrapper {
         requestBuilder.setHeader("Content-Type", "application/json");
         HttpRequest request = requestBuilder.build();
         HttpResponse<String> response =  this.client.send(request, HttpResponse.BodyHandlers.ofString());
-        return (T) new ObjectMapper().readValue(response.body(), returnType);
+        T typedResponse = (T) new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(response.body(), returnType);
+        typedResponse.statusCode = response.statusCode();
+        return typedResponse;
     }
 
     public int postStatusCode(String uri, String body) throws IOException, InterruptedException{

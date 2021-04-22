@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import fr.gouv.clea.client.configuration.CleaClientConfiguration;
 import fr.gouv.clea.client.model.ClusterIndex;
+import fr.gouv.clea.client.model.ReportResponse;
 import fr.gouv.clea.client.model.ScannedQrCode;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.ToString;
@@ -29,6 +30,7 @@ public class CleaClient {
     private Optional<ReportService> reportService;
     @ToString.Exclude
     private Optional<CleaBatchTriggerService> batchTriggerService;
+    private boolean dupVerification = false;
 
     public CleaClient(String name) {
         this.name = name;
@@ -64,11 +66,13 @@ public class CleaClient {
         qrCode = qrCode.substring(configuration.getQrPrefix().length());
         ScannedQrCode scannedQr  = new ScannedQrCode(qrCode, scanTime);
 
-        //Check for duplicate in local list
-        for (ScannedQrCode prevQR : this.localList) {
-            if(scannedQr.getLocationTemporaryId().equals(prevQR.getLocationTemporaryId())
-                    && (Duration.between(prevQR.getScanTime(), scanTime).abs().toSeconds() <= configuration.getDupScanThreshold())) {
-                return false;
+        if(this.dupVerification){
+            //Check for duplicate in local list
+            for (ScannedQrCode prevQR : this.localList) {
+                if(scannedQr.getLocationTemporaryId().equals(prevQR.getLocationTemporaryId())
+                        && (Duration.between(prevQR.getScanTime(), scanTime).abs().toSeconds() <= configuration.getDupScanThreshold())) {
+                    return false;
+                }
             }
         }
         localList.add(scannedQr);
@@ -95,14 +99,33 @@ public class CleaClient {
         return this.sendReport(Instant.now().minus(Duration.ofDays(14)));
     }
 
+    public boolean sendMalformedReport(boolean pivotDateMalformed, boolean qrCodeMalformed, boolean scanTimeMalformed) throws IOException, InterruptedException{
+        this.getReportService().reportMalformed(localList, pivotDateMalformed, qrCodeMalformed, scanTimeMalformed);
+        return this.getLastReportSuccess();
+    }
+
+    public boolean sendReportWithEmptyField(boolean pivotDateEmpty, boolean qrCodeEmpty, boolean scanTimeEmpty) throws IOException, InterruptedException{
+        this.getReportService().reportEmpty(localList, pivotDateEmpty, qrCodeEmpty, scanTimeEmpty);
+        return this.getLastReportSuccess();
+    }
+
+
     public boolean getLastReportSuccess() throws IOException{
-        return this.getReportService().getLastReportResponse().isSuccess();
+        return (this.getReportService().getLastReportResponse().statusCode == 200) && (this.getReportService().getLastReportResponse().isSuccess()) && (this.getReportService().getLastReportResponse().getAcceptedVisits() > 0);
+    }
+
+    public ReportResponse getLastReportResponse() throws IOException{
+        return this.getReportService().getLastReportResponse();
     }
     
     public void triggerNewClusterIdenfication() throws IOException, InterruptedException {
         int currentClusterIteration = this.getCurrentClusterIndexIteration();
         this.getBatchTriggerService().triggerClusterDetection();
         this.waitForClusterIndex(currentClusterIteration+1);
+    }
+
+    public void setDupVerification(boolean dupVerif){
+        this.dupVerification = dupVerif;
     }
 
     protected int getCurrentClusterIndexIteration() throws IOException {
@@ -116,20 +139,31 @@ public class CleaClient {
     private void waitForClusterIndex(int clusterIteration) {
         Awaitility.with().pollInterval(1, TimeUnit.SECONDS)
             .await()
-            .atMost(30, TimeUnit.SECONDS)
+            .atMost(90, TimeUnit.SECONDS)
             .until(() -> this.getCurrentClusterIndexIteration() == clusterIteration);
     }
 
     private CleaBatchTriggerService getBatchTriggerService() throws IOException {
-        return batchTriggerService.orElse(new CleaBatchTriggerService(CleaClientConfiguration.getInstance().getBatchTriggerUrl()));
+        if(batchTriggerService.isPresent()){
+            return batchTriggerService.get();
+        }
+        return this.createBatchTriggerService();
+    }
+
+    private CleaBatchTriggerService createBatchTriggerService() throws IOException{
+        batchTriggerService = Optional.of(new CleaBatchTriggerService(CleaClientConfiguration.getInstance().getBatchTriggerUrl()));
+        return batchTriggerService.get();
     }
 
     public float getStatus() throws IOException {
         return this.getStatusService().status(localList);
     }
 
-    private ReportService getReportService() throws IOException {  
-        return reportService.orElse(this.createReportService());
+    private ReportService getReportService() throws IOException { 
+        if(reportService.isPresent()){
+            return reportService.get();
+        }
+        return this.createReportService();
     }
 
     private ReportService createReportService() throws IOException{
@@ -140,7 +174,10 @@ public class CleaClient {
     }
 
     private StatusService getStatusService() throws IOException{
-        return statusService.orElse(this.createStatusService());
+        if(statusService.isPresent()){
+            return statusService.get();
+        }
+        return this.createStatusService();
     }
 
     private StatusService createStatusService() throws IOException {

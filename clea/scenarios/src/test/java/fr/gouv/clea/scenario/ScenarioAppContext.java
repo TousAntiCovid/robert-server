@@ -19,19 +19,26 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ScenarioAppContext {
-    private final Map<String, Integer> venueCategories;
+    private final Map<String, Integer> venueCategories1;
     private final Map<String, Integer> venueTypes;
     private Map<String, CleaClient> visitors;
     private Map<String, LocationQrCodeGenerator> locations;
+    private Map<String, LocationQrCodeGenerator> staffLocations;
     private String manualContactTracingAuthorityPublicKey;
     private String serverAuthorityPublicKey;
+    private int venueTypeCounter = 0;
+    private int venueCategoryCounter = 0;
+
 
     public ScenarioAppContext() throws Exception {
         visitors = new HashMap<String, CleaClient>(10);
         locations = new HashMap<String, LocationQrCodeGenerator>(10);
+        staffLocations = new HashMap<String, LocationQrCodeGenerator>(10);
         this.initializeKeys();
-        venueTypes = new HashMap<String, Integer>(Map.of("restaurant", 1));
-        venueCategories = new HashMap<String, Integer>(Map.of("NUMBER_1", 1));
+        venueTypes = new HashMap<String, Integer>(Map.of("restaurant", venueTypeCounter));
+        venueTypeCounter++;
+        venueCategories1 = new HashMap<String, Integer>(Map.of("NUMBER_1", venueCategoryCounter));
+        venueCategoryCounter++;
     }
 
     public void initializeKeys() throws Exception {
@@ -60,6 +67,17 @@ public class ScenarioAppContext {
         log.info("Manual Contact Tracing Authority Public Key : " + this.manualContactTracingAuthorityPublicKey);
     }
 
+    public void updateOrCreateRiskConfig(String vtype, String vcategory1, Integer vcategory2, Integer backwardThreshold, Integer backwardExposureTime, Float backwardRisk, Integer forwardThreshold, Integer forwardExposureTime, Float forwardRisk){
+        if(!venueTypes.containsKey(vtype)){
+            venueTypes.put(vtype, venueTypeCounter);
+            venueTypeCounter++;
+        }
+        if(!venueCategories1.containsKey(vcategory1)){
+            venueCategories1.put(vcategory1, venueCategoryCounter);
+            venueCategoryCounter++;
+        }
+    }
+
     public CleaClient getOrCreateVisitor(String name) {
         return visitors.computeIfAbsent(name, newName -> this.createVisitor(newName));
     }
@@ -69,38 +87,84 @@ public class ScenarioAppContext {
         return new CleaClient(name);
     }
 
-    private LocationQrCodeGenerator createLocation(String locationName, Instant periodStartTime, String venueType,
-            String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaCryptoException {
-        log.info("Creating location " + locationName);
+    private LocationQrCodeGenerator createDynamicLocation(String locationName, Instant periodStartTime, String venueType,
+            String venueCategory1, Integer venueCategory2, Duration qrCodeRenewalInterval, Integer periodDuration) throws CleaCryptoException {
         long qrCodeRenewalIntervalLong = qrCodeRenewalInterval.getSeconds();
         int qrCodeRenewalIntervalExponentCompact = (int) (Math.log(qrCodeRenewalIntervalLong) / Math.log(2));
+        return this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCategory2, qrCodeRenewalIntervalExponentCompact, periodDuration);
+    }
 
+    private LocationQrCodeGenerator createStaticLocation(String locationName, Instant periodStartTime, String venueType,
+    String venueCategory1, Integer venueCategory2, Integer periodDuration) throws CleaCryptoException {
+        int qrCodeRenewalIntervalExponentCompact = 0x1F;
+        return this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCategory2, qrCodeRenewalIntervalExponentCompact, periodDuration);
+    }
+
+    private LocationQrCodeGenerator  createLocation(String locationName, Instant periodStartTime, String venueType,
+    String venueCategory1, Integer venueCategory2,Integer qrCodeRenewalIntervalExponentCompact, Integer periodDuration) throws CleaCryptoException {
+        log.info("Creating location " + locationName);
         final String permanentLocationSecretKey = Hex.toHexString(UUID.randomUUID().toString().getBytes());
         LocationQrCodeGenerator location = LocationQrCodeGenerator.builder()
                                                                 .countryCode(250) // France Country Code
-                                                                .staff(false) // not used in test declaration as of now
-                                                                .venueCategory1(venueCategories.get(venueCategory1))
+                                                                .staff(false)
+                                                                .venueCategory1(venueCategories1.get(venueCategory1))
+                                                                .venueCategory2(venueCategory2)
                                                                 .venueType(venueTypes.get(venueType))
-                                                                .periodDuration(12) // not used in test declaration as of now
+                                                                .periodDuration(periodDuration)
                                                                 .periodStartTime(periodStartTime)
                                                                 .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponentCompact)
                                                                 .manualContactTracingAuthorityPublicKey(manualContactTracingAuthorityPublicKey)
                                                                 .serverAuthorityPublicKey(serverAuthorityPublicKey)
                                                                 .permanentLocationSecretKey(permanentLocationSecretKey)
                                                                 .build();
+        LocationQrCodeGenerator staffLocation = LocationQrCodeGenerator.builder()
+                                                                .countryCode(250) // France Country Code
+                                                                .staff(true)
+                                                                .venueCategory1(venueCategories1.get(venueCategory1))
+                                                                .venueCategory2(venueCategory2)
+                                                                .venueType(venueTypes.get(venueType))
+                                                                .periodDuration(periodDuration)
+                                                                .periodStartTime(periodStartTime)
+                                                                .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponentCompact)
+                                                                .manualContactTracingAuthorityPublicKey(manualContactTracingAuthorityPublicKey)
+                                                                .serverAuthorityPublicKey(serverAuthorityPublicKey)
+                                                                .permanentLocationSecretKey(permanentLocationSecretKey)
+                                                                .build();
+        staffLocations.put(locationName, staffLocation);
         locations.put(locationName, location);
         return location;
     }
 
-    public LocationQrCodeGenerator getOrCreateLocation(String locationName, Instant periodStartTime, String venueType,
-            String venueCategory1, Integer venueCapacity, Duration qrCodeRenewalInterval) throws CleaCryptoException {
+    public LocationQrCodeGenerator getOrCreateDynamicLocation(String locationName, Instant periodStartTime, String venueType,
+            String venueCategory1, Integer venueCategory2, Duration qrCodeRenewalInterval) throws CleaCryptoException {
+        return this.getOrCreateDynamicLocation(locationName, periodStartTime, venueType, venueCategory1, venueCategory2,
+                        qrCodeRenewalInterval, 24);
+    }
+
+    public LocationQrCodeGenerator getOrCreateDynamicLocation(String locationName, Instant periodStartTime,
+    String venueType, String venueCategory1, Integer venueCategory2, Duration qrCodeRenewalInterval,
+    Integer periodDuration) throws CleaCryptoException {
         return locations.containsKey(locationName) ? locations.get(locationName)
-                : this.createLocation(locationName, periodStartTime, venueType, venueCategory1, venueCapacity,
-                        qrCodeRenewalInterval);
+        : this.createDynamicLocation(locationName, periodStartTime, venueType, venueCategory1, venueCategory2,
+                qrCodeRenewalInterval, periodDuration);
+    }
+
+    public LocationQrCodeGenerator getOrCreateStaticLocation(String locationName, Instant periodStartTime, String venueType,
+            String venueCategory1, Integer venueCategory2, Integer periodDuration) throws CleaCryptoException {
+        return locations.containsKey(locationName) ? locations.get(locationName)
+                : this.createStaticLocation(locationName, periodStartTime, venueType, venueCategory1, venueCategory2, periodDuration);
+    }
+
+    public LocationQrCodeGenerator getOrCreateStaticLocation(String locationName, Instant periodStartTime, String venueType,
+            String venueCategory1, Integer venueCategory2) throws CleaCryptoException {
+        return this.getOrCreateStaticLocation(locationName, periodStartTime, venueType, venueCategory1, venueCategory2, 24);
     }
 
     public LocationQrCodeGenerator getLocation(String locationName) {
         return locations.get(locationName);
+    }
+    public LocationQrCodeGenerator getStaffLocation(String locationName) {
+        return staffLocations.get(locationName);
     }
 
     public CleaClient getVisitor(String visitorName) {
@@ -110,5 +174,5 @@ public class ScenarioAppContext {
     public void triggerNewClusterIdenfication() throws IOException, InterruptedException {
         CleaClient client = visitors.values().stream().findAny().orElse(new CleaClient(""));
         client.triggerNewClusterIdenfication();
-}
+    }
 }
