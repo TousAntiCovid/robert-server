@@ -1,23 +1,19 @@
 package fr.gouv.clea.clea.scoring.configuration;
 
+import fr.gouv.clea.scoring.configuration.ScoringRule;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
+import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import fr.gouv.clea.scoring.configuration.ScoringRule;
-import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
-import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfigurationConverter;
-import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest()
-@ExtendWith(SpringExtension.class)
+@SpringBootTest
 @EnableConfigurationProperties(value = ExposureTimeConfiguration.class)
 @ContextConfiguration(classes = {ExposureTimeConfigurationConverter.class})
 @ActiveProfiles("test")
