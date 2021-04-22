@@ -17,7 +17,7 @@ clea:
       enabled: "true"
       rules: # FIXME: change with real values
         # venueType, venueCat1, venueCat2, exposureTimeBackward, exposureTimeForward, exposureTimeStaffBackward, exposureTimeStaffForward
-        - '*,*,*,3,3,3,3'
+        - '*,*,*,6,6,6,6'
       risk:
         enabled: "false"
         
