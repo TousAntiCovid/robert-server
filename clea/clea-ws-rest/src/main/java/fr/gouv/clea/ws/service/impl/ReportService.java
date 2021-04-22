@@ -111,7 +111,7 @@ public class ReportService implements IReportService {
     }
 
     private boolean isDuplicatedScan(DecodedVisit one, DecodedVisit other) {
-        if (one.getLocationTemporaryPublicId() != other.getLocationTemporaryPublicId()) {
+        if (!one.getLocationTemporaryPublicId().equals(other.getLocationTemporaryPublicId())) {
             return false;
         }
 
