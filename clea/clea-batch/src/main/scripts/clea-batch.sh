@@ -3,6 +3,13 @@
 PROGNAM=$(basename $0)
 die() { echo "[$PROGNAM] $*" 1>&2 ; exit 1; }
 
+# redirect logs to log file
+test -f "${CLEA_BATCH_LOG_FILE_PATH}/${CLEA_BATCH_LOG_FILE_NAME}.log" || die "log file: ${CLEA_BATCH_LOG_FILE_PATH}/${CLEA_BATCH_LOG_FILE_NAME}.log does not exist"
+test -f "${CLEA_BATCH_LOG_FILE_PATH}/${CLEA_BATCH_LOG_FILE_NAME}.error.log" || die "error log file: ${CLEA_BATCH_LOG_FILE_PATH}/${CLEA_BATCH_LOG_FILE_NAME}.error.log does not exist"
+
+exec >> "${CLEA_BATCH_LOG_FILE_PATH}/${CLEA_BATCH_LOG_FILE_NAME}.log"
+exec 2>> "${CLEA_BATCH_LOG_FILE_PATH}/${CLEA_BATCH_LOG_FILE_NAME}.error.log"
+
 WORKDIR=${CLEA_BATCH_CLUSTER_OUTPUT_PATH:-/tmp/v1}
 BUCKET=${BUCKET:-}
 
@@ -20,7 +27,7 @@ if ! java -jar clea-batch.jar $@ ; then
 fi
 
 
-echo "[$PROGNAM] Coying files...."
+echo "[$PROGNAM] Copying files...."
 
 
 # Test that output folder exists, computing NBFILES fails if folder doesn't exist
