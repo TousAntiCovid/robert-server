@@ -85,5 +85,10 @@ public class LocationQrCodeGeneratorTest {
         QRCode qr2 = dynamicGenerator.getQrCodeAt(dynamicGenerator.getInitialPeriodStart().plus(1, ChronoUnit.DAYS));
         assertThat(qr).isNotEqualTo(qr2);
         assertThat(qr.getLocationTemporaryPublicID().toString()).isNotEqualTo(qr2.getLocationTemporaryPublicID().toString());
+
+        qr = staticGenerator.getQrCodeAt(dynamicGenerator.getInitialPeriodStart());
+         qr2 = staticGenerator.getQrCodeAt(dynamicGenerator.getInitialPeriodStart().plus(1, ChronoUnit.DAYS));
+        assertThat(qr).isNotEqualTo(qr2);
+        assertThat(qr.getLocationTemporaryPublicID().toString()).isNotEqualTo(qr2.getLocationTemporaryPublicID().toString());
     }
 }

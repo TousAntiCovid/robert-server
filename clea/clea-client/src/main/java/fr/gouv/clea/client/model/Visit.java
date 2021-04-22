@@ -1,5 +1,6 @@
 package fr.gouv.clea.client.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
@@ -11,8 +12,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Visit {
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String qrCode;
     
     @JsonProperty("qrCodeScanTime")
-    private long scanTime;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Long scanTime;
 }

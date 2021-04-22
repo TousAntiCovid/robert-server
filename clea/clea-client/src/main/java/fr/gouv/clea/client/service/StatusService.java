@@ -66,7 +66,7 @@ public class StatusService {
                     }
                 }
         }
-
+        log.info("SCORES : {}", scores);
         return scores.stream().max(Comparator.naturalOrder()).orElse(0f);
     }
 
