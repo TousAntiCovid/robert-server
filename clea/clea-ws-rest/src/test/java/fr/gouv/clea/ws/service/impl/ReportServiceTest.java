@@ -1,21 +1,8 @@
 package fr.gouv.clea.ws.service.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-
-import org.apache.tomcat.util.codec.binary.Base64;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
 import fr.gouv.clea.ws.service.IReportService;
@@ -28,6 +15,24 @@ import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.LocationSpecificPartEncoder;
 import fr.inria.clea.lsp.exception.CleaEncodingException;
 import fr.inria.clea.lsp.utils.TimeUtils;
+import org.apache.tomcat.util.codec.binary.Base64;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
+import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 
 class ReportServiceTest {
 
@@ -139,7 +144,7 @@ class ReportServiceTest {
         UUID uuidB2 = UUID.fromString("de4c7b16-d5a2-45fa-a4f4-50fbf1e3880b");
         UUID uuidC = UUID.fromString("bdbf9725-c1ad-42e3-b725-e475272b7f54");
         UUID uuidC2 = UUID.fromString("bdbf9725-c1ad-42e3-b725-e475272b7f54");
-        
+
         List<Visit> visits = List.of(
                 newVisit(uuidA, TimeUtils.ntpTimestampFromInstant(now.minus(4, ChronoUnit.HOURS))), // pass
                 newVisit(uuidA2, TimeUtils.ntpTimestampFromInstant(now)), // pass
@@ -235,7 +240,6 @@ class ReportServiceTest {
         assertThat(processed.get(0).isBackward()).isTrue();
     }
 
-
     private EncryptedLocationSpecificPart createEncryptedLocationSpecificPart(UUID locationTemporaryPublicId) {
         return EncryptedLocationSpecificPart.builder()
                 .locationTemporaryPublicId(locationTemporaryPublicId)
@@ -253,4 +257,104 @@ class ReportServiceTest {
         return new Visit(qrCode, qrCodeScanTime);
     }
 
+    @Nested
+    @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+    class LoggingTest {
+
+        private ListAppender<ILoggingEvent> loggingEventListAppender;
+
+        @BeforeEach
+        void setUp() {
+            now = Instant.now();
+            this.loggingEventListAppender = new ListAppender<>();
+            this.loggingEventListAppender.start();
+            ((Logger) LoggerFactory.getLogger(ReportService.class)).addAppender(loggingEventListAppender);
+        }
+
+        @Test
+        void test_that_duplicate_visits_increment_rejected_visits_count() throws CleaEncodingException {
+            UUID uuidA = UUID.randomUUID();
+            UUID uuidB = UUID.randomUUID();
+            UUID uuidC = UUID.randomUUID();
+            List<Visit> visits = List.of(
+                    newVisit(uuidA, TimeUtils.ntpTimestampFromInstant(now.minus(4, ChronoUnit.HOURS))), // pass
+                    newVisit(uuidA, TimeUtils.ntpTimestampFromInstant(now)), // pass
+                    newVisit(uuidB, TimeUtils.ntpTimestampFromInstant(now.minus(3, ChronoUnit.HOURS))), // pass
+                    newVisit(uuidB, TimeUtils.ntpTimestampFromInstant(now)), // don't pass
+                    newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)), // pass
+                    newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */
+            );
+
+            reportService.report(new ReportRequest(visits, 0L));
+
+            List<ILoggingEvent> logsList = loggingEventListAppender.list;
+
+            assertThat(logsList).extracting("formattedMessage").contains(String.format("BATCH_REPORT %s#%s#%s#%s#%s", visits.size(), 2, 0, 4, 0));
+        }
+
+        @Test
+        void test_that_backward_visit_increments_backward_visits_count() throws CleaEncodingException {
+            long pivotDate = TimeUtils.ntpTimestampFromInstant(now);
+            long qrScan = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
+            UUID uuid = UUID.randomUUID();
+            List<Visit> visits = List.of(newVisit(uuid, qrScan));
+
+            reportService.report(new ReportRequest(visits, pivotDate));
+
+            List<ILoggingEvent> logsList = loggingEventListAppender.list;
+            assertThat(logsList).extracting("formattedMessage").contains(String.format("BATCH_REPORT %s#%s#%s#%s#%s", visits.size(), 0, 1, 0, 0));
+        }
+
+        @Test
+        void test_that_forward_visit_increments_forward_visits_count() throws CleaEncodingException {
+            long pivotDate = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
+            long qrScan = TimeUtils.ntpTimestampFromInstant(now);
+            UUID uuid1 = UUID.randomUUID();
+            UUID uuid2 = UUID.randomUUID();
+            List<Visit> visits = List.of(
+                    newVisit(uuid1, qrScan),
+                    newVisit(uuid2, pivotDate)
+            );
+
+            reportService.report(new ReportRequest(visits, pivotDate));
+
+            List<ILoggingEvent> logsList = loggingEventListAppender.list;
+            assertThat(logsList).extracting("formattedMessage").contains(String.format("BATCH_REPORT %s#%s#%s#%s#%s", visits.size(), 0, 0, 2, 0));
+        }
+
+        @Test
+        void test_that_outdated_visits_increments_rejected_visits_count() throws CleaEncodingException {
+            UUID uuid1 = UUID.randomUUID();
+            UUID uuid2 = UUID.randomUUID();
+            UUID uuid3 = UUID.randomUUID();
+            UUID uuid4 = UUID.randomUUID();
+            List<Visit> visits = List.of(
+                    newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now.minus(15, ChronoUnit.DAYS))), // don't pass
+                    newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.minus(13, ChronoUnit.DAYS))), // pass
+                    newVisit(uuid3, TimeUtils.ntpTimestampFromInstant(now.minus(2, ChronoUnit.DAYS))), // pass
+                    newVisit(uuid4, TimeUtils.ntpTimestampFromInstant(now)) /* pass */
+            );
+
+            ReportRequest reportRequestVo = new ReportRequest(visits, 0L);
+            reportService.report(reportRequestVo);
+
+            List<ILoggingEvent> logsList = loggingEventListAppender.list;
+            assertThat(logsList).extracting("formattedMessage").contains(String.format("BATCH_REPORT %s#%s#%s#%s#%s", visits.size(), 1, 0, 3, 0));
+        }
+
+        @Test
+        void test_that_future_visits_increments_rejected_visits_count() throws CleaEncodingException {
+            UUID uuid1 = UUID.randomUUID();
+            UUID uuid2 = UUID.randomUUID();
+            List<Visit> visits = List.of(
+                    newVisit(uuid1, TimeUtils.ntpTimestampFromInstant(now)), // pass
+                    newVisit(uuid2, TimeUtils.ntpTimestampFromInstant(now.plus(2, ChronoUnit.SECONDS))) // don't pass
+            );
+
+            reportService.report(new ReportRequest(visits, 0L));
+
+            List<ILoggingEvent> logsList = loggingEventListAppender.list;
+            assertThat(logsList).extracting("formattedMessage").contains(String.format("BATCH_REPORT %s#%s#%s#%s#%s", visits.size(), 1, 0, 1, 0));
+        }
+    }
 }

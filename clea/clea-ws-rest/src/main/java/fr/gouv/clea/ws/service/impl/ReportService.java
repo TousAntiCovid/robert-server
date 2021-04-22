@@ -55,12 +55,13 @@ public class ReportService implements IReportService {
 
     @Override
     public List<DecodedVisit> report(ReportRequest reportRequestVo) {
+        final Instant now = Instant.now();
         final VisitsInSameUnitCounter closeScanTimeVisits = new VisitsInSameUnitCounter(exposureTimeUnit);
-        long validatedPivotDate = this.validatePivotDate(reportRequestVo.getPivotDateAsNtpTimestamp());
+        long validatedPivotDate = this.validatePivotDate(reportRequestVo.getPivotDateAsNtpTimestamp(), now);
         List<Visit> reportVisits = reportRequestVo.getVisits();
         List<DecodedVisit> verified = reportVisits.stream()
-                .filter(visit -> !isOutdated(visit))
-                .filter(visit -> !isFuture(visit))
+                .filter(visit -> !isOutdated(visit, now))
+                .filter(visit -> !isFuture(visit, now))
                 .map(it -> this.decode(it, validatedPivotDate))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -73,7 +74,7 @@ public class ReportService implements IReportService {
 
         log.info("BATCH_REPORT {}#{}#{}#{}#{}", reportVisits.size(), reportVisits.size() - pruned.size(),
                 pruned.stream().filter(DecodedVisit::isBackward).count(),
-                pruned.stream().filter(visit -> !visit.isBackward()).count(),
+                pruned.stream().filter(DecodedVisit::isForward).count(),
                 closeScanTimeVisits.getCount());
         return pruned;
     }
@@ -90,16 +91,16 @@ public class ReportService implements IReportService {
         }
     }
 
-    private boolean isOutdated(Visit visit) {
-        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), Instant.now()) > retentionDurationInDays;
+    private boolean isOutdated(Visit visit, Instant now) {
+        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), now) > retentionDurationInDays;
         if (outdated) {
             log.warn("report: {} rejected: Outdated", MessageFormatter.truncateQrCode(visit.getQrCode()));
         }
         return outdated;
     }
 
-    private boolean isFuture(Visit visit) {
-        boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()).isAfter(Instant.now());
+    private boolean isFuture(Visit visit, Instant now) {
+        boolean future = TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()).isAfter(now);
         if (future) {
             log.warn("report: {} rejected: In future", MessageFormatter.truncateQrCode(visit.getQrCode()));
         }
@@ -133,10 +134,10 @@ public class ReportService implements IReportService {
         return cleaned;
     }
 
-    private long validatePivotDate(long pivotDate) {
+    private long validatePivotDate(long pivotDate, Instant now) {
         Instant pivotDateAsInstant = TimeUtils.instantFromTimestamp(pivotDate);
-        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
-        Instant retentionDateLimit = now.minus(retentionDurationInDays, ChronoUnit.DAYS);
+        Instant nowWithoutMilis = now.truncatedTo(ChronoUnit.SECONDS);
+        Instant retentionDateLimit = nowWithoutMilis.minus(retentionDurationInDays, ChronoUnit.DAYS);
         if (pivotDateAsInstant.isAfter(now) || pivotDateAsInstant.isBefore(retentionDateLimit)) {
             long retentionDateLimitAsNtp = TimeUtils.ntpTimestampFromInstant(retentionDateLimit);
             log.warn("pivotDate: {} not between retentionLimitDate: {} and now: {}", pivotDateAsInstant, retentionDateLimit, now);
