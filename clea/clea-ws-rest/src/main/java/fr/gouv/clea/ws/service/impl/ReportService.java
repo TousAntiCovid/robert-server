@@ -137,7 +137,7 @@ public class ReportService implements IReportService {
     private long validatePivotDate(long pivotDate, Instant now) {
         Instant pivotDateAsInstant = TimeUtils.instantFromTimestamp(pivotDate);
         Instant nowWithoutMilis = now.truncatedTo(ChronoUnit.SECONDS);
-        Instant retentionDateLimit = now.minus(retentionDurationInDays, ChronoUnit.DAYS);
+        Instant retentionDateLimit = nowWithoutMilis.minus(retentionDurationInDays, ChronoUnit.DAYS);
         if (pivotDateAsInstant.isAfter(now) || pivotDateAsInstant.isBefore(retentionDateLimit)) {
             long retentionDateLimitAsNtp = TimeUtils.ntpTimestampFromInstant(retentionDateLimit);
             log.warn("pivotDate: {} not between retentionLimitDate: {} and now: {}", pivotDateAsInstant, retentionDateLimit, now);
