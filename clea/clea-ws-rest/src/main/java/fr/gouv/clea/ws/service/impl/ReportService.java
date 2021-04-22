@@ -1,5 +1,6 @@
 package fr.gouv.clea.ws.service.impl;
 
+import fr.gouv.clea.ws.configuration.CleaWsProperties;
 import fr.gouv.clea.ws.model.DecodedVisit;
 import fr.gouv.clea.ws.service.IDecodedVisitProducerService;
 import fr.gouv.clea.ws.service.IReportService;
@@ -12,7 +13,6 @@ import fr.inria.clea.lsp.exception.CleaEncodingException;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -20,35 +20,29 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class ReportService implements IReportService {
 
-    private final int retentionDurationInDays;
-
-    private final long duplicateScanThresholdInSeconds;
+    private final CleaWsProperties cleaWsProperties;
 
     private final LocationSpecificPartDecoder decoder;
 
     private final IDecodedVisitProducerService processService;
 
-    private final long exposureTimeUnit;
 
     @Autowired
     public ReportService(
-            @Value("${clea.conf.retentionDurationInDays}") int retentionDuration,
-            @Value("${clea.conf.duplicateScanThresholdInSeconds}") long duplicateScanThreshold,
-            @Value("${clea.conf.exposureTimeUnitInSeconds}") long exposureTimeUnit,
-                    LocationSpecificPartDecoder decoder,
-            IDecodedVisitProducerService processService) {
-        this.retentionDurationInDays = retentionDuration;
-        this.duplicateScanThresholdInSeconds = duplicateScanThreshold;
-        this.exposureTimeUnit = exposureTimeUnit;
+            CleaWsProperties cleaWsProperties,
+            LocationSpecificPartDecoder decoder,
+            IDecodedVisitProducerService processService
+    ) {
+        this.cleaWsProperties = cleaWsProperties;
         this.decoder = decoder;
         this.processService = processService;
     }
@@ -56,7 +50,7 @@ public class ReportService implements IReportService {
     @Override
     public List<DecodedVisit> report(ReportRequest reportRequestVo) {
         final Instant now = Instant.now();
-        final VisitsInSameUnitCounter closeScanTimeVisits = new VisitsInSameUnitCounter(exposureTimeUnit);
+        final VisitsInSameUnitCounter closeScanTimeVisits = new VisitsInSameUnitCounter(cleaWsProperties.getExposureTimeUnitInSeconds());
         long validatedPivotDate = this.validatePivotDate(reportRequestVo.getPivotDateAsNtpTimestamp(), now);
         List<Visit> reportVisits = reportRequestVo.getVisits();
         List<DecodedVisit> verified = reportVisits.stream()
@@ -92,7 +86,7 @@ public class ReportService implements IReportService {
     }
 
     private boolean isOutdated(Visit visit, Instant now) {
-        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), now) > retentionDurationInDays;
+        boolean outdated = ChronoUnit.DAYS.between(TimeUtils.instantFromTimestamp(visit.getQrCodeScanTimeAsNtpTimestamp()), now) > cleaWsProperties.getRetentionDurationInDays();
         if (outdated) {
             log.warn("report: {} rejected: Outdated", MessageFormatter.truncateQrCode(visit.getQrCode()));
         }
@@ -117,7 +111,7 @@ public class ReportService implements IReportService {
         }
 
         long secondsBetweenScans = Duration.between(one.getQrCodeScanTime(), other.getQrCodeScanTime()).abs().toSeconds();
-        if (secondsBetweenScans <= duplicateScanThresholdInSeconds) {
+        if (secondsBetweenScans <= cleaWsProperties.getDuplicateScanThresholdInSeconds()) {
             log.warn("report: {} {} rejected: Duplicate", MessageFormatter.truncateUUID(one.getStringLocationTemporaryPublicId()), one.getQrCodeScanTime());
             return true;
         }
@@ -137,7 +131,7 @@ public class ReportService implements IReportService {
     private long validatePivotDate(long pivotDate, Instant now) {
         Instant pivotDateAsInstant = TimeUtils.instantFromTimestamp(pivotDate);
         Instant nowWithoutMilis = now.truncatedTo(ChronoUnit.SECONDS);
-        Instant retentionDateLimit = nowWithoutMilis.minus(retentionDurationInDays, ChronoUnit.DAYS);
+        Instant retentionDateLimit = nowWithoutMilis.minus(cleaWsProperties.getRetentionDurationInDays(), ChronoUnit.DAYS);
         if (pivotDateAsInstant.isAfter(now) || pivotDateAsInstant.isBefore(retentionDateLimit)) {
             long retentionDateLimitAsNtp = TimeUtils.ntpTimestampFromInstant(retentionDateLimit);
             log.warn("pivotDate: {} not between retentionLimitDate: {} and now: {}", pivotDateAsInstant, retentionDateLimit, now);

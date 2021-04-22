@@ -42,7 +42,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = {"clea.conf.security.report.checkAuthorization=true"})
+@TestPropertySource(properties = {"clea.conf.authorizationCheckActive=true"})
 class CleaControllerAuthEnabledTest {
 
     /*

@@ -19,7 +19,6 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -33,7 +32,6 @@ import java.util.stream.StreamSupport;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@DirtiesContext
 @EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
 class DecodedVisitProducerServiceTest {
 
@@ -126,7 +124,7 @@ class DecodedVisitProducerServiceTest {
         assertThat(visit3.isBackward()).isEqualTo(isBackward3);
     }
 
-    protected Instant newRandomInstant() {
+    private Instant newRandomInstant() {
         return Instant.ofEpochSecond(RandomUtils.nextLong(0, Instant.now().getEpochSecond()));
     }
 
