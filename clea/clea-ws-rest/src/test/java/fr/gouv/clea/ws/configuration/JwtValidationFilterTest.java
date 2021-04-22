@@ -103,7 +103,7 @@ class JwtValidationFilterTest {
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
-    protected String newJwtToken(Instant now, Instant expiration) {
+    private String newJwtToken(Instant now, Instant expiration) {
         return Jwts.builder()
                 .setHeaderParam("type", "JWT")
                 .setIssuedAt(Date.from(now))

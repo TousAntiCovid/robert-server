@@ -9,20 +9,20 @@ import fr.gouv.clea.ws.service.IReportService;
 import fr.gouv.clea.ws.vo.ReportRequest;
 import fr.gouv.clea.ws.vo.Visit;
 import fr.inria.clea.lsp.CleaEciesEncoder;
-import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPart;
-import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import fr.inria.clea.lsp.LocationSpecificPartEncoder;
-import fr.inria.clea.lsp.exception.CleaEncodingException;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -32,22 +32,21 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 
+@SpringBootTest
 class ReportServiceTest {
 
-    private final int retentionDuration = 14;
-    private final long duplicateScanThresholdInSeconds = 10800L;
-    private final long exposureTimeUnit = 1800L;
-    private final LocationSpecificPartDecoder decoder = new LocationSpecificPartDecoder();
-    private final IDecodedVisitProducerService processService = mock(IDecodedVisitProducerService.class);
-    private final IReportService reportService = new ReportService(retentionDuration, duplicateScanThresholdInSeconds, exposureTimeUnit, decoder, processService);
+    @MockBean
+    private IDecodedVisitProducerService processService;
+
+    @Autowired
+    private IReportService reportService;
+
     private Instant now;
 
     @BeforeEach
     void init() {
         now = Instant.now();
-        assertThat(decoder).isNotNull();
         assertThat(processService).isNotNull();
         assertThat(reportService).isNotNull();
         doNothing().when(processService).produce(anyList());
@@ -55,7 +54,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test successful report with no rejection")
-    void report() throws CleaEncodingException {
+    void report() {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
@@ -75,7 +74,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with non valid qr codes")
-    void testWithNonValidReports() throws CleaEncodingException {
+    void testWithNonValidReports() {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
@@ -96,7 +95,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with outdated scans")
-    void testWithOutdatedReports() throws CleaEncodingException {
+    void testWithOutdatedReports() {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         UUID uuid3 = UUID.randomUUID();
@@ -120,7 +119,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with future scans")
-    void testWithFutureReports() throws CleaEncodingException {
+    void testWithFutureReports() {
         UUID uuid1 = UUID.randomUUID();
         UUID uuid2 = UUID.randomUUID();
         List<Visit> visits = List.of(
@@ -137,7 +136,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("test report with duplicated qr codes")
-    void testWithDuplicates() throws CleaEncodingException {
+    void testWithDuplicates() {
         UUID uuidA = UUID.fromString("60f5ebf7-d2af-4451-a575-7d1a2de7a9fd");
         UUID uuidA2 = UUID.fromString("60f5ebf7-d2af-4451-a575-7d1a2de7a9fd");
         UUID uuidB = UUID.fromString("de4c7b16-d5a2-45fa-a4f4-50fbf1e3880b");
@@ -155,7 +154,7 @@ class ReportServiceTest {
                 newVisit(uuidC, TimeUtils.ntpTimestampFromInstant(now)), // pass
                 newVisit(uuidC2, TimeUtils.ntpTimestampFromInstant(now)), /* don't pass */
                 newVisit(uuidC2, TimeUtils.ntpTimestampFromInstant(now)) /* don't pass */
-            );
+        );
 
         List<DecodedVisit> processed = reportService.report(new ReportRequest(visits, 0L));
 
@@ -167,7 +166,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("if pivot date is in future, set it to retentionDate and check that all visits are forward")
-    void testWithPivotDateInFuture() throws CleaEncodingException {
+    void testWithPivotDateInFuture() {
         long pivotDateInFutureAsNtp = TimeUtils.ntpTimestampFromInstant(now.plus(1, ChronoUnit.MINUTES));
 
         UUID uuid1 = UUID.randomUUID();
@@ -188,7 +187,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("if pivot date is before retentionDate, set it to retentionDate and check that all visits are forward")
-    void testWithPivotDateTooOld() throws CleaEncodingException {
+    void testWithPivotDateTooOld() {
         long pivotDateTooOldAsNtp = TimeUtils.ntpTimestampFromInstant(now.minus(15, ChronoUnit.DAYS));
 
         UUID uuid1 = UUID.randomUUID();
@@ -209,7 +208,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("if pivot date is before or equal qrScanTime, visits should be marked as forward")
-    void testForward() throws CleaEncodingException {
+    void testForward() {
         long pivotDate = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
         long qrScan = TimeUtils.ntpTimestampFromInstant(now);
         UUID uuid1 = UUID.randomUUID();
@@ -228,7 +227,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("if pivot date is strictly after qrScanTime, visits should be marked as backward")
-    void testBackward() throws CleaEncodingException {
+    void testBackward() {
         long pivotDate = TimeUtils.ntpTimestampFromInstant(now);
         long qrScan = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
         UUID uuid = UUID.randomUUID();
@@ -240,13 +239,7 @@ class ReportServiceTest {
         assertThat(processed.get(0).isBackward()).isTrue();
     }
 
-    private EncryptedLocationSpecificPart createEncryptedLocationSpecificPart(UUID locationTemporaryPublicId) {
-        return EncryptedLocationSpecificPart.builder()
-                .locationTemporaryPublicId(locationTemporaryPublicId)
-                .build();
-    }
-
-    private Visit newVisit(UUID uuid, Long qrCodeScanTime) throws CleaEncodingException {
+    private Visit newVisit(UUID uuid, Long qrCodeScanTime) {
         LocationSpecificPart lsp = LocationSpecificPart.builder()
                 .locationTemporaryPublicId(uuid)
                 .build();
@@ -272,7 +265,7 @@ class ReportServiceTest {
         }
 
         @Test
-        void test_that_duplicate_visits_increment_rejected_visits_count() throws CleaEncodingException {
+        void test_that_duplicate_visits_increment_rejected_visits_count() {
             UUID uuidA = UUID.randomUUID();
             UUID uuidB = UUID.randomUUID();
             UUID uuidC = UUID.randomUUID();
@@ -293,7 +286,7 @@ class ReportServiceTest {
         }
 
         @Test
-        void test_that_backward_visit_increments_backward_visits_count() throws CleaEncodingException {
+        void test_that_backward_visit_increments_backward_visits_count() {
             long pivotDate = TimeUtils.ntpTimestampFromInstant(now);
             long qrScan = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
             UUID uuid = UUID.randomUUID();
@@ -306,7 +299,7 @@ class ReportServiceTest {
         }
 
         @Test
-        void test_that_forward_visit_increments_forward_visits_count() throws CleaEncodingException {
+        void test_that_forward_visit_increments_forward_visits_count() {
             long pivotDate = TimeUtils.ntpTimestampFromInstant(now.minus(1, ChronoUnit.DAYS));
             long qrScan = TimeUtils.ntpTimestampFromInstant(now);
             UUID uuid1 = UUID.randomUUID();
@@ -323,7 +316,7 @@ class ReportServiceTest {
         }
 
         @Test
-        void test_that_outdated_visits_increments_rejected_visits_count() throws CleaEncodingException {
+        void test_that_outdated_visits_increments_rejected_visits_count() {
             UUID uuid1 = UUID.randomUUID();
             UUID uuid2 = UUID.randomUUID();
             UUID uuid3 = UUID.randomUUID();
@@ -343,7 +336,7 @@ class ReportServiceTest {
         }
 
         @Test
-        void test_that_future_visits_increments_rejected_visits_count() throws CleaEncodingException {
+        void test_that_future_visits_increments_rejected_visits_count() {
             UUID uuid1 = UUID.randomUUID();
             UUID uuid2 = UUID.randomUUID();
             List<Visit> visits = List.of(

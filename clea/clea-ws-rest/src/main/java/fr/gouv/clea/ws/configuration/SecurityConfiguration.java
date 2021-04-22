@@ -3,9 +3,7 @@ package fr.gouv.clea.ws.configuration;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -14,7 +12,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-import javax.annotation.PostConstruct;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -22,25 +19,18 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
 @EnableWebSecurity
-@Slf4j
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    private final boolean checkAuthorization;
-
-    private final String encodedRobertJwtPublicKey;
+    private final CleaWsProperties cleaWsProperties;
 
     private final HandlerExceptionResolver handlerExceptionResolver;
 
-    private PublicKey robertJwtPublicKey;
-
     @Autowired
     public SecurityConfiguration(
-            @Value("${clea.conf.security.report.checkAuthorization}") boolean checkAuthorization,
-            @Value("${clea.conf.security.report.robertJwtPublicKey}") String encodedRobertJwtPublicKey,
+            CleaWsProperties cleaWsProperties,
             HandlerExceptionResolver handlerExceptionResolver
     ) {
-        this.checkAuthorization = checkAuthorization;
-        this.encodedRobertJwtPublicKey = encodedRobertJwtPublicKey;
+        this.cleaWsProperties = cleaWsProperties;
         this.handlerExceptionResolver = handlerExceptionResolver;
     }
 
@@ -49,12 +39,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new LocationSpecificPartDecoder();
     }
 
-    @PostConstruct
-    private void initPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] encoded = Decoders.BASE64.decode(this.encodedRobertJwtPublicKey);
+    private PublicKey initPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        byte[] encoded = Decoders.BASE64.decode(this.cleaWsProperties.getRobertJwtPublicKey());
         KeyFactory keyFactory = KeyFactory.getInstance(SignatureAlgorithm.RS256.getFamilyName());
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
-        this.robertJwtPublicKey = keyFactory.generatePublic(keySpec);
+        return keyFactory.generatePublic(keySpec);
     }
 
     @Override
@@ -63,7 +52,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api/clea/**").permitAll()
                 .and()
-                .addFilterAfter(new JwtValidationFilter(checkAuthorization, robertJwtPublicKey, handlerExceptionResolver), BasicAuthenticationFilter.class)
+                .addFilterAfter(new JwtValidationFilter(this.cleaWsProperties.isAuthorizationCheckActive(), this.initPublicKey(), handlerExceptionResolver), BasicAuthenticationFilter.class)
                 .httpBasic().disable()
                 .csrf().disable()
                 .cors();

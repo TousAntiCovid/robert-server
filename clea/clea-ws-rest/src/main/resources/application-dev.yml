@@ -3,10 +3,8 @@ clea:
     exposureTimeUnitInSeconds: 1800
     duplicateScanThresholdInSeconds: 10800
     retentionDurationInDays: 14
-    security:
-      report:
-        checkAuthorization: false
-        robertJwtPublicKey: TODO
+    authorizationCheckActive: false
+    robertJwtPublicKey: TODO
 
 controller:
   path:
