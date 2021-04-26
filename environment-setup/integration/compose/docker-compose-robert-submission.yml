@@ -10,7 +10,7 @@ services:
       restart_policy:
         condition: on-failure
   submission-code-server-ws-rest:
-    image: registry.gitlab.inria.fr/stemcovid19/tac-server/backend-server/submission-code-server-ws-rest:${ROBERT_SUBMISSION_TAG}
+    image: registry.gitlab.inria.fr/stopcovid19/backend-server/submission-code-server-ws-rest:${ROBERT_SUBMISSION_TAG}
     container_name: submission-code-server-ws-rest
     ports:
       - "8087:8087"
