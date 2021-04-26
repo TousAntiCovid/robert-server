@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:clea
+    username: clea
+    password: aelc
+    test-on-borrow: true
+    validation-query: SELECT 1
+
+  batch:
+    # Manage it's batch metadata tables
+    initialize-schema: always
+
+  flyway:
+    enabled: "true"

@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  minio:
+    image: minio/minio:edge
+    environment:
+       MINIO_ACCESS_KEY: AKIAIOSFODNN7EXAMPLE
+       MINIO_SECRET_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    entrypoint: sh
+    command: -c 'mkdir -p /data/clea-batch && /usr/bin/minio server /data'
+    ports:
+      - "9100:9000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - clea-network
+
+  clea-batch:
+    volumes:
+      - ./batch/s3cfg:/home/javaapp/.s3cfg
+
+networks:
+  clea-network:
+    driver: bridge
+    name: clea-network
+

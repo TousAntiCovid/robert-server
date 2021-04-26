@@ -1,0 +1,46 @@
+clea:
+  conf:
+    cleaClockDriftInSecs: 300
+    driftBetweenDeviceAndOfficialTimeInSecs: 300
+    retentionDurationInDays: 14
+    durationUnitInSeconds: 1800
+    scheduling:
+      purge:
+        cron: "0 0 1 * * *"
+        enabled: false
+    security:
+      crypto:
+        serverAuthorityPublicKey: 02c3a58bf668fa3fe2fc206152abd6d8d55102adfee68c8b227676d1fe763f5a06
+        serverAuthoritySecretKey: f339df3ad2ff78746845b5bd3e8bfe9862691dc5ae0d6d2b2cf3391b228cc462
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:cleadb
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2
+      settings:
+        trace: false
+        web-allow-others: true
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: create-drop
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: group1
+    template:
+      default-topic: cleaQrCodes

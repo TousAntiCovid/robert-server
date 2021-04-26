@@ -1,5 +1,6 @@
 package fr.gouv.clea.ws.service.impl;
 
+import fr.gouv.clea.ws.exception.CleaForbiddenException;
 import fr.gouv.clea.ws.exception.CleaUnauthorizedException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -53,7 +54,7 @@ class AuthorizationServiceTest {
 
     @Test
     void testGivenAnInvalidJwtBearerWhenRequestingAuthorizationThenAuthorizationFails() {
-        assertThatExceptionOfType(CleaUnauthorizedException.class)
+        assertThatExceptionOfType(CleaForbiddenException.class)
                 .isThrownBy(() -> authorizationService.checkAuthorization("unauthorized"));
     }
 
@@ -67,9 +68,9 @@ class AuthorizationServiceTest {
     }
 
     @Test
-    public void testGivenAValidJwtBearerAlreadyExpiredWhenRequestingAuthorizationThenAuthorizationFails() {
+    void testGivenAValidJwtBearerAlreadyExpiredWhenRequestingAuthorizationThenAuthorizationFails() {
         Instant now = Instant.now();
-        assertThatExceptionOfType(CleaUnauthorizedException.class)
+        assertThatExceptionOfType(CleaForbiddenException.class)
                 .isThrownBy(() -> authorizationService.checkAuthorization(this.newJwtToken(now, now)));
     }
 

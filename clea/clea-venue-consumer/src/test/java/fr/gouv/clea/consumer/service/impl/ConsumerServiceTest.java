@@ -21,7 +21,6 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.TestPropertySource;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -37,7 +36,6 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
-@TestPropertySource(properties = {"kafka.bootstrapAddress=localhost:9092"})
 class ConsumerServiceTest {
 
     @Value("${spring.kafka.template.default-topic}")

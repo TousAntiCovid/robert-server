@@ -4,13 +4,15 @@ import static fr.gouv.tac.analytics.server.controller.CustomExceptionHandler.PAY
 
 import java.time.ZonedDateTime;
 
+import javax.validation.ConstraintViolationException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.gouv.tac.analytics.server.controller.vo.ErrorVo;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -18,12 +20,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import java.time.ZonedDateTime;
 
 @ExtendWith(SpringExtension.class)
 public class CustomExceptionHandlerTest {
 
     @Mock
-    private MethodArgumentNotValidException methodArgumentNotValidException;
+    private ConstraintViolationException constraintViolationException;
+
+    @Mock
+    private JsonProcessingException jsonProcessingException;
 
     @InjectMocks
     private CustomExceptionHandler customExceptionHandler;
@@ -40,24 +53,36 @@ public class CustomExceptionHandlerTest {
     }
 
     @Test
-    public void shouldManageMethodArgumentNotValidException() {
+    public void shouldManageConstraintViolationException() {
 
         final String message = "error message";
-        Mockito.when(methodArgumentNotValidException.getMessage()).thenReturn(message);
+        Mockito.when(constraintViolationException.getMessage()).thenReturn(message);
 
-        final ResponseEntity<ErrorVo> result = customExceptionHandler.exception(methodArgumentNotValidException);
+        final ResponseEntity<ErrorVo> result = customExceptionHandler.exception(constraintViolationException);
         Assertions.assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         Assertions.assertThat(result.getBody().getMessage()).isEqualTo(message);
         Assertions.assertThat(result.getBody().getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
     }
 
     @Test
-    public void shouldManageMethodArgumentNotValidExceptionInCaseOfTooLargePayload() {
+    public void shouldManageJsonProcessingException() {
+
+        final String message = "error message";
+        Mockito.when(jsonProcessingException.getMessage()).thenReturn(message);
+
+        final ResponseEntity<ErrorVo> result = customExceptionHandler.exception(jsonProcessingException);
+        Assertions.assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        Assertions.assertThat(result.getBody().getMessage()).isEqualTo(message);
+        Assertions.assertThat(result.getBody().getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
+    }
+
+    @Test
+    public void shouldManageConstraintViolationExceptionInCaseOfTooLargePayload() {
 
         final String message = PAYLOAD_TOO_LARGE + " - error message";
-        Mockito.when(methodArgumentNotValidException.getMessage()).thenReturn(message);
+        Mockito.when(constraintViolationException.getMessage()).thenReturn(message);
 
-        final ResponseEntity<ErrorVo> result = customExceptionHandler.exception(methodArgumentNotValidException);
+        final ResponseEntity<ErrorVo> result = customExceptionHandler.exception(constraintViolationException);
         Assertions.assertThat(result.getStatusCode()).isEqualTo(HttpStatus.PAYLOAD_TOO_LARGE);
         Assertions.assertThat(result.getBody().getMessage()).isEqualTo(message);
         Assertions.assertThat(result.getBody().getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
