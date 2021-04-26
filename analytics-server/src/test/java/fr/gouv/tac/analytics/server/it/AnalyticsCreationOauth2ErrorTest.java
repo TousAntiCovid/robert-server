@@ -1,11 +1,9 @@
 package fr.gouv.tac.analytics.server.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.security.NoSuchAlgorithmException;
@@ -34,7 +32,6 @@ import fr.gouv.tac.analytics.server.config.security.oauth2tokenvalidator.Expirat
 import fr.gouv.tac.analytics.server.config.security.oauth2tokenvalidator.JtiPresenceOAuth2TokenValidator;
 import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
 import fr.gouv.tac.analytics.server.controller.vo.ErrorVo;
-import fr.gouv.tac.analytics.server.model.kafka.Analytics;
 import fr.gouv.tac.analytics.server.utils.UriConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,10 +43,10 @@ import org.mockito.Mock;
 public class AnalyticsCreationOauth2ErrorTest {
 
     @MockBean
-    private KafkaTemplate<String, Analytics> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @Mock
-    private ListenableFuture<SendResult<String, Analytics>> listenableFutureMock;
+    private ListenableFuture<SendResult<String, String>> listenableFutureMock;
 
     @Autowired
     private MockMvc mockMvc;
@@ -88,7 +85,7 @@ public class AnalyticsCreationOauth2ErrorTest {
         assertThat(errorVo.getMessage()).isEqualTo("Full authentication is required to access this resource");
         assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     @Test
@@ -111,7 +108,7 @@ public class AnalyticsCreationOauth2ErrorTest {
         assertThat(errorVo.getMessage()).contains(JtiPresenceOAuth2TokenValidator.ERR_MESSAGE);
         assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
 
     }
 
@@ -137,7 +134,7 @@ public class AnalyticsCreationOauth2ErrorTest {
         assertThat(errorVo.getMessage()).contains(ExpirationTokenPresenceOAuth2TokenValidator.ERR_MESSAGE);
         assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
 
@@ -163,7 +160,7 @@ public class AnalyticsCreationOauth2ErrorTest {
         assertThat(errorVo.getMessage()).startsWith("An error occurred while attempting to decode the Jwt: Jwt expired at");
         assertThat(errorVo.getTimestamp()).isEqualToIgnoringSeconds(ZonedDateTime.now());
 
-        verify(kafkaTemplate, never()).sendDefault(any(Analytics.class));
+        verify(kafkaTemplate, never()).sendDefault(any(String.class));
     }
 
     private AnalyticsVo buildAnalyticsVo() {

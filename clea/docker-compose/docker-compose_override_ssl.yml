@@ -1,0 +1,80 @@
+version: "3.8"
+services:
+
+  # kafka:
+  #   image: confluentinc/cp-zookeeper:6.1.1
+  #   environment:
+  #     KAFKA_LISTENERS: SSL://broker:9092 
+  #     KAFKA_ADVERTISED_LISTENERS: SSL://broker:9092
+  #     KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+  #     KAFKA_SSL_KEYSTORE_FILENAME: broker.keystore.jks
+  #     KAFKA_SSL_KEYSTORE_CREDENTIALS: 'kafka-keystore-file.txt'
+  #     KAFKA_SSL_KEY_CREDENTIALS:  kafka-key-file.txt
+  #     KAFKA_SSL_TRUSTSTORE_LOCATION: '/etc/kafka/secrets/truststore.jks'
+  #     KAFKA_SSL_TRUSTSTORE_PASSWORD: 'serversecret' 
+  #   volumes:
+  #     - ./kafka/certs:/etc/kafka/secrets/:ro
+  #   networks:
+  #     - clea-network
+
+  kafka:
+    image: "wurstmeister/kafka:latest"
+    environment:
+      KAFKA_LISTENERS: SSL://kafka:9092 
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ~
+      KAFKA_INTER_BROKER_LISTENER_NAME: ~
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+      KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
+      KAFKA_SSL_KEYSTORE_PASSWORD: 'serversecret'
+      KAFKA_SSL_KEY_PASSWORD:  serversecret
+      KAFKA_SSL_TRUSTSTORE_LOCATION: '/etc/kafka/secrets/truststore.jks'
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: 'serversecret' 
+    volumes:
+      - ./kafka/certs:/etc/kafka/secrets/:ro
+    networks:
+      - clea-network
+
+
+  # cmak allow to manage kafka but is not so easy and don't allow to see messages'
+  # kafka-man:
+  #   image: kafkamanager/kafka-manager
+  #   command: ["cmak-3.0.0.4/bin/cmak", "-Dhttp.port=8080","-Dplay.http.context=/cmak"]
+  #   environment:
+  #     ZK_HOSTS: zookeeper
+  #     KAFKA_MANAGER_PASSWORD: "admin123!"
+  #   #ports:
+  #   #  - '9001:8080'
+  #   networks:
+  #     - clea-network
+
+  # kafdrop is a single page console already connected to kafka that allow to see messages 
+  kafdrop:
+    image: "obsidiandynamics/kafdrop:latest"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:9092"
+      KAFKA_TRUSTSTORE: ${B64_TRUSTSTORE}
+      KAFKA_PROPERTIES: c2VjdXJpdHkucHJvdG9jb2w9U1NMCnNzbC50cnVzdHN0b3JlLnBhc3N3b3JkPXNlcnZlcnNlY3JldAojc3NsLnRydXN0c3RvcmUudHlwZT1KS1MK
+
+    volumes:
+      - ./kafka/certs:/etc/kafka/secrets/:ro
+
+  clea-ws-rest:
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: SSL
+      SPRING_KAFKA_SSL_TRUST_STORE_LOCATION: file:///etc/kafka/secrets/truststore.jks
+      SPRING_KAFKA_SSL_TRUST_STORE_PASSWORD: serversecret
+    volumes:
+      - ./kafka/certs:/etc/kafka/secrets/:ro
+
+  clea-venue-consumer:
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: SSL
+      SPRING_KAFKA_SSL_TRUST_STORE_LOCATION: file:///etc/kafka/secrets/truststore.jks
+      SPRING_KAFKA_SSL_TRUST_STORE_PASSWORD: serversecret
+    volumes:
+      - ./kafka/certs:/etc/kafka/secrets/:ro
+  
+    

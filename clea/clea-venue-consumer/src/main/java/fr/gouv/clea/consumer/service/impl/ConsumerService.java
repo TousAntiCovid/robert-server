@@ -33,6 +33,11 @@ public class ConsumerService implements IConsumerService {
     public void consume(DecodedVisit decodedVisit) {
         log.info("[locationTemporaryPublicId: {}, qrCodeScanTime: {}] retrieved from queue", MessageFormatter.truncateUUID(decodedVisit.getStringLocationTemporaryPublicId()), decodedVisit.getQrCodeScanTime());
         Optional<Visit> optionalVisit = decodedVisitService.decryptAndValidate(decodedVisit);
-        optionalVisit.ifPresent(visitExpositionAggregatorService::updateExposureCount);
+        optionalVisit.ifPresentOrElse(
+            visit -> {
+                log.debug("Consumer: visit after decrypt + validation: {}, ", visit);
+                visitExpositionAggregatorService.updateExposureCount(visit);
+            }, 
+            () -> log.info("empty visit after decrypt + validation") );
     }
 }

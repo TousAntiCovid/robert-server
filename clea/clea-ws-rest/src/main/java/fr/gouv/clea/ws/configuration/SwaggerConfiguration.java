@@ -22,8 +22,10 @@ import static springfox.documentation.builders.RequestHandlerSelectors.basePacka
 @EnableSwagger2
 public class SwaggerConfiguration {
 
+    private static final String AUTHORIZATION = "Authorization";
+
     private ApiKey apiKey() {
-        return new ApiKey("Authorization", "Authorization", "header");
+        return new ApiKey(AUTHORIZATION, AUTHORIZATION, "header");
     }
 
     private SecurityContext securityContext() {
@@ -34,7 +36,7 @@ public class SwaggerConfiguration {
         AuthorizationScope authorizationScope = new AuthorizationScope("global", "accessEverything");
         AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
         authorizationScopes[0] = authorizationScope;
-        return List.of(new SecurityReference("Authorization", authorizationScopes));
+        return List.of(new SecurityReference(AUTHORIZATION, authorizationScopes));
     }
 
     @Bean

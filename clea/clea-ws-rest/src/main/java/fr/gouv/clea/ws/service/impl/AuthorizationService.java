@@ -1,5 +1,6 @@
 package fr.gouv.clea.ws.service.impl;
 
+import fr.gouv.clea.ws.exception.CleaForbiddenException;
 import fr.gouv.clea.ws.exception.CleaUnauthorizedException;
 import fr.gouv.clea.ws.service.IAuthorizationService;
 import io.jsonwebtoken.Jwts;
@@ -30,11 +31,11 @@ public class AuthorizationService implements IAuthorizationService {
         this.robertJwtPublicKey = robertJwtPublicKey;
     }
 
-    public boolean checkAuthorization(String jwtToken) throws CleaUnauthorizedException {
+    public boolean checkAuthorization(String jwtToken) throws CleaForbiddenException {
         if (this.checkAuthorization) {
             if (jwtToken == null) {
                 log.warn("Missing Authorisation header!");
-                throw new CleaUnauthorizedException("Missing Authorisation header!");
+                throw new CleaUnauthorizedException();
             }
             jwtToken = jwtToken.replace("Bearer ", "");
             this.verifyJWT(jwtToken);
@@ -42,7 +43,7 @@ public class AuthorizationService implements IAuthorizationService {
         return true;
     }
 
-    private void verifyJWT(String token) throws CleaUnauthorizedException {
+    private void verifyJWT(String token) throws CleaForbiddenException {
         PublicKey jwtPublicKey;
         try {
             byte[] encoded = Decoders.BASE64.decode(this.robertJwtPublicKey);
@@ -52,7 +53,7 @@ public class AuthorizationService implements IAuthorizationService {
             Jwts.parserBuilder().setSigningKey(jwtPublicKey).build().parseClaimsJws(token);
         } catch (Exception e) {
             log.warn("Failed to verify JWT token!", e);
-            throw new CleaUnauthorizedException();
+            throw new CleaForbiddenException();
         }
     }
 }

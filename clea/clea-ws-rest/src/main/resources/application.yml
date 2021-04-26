@@ -1,37 +1,11 @@
-controller:
-  path:
-    prefix: /api/clea
-server:
-  port: 8088
-
-# Available endpoints for the monitoring
-management:
-  endpoints:
-    web:
-      exposure:
-        include: ${CLEA_SERVER_MONITORING_ENDPOINTS:health,metrics}
-
-clea:
-  conf:
-    duplicateScanThresholdInSeconds: 10800
-    retentionDurationInDays: 14
-    security:
-      report:
-        checkAuthorization: true # secured by default
-        robertJwtPublicKey: ${CLEA_SECURITY_JWT_KEY:TODO}
+# contains only static configurations that are not added to consul
 
 logging:
   level:
-    fr.gouv.clea.ws: INFO
+    fr.gouv.clea.consumer: INFO
 
 spring:
   kafka:
-    bootstrap-servers: "${KAFKA_URL:localhost:9092}"
-    consumer:
-      group-id: ${KAFKA_GROUPID:group1}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: fr.gouv.clea.ws.utils.KafkaSerializer
-    template:
-      default-topic: ${KAFKA_TOPIC:cleaQrCodes}
-

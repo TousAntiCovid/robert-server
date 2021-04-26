@@ -5,14 +5,15 @@ import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
 import fr.gouv.clea.consumer.utils.MessageFormatter;
 import fr.inria.clea.lsp.CleaEciesEncoder;
-import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
+import fr.inria.clea.lsp.exception.CleaEncryptionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,8 +34,7 @@ public class DecodedVisitService implements IDecodedVisitService {
             LocationSpecificPartDecoder decoder,
             CleaEciesEncoder cleaEciesEncoder,
             @Value("${clea.conf.driftBetweenDeviceAndOfficialTimeInSecs}") int driftBetweenDeviceAndOfficialTimeInSecs,
-            @Value("${clea.conf.cleaClockDriftInSecs}") int cleaClockDriftInSecs
-    ) {
+            @Value("${clea.conf.cleaClockDriftInSecs}") int cleaClockDriftInSecs) {
         this.decoder = decoder;
         this.cleaEciesEncoder = cleaEciesEncoder;
         this.driftBetweenDeviceAndOfficialTimeInSecs = driftBetweenDeviceAndOfficialTimeInSecs;
@@ -54,7 +54,7 @@ public class DecodedVisitService implements IDecodedVisitService {
     }
 
     private Optional<Visit> verify(Visit visit) {
-        if (!this.isFresh(visit)) {
+        if (this.isDrifting(visit)) {
             log.warn("drift check failed for [locationTemporaryPublicId: {}, qrCodeScanTime: {}]", MessageFormatter.truncateUUID(visit.getStringLocationTemporaryPublicId()), visit.getQrCodeScanTime());
             return Optional.empty();
         } else if (!this.hasValidTemporaryLocationPublicId(visit)) {
@@ -74,14 +74,13 @@ public class DecodedVisitService implements IDecodedVisitService {
         }
     }
 
-    private boolean isFresh(Visit visit) {
-        return true;
-        /*
+    private boolean isDrifting(Visit visit) {
         double qrCodeRenewalInterval = (visit.getQrCodeRenewalIntervalExponentCompact() == 0x1F)
                 ? 0 : Math.pow(2, visit.getQrCodeRenewalIntervalExponentCompact());
-        if (qrCodeRenewalInterval == 0)
-            return true;
-        return Math.abs(TimeUtils.ntpTimestampFromInstant(visit.getQrCodeScanTime()) - visit.getQrCodeValidityStartTime()) < (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
-         */
+        if (qrCodeRenewalInterval == 0) {
+            return false;
+        }
+        return Duration.between(visit.getQrCodeScanTime(), visit.getQrCodeValidityStartTime()).abs().toSeconds() 
+                > (qrCodeRenewalInterval + driftBetweenDeviceAndOfficialTimeInSecs + cleaClockDriftInSecs);
     }
 }

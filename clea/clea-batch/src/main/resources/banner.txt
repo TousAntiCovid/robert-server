@@ -1,0 +1,12 @@
+   ___ _              ___       _      _    
+  / __| |___ __ _ ___| _ ) __ _| |_ __| |_  
+ | (__| / -_) _` |___| _ \/ _` |  _/ _| ' \ 
+  \___|_\___\__,_|   |___/\__,_|\__\__|_||_|
+                                            
+${application.title}:${application.version}
+    Commit: @git.commit.id.describe-short@  (@git.commit.message.short@)
+    Author: @git.commit.user.name@ <@git.commit.user.email@>
+    Date  : @git.commit.time@
+    Powered-by   : Spring-Boot ${spring-boot.formatted-version}
+    Compiled with: Java @java.version@ @java.vm.version@
+    Run with     : Java ${java.version} ${java.vm.version}

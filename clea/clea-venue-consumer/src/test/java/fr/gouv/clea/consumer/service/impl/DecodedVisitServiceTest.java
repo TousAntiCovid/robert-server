@@ -4,18 +4,18 @@ import fr.gouv.clea.consumer.model.DecodedVisit;
 import fr.gouv.clea.consumer.model.Visit;
 import fr.gouv.clea.consumer.service.IDecodedVisitService;
 import fr.inria.clea.lsp.CleaEciesEncoder;
-import fr.inria.clea.lsp.CleaEncodingException;
-import fr.inria.clea.lsp.CleaEncryptionException;
 import fr.inria.clea.lsp.EncryptedLocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPart;
 import fr.inria.clea.lsp.LocationSpecificPartDecoder;
-import fr.inria.clea.lsp.utils.TimeUtils;
+import fr.inria.clea.lsp.exception.CleaEncodingException;
+import fr.inria.clea.lsp.exception.CleaEncryptionException;
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,14 +31,21 @@ class DecodedVisitServiceTest {
     private final int driftBetweenDeviceAndOfficialTimeInSecs = 300;
     private final int cleaClockDriftInSecs = 300;
     private final IDecodedVisitService decodedVisitService = new DecodedVisitService(decoder, cleaEciesEncoder, driftBetweenDeviceAndOfficialTimeInSecs, cleaClockDriftInSecs);
+    private Instant now;
+    private UUID uuid;
+    private byte[] locationTemporarySecretKey;
+
+    @BeforeEach
+    void init() {
+        now = Instant.now();
+        uuid = UUID.randomUUID();
+        locationTemporarySecretKey = RandomUtils.nextBytes(20);
+    }
 
     @Test
     @DisplayName("check with max CRIexp for LSP")
     void maxCRIexp() throws CleaEncryptionException, CleaEncodingException {
         int CRIexp = 0x1F; // qrCodeRenewalInterval = 0
-        Instant now = Instant.now();
-        UUID uuid = UUID.randomUUID();
-        byte[] locationTemporarySecretKey = RandomUtils.nextBytes(20);
 
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
@@ -55,9 +62,7 @@ class DecodedVisitServiceTest {
         Optional<Visit> optional = decodedVisitService.decryptAndValidate(
                 new DecodedVisit(
                         now,
-                        EncryptedLocationSpecificPart.builder()
-                                .locationTemporaryPublicId(uuid)
-                                .build(),
+                        EncryptedLocationSpecificPart.builder().locationTemporaryPublicId(uuid).build(),
                         RandomUtils.nextBoolean()
                 )
         );
@@ -65,22 +70,17 @@ class DecodedVisitServiceTest {
         assertThat(optional).isPresent();
     }
 
-    @Disabled
     @Test
     @DisplayName("check with drifting LSP")
-    void drift() throws CleaEncryptionException, CleaEncodingException {
+    void testDrifting() throws CleaEncryptionException, CleaEncodingException {
         int CRIexp = 10; // qrCodeRenewalInterval=2^10(=1024). 1024+300+300=1624
-        Instant now = Instant.now();
-        long qrCodeValidityStartTime = TimeUtils.currentNtpTime() + 2000;
-        UUID uuid = UUID.randomUUID();
-        byte[] locationTemporarySecretKey = RandomUtils.nextBytes(20);
+        Instant qrCodeValidityStartTime = now.truncatedTo(ChronoUnit.SECONDS).plus(2000, ChronoUnit.SECONDS);
 
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
                         LocationSpecificPart.builder()
-                                .qrCodeValidityStartTime(0)
                                 .qrCodeRenewalIntervalExponentCompact(CRIexp)
-                                // .qrCodeValidityStartTime(qrCodeValidityStartTime)
+                                .qrCodeValidityStartTime(qrCodeValidityStartTime)
                                 .locationTemporaryPublicId(uuid)
                                 .locationTemporarySecretKey(locationTemporarySecretKey)
                                 .build()
@@ -92,9 +92,7 @@ class DecodedVisitServiceTest {
         Optional<Visit> optional = decodedVisitService.decryptAndValidate(
                 new DecodedVisit(
                         now,
-                        EncryptedLocationSpecificPart.builder()
-                                .locationTemporaryPublicId(uuid)
-                                .build(),
+                        EncryptedLocationSpecificPart.builder().locationTemporaryPublicId(uuid).build(),
                         RandomUtils.nextBoolean()
                 )
         );
@@ -103,16 +101,45 @@ class DecodedVisitServiceTest {
     }
 
     @Test
-    @DisplayName("check with non valid temporaryLocationPublicId")
-    void nonValidTemporaryLocationPublicId() throws CleaEncryptionException, CleaEncodingException {
-        Instant now = Instant.now();
-        UUID uuid = UUID.randomUUID();
-        UUID _uuid = UUID.randomUUID();
-        byte[] locationTemporarySecretKey = RandomUtils.nextBytes(20);
+    @DisplayName("check with non drifting LSP")
+    void testNonDrifting() throws CleaEncryptionException, CleaEncodingException {
+        int CRIexp = 10; // qrCodeRenewalInterval=2^10(=1024). 1024+300+300=1624
+        Instant qrCodeValidityStartTime = Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(1600, ChronoUnit.SECONDS);
 
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
                         LocationSpecificPart.builder()
+                                .qrCodeRenewalIntervalExponentCompact(CRIexp)
+                                .qrCodeValidityStartTime(qrCodeValidityStartTime)
+                                .locationTemporaryPublicId(uuid)
+                                .locationTemporarySecretKey(locationTemporarySecretKey)
+                                .build()
+                );
+
+        when(cleaEciesEncoder.computeLocationTemporaryPublicId(locationTemporarySecretKey))
+                .thenReturn(uuid);
+
+        Optional<Visit> optional = decodedVisitService.decryptAndValidate(
+                new DecodedVisit(
+                        now,
+                        EncryptedLocationSpecificPart.builder().locationTemporaryPublicId(uuid).build(),
+                        RandomUtils.nextBoolean()
+                )
+        );
+
+        assertThat(optional).isPresent();
+    }
+
+    @Test
+    @DisplayName("check with non valid temporaryLocationPublicId")
+    void nonValidTemporaryLocationPublicId() throws CleaEncryptionException, CleaEncodingException {
+        int qrCodeRenewalIntervalExponent = 0x1F;
+        UUID _uuid = UUID.randomUUID();
+
+        when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
+                .thenReturn(
+                        LocationSpecificPart.builder()
+                                .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponent)
                                 .locationTemporaryPublicId(uuid)
                                 .locationTemporarySecretKey(locationTemporarySecretKey)
                                 .build()
@@ -124,9 +151,7 @@ class DecodedVisitServiceTest {
         Optional<Visit> optional = decodedVisitService.decryptAndValidate(
                 new DecodedVisit(
                         now,
-                        EncryptedLocationSpecificPart.builder()
-                                .locationTemporaryPublicId(uuid)
-                                .build(),
+                        EncryptedLocationSpecificPart.builder().locationTemporaryPublicId(uuid).build(),
                         RandomUtils.nextBoolean()
                 )
         );
@@ -138,8 +163,6 @@ class DecodedVisitServiceTest {
     @DisplayName("check with CleaEncryptionException when verifying temporaryLocationPublicId")
     void cleaEncryptionExceptionForTLId() throws CleaEncryptionException, CleaEncodingException {
         Instant now = Instant.now();
-        UUID uuid = UUID.randomUUID();
-        byte[] locationTemporarySecretKey = RandomUtils.nextBytes(20);
 
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenReturn(
@@ -155,9 +178,7 @@ class DecodedVisitServiceTest {
         Optional<Visit> optional = decodedVisitService.decryptAndValidate(
                 new DecodedVisit(
                         now,
-                        EncryptedLocationSpecificPart.builder()
-                                .locationTemporaryPublicId(uuid)
-                                .build(),
+                        EncryptedLocationSpecificPart.builder().locationTemporaryPublicId(uuid).build(),
                         RandomUtils.nextBoolean()
                 )
         );
@@ -168,10 +189,6 @@ class DecodedVisitServiceTest {
     @Test
     @DisplayName("check with CleaEncryptionException when decrypting")
     void cleaEncryptionException() throws CleaEncryptionException, CleaEncodingException {
-        Instant now = Instant.now();
-        UUID uuid = UUID.randomUUID();
-        byte[] locationTemporarySecretKey = RandomUtils.nextBytes(20);
-
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenThrow(new CleaEncryptionException(""));
 
@@ -181,9 +198,7 @@ class DecodedVisitServiceTest {
         Optional<Visit> optional = decodedVisitService.decryptAndValidate(
                 new DecodedVisit(
                         now,
-                        EncryptedLocationSpecificPart.builder()
-                                .locationTemporaryPublicId(uuid)
-                                .build(),
+                        EncryptedLocationSpecificPart.builder().locationTemporaryPublicId(uuid).build(),
                         RandomUtils.nextBoolean()
                 )
         );
@@ -194,10 +209,6 @@ class DecodedVisitServiceTest {
     @Test
     @DisplayName("check with CleaEncodingException when decrypting")
     void cleaEncodingException() throws CleaEncryptionException, CleaEncodingException {
-        Instant now = Instant.now();
-        UUID uuid = UUID.randomUUID();
-        byte[] locationTemporarySecretKey = RandomUtils.nextBytes(20);
-
         when(decoder.decrypt(any(EncryptedLocationSpecificPart.class)))
                 .thenThrow(new CleaEncodingException(""));
 
@@ -207,9 +218,7 @@ class DecodedVisitServiceTest {
         Optional<Visit> optional = decodedVisitService.decryptAndValidate(
                 new DecodedVisit(
                         now,
-                        EncryptedLocationSpecificPart.builder()
-                                .locationTemporaryPublicId(uuid)
-                                .build(),
+                        EncryptedLocationSpecificPart.builder().locationTemporaryPublicId(uuid).build(),
                         RandomUtils.nextBoolean()
                 )
         );

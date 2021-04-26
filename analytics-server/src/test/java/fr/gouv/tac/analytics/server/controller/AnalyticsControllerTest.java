@@ -1,20 +1,20 @@
 package fr.gouv.tac.analytics.server.controller;
 
-import fr.gouv.tac.analytics.server.controller.mapper.AnalyticsMapper;
+import javax.validation.Validator;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.tac.analytics.server.service.AnalyticsService;
-import fr.gouv.tac.analytics.server.controller.vo.AnalyticsVo;
-import fr.gouv.tac.analytics.server.model.kafka.Analytics;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import java.util.Optional;
 
 @ExtendWith(SpringExtension.class)
 public class AnalyticsControllerTest {
@@ -23,24 +23,28 @@ public class AnalyticsControllerTest {
     private AnalyticsService analyticsService;
 
     @Mock
-    private AnalyticsMapper analyticsMapper;
+    private ObjectMapper objectMapper;
+
+    @Mock
+    private Validator validator;
+
 
     @InjectMocks
     private AnalyticsController analyticsController;
 
     @Test
-    public void shouldCreateAnalytics() {
+    public void shouldCreateAnalytics() throws JsonProcessingException {
 
-        final AnalyticsVo analyticsVo = new AnalyticsVo();
-        final Optional<Analytics> analytics = Optional.of(new Analytics());
+        final String analyticsAsString = "";
 
-        Mockito.when(analyticsMapper.map(analyticsVo)).thenReturn(analytics);
-
-        final ResponseEntity<Void> result = analyticsController.addAnalytics(analyticsVo);
+        final ResponseEntity<Void> result = analyticsController.addAnalytics(analyticsAsString);
 
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        Mockito.verify(analyticsService).createAnalytics(analytics.get());
+        Mockito.verify(analyticsService).createAnalytics(analyticsAsString);
     }
+
+
+    //TODO ==> ADD TEST IN CASE VALIDATION ERROR ==> RAISING EXCEPTION
 }
