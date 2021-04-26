@@ -8,7 +8,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @Setter
 @ToString

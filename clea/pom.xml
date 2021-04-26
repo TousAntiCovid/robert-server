@@ -20,7 +20,7 @@
 
     <groupId>fr.gouv.clea</groupId>
     <artifactId>clea-server</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>clea-server</name>
     <packaging>pom</packaging>
     <description>Tous Anti-Covid Cluster Exposure Verification (Clea) server project</description>
@@ -31,13 +31,14 @@
         <module>clea-batch</module>
         <module>clea-client</module>
         <module>clea-qr-simulator</module>
+        <module>clea-scoring-conf</module>
     </modules>
 
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <clea-crypto.version>0.0.2-SNAPSHOT</clea-crypto.version>
+        <clea-crypto.version>1.0</clea-crypto.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <postgresql.version>42.2.19</postgresql.version>
         <spring-cloud.version>2020.0.1</spring-cloud.version>

@@ -1,0 +1,21 @@
+clea:
+    conf:
+        exposure:
+            enabled: "true"
+            rules:
+                # venueType, venueCat1, venueCat2, exposureTimeBackward, exposureTimeForward, exposureTimeStaffBackward, exposureTimeStaffForward
+                - '*,*,*,3,11,22,31'
+                - '1,1,1,3,13,23,33'
+                - '3,*,*,1,11,21,31'
+                - '1,2,3,2,12,22,32'
+        risk:
+            enabled: "true"
+            rules:
+                # venueType, venueCat1, venueCat2, clusterThresholdBackward, clusterThresholdForward, riskLevelBackward, riskLevelForward
+                - '*,*,*,3,1,3.0,2.0'
+                - '1,1,1,3,1,3.0,2.0'
+                - '1,2,3,3,1,3.0,2.0'
+                - '3,*,*,3,1,3.0,2.0'
+                - '3,1,*,3,1,3.0,2.0'
+                - '3,*,2,3,1,3.0,2.0'
+                - '3,1,2,3,1,3.0,2.0'
