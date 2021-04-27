@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <logger name="org.springframework" level="OFF"/>
+
+    <!-- LOG everything at INFO level -->
+    <root level="info">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- at TRACE level -->
+    <logger name="trace" level="trace">
+    </logger>
+
+    <!-- at WARN level -->
+    <logger name="warn" level="warn">
+    </logger>
+
+    <!-- at ERROR level -->
+    <logger name="error" level="error">
+    </logger>
+
+</configuration>

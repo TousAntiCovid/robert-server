@@ -1,0 +1,42 @@
+#! /bin/bash
+
+SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+SCRIPTNAME=`basename $0`
+OPTIONS="-p $SCRIPTNAME -f $SCRIPTPATH/docker-compose.yml"
+
+# IP of the host (bridge)
+export EXTERNAL_IP=$(docker network inspect bridge --format='{{(index .IPAM.Config 0).Gateway}}')
+
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+  restart)
+    shift
+    docker-compose $OPTIONS kill $*
+    docker-compose $OPTIONS rm -f $*
+    docker-compose $OPTIONS up -d $*
+    exit 
+    ;;
+
+  psql)
+    shift
+    docker-compose $OPTIONS exec postgres psql -U postgres -d cleadb "$@"
+    exit
+    ;;
+
+  flyway)
+    shift
+    docker-compose $OPTIONS exec flyway flyway $@
+    exit
+    ;;
+
+  *)
+    break
+    ;;
+esac
+done
+
+docker-compose $OPTIONS $*
+
+
