@@ -36,8 +36,7 @@ public class CryptoAESGCM extends CryptoAES {
             this.getDecryptCypher().init(Cipher.DECRYPT_MODE, this.getSecretKey(), this.algorithmParameterSpec);
             return super.decrypt(toDecrypt);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RobertServerCryptoException(e.getMessage());
+            throw new RobertServerCryptoException(e);
         }
     }
 }

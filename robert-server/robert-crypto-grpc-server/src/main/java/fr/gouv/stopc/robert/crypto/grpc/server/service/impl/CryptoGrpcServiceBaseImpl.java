@@ -183,8 +183,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             responseObserver.onCompleted();
         } catch (RobertServerCryptoException e) {
             String errorMessage = "Unhandled exception while creating registration";
-            log.warn(errorMessage);
-            //throw new RobertServerCryptoInternalErrorException(errorMessage);
+            log.warn(errorMessage, e);
             responseObserver.onNext(CreateRegistrationResponse.newBuilder()
                     .setError(ErrorMessage.newBuilder()
                             .setCode(500)
@@ -356,7 +355,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             }
         } catch (RobertServerCryptoException e) {
             String errorMessage = "Could not decrypt ECC";
-            log.warn(errorMessage);
+            log.warn(errorMessage, e);
             responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
                     .setError(ErrorMessage.newBuilder()
                             .setCode(400)
@@ -372,7 +371,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             EbidContent ebidContent = decryptEBIDWithTimeReceived(request.getEbid().toByteArray(), request.getTimeReceived());
 
             if (Objects.isNull(ebidContent)) {
-                String errorMessage = "Could not decrypt EBID";
+                String errorMessage = "Could not decrypt EBID because the server key was not found";
                 responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
                         .setError(ErrorMessage.newBuilder()
                                 .setCode(400)
@@ -386,7 +385,8 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             idA = ebidContent.getIdA();
             epochId = ebidContent.getEpochId();
         } catch (RobertServerCryptoException e) {
-            String errorMessage = "Could not decrypt EBID";
+            String errorMessage = "Could not decrypt EBID due to internal error";
+            log.error(errorMessage, e);
             responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
                     .setError(ErrorMessage.newBuilder()
                             .setCode(500)
@@ -431,7 +431,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             }
         } catch (RobertServerCryptoException e) {
             String errorMessage = "Could not validate MAC";
-            log.warn(errorMessage);
+            log.warn(errorMessage, e);
             responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
                     .setIdA(ByteString.copyFrom(idA))
                     .setError(ErrorMessage.newBuilder()
@@ -544,7 +544,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             }
         } catch (RobertServerCryptoException e) {
             String message = "Error validating authenticated request";
-            log.error(message);
+            log.error(message, e);
             return Optional.of(AuthRequestValidationResult.builder()
                     .error(ErrorMessage.newBuilder()
                             .setCode(500)
@@ -631,11 +631,12 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         int ebidEpochId = getEpochIdFromDecryptedEBID(decryptedEbid);
 
         if (authRequestEpoch != ebidEpochId) {
-            log.warn("Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = {} vs auth request epoch = {}", ebidEpochId, authRequestEpoch);
+            log.info("Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = {} vs auth request epoch = {}", ebidEpochId, authRequestEpoch);
 
             if(enableEpochOverlapping && (Math.abs(authRequestEpoch - ebidEpochId) == 1)) {
                 return EbidContent.builder().epochId(ebidEpochId).idA(idA).build();
             } else if (ksAdjustment && !mustCheckWithPreviousDayKey) {
+                log.warn("Retry to decrypt EBID with previous day key");
                 return decryptEBIDAndCheckEpoch(
                         ebid,
                         authRequestEpoch,
@@ -684,6 +685,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                 return decryptEBIDAndCheckEpoch(ebid, authRequestEpoch + 1, false, false,  false, AdjacentEpochMatchEnum.NONE);
             case NONE:
             default:
+                log.warn("Epochs do not match for authRequestEpoch = {} and adjacentEpochMatchEnum = {}", authRequestEpoch, adjacentEpochMatchEnum);
                 return null;
         }
     }
@@ -816,7 +818,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     tupleGenerator.stop();
                     ephemeralTuples.addAll(tuplesForDay);
                 } catch (RobertServerCryptoException e) {
-                    log.warn("Error generating tuples for day {}", i);
+                    log.warn("Error generating tuples for day {}", i, e);
                     //return Optional.empty();
                 }
             } else {
@@ -841,7 +843,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             }
             return Optional.empty();
         } catch (JsonProcessingException | RobertServerCryptoException e) {
-            log.warn("Error serializing tuples to encrypted JSON");
+            log.warn("Error serializing tuples to encrypted JSON", e);
             return Optional.empty();
         }
     }

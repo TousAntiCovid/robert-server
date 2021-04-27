@@ -57,7 +57,7 @@ public class TupleGenerator {
                             ).call();
             } catch (RobertServerCryptoException e) {
 
-                log.error("Error when generating tuples");
+                log.error("Error when generating tuples", e);
                 return null;
             }
 //            return null;

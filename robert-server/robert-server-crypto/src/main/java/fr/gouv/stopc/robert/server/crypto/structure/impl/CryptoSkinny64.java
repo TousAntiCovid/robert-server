@@ -58,7 +58,7 @@ public class CryptoSkinny64 extends CryptoCipherStructureAbstract {
 		try {
 			cipher.decrypt(output, cipherText, ks);
 		} catch (Exception e) {
-            throw new RobertServerCryptoException(e.getMessage());
+            throw new RobertServerCryptoException(e);
         }
 		return output;
 	}
@@ -74,7 +74,7 @@ public class CryptoSkinny64 extends CryptoCipherStructureAbstract {
 		try {
 			cipher.encrypt(output, plainText, ks);
 		} catch (Exception e) {
-            throw new RobertServerCryptoException(e.getMessage());
+            throw new RobertServerCryptoException(e);
         }
 		return output;
 	}
