@@ -10,8 +10,8 @@ services:
       FLYWAY_USER: postgres
       FLYWAY_PASSWORD: password
     volumes:
-      - ../flyway/conf/:/flyway/conf
-      - ../flyway/sql/:/flyway/sql
+      - ../conf/:/flyway/conf
+      - ../sql/:/flyway/sql
     depends_on:
       - postgres
 
@@ -23,7 +23,7 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - ./docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d
-      - ../flyway/sql/:/manual:ro
+      - ../sql/:/manual:ro
     ports:
       - "5432:5432"
     
