@@ -32,8 +32,7 @@ public class CryptoAESECB extends CryptoAES {
         try {
             this.getDecryptCypher().init(Cipher.DECRYPT_MODE, this.getSecretKey());
         } catch (InvalidKeyException e ) {
-            log.error(e.getMessage(), e);
-            throw new RobertServerCryptoException(e.getMessage());
+            throw new RobertServerCryptoException(e);
         }
         return super.decrypt(cipherText);
     }

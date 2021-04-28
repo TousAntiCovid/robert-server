@@ -164,7 +164,6 @@ public class CryptoServiceImpl implements CryptoService {
     protected void assertLength(String propertyName, int size, byte... bytes) throws RobertServerCryptoException {
         if (bytes == null || bytes.length != size / 8) {
             String message = String.format("%s should be %s-bits sized but is %s-bits sized", propertyName, size, bytes == null ? 0 : bytes.length * 8);
-            log.error(message);
             throw new RobertServerCryptoException(message);
         }
     }
