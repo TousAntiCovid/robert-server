@@ -1,5 +1,6 @@
 spring:
   datasource:
+    plateform: h2
     driverClassName: org.h2.Driver
     url: jdbc:h2:mem:clea
     username: clea
@@ -7,9 +8,9 @@ spring:
     test-on-borrow: true
     validation-query: SELECT 1
 
+    initialization-mode: always
+    schema: schema-h2.sql
+
   batch:
     # Manage it's batch metadata tables
     initialize-schema: always
-
-  flyway:
-    enabled: "true"
