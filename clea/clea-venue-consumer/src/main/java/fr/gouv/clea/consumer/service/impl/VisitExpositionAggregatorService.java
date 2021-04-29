@@ -22,6 +22,7 @@ import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
 import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j
@@ -44,6 +45,7 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
         this.statService = statService;
     }
 
+    @Transactional
     @Override
     public void updateExposureCount(Visit visit) {
         Instant periodStartAsInstant = this.periodStartFromCompressedPeriodStartAsInstant(visit.getCompressedPeriodStartTime());
