@@ -20,7 +20,7 @@ If the database server does not have a fixed IP address, you have to find it, by
 sudo docker inspect compose_postgreswarning_1 | grep IPAddress
 ```
 
-Copy the database.properties file from `https://gitlab.inria.fr/stemcovid19/tac-server/backend-server/-/tree/develop/tac-warning/tac-warning-test-data-seeder/src/main/resources` to the current directory and update the following properties:
+Copy the database.properties file from `https://gitlab.inria.fr/stopcovid19/backend-server/-/tree/develop/tac-warning/tac-warning-test-data-seeder/src/main/resources` to the current directory and update the following properties:
   - spring.datasource.url
   - spring.datasource.username
   - spring.datasource.password
