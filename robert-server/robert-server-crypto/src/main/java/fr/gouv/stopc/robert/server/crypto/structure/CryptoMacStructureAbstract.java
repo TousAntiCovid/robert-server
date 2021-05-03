@@ -20,8 +20,7 @@ public abstract class CryptoMacStructureAbstract implements ICryptoStructure, IM
 
             return this.getMac().doFinal(payloadToEncrypt);
         } catch (InvalidKeyException | IllegalStateException e) {
-            log.error(e.getMessage(), e);
-            throw new RobertServerCryptoException(e.getMessage());
+            throw new RobertServerCryptoException(e);
         }
     }
 

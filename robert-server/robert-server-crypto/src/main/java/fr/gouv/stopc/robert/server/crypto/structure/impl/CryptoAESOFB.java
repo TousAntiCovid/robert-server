@@ -35,8 +35,7 @@ public class CryptoAESOFB extends CryptoAES {
         try {
             this.getDecryptCypher().init(Cipher.DECRYPT_MODE, this.getSecretKey(), this.algorithmParameterSpec);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e ) {
-            log.error(e.getMessage(), e);
-            throw new RobertServerCryptoException(e.getMessage());
+            throw new RobertServerCryptoException(e);
         }
         return super.decrypt(cipherText);
     }

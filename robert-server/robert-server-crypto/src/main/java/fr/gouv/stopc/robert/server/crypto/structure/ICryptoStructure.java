@@ -35,7 +35,7 @@ public interface ICryptoStructure<C extends Cipher, M extends Mac> {
      * @throws RobertServerCryptoException
      */
     default byte[] decrypt(byte[] arguments) throws RobertServerCryptoException {
-        throw new RobertServerCryptoException();
+        throw new RobertServerCryptoException("This method must be implemented");
     }
 
 }

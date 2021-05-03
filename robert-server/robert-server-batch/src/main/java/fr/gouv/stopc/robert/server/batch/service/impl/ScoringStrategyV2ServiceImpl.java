@@ -118,7 +118,7 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
 			String errorMessage = String.format(
 					"Skip contact because some hello messages are coming too late: %s sec after first message",
 					tf - t0);
-			log.error(errorMessage);
+			log.warn(errorMessage);
 
 			// Initializing values to 0.0 will ignore this problematic contact in the overall summation
 			return ScoringResult.builder()

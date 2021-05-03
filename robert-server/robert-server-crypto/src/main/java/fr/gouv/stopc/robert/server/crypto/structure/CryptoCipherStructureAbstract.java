@@ -45,8 +45,7 @@ public abstract class CryptoCipherStructureAbstract implements ICryptoStructure,
 
             return cipherText;
         } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
-            log.error(e.getMessage(), e);
-            throw new RobertServerCryptoException(e.getMessage());
+            throw new RobertServerCryptoException(e);
         }
     }
 
@@ -55,8 +54,7 @@ public abstract class CryptoCipherStructureAbstract implements ICryptoStructure,
         try {
             return this.getDecryptCypher().doFinal(cipherText);
         } catch (IllegalBlockSizeException | BadPaddingException e) {
-            log.error(e.getMessage(), e);
-            throw new RobertServerCryptoException(e.getMessage());
+            throw new RobertServerCryptoException(e);
         }
     }
 

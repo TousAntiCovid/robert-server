@@ -252,6 +252,7 @@ class CryptoServiceGrpcServerTest {
                     atLeastOneError = true;
                 }
             } catch (RobertServerCryptoException e) {
+                log.error("An error occurred during EBID decription", e);
                 atLeastOneError = true;
             }
         }

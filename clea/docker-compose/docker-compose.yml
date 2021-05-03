@@ -49,6 +49,21 @@ services:
       - clea-network
     restart: "no"
 
+  clea-dbmigration:
+    image: flyway/flyway:7.8
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://postgres/cleadb
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: password
+    volumes:
+      - ../clea-dbmigration/conf:/flyway/conf
+      - ../clea-dbmigration/sql:/flyway/sql
+    depends_on:
+      - postgres
+    networks:
+      - clea-network
+    restart: "no"
 
   kafka:
     image: "wurstmeister/kafka:latest"

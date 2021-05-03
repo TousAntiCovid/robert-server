@@ -1,0 +1,29 @@
+version: '3'
+services:
+  flyway:
+    image: flyway/flyway:7.8
+    #command: migrate
+    #command: migrate -baselineOnMigrate=true -baselineVersion=4
+    entrypoint: [ "tail","-f","/dev/null"]
+    environment:
+      FLYWAY_URL: jdbc:postgresql://postgres/cleadb
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: password
+    volumes:
+      - ../conf/:/flyway/conf
+      - ../sql/:/flyway/sql
+    depends_on:
+      - postgres
+
+  postgres:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_DB: cleadb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d
+      - ../sql/:/manual:ro
+    ports:
+      - "5432:5432"
+    

@@ -8,14 +8,10 @@ spring:
     password: password
     test-on-borrow: true
     validation-query: SELECT 1
-  #jpa:
-  #  hibernate.ddl-auto: create_update
+
   batch:
     # Manage it's batch metadata tables 
-    initialize-schema: always
+    initialize-schema: never
     #prevent job to launch on startup
     job:
       enabled: false
-  flyway:
-    enabled: "false"
- 
