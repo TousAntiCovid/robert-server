@@ -1,17 +1,5 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
@@ -22,7 +10,18 @@ import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeConfiguration;
 import fr.gouv.clea.scoring.configuration.exposure.ExposureTimeRule;
 import fr.inria.clea.lsp.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -55,8 +54,8 @@ public class VisitExpositionAggregatorService implements IVisitExpositionAggrega
             return;
         }
         int exposureTime = this.getExposureTime(visit.getVenueType(), visit.getVenueCategory1(), visit.getVenueCategory2(), visit.isStaff(), visit.isBackward());
-        int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime + 1);
-        int lastExposedSlot = Math.min(this.getPeriodMaxSlot(visit.getPeriodDuration()), (int) scanTimeSlot + exposureTime - 1);
+        int firstExposedSlot = Math.max(0, (int) scanTimeSlot - exposureTime);
+        int lastExposedSlot = Math.min(this.getPeriodMaxSlot(visit.getPeriodDuration()), (int) scanTimeSlot + exposureTime);
 
         List<ExposedVisitEntity> exposedVisits = repository.findAllByLocationTemporaryPublicIdAndPeriodStart(visit.getLocationTemporaryPublicId(), periodStartFromCompressedPeriodStart(visit.getCompressedPeriodStartTime()));
 
