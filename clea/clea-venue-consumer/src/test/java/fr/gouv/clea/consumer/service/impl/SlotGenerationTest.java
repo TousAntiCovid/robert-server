@@ -1,11 +1,5 @@
 package fr.gouv.clea.consumer.service.impl;
 
-import static java.time.temporal.ChronoUnit.DAYS;
-import static java.time.temporal.ChronoUnit.HOURS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
 import fr.gouv.clea.consumer.configuration.VenueConsumerConfiguration;
 import fr.gouv.clea.consumer.model.ExposedVisitEntity;
 import fr.gouv.clea.consumer.model.Visit;
@@ -29,6 +23,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.HOURS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 @ExtendWith(MockitoExtension.class)
 public class SlotGenerationTest {
 
@@ -36,12 +36,12 @@ public class SlotGenerationTest {
     static final Instant TODAY_AT_8AM = TODAY_AT_MIDNIGHT.plus(8, HOURS);
 
     final VenueConsumerConfiguration consumerConfig = VenueConsumerConfiguration.builder().build();
-    
+
     final ExposureTimeConfiguration exposureTimeConfig = new ExposureTimeConfiguration();
-    
+
     @Mock
     IExposedVisitRepository repository;
-    
+
     @Mock
     IStatService statService;
 
@@ -54,15 +54,15 @@ public class SlotGenerationTest {
     void init() {
         exposureTimeConfig.setRules(List.of(
                 ExposureTimeRule.builder()
-                    .venueType(ScoringRule.WILDCARD_VALUE)
-                    .venueCategory1(ScoringRule.WILDCARD_VALUE)
-                    .venueCategory2(ScoringRule.WILDCARD_VALUE)
-                    .exposureTimeBackward(3)
-                    .exposureTimeForward(3)
-                    .exposureTimeStaffBackward(3)
-                    .exposureTimeStaffForward(3)
-                    .build()
-                ));
+                        .venueType(ScoringRule.WILDCARD_VALUE)
+                        .venueCategory1(ScoringRule.WILDCARD_VALUE)
+                        .venueCategory2(ScoringRule.WILDCARD_VALUE)
+                        .exposureTimeBackward(3)
+                        .exposureTimeForward(3)
+                        .exposureTimeStaffBackward(3)
+                        .exposureTimeStaffForward(3)
+                        .build()
+        ));
         consumerConfig.setDurationUnitInSeconds(Duration.ofMinutes(30).toSeconds());
         service = new VisitExpositionAggregatorService(repository, consumerConfig, exposureTimeConfig, statService);
     }
@@ -75,20 +75,20 @@ public class SlotGenerationTest {
                 .qrCodeValidityStartTime(TODAY_AT_MIDNIGHT)
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
-        
+
         service.updateExposureCount(visit);
 
         /*  => scanTimeSlot = 8*2 = 16
-         *  => slots to generate = 2 before + scanTimeSlot + 2 after = 5
-         *  => firstExposedSlot = 16-2 = 14
-         *  => lastExposedSlot = 16+2 = 18
+         *  => slots to generate = 3 before + scanTimeSlot + 3 after = 7
+         *  => firstExposedSlot = 16-3 = 13
+         *  => lastExposedSlot = 16+3 = 19
          */
         verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
         assertThat(exposedVisitEntitiesCaptor.getValue())
                 .extracting(ExposedVisitEntity::getTimeSlot)
-                .containsExactly(14, 15, 16, 17, 18);
+                .containsExactly(13, 14, 15, 16, 17, 18, 19);
     }
-    
+
     @Test
     void a_period_duration_of_1_hour_generates_2_slots() {
         Visit visit = defaultVisit().toBuilder()
@@ -97,7 +97,7 @@ public class SlotGenerationTest {
                 .qrCodeValidityStartTime(TODAY_AT_8AM)
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
-        
+
         service.updateExposureCount(visit);
 
         /*  => scanTimeSlot = 0
@@ -119,19 +119,19 @@ public class SlotGenerationTest {
                 .qrCodeValidityStartTime(TODAY_AT_8AM)
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
-        
+
         service.updateExposureCount(visit);
 
         /*
          *  => scanTimeSlot = 0
-         *  => slots to generate = scanTimeSlot + 2 after = 3
+         *  => slots to generate = scanTimeSlot + 3 after = 4
          *  => firstExposedSlot = 0
-         *  => lastExposedSlot = 0+3-1 = 2
+         *  => lastExposedSlot = 0+4-1 = 3
          */
         verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
         assertThat(exposedVisitEntitiesCaptor.getValue())
                 .extracting(ExposedVisitEntity::getTimeSlot)
-                .containsExactly(0, 1, 2);
+                .containsExactly(0, 1, 2, 3);
     }
 
     @Test
@@ -142,7 +142,7 @@ public class SlotGenerationTest {
                 .qrCodeValidityStartTime(TODAY_AT_MIDNIGHT)
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
-        
+
         service.updateExposureCount(visit);
 
         verify(repository, never()).saveAll(exposedVisitEntitiesCaptor.capture());
@@ -159,21 +159,21 @@ public class SlotGenerationTest {
                 .qrCodeRenewalIntervalExponentCompact(14) // 2^14 seconds = 4.55 hours 
                 .qrCodeScanTime(TODAY_AT_8AM)
                 .build();
-        
+
         service.updateExposureCount(visit);
 
         /*
          *  => scanTimeSlot = 8
-         *  => slots to generate = scanTimeSlot + 2 after + 2 before
-         *  => firstExposedSlot = 10
-         *  => lastExposedSlot = 6
+         *  => slots to generate = scanTimeSlot + 3 after + 3 before
+         *  => firstExposedSlot = 11
+         *  => lastExposedSlot = 5
          */
         verify(repository).saveAll(exposedVisitEntitiesCaptor.capture());
         assertThat(exposedVisitEntitiesCaptor.getValue())
                 .extracting(ExposedVisitEntity::getTimeSlot)
-                .containsExactly(6, 7, 8, 9, 10);
+                .containsExactly(5, 6, 7, 8, 9, 10, 11);
     }
-    
+
     protected Visit defaultVisit() {
         return Visit.builder()
                 .version(0)
@@ -193,7 +193,7 @@ public class SlotGenerationTest {
                 .isBackward(true)
                 .build();
     }
-    
+
     protected int getCompressedPeriodStartTime(Instant instant) {
         return (int) (TimeUtils.ntpTimestampFromInstant(instant) / 3600);
     }
