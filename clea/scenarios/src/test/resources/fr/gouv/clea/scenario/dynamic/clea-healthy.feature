@@ -46,11 +46,13 @@ Feature: Several healthy visitors visit different places
   Scenario: Multiple scans of the qrcode by same visitor within the dupScanThreshold of 3 hours
     Given "Heather" recorded a visit to "La fontaine aux perles" at "12:30, 2 days ago"
     Given "Heather" recorded a visit to "La fontaine aux perles" at "12:47, 2 days ago"
+    When "Heather" declares himself sick
     When Cluster detection triggered
-    Then Exposure status request for "Heather" should include only 1 visit(s) to "La fontaine aux perles" at "2 days ago"
+    Then "Heather" has 1 rejected visit
 
   Scenario: Multiple scans of the qrcode by same visitor outside of the dupScanThreshold of 3 hours
     Given "Heather" recorded a visit to "La fontaine aux perles" at "12:30, 2 days ago"
     Given "Heather" recorded a visit to "La fontaine aux perles" at "19:47, 2 days ago"
+    When "Heather" declares himself sick
     When Cluster detection triggered
-    Then Exposure status request for "Heather" should include only 2 visit(s) to "La fontaine aux perles" at "2 days ago"
+    Then "Heather" has 0 rejected visit

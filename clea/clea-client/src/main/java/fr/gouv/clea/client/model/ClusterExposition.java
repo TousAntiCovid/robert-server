@@ -21,7 +21,7 @@ public class ClusterExposition {
     private long startTimeAsNtpTimestamp;
     
     @JsonProperty("d")
-    private int nbDurationUnit;
+    private int durationInSeconds;
 
     @JsonProperty("r")
     private float risk;
@@ -29,6 +29,7 @@ public class ClusterExposition {
     public boolean isInExposition(Instant instant) throws IOException {
         Instant startTime = Instant.ofEpochSecond(startTimeAsNtpTimestamp - ScannedQrCode.SECONDS_FROM_01_01_1900_TO_01_01_1970);
         long delta = Duration.between(startTime, instant).toSeconds();
-        return (delta >= 0 && delta <= nbDurationUnit * CleaClientConfiguration.getInstance().getDurationUnitInSeconds());
+        return (delta >= 0 && delta <= durationInSeconds);
+
     }
 }
