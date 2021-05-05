@@ -19,8 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ScenarioAppContext {
-    private final Map<String, Integer> venueCategories1;
-    private final Map<String, Integer> venueTypes;
+    private final Map<String,Map<String, ConfPair>> venueTypeCategories1;
     private Map<String, CleaClient> visitors;
     private Map<String, LocationQrCodeGenerator> locations;
     private Map<String, LocationQrCodeGenerator> staffLocations;
@@ -35,10 +34,15 @@ public class ScenarioAppContext {
         locations = new HashMap<String, LocationQrCodeGenerator>(10);
         staffLocations = new HashMap<String, LocationQrCodeGenerator>(10);
         this.initializeKeys();
-        venueTypes = new HashMap<String, Integer>(Map.of("restaurant", venueTypeCounter));
-        venueTypeCounter++;
-        venueCategories1 = new HashMap<String, Integer>(Map.of("NUMBER_1", venueCategoryCounter));
-        venueCategoryCounter++;
+        venueTypeCategories1 = new HashMap<>();
+        Map<String, ConfPair> currConf =  new HashMap<String, ConfPair>();
+        venueTypeCategories1.put("restauration", currConf);
+        currConf.put("restaurant rapide", new ConfPair(1,1));
+        currConf =  new HashMap<String, ConfPair>();
+        venueTypeCategories1.put("etablissements sportifs", currConf);
+        currConf.put("sport indoor", new ConfPair(4,2));
+        currConf.put("salle de sport", new ConfPair(4,1));
+        log.debug("{}",venueTypeCategories1);
     }
 
     public void initializeKeys() throws Exception {
@@ -68,14 +72,7 @@ public class ScenarioAppContext {
     }
 
     public void updateOrCreateRiskConfig(String vtype, String vcategory1, Integer vcategory2, Integer backwardThreshold, Integer backwardExposureTime, Float backwardRisk, Integer forwardThreshold, Integer forwardExposureTime, Float forwardRisk){
-        if(!venueTypes.containsKey(vtype)){
-            venueTypes.put(vtype, venueTypeCounter);
-            venueTypeCounter++;
-        }
-        if(!venueCategories1.containsKey(vcategory1)){
-            venueCategories1.put(vcategory1, venueCategoryCounter);
-            venueCategoryCounter++;
-        }
+      //TODO: Create new ConfPair or just check if it exists?
     }
 
     public CleaClient getOrCreateVisitor(String name) {
@@ -104,12 +101,17 @@ public class ScenarioAppContext {
     String venueCategory1, Integer venueCategory2,Integer qrCodeRenewalIntervalExponentCompact, Integer periodDuration) throws CleaCryptoException {
         log.info("Creating location " + locationName);
         final String permanentLocationSecretKey = Hex.toHexString(UUID.randomUUID().toString().getBytes());
+        ConfPair conf;
+        if(venueTypeCategories1.containsKey(venueType) && venueTypeCategories1.get(venueType).containsKey(venueCategory1))
+          conf = venueTypeCategories1.get(venueType).get(venueCategory1);
+        else
+          conf = new ConfPair(9,9);
         LocationQrCodeGenerator location = LocationQrCodeGenerator.builder()
                                                                 .countryCode(250) // France Country Code
                                                                 .staff(false)
-                                                                .venueCategory1(venueCategories1.get(venueCategory1))
+                                                                .venueType(conf.type)
+                                                                .venueCategory1(conf.category)
                                                                 .venueCategory2(venueCategory2)
-                                                                .venueType(venueTypes.get(venueType))
                                                                 .periodDuration(periodDuration)
                                                                 .periodStartTime(periodStartTime)
                                                                 .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponentCompact)
@@ -120,9 +122,9 @@ public class ScenarioAppContext {
         LocationQrCodeGenerator staffLocation = LocationQrCodeGenerator.builder()
                                                                 .countryCode(250) // France Country Code
                                                                 .staff(true)
-                                                                .venueCategory1(venueCategories1.get(venueCategory1))
+                                                                .venueType(conf.type)
+                                                                .venueCategory1(conf.category)
                                                                 .venueCategory2(venueCategory2)
-                                                                .venueType(venueTypes.get(venueType))
                                                                 .periodDuration(periodDuration)
                                                                 .periodStartTime(periodStartTime)
                                                                 .qrCodeRenewalIntervalExponentCompact(qrCodeRenewalIntervalExponentCompact)
@@ -174,5 +176,15 @@ public class ScenarioAppContext {
     public void triggerNewClusterIdenfication() throws IOException, InterruptedException {
         CleaClient client = visitors.values().stream().findAny().orElse(new CleaClient(""));
         client.triggerNewClusterIdenfication();
+    }
+
+    private class ConfPair{
+      public int type;
+      public int category;
+
+      public ConfPair(int type, int category){
+        this.type = type;
+        this.category = category;
+      }
     }
 }
