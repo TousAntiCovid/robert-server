@@ -185,9 +185,9 @@ Feature: Several healthy visitors visit different places
 
 
   Scenario: Nominal case
-    Given "Hugo" recorded a visit to "Chez McDonald's" at "12:30, 4 days ago" 
-    Given "Henry" recorded a visit to "Chez McDonald's" at "11:30, 4 days ago" 
-    Given "Heather" recorded a visit to "Chez McDonald's" at "13:35, 4 days ago" 
+    Given "Hugo" recorded a visit to "Chez McDonald's" at "11:59, 4 days ago" 
+    Given "Henry" recorded a visit to "Chez McDonald's" at "13:29, 4 days ago" 
+    Given "Heather" recorded a visit to "Chez McDonald's" at "12:30, 4 days ago" 
   
     When "Heather" declares himself sick with a "5 days ago" pivot date
     When Cluster detection triggered
@@ -196,7 +196,7 @@ Feature: Several healthy visitors visit different places
 
     Then "Heather" sends his visits
     Then Exposure status should reports "Hugo" as not being at risk
-    Then Exposure status should reports "Henry" as not being at risk 
+    Then Exposure status should reports "Henry" as being at risk of 2.0 
 
     Scenario: Duplicated QR code 
     Given "Hugo" recorded a visit to "Chez McDonald's" at "12:30, 6 days ago"
