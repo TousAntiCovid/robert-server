@@ -5,9 +5,6 @@ FROM adoptopenjdk:11-jre-hotspot
 
 WORKDIR /opt/robert-server-batch/
 
-COPY src/main/resources/application.properties ./
-#TODO: fix using dev profile and use test profile instead
-COPY src/main/resources/application-dev.properties ./
 COPY src/main/docker/logback.xml logback.xml
 COPY target/robert-server-batch*.jar app.jar
 COPY src/main/docker/entrypoint.sh /entrypoint.sh
