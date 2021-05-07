@@ -14,7 +14,7 @@ Si le critère précédent n'est pas respecté, aucune situation mis à part une
 la MR.
 
 Le relecteur peut apporter des suggestions sur tout ce qu'il pense qui est améliorable. Mais si ce n'est pas
-important/bloquant et que l'auteur peut l'ignorer il préfixe son commentaire par `???`.
+important/bloquant et que l'auteur peut l'ignorer il préfixe son commentaire par `:bulb:` :bulb: .
 
 La MR est d'une taille raisonnable pour être relue rapidement.
 
@@ -23,7 +23,7 @@ La MR est d'une taille raisonnable pour être relue rapidement.
 [ ] les tests sont efficaces : ils remontent des messages clairs, ils sont en echec si les inputs sont incorrects, ils
 survivent à un certain degré de refactoring
 [ ] l'analyse statique du code est conforme aux critères de qualité (TODO)
-[ ] les messages de commit sont conformes
+[ ] les messages de commit sont conformes et suivent la convention [angular](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit-message-header)
 
 ### Qui fait la review ?
 
@@ -52,12 +52,19 @@ Tous les commentaires sont résolus.
 Celui qui a ouvert un commentaire doit approuver la réponse qui y a été apportée.  
 L'auteur d'un commentaire est responsable de le marquer comme résolu.
 
+Si le commentaire est un :bulb: il peut etre fermé par l'auteur de la MR pour l'ignorer.
+
 ### Comment communiquer les nouvelles MR ?
 
 L'auteur partage le lien vers la merge request dans le canal dédié dans Mattermost.
 
 Les relecteurs se manifestent en régissant au message (✋ ✔ ❔ ...) pour signaler au reste de l'équipe qu'ils
-interviennent. Cela permet :
+interviennent :
+
+- :eyes: je regarde
+- :timer: intéressé mais j'ai pas le temps pour le moment
+
+Cela permet :
 
 - de rassurer l'auteur en l'avertissant que quelqu'un prend en charge la relecture
 - de communiquer de manière passive au reste de l'équipe qui se charge de la relecture
