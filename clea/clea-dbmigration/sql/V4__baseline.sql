@@ -1,2 +1,0 @@
--- Rebase flyway to v4 (v1 to v3 are already applied manually in INT, PPROD and PROD)
--- Next scripts to apply with flyway will be V5 and upper.
