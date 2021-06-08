@@ -33,6 +33,7 @@
 		<module>robert-crypto-grpc-server</module>
 		<module>robert-crypto-grpc-server-messaging</module>
 		<module>robert-crypto-grpc-server-storage</module>
+		<module>robert-server-mobile-app-emulator</module>
 	</modules>
 
 	<properties>
