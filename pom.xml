@@ -20,7 +20,7 @@
 
     <modules>
         <module>robert-server</module>
-	<module>robert-push-notif-server</module>
+        <module>robert-push-notif-server</module>
         <module>submission-code-server</module>
     </modules>
 
@@ -34,5 +34,27 @@
             <url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
         </snapshotRepository>
     </distributionManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.rudikershaw.gitbuildhook</groupId>
+                <artifactId>git-build-hook-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <gitConfig>
+                        <core.hooksPath>.etc/git-hooks</core.hooksPath>
+                    </gitConfig>
+                </configuration>
+                <executions>
+                    <execution>
+                        <inherited>false</inherited>
+                        <goals>
+                            <goal>configure</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
