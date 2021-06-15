@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>fr.gouv.stopc</groupId>
 		<artifactId>robert-push-notif-server</artifactId>
-		<version>1.1.0-SNAPSHOT</version>
+		<version>1.1.0</version>
 	</parent>
 
 	<artifactId>robert-push-notif-server-batch</artifactId>
@@ -97,6 +97,12 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
 			<scope>test</scope>
 		</dependency>
 
