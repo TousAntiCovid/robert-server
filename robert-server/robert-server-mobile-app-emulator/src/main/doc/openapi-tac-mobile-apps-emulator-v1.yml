@@ -1,0 +1,197 @@
+openapi: 3.0.0
+info:
+  description: "#TOUS-ANTI-COVID, Mobile application emulator"
+  version: 1.0.0
+  title: "tac mobile apps emulator"
+  termsOfService: https://gitlab.inria.fr/stopcovid19/wp3-robert-server/analytics-server
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags: []
+paths:
+  /register:
+    post:
+      tags: ["emulator"]
+      summary: Register an mobile application
+      description: |-
+        Request the registration of a mobile application. Nothing is returned
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterOrderRequest"
+
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Bad request, something is incorrect in the request
+        "500":
+          description: An unexpected error occurs
+  /unregister:
+    post:
+      tags: ["emulator"]
+      summary: Unregister an mobile application
+      description: |-
+        Request the unregistration of a mobile application. Nothing is returned
+      operationId: unregister
+      parameters:
+        - name: "captchaId"
+          in: "query"
+          required: true
+          schema:
+            type : "string"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Bad request, something is incorrect in the request
+        "500":
+          description: An unexpected error occurs
+  /status:
+    post:
+      tags: ["emulator"]
+      summary: A mobile application call the status endpoint exposed by Robert Server
+      description: |-
+        Request the call of the status endpoint exposed by Robert Server. Nothing is returned
+      operationId: status
+      parameters:
+        - name: "captchaId"
+          in: "query"
+          required: true
+          schema:
+            type : "string"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Bad request, something is incorrect in the request
+        "500":
+          description: An unexpected error occurs
+  /deleteExposureHistory:
+    post:
+      tags: ["emulator"]
+      summary: A mobile application call Robert backend in order to delete its exposure history
+      description: |-
+        A mobile application call Robert backend in order to delete its exposure history. Nothing is returned
+      operationId: deleteExposureHistory
+      parameters:
+        - name: "captchaId"
+          in: "query"
+          required: true
+          schema:
+            type : "string"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Bad request, something is incorrect in the request
+        "500":
+          description: An unexpected error occurs
+  /report:
+    post:
+      tags: ["emulator"]
+      summary: A mobile application is sending a report to Robert backend
+      description: |-
+        A mobile application is sending a report to Robert backend. Nothing is returned
+      operationId: report
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportOrderRequest"
+
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Bad request, something is incorrect in the request
+        "500":
+          description: An unexpected error occurs
+  /helloMessageExchanges:
+    post:
+      tags: ["emulator"]
+      summary: A mobile application is sharing hello messages with other mobile applications
+      description: |-
+        A mobile application is sharing hello messages with other mobile applications. Nothing is returned
+        Prerequisities : mobile applications must be previously registered in the emulator application.
+      operationId: startHelloMessageExchanges
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HelloMessageExchangesOrderRequest"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Bad request, something is incorrect in the request
+        "500":
+          description: An unexpected error occurs
+    delete:
+      tags: ["emulator"]
+      summary: A mobile application call Robert backend in order to delete its exposure history
+      description: |-
+        A mobile application call Robert backend in order to delete its exposure history. Nothing is returned
+      operationId: stopHelloMessageExchanges
+      parameters:
+        - name: "captchaId"
+          in: "query"
+          required: true
+          schema:
+            type : "string"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Bad request, something is incorrect in the request
+        "500":
+          description: An unexpected error occurs
+components:
+  schemas:
+    RegisterOrderRequest:
+      type: object
+      properties:
+        captcha:
+          type: string
+          description: the value of the captcha.
+        captchaId:
+          type: string
+          description: the unique identifier of the captcha (it is used as the unique id of a mobile application).
+      required:
+        - captcha
+        - captchaId
+    ReportOrderRequest:
+      type: object
+      properties:
+        captchaId:
+          type: string
+          description: the unique identifier of the application.
+        qrCode:
+          type: string
+          description: the qrCode generated by the submission code server
+      required:
+        - captchaId
+        - qrCode
+    HelloMessageExchangesOrderRequest:
+      type: object
+      properties:
+        captchaId:
+          type: string
+          description: the unique identifier of the mobile application.
+        frequencyInSeconds:
+          type: integer
+          minimum: 1
+          description: Hello messages are exchanged every `frequencyInSeconds` between mobile application defined by `captchaId` and `captchaIdOfOtherApps`
+        captchaIdOfOtherApps:
+          type: array
+          description : array of other identifiers of mobile application
+          items:
+            type : string
+      required:
+        - captchaId
+        - frequencyInSeconds
+        - captchaIdOfOtherApps
