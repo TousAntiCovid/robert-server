@@ -38,7 +38,7 @@ do
     if test "$remote_oid" = "$zero"
     then
       # New branch, examine all commits starting from develop at 9035b29
-      range="9035b29..$local_oid"
+      range="b0fccb90..$local_oid"
     else
       # Update to existing branch, examine new commits
       range="$remote_oid..$local_oid"
