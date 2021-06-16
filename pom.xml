@@ -20,7 +20,6 @@
 
     <modules>
         <module>robert-server</module>
-        <module>robert-push-notif-server</module>
         <module>submission-code-server</module>
     </modules>
 
