@@ -104,11 +104,12 @@ public class RegisterControllerWsRestTest {
 
         this.currentEpoch = this.getCurrentEpoch();
 
-        // TODO: review this or find a better wail to validate epochid
-        // Sanity check: this test will fail one year after the start of the service
+        // TODO: review this or find a better way to validate epochid
+        // Sanity check: this test will fail twenty years after the start of the service
         // (used to prevent epoch calculation errors)
-        // FIXME: investigation is underway to find out why epochIds > 4*24*365 can cause trouble TAC-872
-        //assertTrue(this.currentEpoch <= 4*24*365);
+        // Robert protocol uses 24 bits to store epochId. It means we can have 2^24 = 16777216 epochs.
+        // We use 4 epochs per hour and it can last for hundred of years.
+        assertTrue(this.currentEpoch <= 4*24*365*20);
     }
 
     @Test
