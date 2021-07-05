@@ -117,7 +117,7 @@
 						<phase>generate-sources</phase>
 						<configuration>
 
-							<inputSpec>${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi.yaml</inputSpec>
+							<inputSpec>${project.basedir}/../robert-server-ws-rest/src/main/resources/api-robert-server-v1.yaml</inputSpec>
 							<output>target/generated-sources/robert-server</output>
 							<generatorName>java</generatorName>
 							<apiPackage>fr.gouv.tac.mobile.emulator.robert.api</apiPackage>
