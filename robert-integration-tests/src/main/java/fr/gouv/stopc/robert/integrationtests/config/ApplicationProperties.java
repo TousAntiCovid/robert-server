@@ -1,17 +1,21 @@
 package fr.gouv.stopc.robert.integrationtests.config;
 
-import lombok.Value;
+import lombok.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 
-@Value
 @Validated
 @ConstructorBinding
 @ConfigurationProperties("robert")
+@ToString
+@EqualsAndHashCode
+@AllArgsConstructor
 public class ApplicationProperties {
+
     @Valid
-    RobertWsRestProperties wsRest;
+    @Getter
+    private final RobertWsRestProperties wsRest;
 }

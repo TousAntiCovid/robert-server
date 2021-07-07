@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @RequiredArgsConstructor
 public class BeansConfiguration {
 
-//    private final ApplicationProperties applicationProperties;
+    private final ApplicationProperties applicationProperties;
 
     @Bean
     public ObjectMapper objectMapper() {
