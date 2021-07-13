@@ -1,0 +1,4 @@
+robert:
+  ws-rest:
+    base-url: http://localhost:8086/api/v5
+  crypto-public-key: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEwpDgJdE0aRop5uibRYqCOLK7CnZ+DAyQhGrVD6XYXC/5LeNtLwqSxPAVcswqtiZyPs68h2Y3KEQn2y2bRxRzQg=="
