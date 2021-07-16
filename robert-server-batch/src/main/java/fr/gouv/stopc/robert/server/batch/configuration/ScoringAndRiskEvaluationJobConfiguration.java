@@ -1,6 +1,8 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,10 +35,12 @@ public class ScoringAndRiskEvaluationJobConfiguration {
     public Job scoreAndProcessRisks(Step contactProcessingStep, Step purgeOldEpochExpositionsStep,
             Step populateContactIdMappingStep, Step populateRegistrationIdMappingForEpochPurgeStep,
             Step populateIdMappingWithScoredRegistrationStep, Step processRegistrationRiskStep,
-            Step populateIdMappingForRegistrationRiskResetStep, Step registrationRiskResetStep) {
+            Step populateIdMappingForRegistrationRiskResetStep, Step registrationRiskResetStep,
+            JobExecutionListener logHelloMessageCountToProcessJobExecutionListener) {
 
         log.info("Building contact batch (Old expositions purge, Contact scoring, Risk computation)");
         return this.jobBuilderFactory.get("SCORE_CONTACTS_AND_COMPUTE_RISK")
+                .listener(logHelloMessageCountToProcessJobExecutionListener)
                 .start(populateRegistrationIdMappingForEpochPurgeStep)
                 .next(purgeOldEpochExpositionsStep)
                 .next(populateIdMappingForRegistrationRiskResetStep)

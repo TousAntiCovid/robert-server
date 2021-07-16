@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -16,6 +17,8 @@ import java.util.Random;
 import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 
+import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
+import nl.altindag.log.LogCaptor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -482,7 +485,32 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     }
 
+    @Test
+    public void can_log_how_many_hello_messages_will_processed() throws Exception {
+        final var tpstStart = this.serverConfigurationService.getServiceTimeStart();
+        final var currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
+        final var currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);
 
+        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+
+        // contacts 1 and 2 have 1 hello message each
+        // contact 3 has 2 hello messages
+        final var contact1 = this.generateContact(currentEpochId, currentTime);
+        final var contact2 = this.generateContact(currentEpochId, currentTime);
+        final var contact3 = this.generateContact(currentEpochId, currentTime);
+        contact3.setMessageDetails(List.of(
+                contact3.getMessageDetails().get(0),
+                contact3.getMessageDetails().get(0)
+        ));
+        this.contactService.saveContacts(Arrays.asList(contact1, contact2, contact3));
+
+        try (final var logCaptor = LogCaptor.forClass(LogHelloMessageCountToProcessJobExecutionListener.class)) {
+            jobLauncherTestUtils.launchJob();
+
+            assertThat(logCaptor.getInfoLogs())
+                    .contains("4 hello messages waiting for process", "0 hello messages remaining after process");
+        }
+    }
 
     @Configuration
     @Import({ ScoringAndRiskEvaluationJobConfiguration.class })
