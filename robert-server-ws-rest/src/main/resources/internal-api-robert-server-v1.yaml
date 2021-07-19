@@ -1,0 +1,72 @@
+openapi: 3.0.0
+info:
+  description: "#STOPCOVID, Robert Proximity Tracing Client API"
+  version: 3.0.0
+  title: "#STOPCOVID, Robert Proximity Tracing"
+  termsOfService: https://github.com/ROBERT-proximity-tracing/
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /kpi:
+    get:
+      tags:
+        - KPI
+      summary: Get KPIs
+      description: >-
+        Get KPIs concerning input time range
+
+        NOTE: This API must be protected and used only by a trusted back-end server over a secure private connection.
+      operationId: kpi
+      parameters:
+        - name: fromDate
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: toDate
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returns the KPI list for date range
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KpisResponse"
+        "400":
+          description: bad request
+externalDocs:
+  description: Find out more about ROBERT
+  url: https://github.com/ROBERT-proximity-tracing/
+servers:
+  - url: http://localhost:8080/internal/api/v1
+components:
+  schemas:
+    KpisResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/Kpi"
+    Kpi:
+      type: object
+      properties:
+        date:
+          type: string
+        nbAlertedUsers:
+          type: number
+        nbExposedButNotAtRiskUsers:
+          type: number
+        nbInfectedUsersNotNotified:
+          type: number
+        nbNotifiedUsersScoredAgain:
+          type: number
+      required:
+        - date
+        - nbAlertedUsers
+        - nbExposedButNotAtRiskUsers
+        - nbInfectedUsersNotNotified
+        - nbNotifiedUsersScoredAgain
