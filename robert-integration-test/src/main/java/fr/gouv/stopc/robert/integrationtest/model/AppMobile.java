@@ -1,11 +1,9 @@
 package fr.gouv.stopc.robert.integrationtest.model;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-
 import fr.gouv.stopc.robert.integrationtest.enums.DigestSaltEnum;
-
 import fr.gouv.stopc.robert.integrationtest.exception.RobertServerCryptoException;
 import fr.gouv.stopc.robert.integrationtest.model.api.request.AuthentifiedRequest;
 import fr.gouv.stopc.robert.integrationtest.model.api.request.RegisterSuccessResponse;
@@ -18,19 +16,17 @@ import fr.gouv.stopc.robert.integrationtest.utils.crypto.CryptoHMACSHA256;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import com.fasterxml.jackson.core.type.TypeReference;
-
-import static fr.gouv.stopc.robert.integrationtest.utils.EcdhUtils.deriveKeysFromBackendPublicKey;
-import static fr.gouv.stopc.robert.integrationtest.utils.EcdhUtils.generateKeyPair;
 
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+
+import static fr.gouv.stopc.robert.integrationtest.utils.EcdhUtils.deriveKeysFromBackendPublicKey;
+import static fr.gouv.stopc.robert.integrationtest.utils.EcdhUtils.generateKeyPair;
 
 
 @Slf4j
@@ -105,22 +101,6 @@ public class AppMobile {
         updateTuples(registerData.getTuples());
     }
 
-    public void startHelloMessageExchanges(List<AppMobile> otherApps, Duration delayInMin) {
-        if (Objects.isNull(timer)) {
-            timer = new ExchangeHelloMessageTimer(String.format("App Mobile %s is receiving hello messages from following mobile applications [%s] every %s",
-                    this.captchaId, otherApps.stream().map(AppMobile::getCaptchaId).collect(Collectors.joining(",")), delayInMin.toString()));
-            timer.scheduleAtFixedRate(new HelloMessageExchangeTask(otherApps), 0, delayInMin.toMillis());
-        } else {
-            log.warn("A timer with context {} is already running on this application. Please stop it and start it again if needed.", timer.getFunctionalContext());
-        }
-    }
-
-    public void stopHelloMessageExchanges() {
-        timer.cancel();
-        timer.purge();
-        timer = null;
-    }
-
     private void generateKeyForTuples() throws RobertServerCryptoException {
         this.clientIdentifierBundleWithPublicKey = deriveKeysFromBackendPublicKey(Base64.getDecoder().decode(this.robertPublicKey), keyPair);
     }
@@ -191,30 +171,19 @@ public class AppMobile {
         return cryptoHMACSHA256S.encrypt(ByteUtils.addAll(prefix, argument));
     }
 
-    private class HelloMessageExchangeTask extends TimerTask {
+    public void exchangeEbIdWithRand(List<AppMobile> otherAppMobileList, long timeInMillis) {
 
-        private final List<AppMobile> appMobiles;
+        for (AppMobile otherAppMobile: otherAppMobileList) {
+            log.debug("exchange hello message between {} and {} mobile applications", this.captchaId, otherAppMobile.captchaId);
 
-        public HelloMessageExchangeTask(List<AppMobile> appMobiles) {
-            this.appMobiles = appMobiles;
+            HelloMessageDetail helloMessageDetail = generateHelloMessage(otherAppMobile,
+                    TimeUtils.convertUnixMillistoNtpSeconds(timeInMillis),
+                    ThreadLocalRandom.current().nextInt(-10,3));
+
+            saveHelloMessage(otherAppMobile.getCurrentTuple().getKey().getEcc(),
+                    otherAppMobile.getCurrentTuple().getKey().getEbid(),
+                    helloMessageDetail);
         }
-
-        public void run() {
-            appMobiles.forEach(AppMobile.this::exchangeEbIdWith);
-        }
-    }
-
-    private void exchangeEbIdWith(AppMobile otherAppMobile) {
-
-        log.debug("exchange hello message between {} and {} mobile applications", this.captchaId, otherAppMobile.captchaId);
-
-        HelloMessageDetail helloMessageDetail = generateHelloMessage(otherAppMobile,
-                TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis()),
-                ThreadLocalRandom.current().nextInt(-10,3));
-
-        saveHelloMessage(otherAppMobile.getCurrentTuple().getKey().getEcc(),
-                otherAppMobile.getCurrentTuple().getKey().getEbid(),
-                helloMessageDetail);
 
     }
 
@@ -232,6 +201,31 @@ public class AppMobile {
             newContact.addIdsItem(helloMessageDetail);
             contacts.add(newContact);
         }
+    }
+
+    public void generateHelloMessageDuring(AppMobile appMobile,
+                                           List<String> limitedAppMobileIds,
+                                           Map<String, AppMobile> appMobileMap,
+                                           Integer durationOfExchangeInMin) {
+        log.info("Generate hello message between {} and other AppMobile during {} min",
+                appMobile.getCaptchaId(),
+                durationOfExchangeInMin);
+
+        List<AppMobile> otherApps = limitedAppMobileIds.stream().map(appMobileMap::get)
+                .collect(Collectors.toList());
+
+        long initialTime = System.currentTimeMillis();
+        for (int i = 0; i < durationOfExchangeInMin; i++) {
+            // On ajoute une minute à la date d'échange
+            // NOTE : En théorie il faut à peu près 40 min de contact et 1 message par seconde
+            // Mais en configurant scoringThreshold = "0.0001"
+            // cela devrait déclencher le calcul comme "risque" dès le premier échange.
+            initialTime += (1*60*1000);
+
+            // On crée les helloMessages
+            this.exchangeEbIdWithRand(otherApps, initialTime);
+        }
+
     }
 
     private HelloMessageDetail generateHelloMessage(AppMobile appMobile, long timeAsNtpSeconds, int rssiCalibrated) {

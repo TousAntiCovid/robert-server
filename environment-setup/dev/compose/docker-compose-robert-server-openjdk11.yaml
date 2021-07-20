@@ -5,7 +5,7 @@ version: '3.5'
 services:
   robert-crypto-server:
     build:
-      context: ../../../robert-server/robert-crypto-grpc-server
+      context: ../../../../robert-server/robert-crypto-grpc-server
       dockerfile: ./src/main/docker/Dockerfile
     ports:
       - "9090:9090"
@@ -28,7 +28,25 @@ services:
     image: 'mongo:4.2.5'
     ports:
       - "27017:27017"
-  captcha:
+  robert-server-ws-rest:
+    image: registry.gitlab.inria.fr/stopcovid19/backend-server/robert-server-ws-rest:${ROBERT_SERVER_TAG}
+    container_name: robert-server-ws-rest
+    environment:
+      - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY}
+      - ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}
+      - ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}
+      - ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY=${ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}
+    ports:
+      - "8086:8086"
+    volumes:
+      - ${PWD}/robert-server-ws-rest-config:/work/config
+      - ${PWD}/logs:/logs
+      - ${PWD}/resources/CC.png:/tmp/CC.png
+    deploy:
+      restart_policy:
+        condition: on-failure
+    entrypoint: [ "java","-jar", "/app.jar", "--spring.config.location=file:/work/config/application.properties" ]
+  mock-captcha:
     image: mockserver/mockserver:mockserver-5.11.2
     command: -logLevel DEBUG -serverPort 8055
     ports:
@@ -37,3 +55,16 @@ services:
       - ./captcha-orange-server-config:/mock-expectation
     environment:
       - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
+  mock-submission-code-server:
+    image: mockserver/mockserver:mockserver-5.11.2
+    command: -logLevel DEBUG -serverPort 8087
+    ports:
+      - "8087:8087"
+    volumes:
+      - ./submission-code-server-ws-rest-config:/mock-expectation
+    environment:
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
+networks:
+  default:
+    external:
+      name: ${TAC_DOCKER_COMPOSE_NETWORK}

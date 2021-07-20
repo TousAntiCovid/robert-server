@@ -12,5 +12,33 @@
       "statusCode": 200,
       "body": "{\"result\":\"SUCCESS\"}"
     }
+  },
+  {
+    "id": "By default, calling the captcha endpoint of Orange Captcha return this result",
+    "httpRequest": {
+      "method": "POST",
+      "path": "/private/api/v1/captcha"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 200,
+      "body": "{\n    \"id\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\n    \"captchaId\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"\n}"
+    }
+  },
+  {
+    "id": "By default, calling the captcha/.*/image endpoint of Orange Captcha return this result",
+    "httpRequest": {
+      "method": "GET",
+      "path": "/private/api/v1/captcha/.*/image"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 200,
+      "body": "image.png"
+    }
   }
 ]
