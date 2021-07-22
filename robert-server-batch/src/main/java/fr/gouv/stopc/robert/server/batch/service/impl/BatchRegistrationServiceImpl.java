@@ -75,8 +75,9 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
                 .max( Comparator.comparing(EpochExposition::getEpochId) )
                 .ifPresent(lastContactEpoch -> {
                     long lastContactTimestamp = TimeUtils.getNtpSeconds(lastContactEpoch.getEpochId(), serviceTimeStart);
+                    long currentNtpInstant = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
                     long randomizedLastContactTimestamp = TimeUtils.dayTruncatedTimestamp(
-                            TimeUtils.getRandomizedDateNotInFuture(lastContactTimestamp) );
+                            TimeUtils.getRandomizedDateNotInFuture(lastContactTimestamp, currentNtpInstant) );
                     if (randomizedLastContactTimestamp > registration.getLastContactTimestamp()) {
                         log.debug("Last contact date is updating : last contact date from hello message : {}" +
                                 " - previous last contact date : {} ==> stored last contact date : {}  ",

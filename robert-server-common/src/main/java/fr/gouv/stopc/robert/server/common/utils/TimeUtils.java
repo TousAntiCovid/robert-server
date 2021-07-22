@@ -86,10 +86,10 @@ public final class TimeUtils {
     /**
      * Get a random date between J-1, J, J+1 (uniform distribution) assuming the randomized value can't be in future
      * @param ntpInstant the NTP timestamp representing to randomize
+     * @param currentNtpInstant the current NTP timestamp
      * @return a randomized NTP timestamp
      */
-    public static long getRandomizedDateNotInFuture(long ntpInstant) {
-        long currentNtpInstant = convertUnixMillistoNtpSeconds(System.currentTimeMillis());
+    public static long getRandomizedDateNotInFuture(long ntpInstant,  long currentNtpInstant) {
         long randomizedDate = randomizedDate(ntpInstant);
         return currentNtpInstant < randomizedDate ? currentNtpInstant : randomizedDate;
     }

@@ -2,7 +2,7 @@ package fr.gouv.stopc.robert.server.batch.service;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCHS_PER_DAY;;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -195,7 +195,7 @@ public class BatchRegistrationServiceTest {
         try (MockedStatic<TimeUtils> mockedTimeUtils = Mockito.mockStatic(TimeUtils.class)) {
             //mock the static methods
             mockedTimeUtils.when(()-> TimeUtils.getNtpSeconds(lastContactDateFromExposedEpoch, timeStart)).thenReturn(realLastContactDateFromExposedEpoch);
-            mockedTimeUtils.when(()-> TimeUtils.getRandomizedDateNotInFuture(realLastContactDateFromExposedEpoch)).thenReturn(randomizedLastContactDate);
+            mockedTimeUtils.when(()-> TimeUtils.getRandomizedDateNotInFuture(eq(realLastContactDateFromExposedEpoch), anyLong())).thenReturn(randomizedLastContactDate);
             mockedTimeUtils.when(()-> TimeUtils.dayTruncatedTimestamp(randomizedLastContactDate)).thenReturn(truncateTimestamp);
 
             //WHEN

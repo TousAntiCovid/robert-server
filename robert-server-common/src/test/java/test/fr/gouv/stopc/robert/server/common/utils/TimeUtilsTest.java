@@ -130,9 +130,10 @@ public class TimeUtilsTest {
 
         Instant instantInFuture = Instant.now().plus(5, ChronoUnit.DAYS);
         long ntpInstant = this.ntpTimestampFromInstant(instantInFuture);
+        long currentNtpInstant = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
 
         Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
-                .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant)))
+                .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant, currentNtpInstant)))
                 .collect(Collectors.toSet());
 
         assertThat(randomizedInstants.size()).isEqualTo(1);
@@ -145,9 +146,10 @@ public class TimeUtilsTest {
 
         Instant instantInPast = Instant.now().minus(10, ChronoUnit.DAYS).with(ChronoField.MILLI_OF_SECOND, 0);
         long ntpInstant = this.ntpTimestampFromInstant(instantInPast);
+        long currentNtpInstant = TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis());
 
         Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
-                .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant)))
+                .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant, currentNtpInstant)))
                 .collect(Collectors.toSet());
 
         assertThat(randomizedInstants).containsExactlyInAnyOrder(instantInPast.minus(1, ChronoUnit.DAYS), instantInPast, instantInPast.plus(1, ChronoUnit.DAYS));
