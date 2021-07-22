@@ -38,3 +38,6 @@ build/
 
 ### docker ###
 .env
+
+## cucumber ##
+cucumber-reports.html

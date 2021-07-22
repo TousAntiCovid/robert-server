@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
  
- <property  name="LOG_DIR" value="${ROBERT_SERVER_LOG_FILE_PATH:-/logs}" />
- <property  name="LOG_FILENAME" value="${ROBERT_SERVER_LOG_FILE_NAME:-robert-server-ws-rest}" />
- <property  name="ERROR_LOG_FILENAME" value="${ROBERT_SERVER_ERROR_LOG_FILE_NAME:-robert-server-ws-rest}.error" />
- 
+    <property  name="LOG_DIR" value="${ROBERT_SERVER_LOG_FILE_PATH:-/logs}" />
+    <property  name="LOG_FILENAME" value="${ROBERT_SERVER_LOG_FILE_NAME:-robert-server-ws-rest}" />
+    <property  name="ERROR_LOG_FILENAME" value="${ROBERT_SERVER_ERROR_LOG_FILE_NAME:-robert-server-ws-rest}.error" />
+
     <appender name="RollingFile"
         class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/${LOG_FILENAME}.log</file>

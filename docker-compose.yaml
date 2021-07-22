@@ -36,11 +36,9 @@ services:
       - ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}
       - ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}
       - ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY=${ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}
+      - SPRING_PROFILES_ACTIVE=docker
     ports:
       - "8086:8086"
-    volumes:
-      - ./environment-setup/dev/compose/robert-server-ws-rest-config:/work/config
-      - ./environment-setup/dev/compose/logs:/logs
     deploy:
       restart_policy:
         condition: on-failure
@@ -50,20 +48,18 @@ services:
     ports:
       - "8055:8055"
     volumes:
-      - ./environment-setup/dev/compose/captcha-orange-server-config:/mock-expectation
+      - ./docker-compose/mock-captcha-orange-server-config:/mock-expectation
     environment:
       - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
-    container_name: mock-captcha
   mock-submission-code-server:
     image: mockserver/mockserver:mockserver-5.11.2
     command: -logLevel DEBUG -serverPort 8087
     ports:
       - "8087:8087"
     volumes:
-      - ./environment-setup/dev/compose/submission-code-server-ws-rest-config:/mock-expectation
+      - ./docker-compose/mock-submission-code-server-ws-rest-config:/mock-expectation
     environment:
       - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
-    container_name: mock-submission-code-server
 networks:
   default:
     external:
