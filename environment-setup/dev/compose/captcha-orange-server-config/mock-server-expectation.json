@@ -24,14 +24,14 @@
         "Content-Type": ["application/json"]
       },
       "statusCode": 200,
-      "body": "{\n    \"id\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\n    \"captchaId\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"\n}"
+      "body": "{\"id\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"captchaId\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}"
     }
   },
   {
     "id": "By default, calling the captcha/.*/image endpoint of Orange Captcha return this result",
     "httpRequest": {
       "method": "GET",
-      "path": "/private/api/v1/captcha/.*/image"
+      "path": "/public/api/v1/captcha/.*"
     },
     "httpResponse": {
       "headers": {
