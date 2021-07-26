@@ -8,7 +8,6 @@ import fr.gouv.stopc.robert.integrationtest.exception.RobertServerCryptoExceptio
 import fr.gouv.stopc.robert.integrationtest.model.api.request.AuthentifiedRequest;
 import fr.gouv.stopc.robert.integrationtest.model.api.request.RegisterSuccessResponse;
 import fr.gouv.stopc.robert.integrationtest.model.api.response.ExposureStatusResponse;
-import fr.gouv.stopc.robert.integrationtest.utils.ExchangeHelloMessageTimer;
 import fr.gouv.stopc.robert.integrationtest.utils.common.ByteUtils;
 import fr.gouv.stopc.robert.integrationtest.utils.common.TimeUtils;
 import fr.gouv.stopc.robert.integrationtest.utils.crypto.CryptoAESGCM;
@@ -38,8 +37,6 @@ public class AppMobile {
     private final String robertPublicKey;
     private long timestart;
 
-    private ExchangeHelloMessageTimer timer;
-
     @Getter(AccessLevel.PRIVATE)
     List<Contact> contacts;
 
@@ -66,7 +63,7 @@ public class AppMobile {
         List<Contact> returnedContacts = new ArrayList<>(contacts);
         contacts.clear();
 
-        log.info("Contacts from Mobile App {} have been cleared", this.captchaId);
+        log.debug("Contacts from Mobile App {} have been cleared", this.captchaId);
         return returnedContacts;
     }
 
@@ -207,7 +204,7 @@ public class AppMobile {
                                            List<String> limitedAppMobileIds,
                                            Map<String, AppMobile> appMobileMap,
                                            Integer durationOfExchangeInMin) {
-        log.info("Generate hello message between {} and other AppMobile during {} min",
+        log.debug("Generate hello message between {} and other AppMobile during {} min",
                 appMobile.getCaptchaId(),
                 durationOfExchangeInMin);
 

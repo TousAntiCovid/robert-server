@@ -25,3 +25,19 @@ build:
         - "**/target/surefire-reports/TEST-*.xml"
         - "**/target/failsafe-reports/TEST-*.xml"
 
+integration-tests:
+  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-system-tests:latest
+  stage: integration-tests
+  script:
+    - currentContainer=$(basename $(cat /proc/1/cpuset))
+    - docker-compose up -d
+    - docker network connect robert-server_default $currentContainer
+    - echo "Waiting for robert-server-ws-rest component to be up..."
+    - until curl -s http://robert-server-ws-rest:8086/actuator/health | grep -q UP; do sleep 0.5; done;
+    - java -jar -Dspring.profiles.active=docker robert-integration-test/target/*-SNAPSHOT.jar
+    - docker network disconnect robert-server_default $currentContainer
+    - docker-compose down
+  artifacts:
+    paths:
+      - "$CI_PROJECT_DIR/cucumber-reports.html"
+    expire_in: 2 weeks

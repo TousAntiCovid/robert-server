@@ -28,17 +28,17 @@
     }
   },
   {
-    "id": "By default, calling the captcha/.*/image endpoint of Orange Captcha return this result",
+    "id": "By default, calling the captcha/.* endpoint of Orange Captcha return this result",
     "httpRequest": {
       "method": "GET",
-      "path": "/public/api/v1/captcha/.*"
+      "path": "/public/api/v1/captcha/.*.png"
     },
     "httpResponse": {
       "headers": {
-        "Content-Type": ["application/json"]
+        "Content-Type": ["image/png"]
       },
       "statusCode": 200,
-      "body": "image.png"
+      "body": ""
     }
   }
 ]

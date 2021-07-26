@@ -43,9 +43,9 @@ public class RobertWsService {
     }
 
     /**
-     * Demande un identifiant de challenge captcha.
-     * Appel l'url /api/v5/captcha
-     * @return String un identifiant de challenge captcha
+     * Request a captcha challenge ID.
+     * Call /api/v5/captcha
+     * @return String a captcha challenge identifier
      */
     public Response requestCaptchaChallengeId() {
         // Payload
@@ -60,10 +60,10 @@ public class RobertWsService {
     }
 
     /**
-     * Demande une image de challenge à résoudre correspondant à l'identifiant de challenge captchaId.
-     * Appel l'url /api/v5/captcha/<<captchaId>>/image
-     * @param captchaId Identifiant du challenge à récupérer
-     * @return Response L'image du captcha à résoudre
+     * Resuest a challenge image corresponding to the challenge identifier captchaId.
+     * Call /api/v5/captcha/<<captchaId>>/image
+     * @param captchaId Identifier of the challenge to retrieve
+     * @return Response The captcha image to solve
      */
     public Response requestCaptchaChallengeById(String captchaId) {
         final String captchaByIdUrl = this.applicationProperties.getWsRest()
@@ -72,10 +72,10 @@ public class RobertWsService {
     }
 
     /**
-     * Enregistre une application
-     * Appel l'url /api/register
-     * @param user Utilisateur
-     * @return Response Résultat de l'opération d'enregistrement
+     * Register an application.
+     * Call /api/register
+     * @param user User
+     * @return Response Result of the save operation
      */
     public RegisterSuccessResponse register(User user) {
         RegisterVo registerVo = new RegisterVo();
@@ -102,10 +102,10 @@ public class RobertWsService {
     }
 
     /**
-     * Reporte un contact entre l'application et une liste d'autres applications
-     * Appel l'url /api/report
-     * @param appMobile Objet simulant une application
-     * @return Response Résultat de l'opération de reporting
+     * Reports a contact between the application and a list of other applications.
+     * Call /api/report
+     * @param appMobile Object simulating an application
+     * @return Response Result of the reporting operation
      */
     public Response reportContactHistory(AppMobile appMobile) {
         final String reportUrl = this.applicationProperties.getWsRest()
@@ -124,5 +124,63 @@ public class RobertWsService {
 
         return res;
     }
+
+    /**
+     * Request an update of the risk status.
+     * Call /api/status
+     * @param exposureStatusRequest
+     * @return Response
+     */
+    public Response requestStatus(ExposureStatusRequest exposureStatusRequest) {
+        final String statusUrl = this.applicationProperties.getWsRest()
+                .getBaseUrl().toString().concat("/status");
+
+        Response res = given()
+                .contentType(ContentType.JSON)
+                .body(exposureStatusRequest)
+                .when()
+                .post(statusUrl);
+
+        return res;
+    }
+
+    /**
+     * Request the deletion of the risk exposure history.
+     * Call /api/deleteExposureHistory
+     * @param authentifiedRequest
+     * @return Response
+     */
+    public Response deleteExposureHistory(AuthentifiedRequest authentifiedRequest) {
+        final String statusUrl = this.applicationProperties.getWsRest()
+                .getBaseUrl().toString().concat("/deleteExposureHistory");
+
+        Response res = given()
+                .contentType(ContentType.JSON)
+                .body(authentifiedRequest)
+                .when()
+                .post(statusUrl);
+
+        return res;
+    }
+
+    /**
+     * Request the deletion of the application registration.
+     * Call /api/unregister
+     * @param unregisterRequest
+     * @return Response
+     */
+    public Response unregister(UnregisterRequest unregisterRequest) {
+        final String statusUrl = this.applicationProperties.getWsRest()
+                .getBaseUrl().toString().concat("/unregister");
+
+        Response res = given()
+                .contentType(ContentType.JSON)
+                .body(unregisterRequest)
+                .when()
+                .post(statusUrl);
+
+        return res;
+    }
+
 
 }
