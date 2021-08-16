@@ -10,7 +10,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -72,16 +71,22 @@ public class DeclarationServiceImpl implements DeclarationService {
         log.debug("Generating simple analytics token");
 
         try {
-            Date issuedAt = Date.from(ZonedDateTime.now().toInstant());
-            String jti = UUID.randomUUID().toString();
+            Date issuedAt = Date.from(ZonedDateTime.now()
+                    // TAC-1139 : All customers, in the same minute, will have the
+                    // same information in the token
+                    .withSecond(0).withNano(0)
+                    .toInstant());
             Date expiredAt = Date.from(
                     issuedAt.toInstant()
-                            .plus(configuration.getAnalyticsTokenLifeTime(), ChronoUnit.MINUTES));
+                            .plus(configuration.getAnalyticsTokenLifeTime(), ChronoUnit.MINUTES)
+                            // TAC-1139 : All customers, in the same minute, will have the
+                            // same information in the token
+                            // Add one minute : to have an expiration date in the future
+                            .plus(1, ChronoUnit.MINUTES));
 
             return Optional.of(
                     Jwts.builder()
                             .setHeaderParam("type", "JWT")
-                            .setId(jti)
                             .setIssuedAt(issuedAt)
                             .setExpiration(expiredAt)
                             .setIssuer("robert-server")
