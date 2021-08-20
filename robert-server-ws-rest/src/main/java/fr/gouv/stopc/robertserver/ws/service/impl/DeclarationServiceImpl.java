@@ -1,16 +1,18 @@
 package fr.gouv.stopc.robertserver.ws.service.impl;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
+
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -72,16 +74,21 @@ public class DeclarationServiceImpl implements DeclarationService {
         log.debug("Generating simple analytics token");
 
         try {
-            Date issuedAt = Date.from(ZonedDateTime.now().toInstant());
-            String jti = UUID.randomUUID().toString();
+            Date issuedAt = Date.from(Instant.now()
+                    // TAC-1139 : All customers, in the same minute, will have the
+                    // same information in the token
+                    .truncatedTo(MINUTES));
             Date expiredAt = Date.from(
                     issuedAt.toInstant()
-                            .plus(configuration.getAnalyticsTokenLifeTime(), ChronoUnit.MINUTES));
+                            .plus(configuration.getAnalyticsTokenLifeTime(), MINUTES)
+                            // TAC-1139 : All customers, in the same minute, will have the
+                            // same information in the token
+                            // Add one minute : to have an expiration date in the future
+                            .plus(1, MINUTES));
 
             return Optional.of(
                     Jwts.builder()
                             .setHeaderParam("type", "JWT")
-                            .setId(jti)
                             .setIssuedAt(issuedAt)
                             .setExpiration(expiredAt)
                             .setIssuer("robert-server")
