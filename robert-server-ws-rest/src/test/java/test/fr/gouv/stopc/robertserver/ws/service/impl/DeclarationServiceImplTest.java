@@ -3,8 +3,8 @@ package test.fr.gouv.stopc.robertserver.ws.service.impl;
 import static io.jsonwebtoken.Claims.EXPIRATION;
 import static io.jsonwebtoken.Claims.ISSUED_AT;
 import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.Offset.offset;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -42,7 +42,7 @@ public class DeclarationServiceImplTest {
         assertThat(expirationInstant.atZone(UTC).getSecond()).isEqualTo(0);
         assertThat(expirationInstant.atZone(UTC).getNano()).isEqualTo(0);
 
-        assertThat(Duration.between(issueAtInstant, expirationInstant).getSeconds()).isCloseTo(300L, offset(60L));
+        assertThat(Duration.between(issueAtInstant, expirationInstant)).isEqualTo(Duration.of(6, MINUTES));
     }
 
     private Instant extractInstantFromPayload(String key, String payload) {
