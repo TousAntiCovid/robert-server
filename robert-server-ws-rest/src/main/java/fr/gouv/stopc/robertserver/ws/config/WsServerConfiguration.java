@@ -1,7 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.config;
 
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
@@ -9,8 +8,7 @@ import org.springframework.stereotype.Component;
 /*
  * Global configuration of the Robert Server WS application, which is editable through Consul.
  */
-@Getter
-@ToString
+@Data
 @Component
 @RefreshScope
 public class WsServerConfiguration {
