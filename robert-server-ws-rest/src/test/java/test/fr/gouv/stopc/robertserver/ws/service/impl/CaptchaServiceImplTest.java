@@ -57,7 +57,7 @@ public class CaptchaServiceImplTest {
     }
 
     @Test
-    public void testVerifyCaptchaWhenVoIsNull() {
+    void null_registerVo_should_result_in_unverified_captcha() {
         when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
         
         // When
@@ -68,7 +68,7 @@ public class CaptchaServiceImplTest {
     }
 
     @Test
-    public void testVerifyCaptchaWhenVoHasNoCaptcha() {
+    void registerVo_with_null_captcha_should_result_in_unverified_captcha() {
         when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
 
         // Given
@@ -82,7 +82,7 @@ public class CaptchaServiceImplTest {
     }
 
     @Test
-    public void testVerifyCaptchaWhenVoIsNotNull() {
+    void valid_captcha_challenge_response_should_result_in_successfully_verified_captcha() {
 
         // Given
         CaptchaDto captchaDto = CaptchaDto.builder()
@@ -104,7 +104,7 @@ public class CaptchaServiceImplTest {
     }
 
     @Test
-    public void testVerifyCaptchaWhenFailed() {
+    void incorrect_captcha_challenge_response_should_result_in_unverified_captcha() {
 
         // Given
         CaptchaDto captchaDto = CaptchaDto.builder()
@@ -126,7 +126,7 @@ public class CaptchaServiceImplTest {
     }
 
     @Test
-    public void testVerifyCaptchaWhenErrorIsThrown() {
+    void non_2xx_api_response_should_result_in_unverified_captcha() {
 
         // Given
         when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
@@ -143,7 +143,7 @@ public class CaptchaServiceImplTest {
     }
 
     @Test
-    public void testVerifyCaptchaWhenDataInvalid() {
+    void unexisting_captcha_id_should_result_in_unverified_captcha() {
 
         // Given
         when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
