@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.client.MockServerRestTemplateCustomizer;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,9 +43,9 @@ class CaptchaServiceImplTest {
             }
         };
 
-        final var restTemplate = new RestTemplate();
-        captchaService = new CaptchaServiceImpl(restTemplate, propertyLoader);
-        mockServer = MockRestServiceServer.createServer(restTemplate);
+        final var mockServerCustomizer = new MockServerRestTemplateCustomizer();
+        captchaService = new CaptchaServiceImpl(new RestTemplateBuilder(mockServerCustomizer), propertyLoader);
+        mockServer = mockServerCustomizer.getServer();
 
         registerVo = RegisterVo.builder().captcha("captcha").captchaId("captchaId").build();
     }
