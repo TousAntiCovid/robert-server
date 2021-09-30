@@ -1,164 +1,136 @@
 package test.fr.gouv.stopc.robertserver.ws.service.impl;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.net.URI;
-
+import fr.gouv.stopc.robertserver.ws.service.impl.CaptchaServiceImpl;
+import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.boot.test.web.client.MockServerRestTemplateCustomizer;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.test.web.client.MockRestServiceServer;
 
-import fr.gouv.stopc.robertserver.ws.dto.CaptchaDto;
-import fr.gouv.stopc.robertserver.ws.service.impl.CaptchaErrorMessage;
-import fr.gouv.stopc.robertserver.ws.service.impl.CaptchaServiceImpl;
-import fr.gouv.stopc.robertserver.ws.service.impl.utils.CaptchaAccessException;
-import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
-@ExtendWith(SpringExtension.class)
-@TestPropertySource("classpath:application.properties")
-public class CaptchaServiceImplTest {
+class CaptchaServiceImplTest {
 
-    @Value("${captcha.internal.verify.url}")
-    private String captchaVerificationUrl;
-
-    @Value("${captcha.internal.success.code}")
-    private String captchaSuccessCode;
-
-    @Value("${robert.server.disable-check-captcha}")
-	private Boolean disableCaptcha;
-
-    @InjectMocks
-    private CaptchaServiceImpl captchaStrictServiceImpl;
-
-    @Mock
-    private RestTemplate restTemplate;
-
-    @Mock
-    private PropertyLoader propertyLoader;
+    private CaptchaServiceImpl captchaService;
 
     private RegisterVo registerVo;
 
+    private MockRestServiceServer mockServer;
+
     @BeforeEach
-    public void beforeEach() {
-        this.registerVo = RegisterVo.builder().captcha("captcha").captchaId("captchaId").build();
+    void beforeEach() {
+        final var propertyLoader = new PropertyLoader() {
+            @Override
+            public Boolean getDisableCaptcha() {
+                return false;
+            }
+
+            @Override
+            public String getCaptchaVerificationUrl() {
+                return "http://localhost/api/v1/captcha/{captchaId}/checkAnswer";
+            }
+
+            @Override
+            public String getCaptchaSuccessCode() {
+                return "SUCCESS";
+            }
+        };
+
+        final var mockServerCustomizer = new MockServerRestTemplateCustomizer();
+        captchaService = new CaptchaServiceImpl(new RestTemplateBuilder(mockServerCustomizer), propertyLoader);
+        mockServer = mockServerCustomizer.getServer();
+
+        registerVo = RegisterVo.builder().captcha("captcha").captchaId("captchaId").build();
     }
 
     @Test
-    public void testVerifyCaptchaWhenVoIsNull() {
-        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
-        
+    void null_registerVo_should_result_in_unverified_captcha() {
         // When
-        boolean isVerified = this.captchaStrictServiceImpl.verifyCaptcha(null);
+        boolean isVerified = captchaService.verifyCaptcha(null);
 
         // Then
         assertFalse(isVerified);
     }
 
     @Test
-    public void testVerifyCaptchaWhenVoHasNoCaptcha() {
-        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
-
+    void registerVo_with_null_captcha_should_result_in_unverified_captcha() {
         // Given
-        this.registerVo.setCaptcha(null);
+        registerVo.setCaptcha(null);
 
         // When
-        boolean isVerified = this.captchaStrictServiceImpl.verifyCaptcha(null);
+        boolean isVerified = captchaService.verifyCaptcha(null);
 
         // Then
         assertFalse(isVerified);
     }
 
     @Test
-    public void testVerifyCaptchaWhenVoIsNotNull() {
+    void valid_captcha_challenge_response_should_result_in_successfully_verified_captcha() {
 
         // Given
-        CaptchaDto captchaDto = CaptchaDto.builder()
-                .result("SUCCESS")
-                .errorCode(null)
-                .errorMessage(null)
-                .build();
-        when(this.restTemplate.postForEntity(any(URI.class), any(),
-                any())).thenReturn(ResponseEntity.ok(captchaDto));
-        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
-        when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
-        when(this.propertyLoader.getCaptchaSuccessCode()).thenReturn(this.captchaSuccessCode);
+        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
+                .andRespond(withSuccess()
+                        .body("{ \"result\": \"SUCCESS\" }")
+                        .contentType(APPLICATION_JSON));
 
         // When
-        boolean isVerified = this.captchaStrictServiceImpl.verifyCaptcha(this.registerVo);
+        boolean isVerified = captchaService.verifyCaptcha(registerVo);
 
         // Then
         assertTrue(isVerified);
     }
 
     @Test
-    public void testVerifyCaptchaWhenFailed() {
+    void incorrect_captcha_challenge_response_should_result_in_unverified_captcha() {
 
         // Given
-        CaptchaDto captchaDto = CaptchaDto.builder()
-                .result("FAILED")
-                .errorCode(null)
-                .errorMessage(null)
-                .build();
-        when(this.restTemplate.postForEntity(any(URI.class), any(),
-                any())).thenReturn(ResponseEntity.ok(captchaDto));
-        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
-        when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
-        when(this.propertyLoader.getCaptchaSuccessCode()).thenReturn(this.captchaSuccessCode);
+        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
+                .andRespond(withSuccess()
+                        .body("{ \"result\": \"FAILED\" }")
+                        .contentType(APPLICATION_JSON));
 
         // When
-        boolean isVerified = this.captchaStrictServiceImpl.verifyCaptcha(this.registerVo);
+        boolean isVerified = captchaService.verifyCaptcha(registerVo);
 
         // Then
         assertFalse(isVerified);
     }
 
     @Test
-    public void testVerifyCaptchaWhenErrorIsThrown() {
+    void non_2xx_api_response_should_result_in_unverified_captcha() {
 
         // Given
-        when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
-        when(this.propertyLoader.getCaptchaSuccessCode()).thenReturn(this.captchaSuccessCode);
-        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
-
-        when(this.restTemplate.postForEntity(any(String.class), any(), any())).thenThrow(RestClientException.class);
+        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
+                .andRespond(withServerError());
 
         // When
-        boolean isVerified = this.captchaStrictServiceImpl.verifyCaptcha(this.registerVo);
+        boolean isVerified = captchaService.verifyCaptcha(registerVo);
 
         // Then
         assertFalse(isVerified);
     }
 
     @Test
-    public void testVerifyCaptchaWhenDataInvalid() {
+    void unexisting_captcha_id_should_result_in_unverified_captcha() {
 
         // Given
-        when(this.propertyLoader.getCaptchaVerificationUrl()).thenReturn(this.captchaVerificationUrl);
-        when(this.propertyLoader.getCaptchaSuccessCode()).thenReturn(this.captchaSuccessCode);
-        when(this.propertyLoader.getDisableCaptcha()).thenReturn(this.disableCaptcha);
-        when(this.restTemplate.postForEntity(any(String.class), any(), any()))
-                .thenThrow( new CaptchaAccessException(HttpStatus.NOT_FOUND,
-                        CaptchaErrorMessage.builder().httpStatus(HttpStatus.NOT_FOUND).message("The captcha does not exist").code("0002").build(),
-                        "{\r\n"
-                        + "    \"code\": \"0002\",\r\n"
-                        + "    \"message\": \"The captcha does not exist\"\r\n"
-                        + "}"));
+        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
+                .andRespond(withStatus(NOT_FOUND)
+                        .body("{"
+                                + "    \"code\": \"0002\","
+                                + "    \"message\": \"The captcha does not exist\""
+                                + "}")
+                        .contentType(APPLICATION_JSON));
 
         // When
-        boolean isVerified = this.captchaStrictServiceImpl.verifyCaptcha(this.registerVo);
+        boolean isVerified = captchaService.verifyCaptcha(registerVo);
 
         // Then
         assertFalse(isVerified);
