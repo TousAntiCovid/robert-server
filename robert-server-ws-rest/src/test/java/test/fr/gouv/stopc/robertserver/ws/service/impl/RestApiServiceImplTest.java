@@ -96,7 +96,7 @@ public class RestApiServiceImplTest {
     public void testVerifyReportTokenWhenTokenIsNullFails() {
 
         // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken(null, "notEmpty");
+        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken(null);
 
         // Then
         assertFalse(response.isPresent());
@@ -107,29 +107,7 @@ public class RestApiServiceImplTest {
     public void testVerifyReportTokenWhenTokenIsEmptyFails() {
 
         // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("", "notEmpty");
-
-        // Then
-        assertFalse(response.isPresent());
-        verify(this.restTemplate, never()).getForEntity(any(URI.class), any());
-    }
-
-    @Test
-    public void testVerifyReportTokenWhenTypeIsNullFails() {
-
-        // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token", null);
-
-        // Then
-        assertFalse(response.isPresent());
-        verify(this.restTemplate, never()).getForEntity(any(URI.class), any());
-    }
-
-    @Test
-    public void testVerifyReportTokenWhenTypeIsEmptyFails() {
-
-        // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token", "");
+        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("");
 
         // Then
         assertFalse(response.isPresent());
@@ -144,7 +122,7 @@ public class RestApiServiceImplTest {
                 new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
         // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token", "type");
+        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token");
 
         // Then
         assertFalse(response.isPresent());
@@ -160,7 +138,7 @@ public class RestApiServiceImplTest {
         when(this.restTemplate.getForEntity(any(URI.class), any())).thenReturn(ResponseEntity.ok(verified));
 
         // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token", "type");
+        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token");
 
         // Then
         assertTrue(response.isPresent());
