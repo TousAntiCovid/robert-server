@@ -67,8 +67,8 @@ public class ReportControllerDelegate {
             throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
         }
 
-        List<Integer> list = new ArrayList<>(List.of(6, 12, 36));
-        if (!list.contains(token.length())) {
+        final var acceptedLengths = List.of(6, 12, 36);
+        if (!acceptedLengths.contains(token.length())) {
             log.warn("Token size is incorrect");
             throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
         }
