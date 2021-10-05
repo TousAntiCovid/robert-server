@@ -544,7 +544,7 @@ components:
       properties:
         timeCollectedOnDevice:
           type: integer
-          format: int32
+          format: int64
           description: Timestamp at which the current device collected the HELLO messages
         timeFromHelloMessage:
           type: integer
