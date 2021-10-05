@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -62,6 +64,12 @@ public class ReportControllerDelegate {
     private void checkValidityToken(String token) throws RobertServerException {
         if (StringUtils.isEmpty(token)) {
             log.warn("No token provided");
+            throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
+        }
+
+        List<Integer> list = new ArrayList<>(List.of(6, 12, 36));
+        if (!list.contains(token.length())) {
+            log.warn("Token size is incorrect");
             throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
         }
 
