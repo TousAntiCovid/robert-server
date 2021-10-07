@@ -1,0 +1,22 @@
+robert.crypto.server:
+  port: 9090
+  keystore:
+    file: not-mandatory-in-production:#{null}
+    type: PKCS11
+    password: 1234
+    config.file: /config/SoftHSMv2/softhsm2.cfg
+
+spring:
+  datasource:
+    url: ${ROBERT_CRYPTO_SERVER_DB_URL:jdbc:postgresql://localhost:5432/robert}
+    username: ${ROBERT_CRYPTO_SERVER_DB_USR:robert}
+    password: ${ROBERT_CRYPTO_SERVER_DB_PWD:robert}
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+robert:
+  server:
+    time-start: 20200601
+  protocol:
+    hello-message-timestamp-tolerance: ${ROBERT_PROTOCOL_HELLO_TOLERANCE:180}
