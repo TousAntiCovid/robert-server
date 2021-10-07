@@ -42,14 +42,14 @@ public class RestApiServiceImpl implements IRestApiService {
     }
 
     @Override
-    public Optional<VerifyResponseDto> verifyReportToken(String token, String type) {
+    public Optional<VerifyResponseDto> verifyReportToken(String token)  {
 
-        if(StringUtils.isEmpty(token) || StringUtils.isEmpty(type)) {
+        if(StringUtils.isEmpty(token)) {
             return Optional.empty();
         }
 
         try {
-            ResponseEntity<VerifyResponseDto> response = restTemplate.getForEntity(buildReportTokenVerificationURI(token, type),
+            ResponseEntity<VerifyResponseDto> response = restTemplate.getForEntity(buildReportTokenVerificationURI(token),
                     VerifyResponseDto.class);
 
             return Optional.ofNullable(response.getBody());
@@ -60,14 +60,13 @@ public class RestApiServiceImpl implements IRestApiService {
         return Optional.empty();
     }
 
-    private URI buildReportTokenVerificationURI(String token, String type) {
+    private URI buildReportTokenVerificationURI(String token) {
 
         return UriComponentsBuilder.newInstance().scheme("http")
                 .host(this.propertyLoader.getServerCodeHost())
                 .port(this.propertyLoader.getServerCodePort())
                 .path(this.propertyLoader.getServerCodeVerificationPath())
                 .queryParam("code", token)
-                .queryParam("type", type)
                 .build()
                 .encode()
                 .toUri();
