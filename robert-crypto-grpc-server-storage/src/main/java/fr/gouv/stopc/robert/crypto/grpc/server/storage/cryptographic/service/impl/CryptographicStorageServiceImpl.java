@@ -91,7 +91,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
                     this.keyPassword = password.toCharArray();
                     break;
                 default:
-                    throw new UnsupportedOperationException("keystore type " + keystoreTypeEnum + "is not managed by robert crypto application");
+                    throw new UnsupportedOperationException("keystore type " + keystoreTypeEnum + " is not managed by robert crypto application");
             }
         } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | ProviderException e) {
 
