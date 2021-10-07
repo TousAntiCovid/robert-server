@@ -30,6 +30,6 @@ public class PropertyLoader {
     @Value("${robert.crypto.server.keystore.type}")
     private KeystoreTypeEnum keystoreType;
 
-    @Value("${robert.crypto.server.keystore}")
+    @Value("${robert.crypto.server.keystore.file}")
     private Resource keystoreFile;
 }
