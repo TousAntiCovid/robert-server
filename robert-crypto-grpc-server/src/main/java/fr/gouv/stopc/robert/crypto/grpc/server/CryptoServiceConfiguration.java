@@ -19,7 +19,10 @@ public class CryptoServiceConfiguration {
             ICryptographicStorageService  cryptoStorageService) throws IOException, InterruptedException {
 
         // Init the cryptographic Storage
-        cryptoStorageService.init(propertyLoader.getKeyStorePassword(), propertyLoader.getKeyStoreConfigFile());
+        cryptoStorageService.init(propertyLoader.getKeyStorePassword(),
+                propertyLoader.getKeyStoreConfigFile(),
+                propertyLoader.getKeystoreType(),
+                propertyLoader.getKeystoreFile());
 
         server.initPort(Integer.parseInt(propertyLoader.getCryptoServerPort()));
         server.start();

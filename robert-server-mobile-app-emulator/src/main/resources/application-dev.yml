@@ -1,3 +1,3 @@
 emulator:
   robert-ws-url: http://localhost:8086/api/v5
-  robert-crypto-public-key: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEwpDgJdE0aRop5uibRYqCOLK7CnZ+DAyQhGrVD6XYXC/5LeNtLwqSxPAVcswqtiZyPs68h2Y3KEQn2y2bRxRzQg=="
+  robert-crypto-public-key: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7fAxfrLtG5tXyjomCOg9r1wNnr9len4m9sTflJUHDdkwubKyidTtFkVfNLrM91yuffdrpJZe9XOkof8P+zPGDg=="
