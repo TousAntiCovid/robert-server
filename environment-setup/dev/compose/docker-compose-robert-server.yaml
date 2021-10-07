@@ -14,6 +14,8 @@ services:
       - ROBERT_CRYPTO_SERVER_CONFIG_FILE=/conf/softhsm2.cfg
       - ROBERT_CRYPTO_SERVER_DB_URL=jdbc:postgresql://postgresql-robert:5432/robert
       - JAVA_OPTS=-Xrunjdwp:transport=dt_socket,address=*:19090,server=y,suspend=n
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE=file:/work/config/keystore.p12
     depends_on:
       - postgresql-robert
   postgresql-robert:

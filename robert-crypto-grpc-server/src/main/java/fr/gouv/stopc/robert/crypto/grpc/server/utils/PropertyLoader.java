@@ -1,8 +1,10 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.utils;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.utils.KeystoreTypeEnum;
 import lombok.Getter;
 
 
@@ -24,4 +26,10 @@ public class PropertyLoader {
 
     @Value("${robert.protocol.hello-message-timestamp-tolerance}")
     private Integer helloMessageTimeStampTolerance;
+
+    @Value("${robert.crypto.server.keystore.type}")
+    private KeystoreTypeEnum keystoreType;
+
+    @Value("${robert.crypto.server.keystore}")
+    private Resource keystoreFile;
 }
