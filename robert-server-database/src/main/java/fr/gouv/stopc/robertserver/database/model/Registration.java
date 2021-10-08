@@ -5,6 +5,8 @@ import java.util.List;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @AllArgsConstructor
@@ -12,6 +14,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 @Builder
 @Document(value = "idTable")
+@CompoundIndexes({
+        @CompoundIndex(name = "isNotified_atRisk", def = "{'isNotified' : 1, 'atRisk': 1}")
+})
 public class Registration {
 
     @Id
