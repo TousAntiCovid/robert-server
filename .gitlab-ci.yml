@@ -34,7 +34,6 @@ integration-tests:
   stage: integration-tests
   script:
     - currentContainer=$(basename $(cat /proc/1/cpuset))
-    - docker login -u $CI_JOB_USER -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker-compose up -d
     - docker network connect robert-server_default $currentContainer
     - echo "Waiting for robert-server-ws-rest component to be up..."
