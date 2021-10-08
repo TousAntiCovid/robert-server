@@ -1,0 +1,4 @@
+robert.crypto.server:
+  keystore:
+    file: file:/c:/travail/tac/git/pub/robert-server/robert-crypto-grpc-server/target/keystore.p12
+    type: PKCS12

@@ -95,7 +95,9 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
         boolean success = this.cryptographicStorageService.reloadHSM(
                 request.getPin(),
-                request.getConfigFileName());
+                request.getConfigFileName(),
+                propertyLoader.getKeystoreType(),
+                propertyLoader.getKeystoreFile());
 
         responseObserver.onNext(ReloadHSMResponse.newBuilder()
                 .setSuccess(success)

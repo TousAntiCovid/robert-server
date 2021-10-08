@@ -241,9 +241,6 @@ public class AppMobile {
         byte[] ebid = appMobile.getCurrentTuple().getKey().getEbid();
         byte[] ecc = appMobile.getCurrentTuple().getKey().getEcc();
 
-        byte[] timeOfDevice = new byte[4];
-        System.arraycopy(ByteUtils.longToBytes(timeAsNtpSeconds), 4, timeOfDevice, 0, 4);
-
         byte[] timeHelloB = new byte[4];
         System.arraycopy(ByteUtils.longToBytes(timeAsNtpSeconds), 4, timeHelloB, 0, 4);
 
@@ -251,12 +248,11 @@ public class AppMobile {
         timeHelloB[0] = (byte) (timeHelloB[0] & 0x00);
         timeHelloB[1] = (byte) (timeHelloB[1] & 0x00);
 
-        int timeReceived = ByteUtils.bytesToInt(timeOfDevice);
         int timeHello = ByteUtils.bytesToInt(timeHelloB);
 
         final HelloMessageDetail helloMessageDetail = new HelloMessageDetail();
 
-        helloMessageDetail.setTimeCollectedOnDevice(timeReceived);
+        helloMessageDetail.setTimeCollectedOnDevice(timeAsNtpSeconds);
         helloMessageDetail.setTimeFromHelloMessage(timeHello);
         helloMessageDetail.setMac(appMobile.generateMACforHelloMessage(ebid, ecc, timeHelloB));
         helloMessageDetail.setRssiCalibrated(rssiCalibrated);
