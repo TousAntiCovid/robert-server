@@ -1,0 +1,4 @@
+robert:
+  ws-rest:
+    base-url: http://localhost:8086/api/v5
+  crypto-public-key: "tochange=="
