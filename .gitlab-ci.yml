@@ -34,7 +34,7 @@ deploy-int:
     APP_VERSION: develop-SNAPSHOT
   trigger:
     project: stemcovid19/infrastructure/functional-zone/services/robert/robert-ansible
-    branch: master
+    branch: feature/add_impact_of_pkcs12_keystore
     strategy: depend
   only:
-    - develop
+    - deploy/test_deployment
