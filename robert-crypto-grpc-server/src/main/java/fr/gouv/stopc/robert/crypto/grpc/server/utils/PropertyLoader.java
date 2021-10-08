@@ -27,9 +27,9 @@ public class PropertyLoader {
     @Value("${robert.protocol.hello-message-timestamp-tolerance}")
     private Integer helloMessageTimeStampTolerance;
 
-    @Value("${robert.crypto.server.keystore.type}")
+    @Value("${robert.crypto.server.keystore.type:PKCS11}")
     private KeystoreTypeEnum keystoreType;
 
-    @Value("${robert.crypto.server.keystore.file}")
+    @Value("${robert.crypto.server.keystore.file:}")
     private Resource keystoreFile;
 }
