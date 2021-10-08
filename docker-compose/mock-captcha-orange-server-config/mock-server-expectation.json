@@ -1,0 +1,44 @@
+[
+  {
+    "id": "By default, calling the checkAnswer endpoint of Orange Captcha must succeed",
+    "httpRequest": {
+      "method": "POST",
+      "path": "/private/api/v1/captcha/.*/checkAnswer"
+    },
+    "httpResponse": {
+      "headers": {
+          "Content-Type": ["application/json"]
+        },
+      "statusCode": 200,
+      "body": "{\"result\":\"SUCCESS\"}"
+    }
+  },
+  {
+    "id": "By default, calling the captcha endpoint of Orange Captcha return this result",
+    "httpRequest": {
+      "method": "POST",
+      "path": "/private/api/v1/captcha"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 200,
+      "body": "{\"id\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"captchaId\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}"
+    }
+  },
+  {
+    "id": "By default, calling the captcha/.* endpoint of Orange Captcha return this result",
+    "httpRequest": {
+      "method": "GET",
+      "path": "/public/api/v1/captcha/.*.png"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["image/png"]
+      },
+      "statusCode": 200,
+      "body": ""
+    }
+  }
+]

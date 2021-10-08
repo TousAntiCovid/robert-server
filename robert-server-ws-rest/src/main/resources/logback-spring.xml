@@ -39,12 +39,12 @@
         </rollingPolicy>
     </appender>
 
-    <springProfile name="dev">
+    <springProfile name="docker">
         <include resource="org/springframework/boot/logging/logback/base.xml" />
         <logger name="org.springframework" level="OFF"/>
     </springProfile>
 
-    <springProfile name="!dev">
+    <springProfile name="!docker">
         <!-- LOG everything at INFO level -->
         <root level="info">
             <appender-ref ref="RollingFile" />

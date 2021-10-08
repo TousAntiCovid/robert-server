@@ -1,0 +1,61 @@
+version: '3.5'
+services:
+  postgresql-robert:
+    image: 'postgres:9.6'
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=robert
+      - POSTGRES_DB=robert
+      - POSTGRES_USER=robert
+  robert-crypto-grpc-server:
+    build:
+      context: ./robert-crypto-grpc-server
+      dockerfile: ./src/main/docker/Dockerfile
+    ports:
+      - "9090:9090"
+      - "19090:19090"
+    environment:
+      - ROBERT_CRYPTO_SERVER_CONFIG_FILE=/conf/softhsm2.cfg
+      - ROBERT_CRYPTO_SERVER_DB_URL=jdbc:postgresql://postgresql-robert:5432/robert
+      - JAVA_OPTS=-Xrunjdwp:transport=dt_socket,address=*:19090,server=y,suspend=n
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
+    depends_on:
+      - postgresql-robert
+  mongo:
+    image: 'mongo:4.2.5'
+    ports:
+      - "27017:27017"
+  robert-server-ws-rest:
+    build:
+      context: ./robert-server-ws-rest
+      dockerfile: ./src/main/docker/Dockerfile
+    environment:
+      - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY}
+      - ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}
+      - ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}
+      - ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY=${ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8086:8086"
+    depends_on:
+      - robert-crypto-grpc-server
+  mock-captcha:
+    image: mockserver/mockserver:mockserver-5.11.2
+    command: -logLevel DEBUG -serverPort 8055
+    ports:
+      - "8055:8055"
+    volumes:
+      - ./docker-compose/mock-captcha-orange-server-config:/mock-expectation
+    environment:
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
+  mock-submission-code-server:
+    image: mockserver/mockserver:mockserver-5.11.2
+    command: -logLevel DEBUG -serverPort 8087
+    ports:
+      - "8087:8087"
+    volumes:
+      - ./docker-compose/mock-submission-code-server-ws-rest-config:/mock-expectation
+    environment:
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
