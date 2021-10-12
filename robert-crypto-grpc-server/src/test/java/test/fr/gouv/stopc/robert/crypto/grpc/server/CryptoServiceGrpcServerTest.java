@@ -1,60 +1,12 @@
 package test.fr.gouv.stopc.robert.crypto.grpc.server;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import javax.crypto.KeyGenerator;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.CryptoServiceGrpcServer;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplStub;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.service.ICryptoServerConfigurationService;
 import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl;
 import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.ECDHKeyServiceImpl;
@@ -78,13 +30,35 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 
 @Slf4j
@@ -660,6 +634,13 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.DELETE_HISTORY);
 
+        byte[] ks = ByteUtils.generateRandom(24);
+
+        doReturn(ks).when(this.cryptographicStorageService).getServerKey(
+                bundle.getEpochId() + 1,
+                this.serverConfigurationService.getServiceTimeStart(),
+                false);
+
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
                 .newBuilder()
@@ -680,6 +661,36 @@ class CryptoServiceGrpcServerTest {
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
+    }
+
+    @Test
+    void testGetIdFromAuthRequestFailsCauseNoServerKeyFound() {
+        Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
+        AuthRequestBundle bundle = generateAuthRequestBundle(
+                clientIdentifierBundle.get().getId(),
+                clientIdentifierBundle.get().getKeyForMac(),
+                DigestSaltEnum.DELETE_HISTORY);
+
+        // Given
+        GetIdFromAuthRequest request = GetIdFromAuthRequest
+                .newBuilder()
+                .setEbid(ByteString.copyFrom(bundle.getEbid()))
+                .setEpochId(bundle.getEpochId() + 1)
+                .setTime(bundle.getTime())
+                .setMac(ByteString.copyFrom(bundle.getMac()))
+                .setRequestType(bundle.getRequestType().getValue()) // Select a request type
+                .build();
+
+        ObserverExecutionResult res = new ObserverExecutionResult(false);
+        GetIdFromAuthResponse response =
+                sendCryptoRequest(
+                        request,
+                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                        (t) -> fail(),
+                        res);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 430);
     }
 
     @Test
@@ -1031,6 +1042,13 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.UNREGISTER);
 
+        byte[] ks = ByteUtils.generateRandom(24);
+
+        doReturn(ks).when(this.cryptographicStorageService).getServerKey(
+                bundle.getEpochId() + 1,
+                this.serverConfigurationService.getServiceTimeStart(),
+                false);
+
         // Given
         DeleteIdRequest request = DeleteIdRequest
                 .newBuilder()
@@ -1050,6 +1068,36 @@ class CryptoServiceGrpcServerTest {
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
+    }
+
+    @Test
+    void testDeleteIdFailsCauseNoServerKeyAvailable() {
+        Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
+
+        AuthRequestBundle bundle = generateAuthRequestBundle(
+                clientIdentifierBundle.get().getId(),
+                clientIdentifierBundle.get().getKeyForMac(),
+                DigestSaltEnum.UNREGISTER);
+
+        // Given
+        DeleteIdRequest request = DeleteIdRequest
+                .newBuilder()
+                .setEbid(ByteString.copyFrom(bundle.getEbid()))
+                .setEpochId(bundle.getEpochId() + 1)
+                .setTime(bundle.getTime())
+                .setMac(ByteString.copyFrom(bundle.getMac()))
+                .build();
+
+        ObserverExecutionResult res = new ObserverExecutionResult(false);
+        DeleteIdResponse response =
+                sendCryptoRequest(
+                        request,
+                        (stub, req, observer) -> stub.deleteId(req, observer),
+                        (t) -> fail(),
+                        res);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 430);
     }
 
     @Test
@@ -1315,6 +1363,13 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.STATUS);
 
+        byte[] ks = ByteUtils.generateRandom(24);
+
+        doReturn(ks).when(this.cryptographicStorageService).getServerKey(
+                bundle.getEpochId() + 1,
+                this.serverConfigurationService.getServiceTimeStart(),
+                false);
+
         // Given
         GetIdFromStatusRequest request = GetIdFromStatusRequest
                 .newBuilder()
@@ -1334,6 +1389,36 @@ class CryptoServiceGrpcServerTest {
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
+    }
+
+    @Test
+    void testGetIdFromStatusFailsCauseNoServerKeyFound() {
+
+        Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
+        AuthRequestBundle bundle = generateAuthRequestBundle(
+                clientIdentifierBundle.get().getId(),
+                clientIdentifierBundle.get().getKeyForMac(),
+                DigestSaltEnum.STATUS);
+
+        // Given
+        GetIdFromStatusRequest request = GetIdFromStatusRequest
+                .newBuilder()
+                .setEbid(ByteString.copyFrom(bundle.getEbid()))
+                .setEpochId(bundle.getEpochId() + 1)
+                .setTime(bundle.getTime())
+                .setMac(ByteString.copyFrom(bundle.getMac()))
+                .build();
+
+        ObserverExecutionResult res = new ObserverExecutionResult(false);
+        GetIdFromStatusResponse response =
+                sendCryptoRequest(
+                        request,
+                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                        (t) -> fail(),
+                        res);
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 430);
     }
 
     @Test

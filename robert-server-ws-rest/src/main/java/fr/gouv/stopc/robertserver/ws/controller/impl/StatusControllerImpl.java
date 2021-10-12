@@ -1,19 +1,5 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -23,11 +9,7 @@ import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IStatusController;
-import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
-import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
-import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
-import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
-import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV5;
+import fr.gouv.stopc.robertserver.ws.dto.*;
 import fr.gouv.stopc.robertserver.ws.dto.declaration.GenerateDeclarationTokenRequest;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
@@ -37,6 +19,18 @@ import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -131,6 +125,10 @@ public class StatusControllerImpl implements IStatusController {
 				this.authRequestValidationService.validateStatusRequest(statusVo);
 
 		if (Objects.nonNull(validationResult.getError())) {
+			if (validationResult.getError().getStatusCode().value() == 430) {
+				log.info(validationResult.getError().toString());
+				return ResponseEntity.status(430).build();
+			}
 			log.info("Status request authentication failed");
 			return ResponseEntity.badRequest().build();
 		}

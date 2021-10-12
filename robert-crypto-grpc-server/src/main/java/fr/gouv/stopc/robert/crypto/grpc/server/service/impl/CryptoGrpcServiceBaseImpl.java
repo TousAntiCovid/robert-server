@@ -1,43 +1,11 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.service.impl;
 
-import java.security.Key;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
-
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
+import fr.gouv.stopc.robert.crypto.grpc.server.exception.NoServerKeyFoundException;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.HSMCacheStatusRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.HSMCacheStatusResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ReloadHSMRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ReloadHSMResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.service.ICryptoServerConfigurationService;
 import fr.gouv.stopc.robert.crypto.grpc.server.service.IECDHKeyService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
@@ -56,12 +24,18 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import io.grpc.stub.StreamObserver;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import javax.inject.Inject;
+import java.security.Key;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -215,17 +189,29 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             return;
         }
 
-        Optional<AuthRequestValidationResult> validationResult = validateAuthRequest(
-                request.getEbid().toByteArray(),
-                request.getEpochId(),
-                request.getTime(),
-                request.getMac().toByteArray(),
-                digestSalt);
+        Optional<AuthRequestValidationResult> validationResult;
+        try {
+            validationResult = validateAuthRequest(
+                    request.getEbid().toByteArray(),
+                    request.getEpochId(),
+                    request.getTime(),
+                    request.getMac().toByteArray(),
+                    digestSalt);
+        } catch (NoServerKeyFoundException e) {
+            log.warn(e.getMessage());
+            responseObserver.onNext(GetIdFromAuthResponse.newBuilder()
+                    .setError(ErrorMessage.newBuilder()
+                            .setCode(430)
+                            .setDescription(e.getMessage())
+                            .build())
+                    .build());
+            responseObserver.onCompleted();
+            return;
+        }
 
         if (!validationResult.isPresent()) {
             String errorMessage = "Could not validate auth request";
             log.warn(errorMessage);
-            //throw new RobertServerCryptoInvalidAuthRequestException(errorMessage);
             responseObserver.onNext(GetIdFromAuthResponse.newBuilder()
                     .setError(ErrorMessage.newBuilder()
                             .setCode(400)
@@ -260,13 +246,25 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     public void getIdFromStatus(GetIdFromStatusRequest request,
                                 StreamObserver<GetIdFromStatusResponse> responseObserver) {
         Optional<AuthRequestValidationResult> validationResult = null;
-        validationResult = validateAuthRequest(
-                request.getEbid().toByteArray(),
-                request.getEpochId(),
-                request.getTime(),
-                request.getMac().toByteArray(),
-                DigestSaltEnum.STATUS);
 
+        try {
+            validationResult = validateAuthRequest(
+                    request.getEbid().toByteArray(),
+                    request.getEpochId(),
+                    request.getTime(),
+                    request.getMac().toByteArray(),
+                    DigestSaltEnum.STATUS);
+        } catch (NoServerKeyFoundException e) {
+            log.warn(e.getMessage());
+            responseObserver.onNext(GetIdFromStatusResponse.newBuilder()
+                    .setError(ErrorMessage.newBuilder()
+                            .setCode(430)
+                            .setDescription(e.getMessage())
+                            .build())
+                    .build());
+            responseObserver.onCompleted();
+            return;
+        }
         if (!validationResult.isPresent()) {
             String errorMessage = "Could not validate auth request";
             log.warn(errorMessage);
@@ -397,6 +395,16 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     .build());
             responseObserver.onCompleted();
             return;
+        } catch (NoServerKeyFoundException e) {
+            log.warn(e.getMessage());
+            responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
+                    .setError(ErrorMessage.newBuilder()
+                            .setCode(430)
+                            .setDescription(e.getMessage())
+                            .build())
+                    .build());
+            responseObserver.onCompleted();
+            return;
         }
 
         // Check MAC
@@ -458,14 +466,26 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     @Override
     public void deleteId(DeleteIdRequest request,
                          StreamObserver<DeleteIdResponse> responseObserver) {
-        Optional<AuthRequestValidationResult> validationResult = null;
-        validationResult = validateAuthRequest(
-                request.getEbid().toByteArray(),
-                request.getEpochId(),
-                request.getTime(),
-                request.getMac().toByteArray(),
-                DigestSaltEnum.UNREGISTER);
+        Optional<AuthRequestValidationResult> validationResult;
 
+        try {
+            validationResult = validateAuthRequest(
+                    request.getEbid().toByteArray(),
+                    request.getEpochId(),
+                    request.getTime(),
+                    request.getMac().toByteArray(),
+                    DigestSaltEnum.UNREGISTER);
+        } catch (NoServerKeyFoundException e) {
+            log.warn(e.getMessage());
+            responseObserver.onNext(DeleteIdResponse.newBuilder()
+                    .setError(ErrorMessage.newBuilder()
+                            .setCode(430)
+                            .setDescription(e.getMessage())
+                            .build())
+                    .build());
+            responseObserver.onCompleted();
+            return;
+        }
         if (!validationResult.isPresent()) {
             responseObserver.onError(new RobertServerCryptoException("Could not validate auth request"));
             return;
@@ -494,7 +514,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                                                                       int epochId,
                                                                       long time,
                                                                       byte[] mac,
-                                                                      DigestSaltEnum type) {
+                                                                      DigestSaltEnum type) throws NoServerKeyFoundException {
         try {
             EbidContent ebidContent = decryptEBIDAndCheckEpoch(encryptedEbid, epochId);
 
@@ -616,7 +636,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                                                  boolean ksAdjustment,
                                                  boolean enableEpochOverlapping,
                                                  AdjacentEpochMatchEnum adjacentEpochMatchEnum)
-            throws RobertServerCryptoException {
+            throws RobertServerCryptoException, NoServerKeyFoundException {
 
         byte[] serverKey = this.cryptographicStorageService.getServerKey(
                 authRequestEpoch,
@@ -625,7 +645,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
         if (Objects.isNull(serverKey)) {
             log.warn("Cannot retrieve server key for {}", authRequestEpoch);
-            return null;
+            throw new NoServerKeyFoundException("No server key found from cryptographic storage");
         }
 
         byte[] decryptedEbid = this.cryptoService.decryptEBID(new CryptoSkinny64(serverKey), ebid);
@@ -663,12 +683,13 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
     /**
      * Decrypt the provided ebid and check the epoch it contains matches exactly the provided one
+     *
      * @param ebid
      * @param epoch
      * @return
      * @throws RobertServerCryptoException
      */
-    private EbidContent decryptEBIDAndCheckEpoch(byte[] ebid, int epoch) throws RobertServerCryptoException {
+    private EbidContent decryptEBIDAndCheckEpoch(byte[] ebid, int epoch) throws RobertServerCryptoException, NoServerKeyFoundException {
         return decryptEBIDAndCheckEpoch(ebid,
                 epoch,
                 false,
@@ -677,14 +698,14 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     private EbidContent manageEBIDDecryptRetry(byte[] ebid, int authRequestEpoch, AdjacentEpochMatchEnum adjacentEpochMatchEnum)
-            throws RobertServerCryptoException {
+            throws RobertServerCryptoException, NoServerKeyFoundException {
         switch (adjacentEpochMatchEnum) {
             case PREVIOUS:
                 log.warn("Retrying ebid decrypt with previous epoch");
                 return decryptEBIDAndCheckEpoch(ebid, authRequestEpoch - 1, false, false, false, AdjacentEpochMatchEnum.NONE);
             case NEXT:
                 log.warn("Retrying ebid decrypt with next epoch");
-                return decryptEBIDAndCheckEpoch(ebid, authRequestEpoch + 1, false, false,  false, AdjacentEpochMatchEnum.NONE);
+                return decryptEBIDAndCheckEpoch(ebid, authRequestEpoch + 1, false, false, false, AdjacentEpochMatchEnum.NONE);
             case NONE:
             default:
                 log.warn("Epochs do not match for authRequestEpoch = {} and adjacentEpochMatchEnum = {}", authRequestEpoch, adjacentEpochMatchEnum);
@@ -692,7 +713,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         }
     }
 
-    private EbidContent decryptEBIDWithTimeReceived(byte[] ebid, long timeReceived) throws RobertServerCryptoException {
+    private EbidContent decryptEBIDWithTimeReceived(byte[] ebid, long timeReceived) throws RobertServerCryptoException, NoServerKeyFoundException {
         int epoch = TimeUtils.getNumberOfEpochsBetween(
                 this.serverConfigurationService.getServiceTimeStart(),
                 timeReceived);

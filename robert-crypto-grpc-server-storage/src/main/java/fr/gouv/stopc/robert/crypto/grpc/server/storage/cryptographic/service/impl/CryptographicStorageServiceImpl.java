@@ -201,10 +201,6 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     public byte[] getServerKey(int epochId, long serviceTimeStart, boolean takePreviousDaysKey) {
 
         LocalDate dateFromEpoch = TimeUtils.getDateFromEpoch(epochId, serviceTimeStart);
-        if (Objects.isNull(dateFromEpoch)) {
-            log.error("The date from epoch {} from the time start {} is null", epochId, serviceTimeStart);
-            return null;
-        }
 
         if (takePreviousDaysKey) {
             dateFromEpoch = dateFromEpoch.minusDays(1);
