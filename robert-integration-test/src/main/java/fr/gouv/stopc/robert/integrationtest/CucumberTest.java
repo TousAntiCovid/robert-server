@@ -1,10 +1,11 @@
 package fr.gouv.stopc.robert.integrationtest;
 
-import io.cucumber.junit.Cucumber;
-import io.cucumber.junit.CucumberOptions;
-import org.junit.runner.RunWith;
+import org.junit.platform.suite.api.IncludeEngines;
+import org.junit.platform.suite.api.SelectClasspathResource;
+import org.junit.platform.suite.api.Suite;
 
-@RunWith(Cucumber.class)
-@CucumberOptions(features = { "classpath:features" }, plugin = { "pretty", "html:target/cucumber-reports.html" })
+@Suite
+@SelectClasspathResource("fr/gouv/stopc/robert/integrationtest")
+@IncludeEngines("cucumber")
 public class CucumberTest {
 }
