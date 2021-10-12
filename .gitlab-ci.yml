@@ -43,7 +43,7 @@ integration-tests:
     - docker-compose down
   artifacts:
     paths:
-      - "$CI_PROJECT_DIR/target/cucumber-reports.html"
+      - "$CI_PROJECT_DIR/target/cucumber-reports/cucumber-reports.html"
     expire_in: 1 weeks
 
 deploy-int:
