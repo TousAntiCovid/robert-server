@@ -7,8 +7,6 @@ WORKDIR /opt/robert-crypto-server/
 
 RUN apt-get update && apt-get -y install dos2unix && rm -rf /var/lib/apt/lists/*
 
-COPY ./src/main/resources/application.properties /work/config/application.properties
-COPY ./src/main/docker/logback.xml /work/config/logback.xml
 COPY ./target/robert-crypto-grpc-server-*.jar app.jar
 COPY ./src/main/docker/entrypoint.sh /entrypoint.sh
 
@@ -53,5 +51,6 @@ COPY ./src/main/docker/keystore.p12 /work/config/keystore.p12
 COPY ./src/main/docker/run.sh /run.sh
 
 RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh && dos2unix /run.sh
+RUN mkdir /var/log/robert-crypto-grpc-server
 
 ENTRYPOINT ["/entrypoint.sh"]
