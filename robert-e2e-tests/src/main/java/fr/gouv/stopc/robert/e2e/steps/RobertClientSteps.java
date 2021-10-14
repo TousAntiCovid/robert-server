@@ -1,7 +1,9 @@
-package fr.gouv.stopc.robert.integrationtest.steps;
+package fr.gouv.stopc.robert.e2e.steps;
 
+import fr.gouv.stopc.robert.e2e.config.ApplicationProperties;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

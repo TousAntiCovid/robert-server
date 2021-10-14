@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robert.integrationtest;
+package fr.gouv.stopc.robert.e2e;
 
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;

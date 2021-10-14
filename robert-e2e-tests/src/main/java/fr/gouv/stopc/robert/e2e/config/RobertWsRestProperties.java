@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robert.integrationtest.config;
+package fr.gouv.stopc.robert.e2e.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;

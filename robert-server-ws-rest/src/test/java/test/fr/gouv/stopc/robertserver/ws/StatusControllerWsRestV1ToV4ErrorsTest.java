@@ -31,7 +31,6 @@ import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
 public class StatusControllerWsRestV1ToV4ErrorsTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V4)

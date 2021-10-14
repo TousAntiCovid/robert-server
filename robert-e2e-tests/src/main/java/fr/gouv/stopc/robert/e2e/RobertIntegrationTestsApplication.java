@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robert.integrationtest;
+package fr.gouv.stopc.robert.e2e;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
@@ -16,7 +16,7 @@ import org.junit.platform.launcher.listeners.TestExecutionSummary;
 @SpringBootApplication(exclude = {
         DataSourceAutoConfiguration.class
 })
-@ConfigurationPropertiesScan("fr.gouv.stopc.robert.integrationtest.config")
+@ConfigurationPropertiesScan("fr.gouv.stopc.robert.e2e.config")
 public class RobertIntegrationTestsApplication {
 
     public static void main(String[] args) {

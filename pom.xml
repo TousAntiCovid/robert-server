@@ -34,7 +34,7 @@
 		<module>robert-crypto-grpc-server-messaging</module>
 		<module>robert-crypto-grpc-server-storage</module>
 		<module>robert-server-mobile-app-emulator</module>
-		<module>robert-integration-test</module>
+		<module>robert-e2e-tests</module>
 	</modules>
 
 	<properties>

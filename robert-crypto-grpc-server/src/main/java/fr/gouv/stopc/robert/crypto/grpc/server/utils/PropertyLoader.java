@@ -12,24 +12,26 @@ import lombok.Getter;
 @Component
 public class PropertyLoader {
 
-    @Value("${robert.crypto.server.port}")
+    @Value("${robert.crypto.server.port:9090}")
     private String cryptoServerPort;
 
-    @Value("${robert.crypto.server.keystore.password}")
+    @Value("${robert.crypto.server.keystore.password:1234}")
     private String keyStorePassword;
 
-    @Value("${robert.crypto.server.keystore.config.file}")
+    @Value("${robert.crypto.server.keystore.config.file:/config/SoftHSMv2/softhsm2.cfg}")
     private String keyStoreConfigFile;
-
-    @Value("${robert.server.time-start}")
-    private String timeStart;
-
-    @Value("${robert.protocol.hello-message-timestamp-tolerance}")
-    private Integer helloMessageTimeStampTolerance;
 
     @Value("${robert.crypto.server.keystore.type:PKCS11}")
     private KeystoreTypeEnum keystoreType;
 
     @Value("${robert.crypto.server.keystore.file:}")
     private Resource keystoreFile;
+
+    @Value("${robert.server.time-start:20200601}")
+    private String timeStart;
+
+    @Value("${robert.protocol.hello-message-timestamp-tolerance:180}")
+    private Integer helloMessageTimeStampTolerance;
+
+
 }
