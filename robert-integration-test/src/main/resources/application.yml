@@ -1,2 +1,5 @@
 robert:
   base-url: http://localhost:8086/api/v5
+
+  batch:
+    command: "docker-compose up robert-server-batch"

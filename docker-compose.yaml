@@ -38,20 +38,31 @@ services:
       context: ./robert-server-ws-rest
       dockerfile: ./src/main/docker/Dockerfile
     environment:
-      - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY}
-      - ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}
-      - ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}
-      - ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY=${ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}
+      - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY:-changeit}
+      - ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID:-changeit}
+      - ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY:-changeit}
+      - ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY=${ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY:-changeit}
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
       - ROBERT_CRYPTO_SERVER_HOST=robert-crypto-grpc-server
-      - SUBMISSION_CODE_SERVER_HOST=submission-code-server-ws-rest
+      - SUBMISSION_CODE_SERVER_HOST=mock-submission-code-server
       - CAPTCHA_INTERNAL_HOSTNAME=http://mock-captcha:8055
       - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8055/private/api/v1/captcha/{captchaId}/checkAnswer
       - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
     ports:
       - "8086:8086"
     depends_on:
+      - robert-crypto-grpc-server
+  robert-server-batch:
+    build:
+      context: ./robert-server-batch
+      dockerfile: ./src/main/docker/Dockerfile
+    environment:
+      - ROBERT_CRYPTO_SERVER_HOST=robert-crypto-grpc-server
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
+      - ROBERT_PROTOCOL_SCORING_THRESHOLD=${ROBERT_PROTOCOL_SCORING_THRESHOLD:-0.1}
+    depends_on:
+      - mongo
       - robert-crypto-grpc-server
   mock-captcha:
     image: mockserver/mockserver:mockserver-5.11.2
