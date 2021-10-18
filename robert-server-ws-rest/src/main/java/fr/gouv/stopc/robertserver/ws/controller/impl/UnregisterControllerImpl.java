@@ -42,7 +42,7 @@ public class UnregisterControllerImpl implements IUnregisterController {
 
         if (Objects.nonNull(validationResult.getError()) || validationResult.getResponse().hasError()) {
             if (validationResult.getError().getStatusCode().value() == 430) {
-                log.info(validationResult.getError().toString());
+                log.warn(validationResult.getError().toString());
                 return ResponseEntity.status(430).build();
             }
             return ResponseEntity.badRequest().build();
