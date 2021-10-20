@@ -1,18 +1,21 @@
 version: '3.5'
 services:
   postgresql-robert:
-    image: 'postgres:9.6'
+    build:
+      context: ./docker-compose/postgresql
+      dockerfile: ./Dockerfile
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=robert
       - POSTGRES_DB=robert
       - POSTGRES_USER=robert
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready", "robert", "-U", "robert" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+#    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready", "robert", "-U", "robert" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      start_period: 40s
   robert-crypto-grpc-server:
     build:
       context: ./robert-crypto-grpc-server
@@ -27,8 +30,9 @@ services:
       - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
       - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
     depends_on:
-      postgresql-robert:
-        condition: service_healthy
+      - postgresql-robert
+#      postgresql-robert:
+#        condition: service_healthy
   mongo:
     image: 'mongo:4.2.5'
     ports:
