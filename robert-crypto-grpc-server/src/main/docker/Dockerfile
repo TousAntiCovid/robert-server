@@ -4,9 +4,7 @@
 FROM adoptopenjdk:11-jre-hotspot
 
 WORKDIR /opt/robert-crypto-server/
-
-COPY ./src/main/resources/application.properties /work/config/application.properties
-COPY ./src/main/docker/logback.xml /work/config/logback.xml
+RUN apt-get update && rm -rf /var/lib/apt/lists/*
 COPY ./target/robert-crypto-grpc-server-*.jar app.jar
 COPY ./src/main/docker/entrypoint.sh /entrypoint.sh
 

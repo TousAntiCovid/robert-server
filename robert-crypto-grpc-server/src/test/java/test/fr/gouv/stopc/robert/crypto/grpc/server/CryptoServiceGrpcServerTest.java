@@ -89,7 +89,6 @@ import test.fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@TestPropertySource(locations = "classpath:application.properties")
 class CryptoServiceGrpcServerTest {
 
     private final static String UNEXPECTED_FAILURE_MESSAGE = "Should not fail";
