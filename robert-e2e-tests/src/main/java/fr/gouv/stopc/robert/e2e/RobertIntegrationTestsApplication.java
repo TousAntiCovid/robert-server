@@ -13,10 +13,8 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
-@SpringBootApplication(exclude = {
-        DataSourceAutoConfiguration.class
-})
-@ConfigurationPropertiesScan("fr.gouv.stopc.robert.e2e.config")
+@SpringBootApplication
+@ConfigurationPropertiesScan
 public class RobertIntegrationTestsApplication {
 
     public static void main(String[] args) {

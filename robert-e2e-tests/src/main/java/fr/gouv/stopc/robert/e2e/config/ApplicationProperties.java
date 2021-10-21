@@ -1,28 +1,17 @@
 package fr.gouv.stopc.robert.e2e.config;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.Valid;
-
 @Validated
 @ConstructorBinding
 @ConfigurationProperties("robert")
-@ToString
-@EqualsAndHashCode
-@AllArgsConstructor
+@Data
 public class ApplicationProperties {
 
-    @Valid
-    @Getter
-    private final RobertWsRestProperties wsRest;
+    private final String wsRestBaseUrl;
 
-    @Valid
-    @Getter
     private final String cryptoPublicKey;
 }
