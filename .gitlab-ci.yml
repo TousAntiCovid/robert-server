@@ -29,7 +29,7 @@ build:
         - "**/target/surefire-reports/TEST-*.xml"
         - "**/target/failsafe-reports/TEST-*.xml"
 
-integration-tests:
+e2e-tests-docker:
   image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-system-tests:latest
   stage: e2e-tests
   script:
