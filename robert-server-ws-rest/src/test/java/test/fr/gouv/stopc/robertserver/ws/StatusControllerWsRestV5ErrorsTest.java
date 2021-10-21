@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Test;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
 public class StatusControllerWsRestV5ErrorsTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V5)

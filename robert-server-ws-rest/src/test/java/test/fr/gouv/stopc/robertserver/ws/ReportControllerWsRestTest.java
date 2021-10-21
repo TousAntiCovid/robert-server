@@ -47,7 +47,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 @SpringBootTest(classes = { RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
 public class ReportControllerWsRestTest {
 
     @Autowired

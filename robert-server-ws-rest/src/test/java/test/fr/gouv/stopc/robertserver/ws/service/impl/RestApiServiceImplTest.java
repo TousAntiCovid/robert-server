@@ -32,7 +32,6 @@ import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 
 @ExtendWith(SpringExtension.class)
-@TestPropertySource("classpath:application.properties")
 public class RestApiServiceImplTest {
 
     @InjectMocks

@@ -46,7 +46,6 @@ import org.mockito.ArgumentMatchers;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
 @Slf4j
 public class RegisterControllerWsRestTest {
 
