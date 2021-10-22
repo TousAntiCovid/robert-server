@@ -10,7 +10,6 @@ keytool -list -keystore keystore.p12 -storepass 1234
 
 echo "Launch appli"
 cd /opt/robert-crypto-server
-java $JAVA_OPTS -Dlogging.config=/work/config/logback.xml -jar /opt/robert-crypto-server/app.jar --spring.config.location=file:/work/config/application.properties
-
+java -jar /opt/robert-crypto-server/app.jar
 # useful to debug image build
 #. /run.sh
