@@ -1,21 +1,13 @@
 package e2e.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
 
-import javax.validation.constraints.NotNull;
-
-@AllArgsConstructor
-@NoArgsConstructor
-@Data
+@Value
 @Builder
 public class CaptchaCreationRequest {
 
-    @NotNull
-    private String type;
+    String type;
 
-    @NotNull
-    private String locale;
+    String locale;
 }

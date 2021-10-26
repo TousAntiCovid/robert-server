@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -20,16 +21,16 @@ import static org.hamcrest.Matchers.notNullValue;
 public class RobertClientSteps {
 
     public static final String CAPTCHA_BYPASS_SOLUTION = "IEDX";
-    private static final String API_BASE_PATH = "/api/v6";
 
-    private ApplicationProperties applicationProperties;
+    private final ApplicationProperties applicationProperties;
 
     private final ScenarioContext scenarioContext;
 
     @Given("application robert ws rest is ready")
     public void application_robert_is_ready() {
         given()
-                .get(applicationProperties.getWsRestBaseUrl() + "/actuator/health")
+                .baseUri(applicationProperties.getWsRestBaseUrl())
+                .get("/actuator/health")
                 .then()
                 .statusCode(200)
                 .body("status", equalTo("UP"));
@@ -42,18 +43,24 @@ public class RobertClientSteps {
 
     @Given("{word} application request a captcha challenge id")
     public void request_captcha_challenge_id(String userName) {
-        given()
-                .contentType(ContentType.JSON)
-                .body(CaptchaCreationRequest.builder().locale("fr").type("IMAGE").build())
+        final String captchaId = given()
+                .contentType(JSON)
+                .baseUri(this.applicationProperties.getWsRestBaseUrl())
+                .body(CaptchaCreationRequest.builder()
+                        .locale("fr")
+                        .type("IMAGE")
+                        .build())
+
                 .when()
-                .post(this.applicationProperties.getWsRestBaseUrl() + API_BASE_PATH + "/captcha")
+                .post("/api/v6/captcha")
+
                 .then()
                 .statusCode(200)
-                .body("captchaId", notNullValue());
-        User user = this.scenarioContext.getOrCreateUser(userName);
+                .body("captchaId", notNullValue())
+                .extract().path("captchaId");
 
-        // We generate a fake Captcha id which will be used to differentiate the mobile apps
-        user.setCaptchaId(RandomStringUtils.random(7, true, false));
+        this.scenarioContext.getOrCreateUser(userName)
+                .setCaptchaId(captchaId);
     }
 
     @Given("{word} application request an image captcha challenge with the previously received id")
@@ -63,7 +70,7 @@ public class RobertClientSteps {
         given()
                 .baseUri(this.applicationProperties.getWsRestBaseUrl())
                 .when()
-                .get(API_BASE_PATH + "/captcha/{captchaId}/image", user.getCaptchaId())
+                .get("/api/v6/captcha/{captchaId}/image", user.getCaptchaId())
                 .then()
                 .statusCode(200);
     }
@@ -71,7 +78,7 @@ public class RobertClientSteps {
     @When("{word} resolve the Captcha image into the application")
     public void resolve_captcha_image_challenge(String userName) {
         // Simulate visual resolution
-        this.scenarioContext.getOrCreateUser(userName).setCaptchaSolution(this.CAPTCHA_BYPASS_SOLUTION);
+        this.scenarioContext.getOrCreateUser(userName).setCaptchaSolution(CAPTCHA_BYPASS_SOLUTION);
     }
 
 }

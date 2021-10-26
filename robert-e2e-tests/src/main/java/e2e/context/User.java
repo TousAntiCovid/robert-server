@@ -13,7 +13,4 @@ public class User {
     private String captchaId;
 
     private String captchaSolution;
-
-    private String clientPublicECDHKey;
-
 }
