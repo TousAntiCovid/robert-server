@@ -1,5 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
 	<modelVersion>4.0.0</modelVersion>
 
 	<licenses>
@@ -194,50 +198,24 @@
 				<plugin>
 					<groupId>org.jacoco</groupId>
 					<artifactId>jacoco-maven-plugin</artifactId>
-					<version>0.8.4</version>
+					<version>0.8.7</version>
 					<executions>
 						<execution>
-							<id>pre-unit-agent</id>
 							<goals>
 								<goal>prepare-agent</goal>
 							</goals>
 						</execution>
-						<execution>
-							<id>post-unit-test</id>
-							<phase>test</phase>
-							<goals>
-								<goal>report</goal>
-							</goals>
-						</execution>
-						<execution>
-							<id>pre-integration-tests</id>
-							<goals>
-								<goal>prepare-agent-integration</goal>
-							</goals>
-						</execution>
-						<execution>
-							<id>post-integration-test</id>
-							<goals>
-								<goal>report-integration</goal>
-							</goals>
-						</execution>
-						<execution>
-							<id>merge</id>
-							<goals>
-								<goal>merge</goal>
-							</goals>
-							<configuration>
-								<fileSets>
-									<fileSet implementation="org.apache.maven.shared.model.fileset.FileSet">
-										<directory>${project.basedir}</directory>
-										<includes>
-											<include>**/*.exec</include>
-										</includes>
-									</fileSet>
-								</fileSets>
-							</configuration>
-						</execution>
 					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.owasp</groupId>
+					<artifactId>dependency-check-maven</artifactId>
+					<version>6.3.1</version>
+				</plugin>
+				<plugin>
+					<groupId>org.sonarsource.scanner.maven</groupId>
+					<artifactId>sonar-maven-plugin</artifactId>
+					<version>3.9.0.2155</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -259,6 +237,23 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>2.11.1</version>
+				<configuration>
+					<ratchetFrom>7ce5d21af5410159743da75c1429497518ab735d</ratchetFrom>
+					<java>
+						<importOrder>
+							<file>.etc/eclipse.importorder</file>
+						</importOrder>
+						<removeUnusedImports />
+						<eclipse>
+							<file>.etc/eclipse-formatter-java.xml</file>
+						</eclipse>
+					</java>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -283,23 +278,6 @@
 		</plugins>
 	</build>
 
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.owasp</groupId>
-				<artifactId>dependency-check-maven</artifactId>
-				<version>5.3.2</version>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>aggregate</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
-		</plugins>
-	</reporting>
-
 	<profiles>
 		<profile>
 			<id>release</id>
@@ -322,14 +300,21 @@
 		</profile>
 	</profiles>
 
+	<repositories>
+		<repository>
+			<id>gitlab-maven</id>
+			<url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
+		</repository>
+	</repositories>
+
     <distributionManagement>
         <repository>
             <id>gitlab-maven</id>
-	    <url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
+	    	<url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
         </repository>
         <snapshotRepository>
             <id>gitlab-maven</id>
-	    <url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
+	    	<url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
         </snapshotRepository>
     </distributionManagement>
 
