@@ -27,7 +27,7 @@ public class RobertClientSteps {
     private final ScenarioContext scenarioContext;
 
     private RequestSpecification givenRobertBaseUri() {
-        return  given()
+        return given()
                 .baseUri(this.applicationProperties.getWsRestBaseUrl())
                 .contentType(JSON);
     }
@@ -49,10 +49,12 @@ public class RobertClientSteps {
     @Given("{word} application request a captcha challenge id")
     public void request_captcha_challenge_id(String userName) {
         givenRobertBaseUri()
-                .body(CaptchaCreationRequest.builder()
-                        .locale("fr")
-                        .type("IMAGE")
-                        .build())
+                .body(
+                        CaptchaCreationRequest.builder()
+                                .locale("fr")
+                                .type("IMAGE")
+                                .build()
+                )
                 .when()
                 .post("/api/v6/captcha")
                 .then()
@@ -61,7 +63,8 @@ public class RobertClientSteps {
 
         User user = this.scenarioContext.getOrCreateUser(userName);
 
-        // We generate a fake Captcha id which will be used to differentiate the mobile apps
+        // We generate a fake Captcha id which will be used to differentiate the mobile
+        // apps
         user.setCaptchaId(RandomStringUtils.random(7, true, false));
     }
 
