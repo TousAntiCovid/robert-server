@@ -1,11 +1,20 @@
-variables:
-  ANSIBLE_DEPLOY_PROJECT: robert/robert-ansible
-
 include:
   - project: stopcovid19/accueil
+    ref: master
     file: gitlab/gitlab-ci-java-template.yml
 
 e2e-tests-docker:
   script:
     - until curl -s http://robert-server-ws-rest:8086/actuator/health | grep -q UP; do sleep 0.5; done;
     - java -jar robert-e2e-tests/target/*-SNAPSHOT.jar
+
+deploy-int:
+  stage: deploy
+  variables:
+    APP_VERSION: develop-SNAPSHOT
+  trigger:
+    project: stemcovid19/infrastructure/functional-zone/services/robert/robert-ansible
+    branch: master
+    strategy: depend
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
