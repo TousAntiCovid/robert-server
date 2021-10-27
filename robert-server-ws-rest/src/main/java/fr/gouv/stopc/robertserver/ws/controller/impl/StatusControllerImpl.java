@@ -126,7 +126,6 @@ public class StatusControllerImpl implements IStatusController {
 
 		if (Objects.nonNull(validationResult.getError())) {
 			if (validationResult.getError().getStatusCode().value() == 430) {
-				log.warn(validationResult.getError().toString());
 				return ResponseEntity.status(430).build();
 			}
 			log.info("Status request authentication failed");

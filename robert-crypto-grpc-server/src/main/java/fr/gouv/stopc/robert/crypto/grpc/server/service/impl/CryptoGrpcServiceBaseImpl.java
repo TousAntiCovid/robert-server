@@ -644,8 +644,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                 mustCheckWithPreviousDayKey);
 
         if (Objects.isNull(serverKey)) {
-            log.warn("Cannot retrieve server key for {}", authRequestEpoch);
-            throw new NoServerKeyFoundException("No server key found from cryptographic storage");
+            throw new NoServerKeyFoundException("No server key found from cryptographic storage : " + authRequestEpoch);
         }
 
         byte[] decryptedEbid = this.cryptoService.decryptEBID(new CryptoSkinny64(serverKey), ebid);
