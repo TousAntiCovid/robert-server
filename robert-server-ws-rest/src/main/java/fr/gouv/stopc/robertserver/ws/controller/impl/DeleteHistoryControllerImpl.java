@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.inject.Inject;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -22,50 +23,52 @@ import java.util.Optional;
 @Service
 public class DeleteHistoryControllerImpl implements IDeleteHistoryController {
 
-	private final IRegistrationService registrationService;
-	private final AuthRequestValidationService authRequestValidationService;
+    private final IRegistrationService registrationService;
 
-	@Inject
-	public DeleteHistoryControllerImpl(final IRegistrationService registrationService,
-									   final AuthRequestValidationService authRequestValidationService) {
-		this.registrationService = registrationService;
-		this.authRequestValidationService = authRequestValidationService;
-	}
+    private final AuthRequestValidationService authRequestValidationService;
 
-	@Override
-	public ResponseEntity<DeleteHistoryResponseDto> deleteHistory(DeleteHistoryRequestVo deleteHistoryRequestVo)
-			throws RobertServerException {
-		log.info("Receiving delete exposure history request");
+    @Inject
+    public DeleteHistoryControllerImpl(final IRegistrationService registrationService,
+            final AuthRequestValidationService authRequestValidationService) {
+        this.registrationService = registrationService;
+        this.authRequestValidationService = authRequestValidationService;
+    }
 
-		AuthRequestValidationService.ValidationResult<GetIdFromAuthResponse> validationResult =
-				this.authRequestValidationService.validateRequestForAuth(deleteHistoryRequestVo, DigestSaltEnum.DELETE_HISTORY);
+    @Override
+    public ResponseEntity<DeleteHistoryResponseDto> deleteHistory(DeleteHistoryRequestVo deleteHistoryRequestVo)
+            throws RobertServerException {
+        log.info("Receiving delete exposure history request");
 
-		if (Objects.nonNull(validationResult.getError()) || validationResult.getResponse().hasError()) {
-			if (validationResult.getError().getStatusCode().value() == 430) {
-				return ResponseEntity.status(430).build();
-			}
-			log.info("Delete exposure history request authentication failed");
-			return ResponseEntity.badRequest().build();
-		}
-		log.info("Delete exposure history request authentication passed");
+        AuthRequestValidationService.ValidationResult<GetIdFromAuthResponse> validationResult = this.authRequestValidationService
+                .validateRequestForAuth(deleteHistoryRequestVo, DigestSaltEnum.DELETE_HISTORY);
 
-		GetIdFromAuthResponse authResponse = validationResult.getResponse();
-		Optional<Registration> registrationRecord = this.registrationService.findById(authResponse.getIdA().toByteArray());
+        if (Objects.nonNull(validationResult.getError()) || validationResult.getResponse().hasError()) {
+            if (validationResult.getError().getStatusCode().value() == 430) {
+                return ResponseEntity.status(430).build();
+            }
+            log.info("Delete exposure history request authentication failed");
+            return ResponseEntity.badRequest().build();
+        }
+        log.info("Delete exposure history request authentication passed");
 
-		if (registrationRecord.isPresent()) {
-			Registration record = registrationRecord.get();
+        GetIdFromAuthResponse authResponse = validationResult.getResponse();
+        Optional<Registration> registrationRecord = this.registrationService
+                .findById(authResponse.getIdA().toByteArray());
 
-			// Clear ExposedEpoch list then save the updated registration
-			if (!CollectionUtils.isEmpty(record.getExposedEpochs())) {
-				record.getExposedEpochs().clear();
-				registrationService.saveRegistration(record);
-			}
+        if (registrationRecord.isPresent()) {
+            Registration record = registrationRecord.get();
 
-			log.info("Delete exposure history request successful");
-			return ResponseEntity.ok(DeleteHistoryResponseDto.builder().success(true).build());
-		} else {
-			log.info("Discarding delete exposure history request because id unknown (fake or was deleted)");
-			return ResponseEntity.notFound().build();
-		}
-	}
+            // Clear ExposedEpoch list then save the updated registration
+            if (!CollectionUtils.isEmpty(record.getExposedEpochs())) {
+                record.getExposedEpochs().clear();
+                registrationService.saveRegistration(record);
+            }
+
+            log.info("Delete exposure history request successful");
+            return ResponseEntity.ok(DeleteHistoryResponseDto.builder().success(true).build());
+        } else {
+            log.info("Discarding delete exposure history request because id unknown (fake or was deleted)");
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

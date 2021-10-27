@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.inject.Inject;
+
 import java.security.Key;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -42,19 +43,24 @@ import java.util.stream.Collectors;
 public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
     private final ICryptoServerConfigurationService serverConfigurationService;
+
     private final CryptoService cryptoService;
+
     private final IECDHKeyService keyService;
+
     private final IClientKeyStorageService clientStorageService;
+
     private final ICryptographicStorageService cryptographicStorageService;
+
     private final PropertyLoader propertyLoader;
 
     @Inject
     public CryptoGrpcServiceBaseImpl(final ICryptoServerConfigurationService serverConfigurationService,
-                                     final CryptoService cryptoService,
-                                     final IECDHKeyService keyService,
-                                     final IClientKeyStorageService clientStorageService,
-                                     final ICryptographicStorageService cryptographicStorageService,
-                                     final PropertyLoader propertyLoader) {
+            final CryptoService cryptoService,
+            final IECDHKeyService keyService,
+            final IClientKeyStorageService clientStorageService,
+            final ICryptographicStorageService cryptographicStorageService,
+            final PropertyLoader propertyLoader) {
 
         this.serverConfigurationService = serverConfigurationService;
         this.cryptoService = cryptoService;
@@ -71,59 +77,76 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                 request.getPin(),
                 request.getConfigFileName(),
                 propertyLoader.getKeystoreType(),
-                propertyLoader.getKeystoreFile());
+                propertyLoader.getKeystoreFile()
+        );
 
-        responseObserver.onNext(ReloadHSMResponse.newBuilder()
-                .setSuccess(success)
-                .build());
+        responseObserver.onNext(
+                ReloadHSMResponse.newBuilder()
+                        .setSuccess(success)
+                        .build()
+        );
         responseObserver.onCompleted();
     }
 
     @Override
-    public void getHSMCacheStatus(HSMCacheStatusRequest request, StreamObserver<HSMCacheStatusResponse> responseObserver) {
+    public void getHSMCacheStatus(HSMCacheStatusRequest request,
+            StreamObserver<HSMCacheStatusResponse> responseObserver) {
 
         List<String> cachedKeys = this.cryptographicStorageService.getHSMCacheStatus();
 
-        responseObserver.onNext(HSMCacheStatusResponse.newBuilder()
-                .addAllAliases(cachedKeys)
-                .build());
+        responseObserver.onNext(
+                HSMCacheStatusResponse.newBuilder()
+                        .addAllAliases(cachedKeys)
+                        .build()
+        );
         responseObserver.onCompleted();
     }
 
     @Override
     public void createRegistration(CreateRegistrationRequest request,
-                                   StreamObserver<CreateRegistrationResponse> responseObserver) {
+            StreamObserver<CreateRegistrationResponse> responseObserver) {
 
         try {
             // Derive K_A and K_A_Tuples from client public key for the new registration
-            Optional<ClientIdentifierBundle> clientIdentifierBundleWithPublicKey = this.keyService.deriveKeysFromClientPublicKey(request.getClientPublicKey().toByteArray());
+            Optional<ClientIdentifierBundle> clientIdentifierBundleWithPublicKey = this.keyService
+                    .deriveKeysFromClientPublicKey(request.getClientPublicKey().toByteArray());
 
             if (!clientIdentifierBundleWithPublicKey.isPresent()) {
                 String errorMessage = "Unable to derive keys from provided client public key for client registration";
                 log.warn(errorMessage);
-                responseObserver.onNext(CreateRegistrationResponse.newBuilder()
-                        .setError(ErrorMessage.newBuilder()
-                                .setCode(400)
-                                .setDescription(errorMessage)
-                                .build())
-                        .build());
+                responseObserver.onNext(
+                        CreateRegistrationResponse.newBuilder()
+                                .setError(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(400)
+                                                .setDescription(errorMessage)
+                                                .build()
+                                )
+                                .build()
+                );
                 responseObserver.onCompleted();
                 return;
             }
 
-            Optional<ClientIdentifierBundle> clientIdentifierBundleFromDb = this.clientStorageService.createClientIdUsingKeys(
-                    clientIdentifierBundleWithPublicKey.get().getKeyForMac(),
-                    clientIdentifierBundleWithPublicKey.get().getKeyForTuples());
+            Optional<ClientIdentifierBundle> clientIdentifierBundleFromDb = this.clientStorageService
+                    .createClientIdUsingKeys(
+                            clientIdentifierBundleWithPublicKey.get().getKeyForMac(),
+                            clientIdentifierBundleWithPublicKey.get().getKeyForTuples()
+                    );
 
-            if(!clientIdentifierBundleFromDb.isPresent()) {
+            if (!clientIdentifierBundleFromDb.isPresent()) {
                 String errorMessage = "Unable to create a registration";
                 log.warn(errorMessage);
-                responseObserver.onNext(CreateRegistrationResponse.newBuilder()
-                        .setError(ErrorMessage.newBuilder()
-                                .setCode(500)
-                                .setDescription(errorMessage)
-                                .build())
-                        .build());
+                responseObserver.onNext(
+                        CreateRegistrationResponse.newBuilder()
+                                .setError(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(500)
+                                                .setDescription(errorMessage)
+                                                .build()
+                                )
+                                .build()
+                );
                 responseObserver.onCompleted();
                 return;
             }
@@ -133,18 +156,23 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     clientIdentifierBundleFromDb.get().getId(),
                     request.getFromEpochId(),
                     request.getNumberOfDaysForEpochBundles(),
-                    request.getServerCountryCode().byteAt(0));
+                    request.getServerCountryCode().byteAt(0)
+            );
 
             if (!encryptedTuples.isPresent()) {
                 String errorMessage = "Unhandled exception while creating registration";
                 log.warn(errorMessage);
-                responseObserver.onNext(CreateRegistrationResponse.newBuilder()
-                        .setIdA(ByteString.copyFrom(clientIdentifierBundleFromDb.get().getId()))
-                        .setError(ErrorMessage.newBuilder()
-                                .setCode(500)
-                                .setDescription(errorMessage)
-                                .build())
-                        .build());
+                responseObserver.onNext(
+                        CreateRegistrationResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(clientIdentifierBundleFromDb.get().getId()))
+                                .setError(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(500)
+                                                .setDescription(errorMessage)
+                                                .build()
+                                )
+                                .build()
+                );
                 responseObserver.onCompleted();
                 return;
             }
@@ -160,12 +188,16 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         } catch (RobertServerCryptoException e) {
             String errorMessage = "Unhandled exception while creating registration";
             log.warn(errorMessage, e);
-            responseObserver.onNext(CreateRegistrationResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(500)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    CreateRegistrationResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(500)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
@@ -173,18 +205,22 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
     @Override
     public void getIdFromAuth(GetIdFromAuthRequest request,
-                              StreamObserver<GetIdFromAuthResponse> responseObserver) {
-        DigestSaltEnum digestSalt = DigestSaltEnum.valueOf((byte)request.getRequestType());
+            StreamObserver<GetIdFromAuthResponse> responseObserver) {
+        DigestSaltEnum digestSalt = DigestSaltEnum.valueOf((byte) request.getRequestType());
 
         if (Objects.isNull(digestSalt)) {
             String errorMessage = String.format("Unknown request type %d", request.getRequestType());
             log.warn(errorMessage);
-            responseObserver.onNext(GetIdFromAuthResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(400)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetIdFromAuthResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(400)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
@@ -196,15 +232,20 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     request.getEpochId(),
                     request.getTime(),
                     request.getMac().toByteArray(),
-                    digestSalt);
+                    digestSalt
+            );
         } catch (NoServerKeyFoundException e) {
             log.warn(e.getMessage());
-            responseObserver.onNext(GetIdFromAuthResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(430)
-                            .setDescription(e.getMessage())
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetIdFromAuthResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(430)
+                                            .setDescription(e.getMessage())
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
@@ -212,12 +253,16 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         if (!validationResult.isPresent()) {
             String errorMessage = "Could not validate auth request";
             log.warn(errorMessage);
-            responseObserver.onNext(GetIdFromAuthResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(400)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetIdFromAuthResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(400)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         } else if (Objects.nonNull(validationResult.get().getError())) {
@@ -235,16 +280,18 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             return;
         }
 
-        responseObserver.onNext(GetIdFromAuthResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(validationResult.get().getId()))
-                .setEpochId(validationResult.get().getEpochId())
-                .build());
+        responseObserver.onNext(
+                GetIdFromAuthResponse.newBuilder()
+                        .setIdA(ByteString.copyFrom(validationResult.get().getId()))
+                        .setEpochId(validationResult.get().getEpochId())
+                        .build()
+        );
         responseObserver.onCompleted();
     }
 
     @Override
     public void getIdFromStatus(GetIdFromStatusRequest request,
-                                StreamObserver<GetIdFromStatusResponse> responseObserver) {
+            StreamObserver<GetIdFromStatusResponse> responseObserver) {
         Optional<AuthRequestValidationResult> validationResult = null;
 
         try {
@@ -253,27 +300,36 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     request.getEpochId(),
                     request.getTime(),
                     request.getMac().toByteArray(),
-                    DigestSaltEnum.STATUS);
+                    DigestSaltEnum.STATUS
+            );
         } catch (NoServerKeyFoundException e) {
             log.warn(e.getMessage());
-            responseObserver.onNext(GetIdFromStatusResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(430)
-                            .setDescription(e.getMessage())
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetIdFromStatusResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(430)
+                                            .setDescription(e.getMessage())
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
         if (!validationResult.isPresent()) {
             String errorMessage = "Could not validate auth request";
             log.warn(errorMessage);
-            responseObserver.onNext(GetIdFromStatusResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(400)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetIdFromStatusResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(400)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         } else if (Objects.nonNull(validationResult.get().getError())) {
@@ -291,16 +347,21 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             return;
         }
 
-        Optional<ClientIdentifierBundle> clientIdentifierBundle = this.clientStorageService.findKeyById(validationResult.get().getId());
+        Optional<ClientIdentifierBundle> clientIdentifierBundle = this.clientStorageService
+                .findKeyById(validationResult.get().getId());
         if (!clientIdentifierBundle.isPresent()) {
             String errorMessage = "Unknown id";
             log.warn(errorMessage);
-            responseObserver.onNext(GetIdFromStatusResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(404)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetIdFromStatusResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(404)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
@@ -310,32 +371,39 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                 clientIdentifierBundle.get().getId(),
                 request.getFromEpochId(),
                 request.getNumberOfDaysForEpochBundles(),
-                request.getServerCountryCode().byteAt(0));
+                request.getServerCountryCode().byteAt(0)
+        );
 
         if (!encryptedTuples.isPresent()) {
             String errorMessage = "Unhandled exception while creating tuples";
             log.warn(errorMessage);
-            responseObserver.onNext(GetIdFromStatusResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(500)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetIdFromStatusResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(500)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
 
-        responseObserver.onNext(GetIdFromStatusResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(validationResult.get().getId()))
-                .setEpochId(validationResult.get().getEpochId())
-                .setTuples(ByteString.copyFrom(encryptedTuples.get().getEncryptedTuples()))
-                .build());
+        responseObserver.onNext(
+                GetIdFromStatusResponse.newBuilder()
+                        .setIdA(ByteString.copyFrom(validationResult.get().getId()))
+                        .setEpochId(validationResult.get().getEpochId())
+                        .setTuples(ByteString.copyFrom(encryptedTuples.get().getEncryptedTuples()))
+                        .build()
+        );
         responseObserver.onCompleted();
     }
 
     @Override
     public void getInfoFromHelloMessage(GetInfoFromHelloMessageRequest request,
-                                        StreamObserver<GetInfoFromHelloMessageResponse> responseObserver) {
+            StreamObserver<GetInfoFromHelloMessageResponse> responseObserver) {
         byte[] idA;
         int epochId;
         byte[] cc;
@@ -347,37 +415,49 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             // If country code was decrypted successfully but does not match current server,
             // return directly and forward to appropriate federation server
             if (!Arrays.equals(cc, request.getServerCountryCode().toByteArray())) {
-                responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
-                        .setCountryCode(ByteString.copyFrom(cc))
-                        .build());
+                responseObserver.onNext(
+                        GetInfoFromHelloMessageResponse.newBuilder()
+                                .setCountryCode(ByteString.copyFrom(cc))
+                                .build()
+                );
                 responseObserver.onCompleted();
                 return;
             }
         } catch (RobertServerCryptoException e) {
             String errorMessage = "Could not decrypt ECC";
             log.warn(errorMessage, e);
-            responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(400)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetInfoFromHelloMessageResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(400)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
 
         try {
             // Decrypt EBID
-            EbidContent ebidContent = decryptEBIDWithTimeReceived(request.getEbid().toByteArray(), request.getTimeReceived());
+            EbidContent ebidContent = decryptEBIDWithTimeReceived(
+                    request.getEbid().toByteArray(), request.getTimeReceived()
+            );
 
             if (Objects.isNull(ebidContent)) {
                 String errorMessage = "Could not decrypt EBID because the server key was not found";
-                responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
-                        .setError(ErrorMessage.newBuilder()
-                                .setCode(400)
-                                .setDescription(errorMessage)
-                                .build())
-                        .build());
+                responseObserver.onNext(
+                        GetInfoFromHelloMessageResponse.newBuilder()
+                                .setError(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(400)
+                                                .setDescription(errorMessage)
+                                                .build()
+                                )
+                                .build()
+                );
                 responseObserver.onCompleted();
                 return;
             }
@@ -387,22 +467,30 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         } catch (RobertServerCryptoException e) {
             String errorMessage = "Could not decrypt EBID due to internal error";
             log.error(errorMessage, e);
-            responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(500)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetInfoFromHelloMessageResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(500)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         } catch (NoServerKeyFoundException e) {
             log.warn(e.getMessage());
-            responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(430)
-                            .setDescription(e.getMessage())
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetInfoFromHelloMessageResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(430)
+                                            .setDescription(e.getMessage())
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
@@ -413,42 +501,56 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             if (!clientIdentifierBundle.isPresent()) {
                 String errorMessage = "Could not find keys for id";
                 log.warn(errorMessage);
-                responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
-                        .setIdA(ByteString.copyFrom(idA))
-                        .setError(ErrorMessage.newBuilder()
-                                .setCode(404)
-                                .setDescription(errorMessage)
-                                .build())
-                        .build());
+                responseObserver.onNext(
+                        GetInfoFromHelloMessageResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setError(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(404)
+                                                .setDescription(errorMessage)
+                                                .build()
+                                )
+                                .build()
+                );
                 responseObserver.onCompleted();
                 return;
             }
-            boolean macValid = this.cryptoService.macHelloValidation(new CryptoHMACSHA256(clientIdentifierBundle.get().getKeyForMac()),
-                    generateHelloFromHelloMessageRequest(request));
+            boolean macValid = this.cryptoService.macHelloValidation(
+                    new CryptoHMACSHA256(clientIdentifierBundle.get().getKeyForMac()),
+                    generateHelloFromHelloMessageRequest(request)
+            );
 
             if (!macValid) {
                 String errorMessage = "MAC is invalid";
                 log.warn(errorMessage);
-                responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
-                        .setIdA(ByteString.copyFrom(idA))
-                        .setError(ErrorMessage.newBuilder()
-                                .setCode(400)
-                                .setDescription(errorMessage)
-                                .build())
-                        .build());
+                responseObserver.onNext(
+                        GetInfoFromHelloMessageResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setError(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(400)
+                                                .setDescription(errorMessage)
+                                                .build()
+                                )
+                                .build()
+                );
                 responseObserver.onCompleted();
                 return;
             }
         } catch (RobertServerCryptoException e) {
             String errorMessage = "Could not validate MAC";
             log.warn(errorMessage, e);
-            responseObserver.onNext(GetInfoFromHelloMessageResponse.newBuilder()
-                    .setIdA(ByteString.copyFrom(idA))
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(500)
-                            .setDescription(errorMessage)
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    GetInfoFromHelloMessageResponse.newBuilder()
+                            .setIdA(ByteString.copyFrom(idA))
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(500)
+                                            .setDescription(errorMessage)
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
@@ -465,7 +567,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
     @Override
     public void deleteId(DeleteIdRequest request,
-                         StreamObserver<DeleteIdResponse> responseObserver) {
+            StreamObserver<DeleteIdResponse> responseObserver) {
         Optional<AuthRequestValidationResult> validationResult;
 
         try {
@@ -474,15 +576,20 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     request.getEpochId(),
                     request.getTime(),
                     request.getMac().toByteArray(),
-                    DigestSaltEnum.UNREGISTER);
+                    DigestSaltEnum.UNREGISTER
+            );
         } catch (NoServerKeyFoundException e) {
             log.warn(e.getMessage());
-            responseObserver.onNext(DeleteIdResponse.newBuilder()
-                    .setError(ErrorMessage.newBuilder()
-                            .setCode(430)
-                            .setDescription(e.getMessage())
-                            .build())
-                    .build());
+            responseObserver.onNext(
+                    DeleteIdResponse.newBuilder()
+                            .setError(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(430)
+                                            .setDescription(e.getMessage())
+                                            .build()
+                            )
+                            .build()
+            );
             responseObserver.onCompleted();
             return;
         }
@@ -504,75 +611,97 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
         this.clientStorageService.deleteClientId(validationResult.get().getId());
 
-        responseObserver.onNext(DeleteIdResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(validationResult.get().getId()))
-                .build());
+        responseObserver.onNext(
+                DeleteIdResponse.newBuilder()
+                        .setIdA(ByteString.copyFrom(validationResult.get().getId()))
+                        .build()
+        );
         responseObserver.onCompleted();
     }
 
     private Optional<AuthRequestValidationResult> validateAuthRequest(byte[] encryptedEbid,
-                                                                      int epochId,
-                                                                      long time,
-                                                                      byte[] mac,
-                                                                      DigestSaltEnum type) throws NoServerKeyFoundException {
+            int epochId,
+            long time,
+            byte[] mac,
+            DigestSaltEnum type) throws NoServerKeyFoundException {
         try {
             EbidContent ebidContent = decryptEBIDAndCheckEpoch(encryptedEbid, epochId);
 
             if (Objects.isNull(ebidContent)) {
                 String message = "Could not decrypt ebid content";
                 log.warn(message);
-                return Optional.of(AuthRequestValidationResult.builder()
-                        .error(ErrorMessage.newBuilder()
-                                .setCode(400)
-                                .setDescription(message)
-                                .build())
-                        .build());
+                return Optional.of(
+                        AuthRequestValidationResult.builder()
+                                .error(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(400)
+                                                .setDescription(message)
+                                                .build()
+                                )
+                                .build()
+                );
             }
 
-            Optional<ClientIdentifierBundle> clientIdentifierBundle = this.clientStorageService.findKeyById(ebidContent.getIdA());
+            Optional<ClientIdentifierBundle> clientIdentifierBundle = this.clientStorageService
+                    .findKeyById(ebidContent.getIdA());
             if (!clientIdentifierBundle.isPresent()) {
                 String message = "Could not find id";
                 log.warn(message);
-                return Optional.of(AuthRequestValidationResult.builder()
-                        .epochId(ebidContent.getEpochId())
-                        .id(ebidContent.getIdA())
-                        .error(ErrorMessage.newBuilder()
-                                .setCode(404)
-                                .setDescription(message)
-                                .build())
-                        .build());
+                return Optional.of(
+                        AuthRequestValidationResult.builder()
+                                .epochId(ebidContent.getEpochId())
+                                .id(ebidContent.getIdA())
+                                .error(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(404)
+                                                .setDescription(message)
+                                                .build()
+                                )
+                                .build()
+                );
             }
             boolean valid = this.cryptoService.macValidationForType(
-                                new CryptoHMACSHA256(clientIdentifierBundle.get().getKeyForMac()),
-                                addEbidComponents(encryptedEbid, epochId, time),
-                                mac,
-                                type);
+                    new CryptoHMACSHA256(clientIdentifierBundle.get().getKeyForMac()),
+                    addEbidComponents(encryptedEbid, epochId, time),
+                    mac,
+                    type
+            );
             if (valid) {
-                return Optional.of(AuthRequestValidationResult.builder()
-                        .epochId(ebidContent.getEpochId())
-                        .id(ebidContent.getIdA())
-                        .build());
+                return Optional.of(
+                        AuthRequestValidationResult.builder()
+                                .epochId(ebidContent.getEpochId())
+                                .id(ebidContent.getIdA())
+                                .build()
+                );
             } else {
                 String message = "Invalid MAC";
                 log.warn(message);
-                return Optional.of(AuthRequestValidationResult.builder()
-                        .epochId(ebidContent.getEpochId())
-                        .id(ebidContent.getIdA())
-                        .error(ErrorMessage.newBuilder()
-                                .setCode(400)
-                                .setDescription(message)
-                                .build())
-                        .build());
+                return Optional.of(
+                        AuthRequestValidationResult.builder()
+                                .epochId(ebidContent.getEpochId())
+                                .id(ebidContent.getIdA())
+                                .error(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(400)
+                                                .setDescription(message)
+                                                .build()
+                                )
+                                .build()
+                );
             }
         } catch (RobertServerCryptoException e) {
             String message = "Error validating authenticated request";
             log.error(message, e);
-            return Optional.of(AuthRequestValidationResult.builder()
-                    .error(ErrorMessage.newBuilder()
-                            .setCode(500)
-                            .setDescription(message)
-                            .build())
-                    .build());
+            return Optional.of(
+                    AuthRequestValidationResult.builder()
+                            .error(
+                                    ErrorMessage.newBuilder()
+                                            .setCode(500)
+                                            .setDescription(message)
+                                            .build()
+                            )
+                            .build()
+            );
         }
     }
 
@@ -580,8 +709,11 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     @Getter
     @AllArgsConstructor
     private static class AuthRequestValidationResult {
+
         private byte[] id;
+
         private int epochId;
+
         private ErrorMessage error;
     }
 
@@ -589,17 +721,21 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     @Getter
     @AllArgsConstructor
     private static class TuplesGenerationResult {
+
         byte[] encryptedTuples;
     }
 
-    // The two following classes are used to serialize to a JSON string that complies with the API Spec
+    // The two following classes are used to serialize to a JSON string that
+    // complies with the API Spec
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
     @Getter
     @Setter
     public static class EphemeralTupleJson {
+
         private int epochId;
+
         private EphemeralTupleEbidEccJson key;
     }
 
@@ -609,7 +745,9 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     @Getter
     @Setter
     public static class EphemeralTupleEbidEccJson {
+
         private byte[] ebid;
+
         private byte[] ecc;
     }
 
@@ -617,31 +755,37 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     @AllArgsConstructor
     @Getter
     private static class EbidContent {
+
         byte[] idA;
+
         int epochId;
     }
 
     /**
-     * Decrypt the provided ebid and check the authRequestEpoch it contains the provided one or the next/previous
+     * Decrypt the provided ebid and check the authRequestEpoch it contains the
+     * provided one or the next/previous
+     * 
      * @param ebid
      * @param authRequestEpoch
-     * @param enableEpochOverlapping authorize the epoch overlapping (ie too close epochs =>  (Math.abs(epoch1 - epoch2) == 1))
+     * @param enableEpochOverlapping authorize the epoch overlapping (ie too close
+     *                               epochs => (Math.abs(epoch1 - epoch2) == 1))
      * @param adjacentEpochMatchEnum
      * @return
      * @throws RobertServerCryptoException
      */
     private EbidContent decryptEBIDAndCheckEpoch(byte[] ebid,
-                                                 int authRequestEpoch,
-                                                 boolean mustCheckWithPreviousDayKey,
-                                                 boolean ksAdjustment,
-                                                 boolean enableEpochOverlapping,
-                                                 AdjacentEpochMatchEnum adjacentEpochMatchEnum)
+            int authRequestEpoch,
+            boolean mustCheckWithPreviousDayKey,
+            boolean ksAdjustment,
+            boolean enableEpochOverlapping,
+            AdjacentEpochMatchEnum adjacentEpochMatchEnum)
             throws RobertServerCryptoException, NoServerKeyFoundException {
 
         byte[] serverKey = this.cryptographicStorageService.getServerKey(
                 authRequestEpoch,
                 this.serverConfigurationService.getServiceTimeStart(),
-                mustCheckWithPreviousDayKey);
+                mustCheckWithPreviousDayKey
+        );
 
         if (Objects.isNull(serverKey)) {
             throw new NoServerKeyFoundException("No server key found from cryptographic storage : " + authRequestEpoch);
@@ -652,9 +796,12 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         int ebidEpochId = getEpochIdFromDecryptedEBID(decryptedEbid);
 
         if (authRequestEpoch != ebidEpochId) {
-            log.info("Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = {} vs auth request epoch = {}", ebidEpochId, authRequestEpoch);
+            log.info(
+                    "Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = {} vs auth request epoch = {}",
+                    ebidEpochId, authRequestEpoch
+            );
 
-            if(enableEpochOverlapping && (Math.abs(authRequestEpoch - ebidEpochId) == 1)) {
+            if (enableEpochOverlapping && (Math.abs(authRequestEpoch - ebidEpochId) == 1)) {
                 return EbidContent.builder().epochId(ebidEpochId).idA(idA).build();
             } else if (ksAdjustment && !mustCheckWithPreviousDayKey) {
                 log.warn("Retry to decrypt EBID with previous day key");
@@ -663,66 +810,84 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                         authRequestEpoch,
                         true,
                         false,
-                        enableEpochOverlapping, adjacentEpochMatchEnum);
+                        enableEpochOverlapping, adjacentEpochMatchEnum
+                );
             } else {
-                return manageEBIDDecryptRetry(ebid,
+                return manageEBIDDecryptRetry(
+                        ebid,
                         authRequestEpoch,
-                        adjacentEpochMatchEnum);
+                        adjacentEpochMatchEnum
+                );
             }
         }
 
         return EbidContent.builder().epochId(ebidEpochId).idA(idA).build();
     }
 
-
     private final static int MAX_EPOCH_DOUBLE_KS_CHECK = 672;
+
     private boolean isEBIDWithinRange(int epoch) {
         return epoch >= 0 && epoch <= MAX_EPOCH_DOUBLE_KS_CHECK;
     }
 
     /**
-     * Decrypt the provided ebid and check the epoch it contains matches exactly the provided one
+     * Decrypt the provided ebid and check the epoch it contains matches exactly the
+     * provided one
      *
      * @param ebid
      * @param epoch
      * @return
      * @throws RobertServerCryptoException
      */
-    private EbidContent decryptEBIDAndCheckEpoch(byte[] ebid, int epoch) throws RobertServerCryptoException, NoServerKeyFoundException {
-        return decryptEBIDAndCheckEpoch(ebid,
+    private EbidContent decryptEBIDAndCheckEpoch(byte[] ebid, int epoch)
+            throws RobertServerCryptoException, NoServerKeyFoundException {
+        return decryptEBIDAndCheckEpoch(
+                ebid,
                 epoch,
                 false,
                 isEBIDWithinRange(epoch),
-                false, AdjacentEpochMatchEnum.NONE);
+                false, AdjacentEpochMatchEnum.NONE
+        );
     }
 
-    private EbidContent manageEBIDDecryptRetry(byte[] ebid, int authRequestEpoch, AdjacentEpochMatchEnum adjacentEpochMatchEnum)
+    private EbidContent manageEBIDDecryptRetry(byte[] ebid, int authRequestEpoch,
+            AdjacentEpochMatchEnum adjacentEpochMatchEnum)
             throws RobertServerCryptoException, NoServerKeyFoundException {
         switch (adjacentEpochMatchEnum) {
             case PREVIOUS:
                 log.warn("Retrying ebid decrypt with previous epoch");
-                return decryptEBIDAndCheckEpoch(ebid, authRequestEpoch - 1, false, false, false, AdjacentEpochMatchEnum.NONE);
+                return decryptEBIDAndCheckEpoch(
+                        ebid, authRequestEpoch - 1, false, false, false, AdjacentEpochMatchEnum.NONE
+                );
             case NEXT:
                 log.warn("Retrying ebid decrypt with next epoch");
-                return decryptEBIDAndCheckEpoch(ebid, authRequestEpoch + 1, false, false, false, AdjacentEpochMatchEnum.NONE);
+                return decryptEBIDAndCheckEpoch(
+                        ebid, authRequestEpoch + 1, false, false, false, AdjacentEpochMatchEnum.NONE
+                );
             case NONE:
             default:
-                log.warn("Epochs do not match for authRequestEpoch = {} and adjacentEpochMatchEnum = {}", authRequestEpoch, adjacentEpochMatchEnum);
+                log.warn(
+                        "Epochs do not match for authRequestEpoch = {} and adjacentEpochMatchEnum = {}",
+                        authRequestEpoch, adjacentEpochMatchEnum
+                );
                 return null;
         }
     }
 
-    private EbidContent decryptEBIDWithTimeReceived(byte[] ebid, long timeReceived) throws RobertServerCryptoException, NoServerKeyFoundException {
+    private EbidContent decryptEBIDWithTimeReceived(byte[] ebid, long timeReceived)
+            throws RobertServerCryptoException, NoServerKeyFoundException {
         int epoch = TimeUtils.getNumberOfEpochsBetween(
                 this.serverConfigurationService.getServiceTimeStart(),
-                timeReceived);
+                timeReceived
+        );
 
         return decryptEBIDAndCheckEpoch(
                 ebid,
                 epoch,
                 false,
                 isEBIDWithinRange(epoch),
-                true, atStartOrEndOfDay(timeReceived));
+                true, atStartOrEndOfDay(timeReceived)
+        );
 
     }
 
@@ -752,7 +917,8 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
     private byte[] decryptECC(byte[] ebid, byte encryptedCountryCode) throws RobertServerCryptoException {
         return this.cryptoService.decryptCountryCode(
-                new CryptoAESECB(this.cryptographicStorageService.getFederationKey()), ebid, encryptedCountryCode);
+                new CryptoAESECB(this.cryptographicStorageService.getFederationKey()), ebid, encryptedCountryCode
+        );
     }
 
     private byte[] generateHelloFromHelloMessageRequest(GetInfoFromHelloMessageRequest request) {
@@ -776,7 +942,8 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                 4,
                 all,
                 encryptedEbid.length + Integer.BYTES,
-                Integer.BYTES);
+                Integer.BYTES
+        );
         return all;
     }
 
@@ -784,22 +951,26 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         ArrayList<EphemeralTupleJson> mappedTuples = new ArrayList<>();
 
         for (EphemeralTuple tuple : tuples) {
-            mappedTuples.add(EphemeralTupleJson.builder()
-                    .epochId(tuple.getEpochId())
-                    .key(EphemeralTupleEbidEccJson.builder()
-                            .ebid(tuple.getEbid())
-                            .ecc(tuple.getEncryptedCountryCode())
-                            .build())
-                    .build());
+            mappedTuples.add(
+                    EphemeralTupleJson.builder()
+                            .epochId(tuple.getEpochId())
+                            .key(
+                                    EphemeralTupleEbidEccJson.builder()
+                                            .ebid(tuple.getEbid())
+                                            .ecc(tuple.getEncryptedCountryCode())
+                                            .build()
+                            )
+                            .build()
+            );
         }
         return mappedTuples;
     }
 
     private Optional<TuplesGenerationResult> generateEncryptedTuples(byte[] tuplesEncryptionKey,
-                                                                     byte[] id,
-                                                                     int epochId,
-                                                                     int nbDays,
-                                                                     byte serverCountryCode) {
+            byte[] id,
+            int epochId,
+            int nbDays,
+            byte serverCountryCode) {
 
         if (nbDays < 1) {
             log.error("Request number of epochs is invalid for tuple generation");
@@ -812,7 +983,8 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         final byte[][] serverKeys = this.cryptographicStorageService.getServerKeys(
                 epochId,
                 this.serverConfigurationService.getServiceTimeStart(),
-                nbDays);
+                nbDays
+        );
 
         if (Objects.isNull(serverKeys)) {
             log.warn("Could not retrieve server keys for epoch span starting with: {}", epochId);
@@ -820,7 +992,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         }
         int[] nbOfEpochsToGeneratePerDay = new int[serverKeys.length];
         nbOfEpochsToGeneratePerDay[0] = TimeUtils.remainingEpochsForToday(epochId);
-        for (int i = 1; i < nbOfEpochsToGeneratePerDay.length;  i++) {
+        for (int i = 1; i < nbOfEpochsToGeneratePerDay.length; i++) {
             nbOfEpochsToGeneratePerDay[i] = TimeUtils.EPOCHS_PER_DAY;
         }
 
@@ -841,7 +1013,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     ephemeralTuples.addAll(tuplesForDay);
                 } catch (RobertServerCryptoException e) {
                     log.warn("Error generating tuples for day {}", i, e);
-                    //return Optional.empty();
+                    // return Optional.empty();
                 }
             } else {
                 log.warn("Cannot generating tuples for day {}, missing key", i);
@@ -861,7 +1033,9 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                 ObjectMapper objectMapper = new ObjectMapper();
                 byte[] tuplesAsBytes = objectMapper.writeValueAsBytes(mapEphemeralTuples(ephemeralTuples));
                 CryptoAESGCM cryptoAESGCM = new CryptoAESGCM(tuplesEncryptionKey);
-                return Optional.of(TuplesGenerationResult.builder().encryptedTuples(cryptoAESGCM.encrypt(tuplesAsBytes)).build());
+                return Optional.of(
+                        TuplesGenerationResult.builder().encryptedTuples(cryptoAESGCM.encrypt(tuplesAsBytes)).build()
+                );
             }
             return Optional.empty();
         } catch (JsonProcessingException | RobertServerCryptoException e) {
@@ -883,4 +1057,3 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
 }
-
