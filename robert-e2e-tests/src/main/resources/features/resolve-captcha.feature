@@ -11,3 +11,4 @@ Feature: Resolve captcha
     Given Sarah application request an image captcha challenge with the previously received id
     Then François resolve the Captcha image into the application
     Then Sarah resolve the Captcha image into the application
+    Then François is registered on TAC
