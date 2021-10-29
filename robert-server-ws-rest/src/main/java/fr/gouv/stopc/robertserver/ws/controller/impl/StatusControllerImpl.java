@@ -76,8 +76,14 @@ public class StatusControllerImpl implements IStatusController {
     @Override
     public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo)
             throws RobertServerException {
+
         ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
-        if (Objects.isNull(statusResponse) || Objects.isNull(statusResponse.getStatusCode())) {
+
+        if (statusResponse.getStatusCodeValue() == 430) {
+            log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCodeValue());
+            return ResponseEntity.status(430).build();
+        }
+        if (Objects.isNull(statusResponse) || Objects.isNull(statusResponse.getStatusCodeValue())) {
             log.error("The response of the status must not be null");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -99,15 +105,22 @@ public class StatusControllerImpl implements IStatusController {
 
     @Override
     public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) throws RobertServerException {
+
         ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
-        if (Objects.isNull(statusResponse) || Objects.isNull(statusResponse.getStatusCode())) {
+
+        if (statusResponse.getStatusCodeValue() == 430) {
+            log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCodeValue());
+            return ResponseEntity.status(430).build();
+        }
+
+        if (Objects.isNull(statusResponse) || Objects.isNull(statusResponse.getStatusCodeValue())) {
             log.error("The response of the status must not be null");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
         if (statusResponse.getStatusCode().isError()) {
-            log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCode());
-            return ResponseEntity.status(statusResponse.getStatusCode()).build();
+            log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCodeValue());
+            return ResponseEntity.status(statusResponse.getStatusCodeValue()).build();
         }
 
         StatusResponseDto status = statusResponse.getBody();

@@ -1,26 +1,5 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.net.URI;
-
-import javax.inject.Inject;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.controller.impl.StatusControllerImpl;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
@@ -28,6 +7,22 @@ import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.*;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.inject.Inject;
+
+import java.net.URI;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -50,13 +45,14 @@ public class StatusControllerWsRestV5ErrorsTest {
 
     @MockBean
     private IRestApiService restApiService;
-    
+
     @SpyBean
     private StatusControllerImpl statusController;
 
     @BeforeEach
     public void setUp() {
-        this.targetUrl = UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.STATUS).build().encode().toUri();
+        this.targetUrl = UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.STATUS).build()
+                .encode().toUri();
         this.statusBody = StatusVo.builder()
                 .ebid("012345678912")
                 .epochId(1)
@@ -65,23 +61,28 @@ public class StatusControllerWsRestV5ErrorsTest {
                 .build();
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
     }
-  
+
     @Test
     public void testWhenGetStatusReturnsBadRequestThenGetStatusV5ReturnsBadRequest() {
         when(statusController.getStatus(any())).thenReturn(ResponseEntity.badRequest().build());
-        
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl, HttpMethod.POST,
-                this.requestEntity, String.class);
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl, HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     public void testWhenGetStatusReturnsInternalServerErrorThenGetStatusV5ReturnsInternalServerError() {
-        when(statusController.getStatus(any())).thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
-        
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl, HttpMethod.POST,
-                this.requestEntity, String.class);
+        when(statusController.getStatus(any()))
+                .thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl, HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -89,20 +90,37 @@ public class StatusControllerWsRestV5ErrorsTest {
     @Test
     public void testWhenGetStatusReturnsNotFoundThenGetStatusV5ReturnsNotFound() {
         when(statusController.getStatus(any())).thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-        
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl, HttpMethod.POST,
-                this.requestEntity, String.class);
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl, HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
-    
+
     @Test
     public void testWhenGetStatusReturnsNullThenGetStatusV5ReturnsInternalServerError() {
         when(statusController.getStatus(any())).thenReturn(null);
-        
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl, HttpMethod.POST,
-                this.requestEntity, String.class);
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl, HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    void whenGetStatusReturns430ThenGetStatusV5Returns430WithNoBody() {
+        when(statusController.getStatus(any())).thenReturn(ResponseEntity.status(430).build());
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl, HttpMethod.POST,
+                this.requestEntity, String.class
+        );
+
+        assertThat(response.getStatusCodeValue()).isEqualTo(430);
+        assertThat(response.getBody()).isNull();
     }
 }
