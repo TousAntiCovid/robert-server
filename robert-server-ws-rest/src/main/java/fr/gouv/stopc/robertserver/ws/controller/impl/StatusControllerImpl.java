@@ -128,10 +128,13 @@ public class StatusControllerImpl implements IStatusController {
         AuthRequestValidationService.ValidationResult<GetIdFromStatusResponse> validationResult = this.authRequestValidationService
                 .validateStatusRequest(statusVo);
 
+        if (Objects.nonNull(validationResult.getResponse()) &&
+                validationResult.getResponse().getError().getCode() == 430) {
+
+            return ResponseEntity.status(430).build();
+        }
+
         if (Objects.nonNull(validationResult.getError())) {
-            if (validationResult.getError().getStatusCode().value() == 430) {
-                return ResponseEntity.status(430).build();
-            }
             log.info("Status request authentication failed");
             return ResponseEntity.badRequest().build();
         }

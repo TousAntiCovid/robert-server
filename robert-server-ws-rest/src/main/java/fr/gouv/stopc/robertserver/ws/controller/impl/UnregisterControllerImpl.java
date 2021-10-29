@@ -44,10 +44,13 @@ public class UnregisterControllerImpl implements IUnregisterController {
         AuthRequestValidationService.ValidationResult<DeleteIdResponse> validationResult = authRequestValidationService
                 .validateRequestForUnregister(unregisterRequestVo);
 
+        if (Objects.nonNull(validationResult.getResponse()) &&
+                validationResult.getResponse().getError().getCode() == 430) {
+
+            return ResponseEntity.status(430).build();
+        }
+
         if (Objects.nonNull(validationResult.getError()) || validationResult.getResponse().hasError()) {
-            if (validationResult.getError().getStatusCode().value() == 430) {
-                return ResponseEntity.status(430).build();
-            }
             return ResponseEntity.badRequest().build();
         }
 
