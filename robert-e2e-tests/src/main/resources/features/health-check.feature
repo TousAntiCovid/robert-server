@@ -1,3 +1,4 @@
+@Smoke
 Feature: Health check
 
   Scenario: Robert is up

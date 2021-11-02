@@ -11,7 +11,6 @@ import e2e.dto.RegisterVo;
 import e2e.model.AppMobile;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import lombok.AllArgsConstructor;
@@ -60,8 +59,8 @@ public class RobertClientSteps {
         this.scenarioContext.getOrCreateUser(userName);
     }
 
-    @Given("{word} application request a captcha challenge id")
-    public void request_captcha_challenge_id(String userName) {
+    @Given("{word} resolve the captcha challenge")
+    public void resolve_captcha_challenge(String userName) {
         givenRobertBaseUri()
                 .body(
                         CaptchaCreationRequest.builder()
@@ -79,21 +78,13 @@ public class RobertClientSteps {
 
         // We generate a fake Captcha id which will be used to differentiate mobile apps
         user.setCaptchaId(RandomStringUtils.random(7, true, false));
-    }
-
-    @Given("{word} application request an image captcha challenge with the previously received id")
-    public void request_image_captcha_challenge_with_id(String userName) {
-        User user = this.scenarioContext.getOrCreateUser(userName);
 
         givenRobertBaseUri()
                 .when()
                 .get("/api/v6/captcha/{captchaId}/image", user.getCaptchaId())
                 .then()
                 .statusCode(200);
-    }
 
-    @When("{word} resolve the Captcha image into the application")
-    public void resolve_captcha_image_challenge(String userName) {
         // Simulate visual resolution
         this.scenarioContext.getOrCreateUser(userName).setCaptchaSolution(CAPTCHA_BYPASS_SOLUTION);
     }
