@@ -10,11 +10,5 @@ public class User {
 
     private final String name;
 
-    private String captchaId;
-
-    private String captchaSolution;
-
-    private String clientPublicECDHKey;
-
     private AppMobile appMobile;
 }

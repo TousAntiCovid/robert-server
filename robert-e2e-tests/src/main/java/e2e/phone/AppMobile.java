@@ -8,8 +8,7 @@ import e2e.external.crypto.model.EphemeralTupleJson;
 import e2e.phone.tools.ClientIdentifierBundle;
 import e2e.phone.tools.Contact;
 import e2e.robert.ws.rest.RegisterSuccessResponse;
-import lombok.AccessLevel;
-import lombok.Getter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
@@ -32,9 +31,13 @@ public class AppMobile {
     @Getter
     private final String captchaId;
 
-    private final String captcha;
+    @Getter
+    @Setter
+    private String captchaSolution;
 
-    private final String robertPublicKey;
+    @Getter
+    @Setter
+    private String robertPublicKey;
 
     private long timestart;
 
@@ -49,11 +52,12 @@ public class AppMobile {
 
     KeyPair keyPair;
 
-    public AppMobile(String captchaId, String captcha, String robertPublicKey)
-            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
-        this.captcha = captcha;
+    public AppMobile(String captchaId) {
         this.captchaId = captchaId;
-        this.robertPublicKey = robertPublicKey;
+    }
+
+    public void generateUsefullData()
+            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
         this.keyPair = generateKeyPair();
         this.contacts = new ArrayList<>();
         generateKeyForTuples();

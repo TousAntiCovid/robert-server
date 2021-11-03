@@ -1,8 +1,9 @@
 package e2e.robert.ws.rest;
 
-import lombok.*;
-
-import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -10,16 +11,10 @@ import javax.validation.constraints.NotNull;
 @Builder
 public class PushInfoVo {
 
-    @NotNull
-    @ToString.Exclude
     private String token;
 
-    @NotNull
-    @ToString.Exclude
     private String locale;
 
-    @NotNull
-    @ToString.Exclude
     private String timezone;
 
 }

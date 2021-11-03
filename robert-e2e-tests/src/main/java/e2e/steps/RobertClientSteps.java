@@ -57,7 +57,8 @@ public class RobertClientSteps {
     }
 
     @Given("{word} resolve the captcha challenge")
-    public void resolve_captcha_challenge(String userName) {
+    public void resolve_captcha_challenge(String userName)
+            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
         givenRobertBaseUri()
                 .body(
                         CaptchaCreationRequest.builder()
@@ -74,34 +75,30 @@ public class RobertClientSteps {
         User user = this.scenarioContext.getOrCreateUser(userName);
 
         // We generate a fake Captcha id which will be used to differentiate mobile apps
-        user.setCaptchaId(RandomStringUtils.random(7, true, false));
+        user.setAppMobile(new AppMobile(RandomStringUtils.random(7, true, false)));
+        AppMobile appMobile = user.getAppMobile();
 
         givenRobertBaseUri()
                 .when()
-                .get("/api/v6/captcha/{captchaId}/image", user.getCaptchaId())
+                .get("/api/v6/captcha/{captchaId}/image", appMobile.getCaptchaId())
                 .then()
                 .statusCode(200);
 
         // Simulate visual resolution
-        this.scenarioContext.getOrCreateUser(userName).setCaptchaSolution(CAPTCHA_BYPASS_SOLUTION);
+        appMobile.setCaptchaSolution(CAPTCHA_BYPASS_SOLUTION);
     }
 
     @Then("{word} is registered on TAC")
     public void register_user_on_TAC(String userName)
             throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
-        User user = this.scenarioContext.getOrCreateUser(userName);
-
-        AppMobile appMobile = new AppMobile(
-                user.getCaptchaId(),
-                user.getCaptchaSolution(),
-                this.applicationProperties.getCryptoPublicKey()
-        );
-        user.setClientPublicECDHKey(appMobile.getPublicKey());
+        AppMobile appMobile = this.scenarioContext.getOrCreateUser(userName).getAppMobile();
+        appMobile.setRobertPublicKey(this.applicationProperties.getCryptoPublicKey());
+        appMobile.generateUsefullData();
 
         RegisterVo registerVo = RegisterVo.builder()
-                .captcha(user.getCaptchaSolution())
-                .captchaId(user.getCaptchaId())
-                .clientPublicECDHKey(user.getClientPublicECDHKey())
+                .captcha(appMobile.getCaptchaSolution())
+                .captchaId(appMobile.getCaptchaId())
+                .clientPublicECDHKey(appMobile.getPublicKey())
                 .build();
 
         PushInfoVo pushInfo = PushInfoVo.builder()
@@ -123,7 +120,6 @@ public class RobertClientSteps {
                 .as(RegisterSuccessResponse.class);
 
         assertDoesNotThrow(() -> appMobile.decryptRegisterResponse(registerSuccessResponse));
-        user.setAppMobile(appMobile);
     }
 
 }
