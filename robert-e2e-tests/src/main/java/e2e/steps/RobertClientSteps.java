@@ -1,14 +1,14 @@
 package e2e.steps;
 
+import e2e.captcha.CaptchaCreationRequest;
 import e2e.config.ApplicationProperties;
 import e2e.context.ScenarioContext;
 import e2e.context.User;
-import e2e.crypto.exception.RobertServerCryptoException;
-import e2e.dto.CaptchaCreationRequest;
-import e2e.dto.PushInfoVo;
-import e2e.dto.RegisterSuccessResponse;
-import e2e.dto.RegisterVo;
-import e2e.model.AppMobile;
+import e2e.external.crypto.exception.RobertServerCryptoException;
+import e2e.phone.AppMobile;
+import e2e.robert.ws.rest.PushInfoVo;
+import e2e.robert.ws.rest.RegisterSuccessResponse;
+import e2e.robert.ws.rest.RegisterVo;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.restassured.http.ContentType;
@@ -19,7 +19,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
@@ -36,8 +35,6 @@ public class RobertClientSteps {
     private final ApplicationProperties applicationProperties;
 
     private final ScenarioContext scenarioContext;
-
-    private final Map<String, AppMobile> appMobileMap;
 
     private RequestSpecification givenRobertBaseUri() {
         return given()
@@ -101,15 +98,17 @@ public class RobertClientSteps {
         );
         user.setClientPublicECDHKey(appMobile.getPublicKey());
 
-        RegisterVo registerVo = new RegisterVo();
-        registerVo.setCaptchaId(user.getCaptchaId());
-        registerVo.setCaptcha(user.getCaptchaSolution());
-        registerVo.setClientPublicECDHKey(user.getClientPublicECDHKey());
+        RegisterVo registerVo = RegisterVo.builder()
+                .captcha(user.getCaptchaSolution())
+                .captchaId(user.getCaptchaId())
+                .clientPublicECDHKey(user.getClientPublicECDHKey())
+                .build();
 
-        PushInfoVo pushInfo = new PushInfoVo();
-        pushInfo.setToken("string");
-        pushInfo.setLocale("fr");
-        pushInfo.setTimezone("Europe/Paris");
+        PushInfoVo pushInfo = PushInfoVo.builder()
+                .token("string")
+                .locale("fr")
+                .timezone("Europe/Paris")
+                .build();
 
         registerVo.setPushInfo(pushInfo);
 
@@ -124,7 +123,7 @@ public class RobertClientSteps {
                 .as(RegisterSuccessResponse.class);
 
         assertDoesNotThrow(() -> appMobile.decryptRegisterResponse(registerSuccessResponse));
-        appMobileMap.put(user.getCaptchaId(), appMobile);
+        user.setAppMobile(appMobile);
     }
 
 }

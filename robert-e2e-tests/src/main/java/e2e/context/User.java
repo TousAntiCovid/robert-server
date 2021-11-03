@@ -1,5 +1,6 @@
 package e2e.context;
 
+import e2e.phone.AppMobile;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -14,4 +15,6 @@ public class User {
     private String captchaSolution;
 
     private String clientPublicECDHKey;
+
+    private AppMobile appMobile;
 }
