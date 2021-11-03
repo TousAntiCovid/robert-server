@@ -11,6 +11,7 @@ import e2e.dto.RegisterVo;
 import e2e.model.AppMobile;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import lombok.AllArgsConstructor;
@@ -19,10 +20,14 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -86,7 +91,7 @@ public class RobertClientSteps {
                 .statusCode(200);
 
         // Simulate visual resolution
-        this.scenarioContext.getOrCreateUser(userName).setCaptchaSolution(CAPTCHA_BYPASS_SOLUTION);
+        user.setCaptchaSolution(CAPTCHA_BYPASS_SOLUTION);
     }
 
     @Then("{word} is registered on TAC")
@@ -125,6 +130,24 @@ public class RobertClientSteps {
 
         assertDoesNotThrow(() -> appMobile.decryptRegisterResponse(registerSuccessResponse));
         appMobileMap.put(user.getCaptchaId(), appMobile);
+    }
+
+    @When("{word} is near {word} during 1 hour")
+    public void generate_contact_between_two_users(String firstUserName, String secondUserName) {
+        User firstUser = this.scenarioContext.getOrCreateUser(firstUserName);
+        Objects.requireNonNull(firstUser);
+        User secondUser = this.scenarioContext.getOrCreateUser(secondUserName);
+        Objects.requireNonNull(secondUser);
+
+        List<String> limitedAppMobileIds = new ArrayList<>();
+        limitedAppMobileIds.add(secondUser.getCaptchaId());
+
+        AppMobile appMobile = appMobileMap.get(firstUser.getCaptchaId());
+        Objects.requireNonNull(appMobile);
+        assertThat(appMobile.numberOfContacts()).as("There is no contact").isEqualTo(0);
+
+        appMobile.generateHelloMessageDuring(appMobile, limitedAppMobileIds, appMobileMap, 1);
+        assertThat(appMobile.numberOfContacts()).as("There is only one contact").isEqualTo(1);
     }
 
 }

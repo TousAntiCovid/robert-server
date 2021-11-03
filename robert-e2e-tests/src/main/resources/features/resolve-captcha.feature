@@ -9,3 +9,4 @@ Feature: Two people meet and one declare himself at risk
     Given Sarah resolve the captcha challenge
     Then François is registered on TAC
     Then Sarah is registered on TAC
+    When Sarah is near François during 1 hour
