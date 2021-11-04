@@ -8,7 +8,7 @@ import fr.gouv.tac.e2e.config.ApplicationProperties;
 import fr.gouv.tac.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.tac.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.tac.e2e.robert.model.PushInfo;
-import fr.gouv.tac.e2e.robert.model.Register;
+import fr.gouv.tac.e2e.robert.model.RegisterRequest;
 import fr.gouv.tac.e2e.robert.model.RegisterSuccessResponse;
 import io.restassured.specification.RequestSpecification;
 import lombok.SneakyThrows;
@@ -29,6 +29,8 @@ import static io.restassured.http.ContentType.JSON;
 @Slf4j
 public class AppMobile {
 
+    public static final String CAPTCHA_BYPASS_SOLUTION = "IEDX";
+
     private final ApplicationProperties applicationProperties;
 
     private final KeyPair keyPair;
@@ -40,8 +42,6 @@ public class AppMobile {
     private List<EphemeralTupleJson> decodedTuples;
 
     private ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
-
-    public static final String CAPTCHA_BYPASS_SOLUTION = "IEDX";
 
     @SneakyThrows
     public AppMobile(ApplicationProperties applicationProperties) {
@@ -83,7 +83,7 @@ public class AppMobile {
     }
 
     private void register() {
-        var registerVo = Register.builder()
+        var register = RegisterRequest.builder()
                 .captcha(CAPTCHA_BYPASS_SOLUTION)
                 .captchaId(captchaId)
                 .clientPublicECDHKey(getPublicKey())
@@ -98,7 +98,7 @@ public class AppMobile {
 
         var registerSuccessResponse = given()
                 .contentType(JSON)
-                .body(registerVo)
+                .body(register)
                 .when()
                 .post(applicationProperties.getWsRestBaseUrl().concat("/api/v6/register"))
                 .then()

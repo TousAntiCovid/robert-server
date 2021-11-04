@@ -36,6 +36,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
@@ -74,6 +79,16 @@
             <artifactId>awaitility</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>3.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -96,6 +111,46 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>5.1.0</version>
+                <configuration>
+                    <inputSpec>
+                        ${project.basedir}/src/main/resources/api-robert-server-v1.yaml
+                    </inputSpec>
+                    <generatorName>spring</generatorName>
+                    <generateApis>false</generateApis>
+                    <modelsToGenerate>
+                        RegisterRequest,
+                        PushInfo,
+                        RegisterSuccessResponse,
+                        ConfigurationProperty
+                    </modelsToGenerate>
+                    <modelPackage>
+                        fr.gouv.tac.e2e.robert.model
+                    </modelPackage>
+                    <configOptions>
+                        <dateLibrary>java8-localdatetime</dateLibrary>
+                        <interfaceOnly>true</interfaceOnly>
+                        <useTags>true</useTags>
+                        <additionalModelTypeAnnotations>
+                            @lombok.Builder
+                            @lombok.AllArgsConstructor
+                            @lombok.NoArgsConstructor
+                        </additionalModelTypeAnnotations>
+                        <unhandledException>true</unhandledException>
+                    </configOptions>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
