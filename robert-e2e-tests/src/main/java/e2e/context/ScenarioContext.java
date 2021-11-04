@@ -1,6 +1,6 @@
 package e2e.context;
 
-import e2e.phone.AppMobile;
+import e2e.appmobile.AppMobile;
 import io.cucumber.spring.ScenarioScope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

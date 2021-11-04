@@ -1,4 +1,4 @@
-package e2e.phone.tools;
+package e2e.appmobile.tools;
 
 import e2e.external.crypto.CryptoHMACSHA256;
 import e2e.external.crypto.exception.RobertServerCryptoException;

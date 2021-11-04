@@ -1,4 +1,4 @@
-package e2e.phone.tools;
+package e2e.appmobile.tools;
 
 import lombok.Getter;
 

@@ -1,12 +1,12 @@
-package e2e.phone;
+package e2e.appmobile;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import e2e.appmobile.tools.ClientIdentifierBundle;
+import e2e.appmobile.tools.Contact;
 import e2e.external.crypto.CryptoAESGCM;
 import e2e.external.crypto.exception.RobertServerCryptoException;
 import e2e.external.crypto.model.EphemeralTupleJson;
-import e2e.phone.tools.ClientIdentifierBundle;
-import e2e.phone.tools.Contact;
 import e2e.robert.ws.rest.RegisterSuccessResponse;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +20,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 
-import static e2e.phone.tools.EcdhUtils.deriveKeysFromBackendPublicKey;
-import static e2e.phone.tools.EcdhUtils.generateKeyPair;
+import static e2e.appmobile.tools.EcdhUtils.deriveKeysFromBackendPublicKey;
+import static e2e.appmobile.tools.EcdhUtils.generateKeyPair;
 
 @Slf4j
 public class AppMobile {
@@ -39,28 +38,24 @@ public class AppMobile {
     @Setter
     private String captchaSolution;
 
-    @Getter
     @Setter
     private String robertPublicKey;
 
     private long timestart;
 
-    @Getter(AccessLevel.PRIVATE)
-    List<Contact> contacts;
+    private KeyPair keyPair;
 
-    @Getter(AccessLevel.PRIVATE)
-    List<EphemeralTupleJson> decodedTuples;
+    private List<Contact> contacts;
 
-    @Getter(AccessLevel.PRIVATE)
-    Optional<ClientIdentifierBundle> clientIdentifierBundleWithPublicKey;
+    private List<EphemeralTupleJson> decodedTuples;
 
-    KeyPair keyPair;
+    private ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
 
     public AppMobile(String userName) {
         this.userName = userName;
     }
 
-    public void generateUsefullData()
+    public void generateApplicationMobileEngineData()
             throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
         this.keyPair = generateKeyPair();
         this.contacts = new ArrayList<>();
@@ -68,9 +63,10 @@ public class AppMobile {
     }
 
     private void generateKeyForTuples() throws RobertServerCryptoException {
-        this.clientIdentifierBundleWithPublicKey = deriveKeysFromBackendPublicKey(
+        deriveKeysFromBackendPublicKey(
                 Base64.getDecoder().decode(this.robertPublicKey), keyPair
-        );
+        )
+                .ifPresent(clientIdentifierBundle -> this.clientIdentifierBundleWithPublicKey = clientIdentifierBundle);
     }
 
     public String getPublicKey() {
@@ -84,12 +80,10 @@ public class AppMobile {
     }
 
     private void updateTuples(byte[] encryptedTuples) throws RobertServerCryptoException {
-        CryptoAESGCM aesGcm = new CryptoAESGCM(clientIdentifierBundleWithPublicKey.get().getKeyForTuples());
+        CryptoAESGCM aesGcm = new CryptoAESGCM(clientIdentifierBundleWithPublicKey.getKeyForTuples());
         try {
-            byte[] decryptedTuples = aesGcm.decrypt(encryptedTuples);
-            ObjectMapper objectMapper = new ObjectMapper();
-            this.decodedTuples = objectMapper.readValue(
-                    decryptedTuples,
+            this.decodedTuples = new ObjectMapper().readValue(
+                    aesGcm.decrypt(encryptedTuples),
                     new TypeReference<>() {
                     }
             );

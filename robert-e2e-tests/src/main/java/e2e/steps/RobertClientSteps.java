@@ -1,10 +1,10 @@
 package e2e.steps;
 
+import e2e.appmobile.AppMobile;
 import e2e.captcha.CaptchaCreationRequest;
 import e2e.config.ApplicationProperties;
 import e2e.context.ScenarioContext;
 import e2e.external.crypto.exception.RobertServerCryptoException;
-import e2e.phone.AppMobile;
 import e2e.robert.ws.rest.PushInfoVo;
 import e2e.robert.ws.rest.RegisterSuccessResponse;
 import e2e.robert.ws.rest.RegisterVo;
@@ -42,7 +42,7 @@ public class RobertClientSteps {
     }
 
     @Given("application robert ws rest is ready")
-    public void application_robert_is_ready() {
+    public void applicationRobertIsReady() {
         givenRobertBaseUri()
                 .get("/actuator/health")
                 .then()
@@ -51,12 +51,12 @@ public class RobertClientSteps {
     }
 
     @Given("{word} has the application TAC")
-    public void generate_user(String userName) {
+    public void createAppMobile(String userName) {
         this.scenarioContext.getOrCreateApplication(userName);
     }
 
     @Given("{word} resolve the captcha challenge")
-    public void resolve_captcha_challenge(String userName) {
+    public void resolveCaptchaChallenge(String userName) {
         givenRobertBaseUri()
                 .body(
                         CaptchaCreationRequest.builder()
@@ -72,7 +72,7 @@ public class RobertClientSteps {
 
         AppMobile appMobile = this.scenarioContext.getOrCreateApplication(userName);
 
-        // We generate a fake Captcha id which will be used to differentiate mobile apps
+        // We generate a fake Captcha id which we will use to differentiate mobile apps
         appMobile.setCaptchaId(RandomStringUtils.random(7, true, false));
 
         givenRobertBaseUri()
@@ -86,25 +86,24 @@ public class RobertClientSteps {
     }
 
     @Then("{word} is registered on TAC")
-    public void register_user_on_TAC(String userName)
+    public void registerOnTAC(String userName)
             throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
         AppMobile appMobile = this.scenarioContext.getOrCreateApplication(userName);
         appMobile.setRobertPublicKey(this.applicationProperties.getCryptoPublicKey());
-        appMobile.generateUsefullData();
+        appMobile.generateApplicationMobileEngineData();
 
         RegisterVo registerVo = RegisterVo.builder()
                 .captcha(appMobile.getCaptchaSolution())
                 .captchaId(appMobile.getCaptchaId())
                 .clientPublicECDHKey(appMobile.getPublicKey())
+                .pushInfo(
+                        PushInfoVo.builder()
+                                .token("string")
+                                .locale("fr")
+                                .timezone("Europe/Paris")
+                                .build()
+                )
                 .build();
-
-        PushInfoVo pushInfo = PushInfoVo.builder()
-                .token("string")
-                .locale("fr")
-                .timezone("Europe/Paris")
-                .build();
-
-        registerVo.setPushInfo(pushInfo);
 
         RegisterSuccessResponse registerSuccessResponse = given()
                 .contentType(ContentType.JSON)
