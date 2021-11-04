@@ -3,7 +3,6 @@ package e2e.steps;
 import e2e.captcha.CaptchaCreationRequest;
 import e2e.config.ApplicationProperties;
 import e2e.context.ScenarioContext;
-import e2e.context.User;
 import e2e.external.crypto.exception.RobertServerCryptoException;
 import e2e.phone.AppMobile;
 import e2e.robert.ws.rest.PushInfoVo;
@@ -53,12 +52,11 @@ public class RobertClientSteps {
 
     @Given("{word} has the application TAC")
     public void generate_user(String userName) {
-        this.scenarioContext.getOrCreateUser(userName);
+        this.scenarioContext.getOrCreateApplication(userName);
     }
 
     @Given("{word} resolve the captcha challenge")
-    public void resolve_captcha_challenge(String userName)
-            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
+    public void resolve_captcha_challenge(String userName) {
         givenRobertBaseUri()
                 .body(
                         CaptchaCreationRequest.builder()
@@ -72,11 +70,10 @@ public class RobertClientSteps {
                 .statusCode(200)
                 .body("captchaId", notNullValue());
 
-        User user = this.scenarioContext.getOrCreateUser(userName);
+        AppMobile appMobile = this.scenarioContext.getOrCreateApplication(userName);
 
         // We generate a fake Captcha id which will be used to differentiate mobile apps
-        user.setAppMobile(new AppMobile(RandomStringUtils.random(7, true, false)));
-        AppMobile appMobile = user.getAppMobile();
+        appMobile.setCaptchaId(RandomStringUtils.random(7, true, false));
 
         givenRobertBaseUri()
                 .when()
@@ -91,7 +88,7 @@ public class RobertClientSteps {
     @Then("{word} is registered on TAC")
     public void register_user_on_TAC(String userName)
             throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
-        AppMobile appMobile = this.scenarioContext.getOrCreateUser(userName).getAppMobile();
+        AppMobile appMobile = this.scenarioContext.getOrCreateApplication(userName);
         appMobile.setRobertPublicKey(this.applicationProperties.getCryptoPublicKey());
         appMobile.generateUsefullData();
 

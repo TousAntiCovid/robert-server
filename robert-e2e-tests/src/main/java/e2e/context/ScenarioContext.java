@@ -1,5 +1,6 @@
 package e2e.context;
 
+import e2e.phone.AppMobile;
 import io.cucumber.spring.ScenarioScope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -12,13 +13,13 @@ import java.util.Map;
 @ScenarioScope
 public class ScenarioContext {
 
-    private final Map<String, User> users = new HashMap<>();
+    private final Map<String, AppMobile> applicationMobileMap = new HashMap<>();
 
-    public User getOrCreateUser(String name) {
-        return users.computeIfAbsent(name, this::createUser);
+    public AppMobile getOrCreateApplication(String name) {
+        return applicationMobileMap.computeIfAbsent(name, this::createApplication);
     }
 
-    private User createUser(String userName) {
-        return new User(userName);
+    private AppMobile createApplication(String userName) {
+        return new AppMobile(userName);
     }
 }

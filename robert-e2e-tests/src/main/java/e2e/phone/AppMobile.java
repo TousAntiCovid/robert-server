@@ -29,7 +29,11 @@ import static e2e.phone.tools.EcdhUtils.generateKeyPair;
 public class AppMobile {
 
     @Getter
-    private final String captchaId;
+    private final String userName;
+
+    @Getter
+    @Setter
+    private String captchaId;
 
     @Getter
     @Setter
@@ -52,8 +56,8 @@ public class AppMobile {
 
     KeyPair keyPair;
 
-    public AppMobile(String captchaId) {
-        this.captchaId = captchaId;
+    public AppMobile(String userName) {
+        this.userName = userName;
     }
 
     public void generateUsefullData()
