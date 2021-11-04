@@ -1,9 +1,5 @@
 Feature: Two people meet and one declare himself at risk
 
-  Scenario: They register themself on TAC
-    Given François has the application TAC
-    Given François resolve the captcha challenge
-    Then François is registered on TAC
-    Given Sarah has the application TAC
-    Given Sarah resolve the captcha challenge
-    Then Sarah is registered on TAC
+  Scenario: They install the application TAC
+    Given François install the application TAC
+    Given Sarah install the application TAC
