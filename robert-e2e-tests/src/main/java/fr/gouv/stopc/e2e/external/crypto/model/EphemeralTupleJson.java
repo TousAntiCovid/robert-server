@@ -5,8 +5,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Getter
-@Setter
+@Data
 public class EphemeralTupleJson {
 
     private int epochId;
@@ -16,8 +15,7 @@ public class EphemeralTupleJson {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    @Getter
-    @Setter
+    @Data
     public static class EphemeralTupleEbidEccJson {
 
         private byte[] ebid;
