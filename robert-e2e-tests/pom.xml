@@ -143,12 +143,10 @@
                 <version>5.1.0</version>
                 <configuration>
                     <inputSpec>
-                        ${project.basedir}/src/main/resources/api-robert-server-v1.yaml
+                        ${project.basedir}/../robert-server-ws-rest/src/main/resources/api-robert-server-v1.yaml
                     </inputSpec>
                     <generatorName>java</generatorName>
                     <generateApis>false</generateApis>
-                    <modelsToGenerate
-          >RegisterRequest,PushInfo,RegisterSuccessResponse,ConfigurationProperty,CaptchaGenerationRequest</modelsToGenerate>
                     <modelPackage>
                         fr.gouv.tac.e2e.robert.model
                     </modelPackage>
