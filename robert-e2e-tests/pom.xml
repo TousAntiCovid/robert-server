@@ -148,7 +148,7 @@
                     <generatorName>java</generatorName>
                     <generateApis>false</generateApis>
                     <modelsToGenerate
-          >RegisterRequest,PushInfo,RegisterSuccessResponse,ConfigurationProperty</modelsToGenerate>
+          >RegisterRequest,PushInfo,RegisterSuccessResponse,ConfigurationProperty,CaptchaGenerationRequest</modelsToGenerate>
                     <modelPackage>
                         fr.gouv.tac.e2e.robert.model
                     </modelPackage>

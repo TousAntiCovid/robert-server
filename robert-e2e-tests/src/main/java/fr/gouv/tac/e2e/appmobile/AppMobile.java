@@ -3,10 +3,10 @@ package fr.gouv.tac.e2e.appmobile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.tac.e2e.appmobile.model.ClientIdentifierBundle;
-import fr.gouv.tac.e2e.captcha.CaptchaCreationRequest;
 import fr.gouv.tac.e2e.config.ApplicationProperties;
 import fr.gouv.tac.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.tac.e2e.external.crypto.model.EphemeralTupleJson;
+import fr.gouv.tac.e2e.robert.model.CaptchaGenerationRequest;
 import fr.gouv.tac.e2e.robert.model.PushInfo;
 import fr.gouv.tac.e2e.robert.model.RegisterRequest;
 import fr.gouv.tac.e2e.robert.model.RegisterSuccessResponse;
@@ -61,7 +61,7 @@ public class AppMobile {
     private void resolveCaptcha() {
         givenRobertBaseUri()
                 .body(
-                        CaptchaCreationRequest.builder()
+                        CaptchaGenerationRequest.builder()
                                 .locale("fr")
                                 .type("IMAGE")
                                 .build()
