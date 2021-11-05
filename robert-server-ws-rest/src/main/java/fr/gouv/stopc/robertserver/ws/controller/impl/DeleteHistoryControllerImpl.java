@@ -42,10 +42,13 @@ public class DeleteHistoryControllerImpl implements IDeleteHistoryController {
         AuthRequestValidationService.ValidationResult<GetIdFromAuthResponse> validationResult = this.authRequestValidationService
                 .validateRequestForAuth(deleteHistoryRequestVo, DigestSaltEnum.DELETE_HISTORY);
 
+        if (Objects.nonNull(validationResult.getResponse()) &&
+                validationResult.getResponse().getError().getCode() == 430) {
+
+            return ResponseEntity.status(430).build();
+        }
+
         if (Objects.nonNull(validationResult.getError()) || validationResult.getResponse().hasError()) {
-            if (validationResult.getError().getStatusCode().value() == 430) {
-                return ResponseEntity.status(430).build();
-            }
             log.info("Delete exposure history request authentication failed");
             return ResponseEntity.badRequest().build();
         }

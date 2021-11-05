@@ -1,37 +1,9 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
-import java.net.URI;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Optional;
-
-import javax.crypto.KeyGenerator;
-import javax.inject.Inject;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdResponse;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
@@ -53,6 +25,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.*;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.crypto.KeyGenerator;
+import javax.inject.Inject;
+
+import java.net.URI;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -114,7 +109,8 @@ public class UnregisterControllerWsRestTest {
         assert (this.restTemplate != null);
         this.headers = new HttpHeaders();
         this.headers.setContentType(MediaType.APPLICATION_JSON);
-        this.targetUrl = UriComponentsBuilder.fromUriString(this.pathPrefix).path(UriConstants.UNREGISTER).build().encode().toUri();
+        this.targetUrl = UriComponentsBuilder.fromUriString(this.pathPrefix).path(UriConstants.UNREGISTER).build()
+                .encode().toUri();
 
         this.currentEpoch = this.getCurrentEpoch();
         this.serverKey = generateKey(24);
@@ -126,8 +122,10 @@ public class UnregisterControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.GET,
-                this.requestEntity, String.class);
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl.toString(), HttpMethod.GET,
+                this.requestEntity, String.class
+        );
 
         log.info("******* Bad HTTP Verb Payload: {}", response.getBody());
 
@@ -150,38 +148,58 @@ public class UnregisterControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.registrationService, never()).findById(ArgumentMatchers.any());
         verify(this.registrationService, never()).delete(ArgumentMatchers.any());
     }
+
     /** Test the access for API V2, should not be used since API V3 */
     @Test
     public void testAccessV2() {
-        acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.UNREGISTER).build().encode().toUri());
+        acceptOldEBIDValueEpochSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.UNREGISTER).build().encode()
+                        .toUri()
+        );
     }
 
     /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
-        acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.UNREGISTER).build().encode().toUri());
+        acceptOldEBIDValueEpochSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.UNREGISTER).build().encode()
+                        .toUri()
+        );
     }
 
     /** Test the access for API V4, should not be used since API V5 */
     @Test
     public void testAccessV4() {
-        acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.UNREGISTER).build().encode().toUri());
+        acceptOldEBIDValueEpochSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.UNREGISTER).build().encode()
+                        .toUri()
+        );
     }
 
-    /** Test the access for API V5, should not be used since API V6 */
+    /**
+     * Test the access for API V5, should not be used since API V6
+     */
     @Test
     public void testAccessV5() {
-        acceptOldEBIDValueEpochSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.UNREGISTER).build().encode().toUri());
+        acceptOldEBIDValueEpochSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.UNREGISTER).build().encode()
+                        .toUri()
+        );
     }
 
-    /** {@link #acceptOldEBIDValueEpochSucceeds(URI)} and shortcut to test for API V4 exposure */
+    /**
+     * {@link #acceptOldEBIDValueEpochSucceeds(URI)} and shortcut to test for API V4
+     * exposure
+     */
     @Test
     public void testAcceptOldEBIDValueEpochSucceeds() {
         acceptOldEBIDValueEpochSucceeds(this.targetUrl);
@@ -205,14 +223,20 @@ public class UnregisterControllerWsRestTest {
 
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch - 10), 1, decryptedEbid, 0, decryptedEbid.length - idA.length);
+        System.arraycopy(
+                ByteUtils.intToBytes(currentEpoch - 10), 1, decryptedEbid, 0, decryptedEbid.length - idA.length
+        );
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
-        doReturn(Optional.of(DeleteIdResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(idA))
-                .build()))
-        .when(this.cryptoServerClient).deleteId(any());
+        doReturn(
+                Optional.of(
+                        DeleteIdResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).deleteId(any());
 
         this.requestBody = UnregisterRequestVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -224,8 +248,10 @@ public class UnregisterControllerWsRestTest {
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
         // When
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         // Given
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -243,7 +269,8 @@ public class UnregisterControllerWsRestTest {
                 idA,
                 kA,
                 currentEpoch,
-                0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1));
+                0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1)
+        );
 
         requestBody = UnregisterRequestVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -254,8 +281,10 @@ public class UnregisterControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.registrationService, never()).findById(ArgumentMatchers.any());
@@ -271,7 +300,8 @@ public class UnregisterControllerWsRestTest {
                 idA,
                 kA,
                 currentEpoch,
-                0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1));
+                0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1)
+        );
 
         requestBody = UnregisterRequestVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -281,8 +311,10 @@ public class UnregisterControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.registrationService, never()).findById(ArgumentMatchers.any());
@@ -304,8 +336,10 @@ public class UnregisterControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.registrationService, never()).findById(ArgumentMatchers.any());
@@ -327,8 +361,10 @@ public class UnregisterControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.registrationService, never()).findById(ArgumentMatchers.any());
@@ -356,7 +392,7 @@ public class UnregisterControllerWsRestTest {
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.empty())
-        .when(this.cryptoServerClient).deleteId(any());
+                .when(this.cryptoServerClient).deleteId(any());
 
         requestBody = UnregisterRequestVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -367,8 +403,10 @@ public class UnregisterControllerWsRestTest {
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
         // When
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         // Then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -417,7 +455,8 @@ public class UnregisterControllerWsRestTest {
         return time;
     }
 
-    private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument, final DigestSaltEnum salt)
+    private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument,
+            final DigestSaltEnum salt)
             throws Exception {
 
         final byte[] prefix = new byte[] { salt.getValue() };
@@ -449,8 +488,10 @@ public class UnregisterControllerWsRestTest {
     private byte[][] createEBIDTimeMACFor(byte[] id, byte[] ka, int currentEpoch, int adjustTimeBySeconds) {
         byte[][] res = new byte[3][];
         try {
-            res[0] = this.cryptoService.generateEBID(new CryptoSkinny64(this.serverKey),
-                    currentEpoch, id);
+            res[0] = this.cryptoService.generateEBID(
+                    new CryptoSkinny64(this.serverKey),
+                    currentEpoch, id
+            );
             res[1] = this.generateTime32(adjustTimeBySeconds);
             res[2] = this.generateMACFor(res[0], res[1], ka);
         } catch (Exception e) {
@@ -477,10 +518,14 @@ public class UnregisterControllerWsRestTest {
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
-        doReturn(Optional.of(DeleteIdResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(idA))
-                .build()))
-        .when(this.cryptoServerClient).deleteId(any());
+        doReturn(
+                Optional.of(
+                        DeleteIdResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).deleteId(any());
 
         requestBody = UnregisterRequestVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -490,15 +535,75 @@ public class UnregisterControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().getSuccess());
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
-        
+
+    }
+
+    @Test
+    public void testUnregisterRequestFailsCauseNoServerKey() {
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(true)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(
+                Optional.of(
+                        DeleteIdResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).deleteId(any());
+
+        requestBody = UnregisterRequestVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
+
+        doReturn(
+                Optional.of(
+                        DeleteIdResponse.newBuilder()
+                                .setError(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(430)
+                                                .setDescription("error")
+                                                .build()
+                                )
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).deleteId(any());
+
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
+
+        assertEquals(430, response.getStatusCodeValue());
+
     }
 
     @Test
@@ -508,16 +613,19 @@ public class UnregisterControllerWsRestTest {
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
 
-
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length);
 
-        doReturn(Optional.of(DeleteIdResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(idA))
-                .build()))
-        .when(this.cryptoServerClient).deleteId(any());
+        doReturn(
+                Optional.of(
+                        DeleteIdResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).deleteId(any());
 
         doReturn(Optional.empty()).when(this.registrationService).findById(idA);
 
@@ -530,8 +638,10 @@ public class UnregisterControllerWsRestTest {
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
         // When
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         // Then
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -546,11 +656,13 @@ public class UnregisterControllerWsRestTest {
         // Given
         byte[] idA = this.generateKey(5);
         String pushToken = "pushToken";
-        generateSuccessPayload(idA,pushToken);
+        generateSuccessPayload(idA, pushToken);
 
         // When
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -570,8 +682,10 @@ public class UnregisterControllerWsRestTest {
         generateSuccessPayload(idA, pushToken);
 
         // When
-        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class);
+        ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, UnregisterResponseDto.class
+        );
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -582,7 +696,7 @@ public class UnregisterControllerWsRestTest {
         verify(this.restApiService, never()).unregisterPushNotif(anyString());
     }
 
-    private void generateSuccessPayload(byte[]idA, String pushToken) {
+    private void generateSuccessPayload(byte[] idA, String pushToken) {
         byte[] kA = this.generateKA();
         Registration reg = Registration.builder()
                 .permanentIdentifier(idA)
@@ -598,10 +712,14 @@ public class UnregisterControllerWsRestTest {
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
-        doReturn(Optional.of(DeleteIdResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(idA))
-                .build()))
-        .when(this.cryptoServerClient).deleteId(any());
+        doReturn(
+                Optional.of(
+                        DeleteIdResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).deleteId(any());
 
         requestBody = UnregisterRequestVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
