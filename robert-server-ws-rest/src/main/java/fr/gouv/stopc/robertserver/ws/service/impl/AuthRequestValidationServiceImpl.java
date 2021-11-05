@@ -1,31 +1,29 @@
 package fr.gouv.stopc.robertserver.ws.service.impl;
 
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
-
-import javax.inject.Inject;
-
-import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import org.bson.internal.Base64;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
 import com.google.protobuf.ByteString;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.vo.AuthRequestVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.internal.Base64;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import javax.inject.Inject;
+
+import java.util.Date;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -44,9 +42,9 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
     @Inject
     public AuthRequestValidationServiceImpl(final IServerConfigurationService serverConfigurationService,
-                                            final ICryptoServerGrpcClient cryptoServerClient,
-                                            final IRegistrationService registrationService,
-                                            final WsServerConfiguration wsServerConfiguration) {
+            final ICryptoServerGrpcClient cryptoServerClient,
+            final IRegistrationService registrationService,
+            final WsServerConfiguration wsServerConfiguration) {
         this.serverConfigurationService = serverConfigurationService;
         this.cryptoServerClient = cryptoServerClient;
         this.registrationService = registrationService;
@@ -89,13 +87,15 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
             return createErrorBadRequestCustom("Discarding authenticated request because of invalid MAC field size");
         }
 
-        // Moved timestamp difference check to after request sent to cryptoserver to be able to store drift in db
+        // Moved timestamp difference check to after request sent to cryptoserver to be
+        // able to store drift in db
 
         return Optional.empty();
     }
 
     @Override
-    public ValidationResult<GetIdFromAuthResponse> validateRequestForAuth(AuthRequestVo authRequestVo, DigestSaltEnum requestType) {
+    public ValidationResult<GetIdFromAuthResponse> validateRequestForAuth(AuthRequestVo authRequestVo,
+            DigestSaltEnum requestType) {
         Optional<ResponseEntity> validationError = validateCommonAuth(authRequestVo);
 
         if (validationError.isPresent()) {
@@ -104,11 +104,11 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
         try {
             GetIdFromAuthRequest request = GetIdFromAuthRequest.newBuilder()
-                        .setEbid(ByteString.copyFrom(Base64.decode(authRequestVo.getEbid())))
-                        .setEpochId(authRequestVo.getEpochId())
-                        .setTime(Integer.toUnsignedLong(ByteUtils.bytesToInt(Base64.decode(authRequestVo.getTime()))))
-                        .setMac(ByteString.copyFrom(Base64.decode(authRequestVo.getMac())))
-                        .setRequestType(requestType.getValue())
+                    .setEbid(ByteString.copyFrom(Base64.decode(authRequestVo.getEbid())))
+                    .setEpochId(authRequestVo.getEpochId())
+                    .setTime(Integer.toUnsignedLong(ByteUtils.bytesToInt(Base64.decode(authRequestVo.getTime()))))
+                    .setMac(ByteString.copyFrom(Base64.decode(authRequestVo.getMac())))
+                    .setRequestType(requestType.getValue())
                     .build();
 
             Optional<GetIdFromAuthResponse> response = this.cryptoServerClient.getIdFromAuth(request);
@@ -117,7 +117,8 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
                 if (Objects.nonNull(response.get().getIdA())) {
                     Optional<ValidationResult> timeValidationResult = this.checkTime(
                             Base64.decode(authRequestVo.getTime()),
-                            response.get().getIdA().toByteArray());
+                            response.get().getIdA().toByteArray()
+                    );
                     if (timeValidationResult.isPresent()) {
                         return timeValidationResult.get();
                     }
@@ -153,7 +154,8 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
                 if (Objects.nonNull(response.get().getIdA())) {
                     Optional<ValidationResult> timeValidationResult = this.checkTime(
                             Base64.decode(authRequestVo.getTime()),
-                            response.get().getIdA().toByteArray());
+                            response.get().getIdA().toByteArray()
+                    );
                     if (timeValidationResult.isPresent()) {
                         return timeValidationResult.get();
                     }
@@ -177,22 +179,30 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
         try {
             GetIdFromStatusRequest request = GetIdFromStatusRequest.newBuilder()
-                        .setEbid(ByteString.copyFrom(Base64.decode(statusVo.getEbid())))
-                        .setEpochId(statusVo.getEpochId())
-                        .setTime(Integer.toUnsignedLong(ByteUtils.bytesToInt(Base64.decode(statusVo.getTime()))))
-                        .setMac(ByteString.copyFrom(Base64.decode(statusVo.getMac())))
-                        .setFromEpochId(TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart()))
-                        .setNumberOfDaysForEpochBundles(this.wsServerConfiguration.getEpochBundleDurationInDays())
-                        .setServerCountryCode(ByteString.copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() }))
+                    .setEbid(ByteString.copyFrom(Base64.decode(statusVo.getEbid())))
+                    .setEpochId(statusVo.getEpochId())
+                    .setTime(Integer.toUnsignedLong(ByteUtils.bytesToInt(Base64.decode(statusVo.getTime()))))
+                    .setMac(ByteString.copyFrom(Base64.decode(statusVo.getMac())))
+                    .setFromEpochId(
+                            TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart())
+                    )
+                    .setNumberOfDaysForEpochBundles(this.wsServerConfiguration.getEpochBundleDurationInDays())
+                    .setServerCountryCode(
+                            ByteString.copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() })
+                    )
                     .build();
 
             Optional<GetIdFromStatusResponse> response = this.cryptoServerClient.getIdFromStatus(request);
 
             if (response.isPresent()) {
+                if (response.get().hasError()) {
+                    return ValidationResult.<GetIdFromStatusResponse>builder().response(response.get()).build();
+                }
                 if (Objects.nonNull(response.get().getIdA())) {
                     Optional<ValidationResult> timeValidationResult = this.checkTime(
                             Base64.decode(statusVo.getTime()),
-                            response.get().getIdA().toByteArray());
+                            response.get().getIdA().toByteArray()
+                    );
                     if (timeValidationResult.isPresent()) {
                         return timeValidationResult.get();
                     }
@@ -227,15 +237,22 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
         // Step #2: check if time is close to current time
         if (Math.abs(delta) > this.timeDeltaTolerance) {
-            log.warn("Witnessing abnormal time difference {} between client: {} and server: {}",
+            log.warn(
+                    "Witnessing abnormal time difference {} between client: {} and server: {}",
                     delta,
                     timeA,
-                    currentTime);
-            return Optional.of(ValidationResult.<GetIdFromAuthResponse>builder()
-                    .error(createErrorBadRequestCustom(
-                            "Discarding authenticated request because provided time is too far from current server time")
-                            .get())
-                    .build());
+                    currentTime
+            );
+            return Optional.of(
+                    ValidationResult.<GetIdFromAuthResponse>builder()
+                            .error(
+                                    createErrorBadRequestCustom(
+                                            "Discarding authenticated request because provided time is too far from current server time"
+                                    )
+                                            .get()
+                            )
+                            .build()
+            );
         }
         return Optional.empty();
     }
