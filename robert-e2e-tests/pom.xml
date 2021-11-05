@@ -80,11 +80,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.openapitools</groupId>
-            <artifactId>jackson-databind-nullable</artifactId>
-            <version>0.2.1</version>
-        </dependency>
-        <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger2</artifactId>
             <version>3.0.0</version>
@@ -148,7 +143,7 @@
                     <generatorName>java</generatorName>
                     <generateApis>false</generateApis>
                     <modelPackage>
-                        fr.gouv.tac.e2e.robert.model
+                        fr.gouv.stopc.e2e.robert.model
                     </modelPackage>
                     <configOptions>
                         <library>rest-assured</library>
