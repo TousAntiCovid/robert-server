@@ -57,6 +57,7 @@
 		<junit-jupiter.version>5.7.1</junit-jupiter.version>
 		<logcaptor.version>2.6.1</logcaptor.version>
 		<mockito.version>3.7.0</mockito.version>
+		<prometheus-pushgateway.version>0.10.0</prometheus-pushgateway.version>
 	</properties>
 
 	<dependencies>
