@@ -1,4 +1,4 @@
-package e2e;
+package fr.gouv.stopc.e2e;
 
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -9,6 +9,11 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 import java.util.List;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.hamcrest.Matchers.is;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 @SpringBootApplication
@@ -16,8 +21,23 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 public class RobertIntegrationTestsApplication {
 
     public static void main(String[] args) {
+        var exitCode = 1;
+        try {
+            await("Robert platform is ready")
+                    .atMost(3, MINUTES)
+                    .pollInterval(fibonacci(SECONDS))
+                    .until(() -> runCucumberTestClass(SmokeTests.class), is(0));
+
+            exitCode = runCucumberTestClass(CucumberTest.class);
+        } finally {
+            System.exit(exitCode);
+        }
+    }
+
+    private static <T> int runCucumberTestClass(Class<T> classToRun) {
+
         var launcherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectClass(CucumberTest.class))
+                .selectors(selectClass(classToRun))
                 .build();
 
         var launcher = LauncherFactory.create();
@@ -29,10 +49,7 @@ public class RobertIntegrationTestsApplication {
         TestExecutionSummary summary = summaryGeneratingListener.getSummary();
 
         List<TestExecutionSummary.Failure> failures = summary.getFailures();
-        System.out.println("getTestsSucceededCount() - " + summary.getTestsSucceededCount());
-        failures.forEach(failure -> System.out.println("failure - " + failure.getException()));
 
-        var exitCode = failures.size() > 0 ? 1 : 0;
-        System.exit(exitCode);
+        return failures.size() > 0 ? 1 : 0;
     }
 }

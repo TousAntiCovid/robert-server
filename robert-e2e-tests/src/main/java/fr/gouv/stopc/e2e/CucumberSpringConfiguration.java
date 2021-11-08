@@ -1,4 +1,4 @@
-package e2e;
+package fr.gouv.stopc.e2e;
 
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;

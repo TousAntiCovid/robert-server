@@ -1,4 +1,4 @@
-package e2e.config;
+package fr.gouv.stopc.e2e.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
