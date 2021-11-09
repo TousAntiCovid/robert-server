@@ -284,8 +284,8 @@ public class AppMobile {
 
         for (var i = 0; i < durationOfExchangeInSec; i++) {
             // We add one second to the exchange duration
-            // NOTE : Int theory, we need an exchange of 40 minutes and send 1 message per
-            // second
+            // NOTE :
+            // In theory, we need an exchange of 40 minutes and send 1 message per second
             // But with scoringThreshold to "0.0001"
             // The computation of "risk" should start start from the first exchange
             initialTime += 1000; // 1 second
