@@ -32,13 +32,14 @@ import static fr.gouv.stopc.e2e.appmobile.model.EcdhUtils.generateKeyPair;
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static java.util.Base64.getEncoder;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 @Slf4j
 public class AppMobile {
 
-    public static final String CAPTCHA_BYPASS_SOLUTION = "IEDX";
+    private static final String CAPTCHA_BYPASS_SOLUTION = "IEDX";
 
     private final ApplicationProperties applicationProperties;
 
@@ -46,7 +47,7 @@ public class AppMobile {
 
     private String captchaId;
 
-    private long timestart;
+    private long timeStart;
 
     List<Contact> contacts = new ArrayList<>();
 
@@ -80,7 +81,8 @@ public class AppMobile {
                 .when()
                 .post("/api/v6/captcha")
                 .then()
-                .statusCode(200);
+                .statusCode(200)
+                .contentType(ContentType.JSON);
 
         // We generate a fake Captcha id which we will use to differentiate mobile apps
         captchaId = RandomStringUtils.random(7, true, false);
@@ -90,7 +92,8 @@ public class AppMobile {
                 .when()
                 .get("/api/v6/captcha/{captchaId}/image", captchaId)
                 .then()
-                .statusCode(200);
+                .statusCode(200)
+                .contentType("image/png");
     }
 
     private void register() {
@@ -114,6 +117,7 @@ public class AppMobile {
                 .post(applicationProperties.getWsRestBaseUrl().concat("/api/v6/register"))
                 .then()
                 .statusCode(201)
+                .contentType(ContentType.JSON)
                 .extract()
                 .as(RegisterSuccessResponse.class);
 
@@ -122,7 +126,7 @@ public class AppMobile {
 
     public void generateContactsWithOtherApps(List<AppMobile> otherApps, Instant startDate,
             int durationOfExchangeInMin) {
-        int numberOfContacts = contacts.size();
+        var numberOfContacts = contacts.size();
         generateHelloMessageDuring(otherApps, startDate, durationOfExchangeInMin);
         assertThat(contacts.size()).as("There is one more contact in the contact list.")
                 .isEqualTo(numberOfContacts + 1);
@@ -144,12 +148,13 @@ public class AppMobile {
                 )
                 .then()
                 .statusCode(200)
+                .contentType(ContentType.JSON)
                 .body("success", equalTo(true))
                 .body("message", equalTo("Successful operation"));
     }
 
     private void decryptRegisterResponse(@NotNull RegisterSuccessResponse registerData) {
-        timestart = registerData.getTimeStart();
+        timeStart = registerData.getTimeStart();
         updateTuples(registerData.getTuples());
     }
 
@@ -157,7 +162,7 @@ public class AppMobile {
     private void updateTuples(byte[] encryptedTuples) {
         var aesGcm = new CryptoAESGCM(clientIdentifierBundleWithPublicKey.getKeyForTuples());
 
-        this.decodedTuples = new ObjectMapper().readValue(
+        decodedTuples = new ObjectMapper().readValue(
                 aesGcm.decrypt(encryptedTuples),
                 new TypeReference<>() {
                 }
@@ -173,23 +178,18 @@ public class AppMobile {
     }
 
     private String getPublicKey() {
-        return Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+        return getEncoder().encodeToString(keyPair.getPublic().getEncoded());
     }
 
     private EphemeralTupleJson getCurrentTuple() {
-        var currentEpoch = TimeUtils.getCurrentEpochFrom(timestart);
-
-        var tuple = decodedTuples.stream()
-                .filter(e -> e.getEpochId() == currentEpoch)
+        return decodedTuples.stream()
+                .filter(e -> e.getEpochId() == TimeUtils.getCurrentEpochFrom(timeStart))
                 .collect(Collectors.toList())
                 .get(0);
-
-        return tuple;
     }
 
     @SneakyThrows
     private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument) {
-
         return cryptoHMACSHA256S.encrypt(ByteUtils.addAll(new byte[] { HELLO.getValue() }, argument));
     }
 
@@ -236,15 +236,12 @@ public class AppMobile {
     }
 
     private void exchangeEbIdWithRand(List<AppMobile> otherAppMobileList, long timeInMillis) {
-
         for (AppMobile otherAppMobile : otherAppMobileList) {
-
             var helloMessageDetail = generateHelloMessage(
                     otherAppMobile,
                     TimeUtils.convertUnixMillistoNtpSeconds(timeInMillis),
                     ThreadLocalRandom.current().nextInt(-10, 3)
             );
-
             getOrCreateContact(otherAppMobile.getCurrentTuple().getKey()).addIdsItem(helloMessageDetail);
         }
     }
@@ -273,9 +270,9 @@ public class AppMobile {
             Integer durationOfExchangeInMin) {
 
         var initialTime = startDate.toEpochMilli();
+        var durationOfExchangeInSec = durationOfExchangeInMin * 60;
 
-        durationOfExchangeInMin = durationOfExchangeInMin * 60;
-        for (var i = 0; i < durationOfExchangeInMin; i++) {
+        for (var i = 0; i < durationOfExchangeInSec; i++) {
             // On ajoute une minute à la date d'échange
             // NOTE : En théorie il faut à peu près 40 min de contact et 1 message par
             // seconde
