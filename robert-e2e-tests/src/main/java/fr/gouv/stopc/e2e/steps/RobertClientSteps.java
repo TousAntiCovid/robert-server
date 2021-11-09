@@ -45,7 +45,7 @@ public class RobertClientSteps {
                 .body("status", equalTo("UP"));
     }
 
-    @Given("{word} install the application TAC")
+    @Given("{word} installs the application TAC")
     public void createAppMobile(String userName) {
         createApplication(userName, applicationProperties);
     }
@@ -64,5 +64,4 @@ public class RobertClientSteps {
         AppMobile mainMobileApp = applicationMobileMap.get(userName);
         mainMobileApp.reportContacts();
     }
-
 }

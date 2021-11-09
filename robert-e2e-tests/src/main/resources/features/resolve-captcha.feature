@@ -5,8 +5,8 @@ Feature: Bluetooth contact tracing
   In order to protect my neighbors
 
   Background:
-    Given François install the application TAC
-    Given Sarah install the application TAC
+    Given François installs the application TAC
+    Given Sarah installs the application TAC
 
   Scenario: They install the application TAC
     Given two days ago at 12:00, François was near Sarah during 45 minutes

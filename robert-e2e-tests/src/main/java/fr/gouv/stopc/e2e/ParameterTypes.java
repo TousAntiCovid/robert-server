@@ -14,14 +14,15 @@ public class ParameterTypes {
         final var dates = new PrettyTimeParser()
                 .parse(timeExpression);
         if (dates.size() != 1) {
-            final var message = format(
-                    "Expecting to find exactly 1 date expression but found %d in '%s'",
-                    dates.size(), timeExpression
+            throw new IllegalArgumentException(
+                    format(
+                            "Expecting to find exactly 1 date expression but found %d in '%s'",
+                            dates.size(), timeExpression
+                    )
             );
-            throw new IllegalArgumentException(message);
         }
         return dates.stream()
-                .findAny()
+                .findFirst()
                 .orElseThrow()
                 .toInstant();
     }
