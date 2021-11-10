@@ -14,12 +14,7 @@ spring:
     username: sa
     password: password
 
-logging:
-  level:
-    org:
-      springframework:
-        web:
-          client:
-            RestTemplate: DEBUG
-      apache:
-        http: DEBUG
+logging.level:
+  fr.gouv.tac.mobile.emulator: DEBUG
+  org.springframework.web.client.RestTemplate: DEBUG
+  org.apache.http: DEBUG
