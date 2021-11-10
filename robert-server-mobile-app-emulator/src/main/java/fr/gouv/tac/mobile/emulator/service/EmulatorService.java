@@ -1,16 +1,5 @@
 package fr.gouv.tac.mobile.emulator.service;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.mobile.emulator.api.model.HelloMessageExchangesOrderRequest;
@@ -27,26 +16,41 @@ import fr.gouv.tac.mobile.emulator.robert.api.model.RegisterSuccessResponse;
 import fr.gouv.tac.mobile.emulator.robert.api.model.ReportBatchRequest;
 import fr.gouv.tac.mobile.emulator.robert.api.model.UnregisterRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class EmulatorService {
 
-
     private final EmulatorProperties emulatorProperties;
+
     private final Map<String, AppMobile> appMobileMap;
+
     private final DefaultApi robertApiClient;
 
     public EmulatorService(DefaultApi robertApiClient, EmulatorProperties emulatorProperties) {
-        this.emulatorProperties=emulatorProperties;
+        this.emulatorProperties = emulatorProperties;
         this.robertApiClient = robertApiClient;
         robertApiClient.getApiClient().setBasePath(emulatorProperties.getRobertWsUrl());
         this.appMobileMap = new HashMap<>();
     }
 
-    public void register(RegisterOrderRequest registerOrderRequest) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
+    public void register(RegisterOrderRequest registerOrderRequest)
+            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
 
-        AppMobile appMobile = new AppMobile(registerOrderRequest.getCaptchaId(), registerOrderRequest.getCaptcha(), emulatorProperties.getRobertCryptoPublicKey());
+        AppMobile appMobile = new AppMobile(
+                registerOrderRequest.getCaptchaId(), registerOrderRequest.getCaptcha(),
+                emulatorProperties.getRobertCryptoPublicKey()
+        );
 
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setCaptcha(registerOrderRequest.getCaptcha());
@@ -92,7 +96,7 @@ public class EmulatorService {
 
     }
 
-    public void status(String captchaId) {
+    public Integer status(String captchaId) {
         log.info("call status of the app mobile identified by this captcha id {} ", captchaId);
 
         AppMobile appMobile = appMobileMap.get(captchaId);
@@ -108,6 +112,7 @@ public class EmulatorService {
 
         ExposureStatusResponse exposureStatusResponse = robertApiClient.eSR(exposureStatusRequest);
         appMobile.decryptStatusResponse(exposureStatusResponse);
+        return exposureStatusResponse.getRiskLevel();
     }
 
     public void report(ReportOrderRequest reportOrderRequest) {
@@ -129,12 +134,14 @@ public class EmulatorService {
         AppMobile appMobile = appMobileMap.get(helloMessageExchangesOrderRequest.getCaptchaId());
         Objects.requireNonNull(appMobile);
 
-        List<AppMobile> otherApps = helloMessageExchangesOrderRequest.getCaptchaIdOfOtherApps().stream().map(appMobileMap::get).collect(Collectors.toList());
+        List<AppMobile> otherApps = helloMessageExchangesOrderRequest.getCaptchaIdOfOtherApps().stream()
+                .map(appMobileMap::get).collect(Collectors.toList());
 
-        appMobile.startHelloMessageExchanges(otherApps, Duration.ofSeconds(helloMessageExchangesOrderRequest.getFrequencyInSeconds()));
+        appMobile.startHelloMessageExchanges(
+                otherApps, Duration.ofSeconds(helloMessageExchangesOrderRequest.getFrequencyInSeconds())
+        );
 
     }
-
 
     public void stopHelloMessageExchange(String captchaId) {
 
