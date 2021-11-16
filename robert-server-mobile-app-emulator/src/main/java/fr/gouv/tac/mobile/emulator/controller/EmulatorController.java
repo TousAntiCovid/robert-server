@@ -1,20 +1,20 @@
 package fr.gouv.tac.mobile.emulator.controller;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.mobile.emulator.api.EmulatorApi;
 import fr.gouv.tac.mobile.emulator.api.model.HelloMessageExchangesOrderRequest;
+import fr.gouv.tac.mobile.emulator.api.model.InlineResponse200;
 import fr.gouv.tac.mobile.emulator.api.model.RegisterOrderRequest;
 import fr.gouv.tac.mobile.emulator.api.model.ReportOrderRequest;
 import fr.gouv.tac.mobile.emulator.service.EmulatorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
 
 @Controller
 @RequestMapping(path = "/api/v1/emulator")
@@ -56,12 +56,14 @@ public class EmulatorController implements EmulatorApi {
     }
 
     @Override
-    public ResponseEntity<Void> status(String captchaId) {
+    public ResponseEntity<InlineResponse200> status(String captchaId) {
         log.info("status for the app mobile identified by this captcha id {} ", captchaId);
 
-        emulatorService.status(captchaId);
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(
+                InlineResponse200.builder()
+                        .riskLevel(emulatorService.status(captchaId))
+                        .build()
+        );
     }
 
     @Override
@@ -74,8 +76,12 @@ public class EmulatorController implements EmulatorApi {
     }
 
     @Override
-    public ResponseEntity<Void> startHelloMessageExchanges(HelloMessageExchangesOrderRequest helloMessageExchangesOrderRequest) {
-        log.info("start hello message exchanges managed by app mobile with captcha  : {}", helloMessageExchangesOrderRequest.getCaptchaId());
+    public ResponseEntity<Void> startHelloMessageExchanges(
+            HelloMessageExchangesOrderRequest helloMessageExchangesOrderRequest) {
+        log.info(
+                "start hello message exchanges managed by app mobile with captcha  : {}",
+                helloMessageExchangesOrderRequest.getCaptchaId()
+        );
 
         emulatorService.startHelloMessageExchange(helloMessageExchangesOrderRequest);
 
