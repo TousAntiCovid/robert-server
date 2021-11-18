@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -39,10 +40,11 @@ public class CaptchaServiceImpl implements CaptchaService {
 	private PropertyLoader propertyLoader;
 
 	@Inject
-	public CaptchaServiceImpl(RestTemplate restTemplate,
+	public CaptchaServiceImpl(RestTemplateBuilder restTemplateBuilder,
 							  PropertyLoader propertyLoader) {
-		this.restTemplate = restTemplate;
-		this.restTemplate.setErrorHandler(new CaptchaErrorHandler());
+		this.restTemplate = restTemplateBuilder
+				.errorHandler(new CaptchaErrorHandler())
+				.build();
 		this.propertyLoader = propertyLoader;
 	}
 

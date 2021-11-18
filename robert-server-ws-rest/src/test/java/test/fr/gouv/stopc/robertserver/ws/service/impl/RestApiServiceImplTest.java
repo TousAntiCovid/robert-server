@@ -1,17 +1,9 @@
 package test.fr.gouv.stopc.robertserver.ws.service.impl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.net.URI;
-import java.util.Optional;
-
+import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
+import fr.gouv.stopc.robertserver.ws.service.impl.RestApiServiceImpl;
+import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
+import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,10 +18,18 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
-import fr.gouv.stopc.robertserver.ws.service.impl.RestApiServiceImpl;
-import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
-import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:application.properties")
@@ -68,7 +68,7 @@ public class RestApiServiceImplTest {
     private PushInfoVo pushInfoVo;
 
     @BeforeEach
-    public void beforeEach() {
+    public void beforeEach() throws URISyntaxException {
 
         assertNotNull(restApiServiceImpl);
         assertNotNull(restTemplate);
@@ -80,9 +80,7 @@ public class RestApiServiceImplTest {
                 .timezone("Europe/Paris")
                 .build();
 
-        when(this.propertyLoader.getServerCodeHost()).thenReturn("localhost");
-        when(this.propertyLoader.getServerCodePort()).thenReturn("8080");
-        when(this.propertyLoader.getServerCodeVerificationPath()).thenReturn("/api/v1/verify");
+        when(this.propertyLoader.getServerCodeUrl()).thenReturn(new URI("http://localhost:8080"));
 
         when(this.propertyLoader.getPushServerHost()).thenReturn(this.pushServerHost);
         when(this.propertyLoader.getPushServerPort()).thenReturn(this.pushServerPort);
@@ -96,7 +94,7 @@ public class RestApiServiceImplTest {
     public void testVerifyReportTokenWhenTokenIsNullFails() {
 
         // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken(null, "notEmpty");
+        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken(null);
 
         // Then
         assertFalse(response.isPresent());
@@ -107,29 +105,7 @@ public class RestApiServiceImplTest {
     public void testVerifyReportTokenWhenTokenIsEmptyFails() {
 
         // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("", "notEmpty");
-
-        // Then
-        assertFalse(response.isPresent());
-        verify(this.restTemplate, never()).getForEntity(any(URI.class), any());
-    }
-
-    @Test
-    public void testVerifyReportTokenWhenTypeIsNullFails() {
-
-        // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token", null);
-
-        // Then
-        assertFalse(response.isPresent());
-        verify(this.restTemplate, never()).getForEntity(any(URI.class), any());
-    }
-
-    @Test
-    public void testVerifyReportTokenWhenTypeIsEmptyFails() {
-
-        // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token", "");
+        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("");
 
         // Then
         assertFalse(response.isPresent());
@@ -141,10 +117,11 @@ public class RestApiServiceImplTest {
 
         // Given
         when(this.restTemplate.getForEntity(any(URI.class), any())).thenThrow(
-                new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+                new HttpClientErrorException(HttpStatus.BAD_REQUEST)
+        );
 
         // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token", "type");
+        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token");
 
         // Then
         assertFalse(response.isPresent());
@@ -155,12 +132,12 @@ public class RestApiServiceImplTest {
     public void testVerifyReportTokenShouldSucceed() {
 
         // Given
-        VerifyResponseDto verified  = VerifyResponseDto.builder().valid(true).build();
+        VerifyResponseDto verified = VerifyResponseDto.builder().valid(true).build();
 
         when(this.restTemplate.getForEntity(any(URI.class), any())).thenReturn(ResponseEntity.ok(verified));
 
         // When
-        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token", "type");
+        Optional<VerifyResponseDto> response = this.restApiServiceImpl.verifyReportToken("token");
 
         // Then
         assertTrue(response.isPresent());

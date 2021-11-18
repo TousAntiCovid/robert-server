@@ -1,13 +1,15 @@
-#!/bin/sh
+#!/bin/bash
 echo "Generate keys..."
-python3 /hsm-tools/key-management/init-from-scratch/populate-hsm_ks_days.py -p "1234" -t "StopCovid" -n "90"
+cd /work/config
+keytool -genseckey -alias federation-key -keyalg AES -keysize 256 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v
+keytool -genseckey -alias key-encryption-key -keyalg AES -keysize 256 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v
+for i in {0..5};do keytool -genseckey -alias server-key-$(date --date="$i days" +%Y%m%d) -keyalg AES -keysize 192 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v; done
 
 echo "Check keys"
-pkcs11-tool --module /usr/local/lib/softhsm/libsofthsm2.so -l -p "1234" -O
+keytool -list -keystore keystore.p12 -storepass 1234
 
 echo "Launch appli"
 cd /opt/robert-crypto-server
-java $JAVA_OPTS -Dlogging.config=/work/config/logback.xml -jar /opt/robert-crypto-server/app.jar --spring.config.location=file:/work/config/application.properties
-
+java -jar /opt/robert-crypto-server/app.jar
 # useful to debug image build
 #. /run.sh

@@ -1,13 +1,5 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import java.util.Objects;
-import java.util.Optional;
-
-import javax.inject.Inject;
-
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
 import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerBadRequestException;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
@@ -18,6 +10,14 @@ import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import io.micrometer.core.instrument.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -44,8 +44,9 @@ public class ReportControllerDelegate {
             return false;
         }
 
-	if (!this.propertyLoader.getDisableCheckToken())
+        if (!this.propertyLoader.getDisableCheckToken()) {
             this.checkValidityToken(reportBatchRequestVo.getToken());
+        }
 
         return true;
     }
@@ -66,12 +67,13 @@ public class ReportControllerDelegate {
             throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
         }
 
-        if (token.length() != 6 && token.length() != 36) {
+        final var acceptedLengths = List.of(6, 12, 36);
+        if (!acceptedLengths.contains(token.length())) {
             log.warn("Token size is incorrect");
             throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
         }
 
-        Optional<VerifyResponseDto> response = this.restApiService.verifyReportToken(token, getCodeType(token));
+        Optional<VerifyResponseDto> response = this.restApiService.verifyReportToken(token);
 
         if (!response.isPresent() ||  !response.get().isValid()) {
             log.warn("Verifying the token failed");
@@ -81,8 +83,4 @@ public class ReportControllerDelegate {
         log.info("Verifying the token succeeded");
     }
 
-    private String getCodeType(String token) {
-        // TODO: create enum for long and short codes
-        return token.length() == 6 ? "2" : "1";
-    }
 }

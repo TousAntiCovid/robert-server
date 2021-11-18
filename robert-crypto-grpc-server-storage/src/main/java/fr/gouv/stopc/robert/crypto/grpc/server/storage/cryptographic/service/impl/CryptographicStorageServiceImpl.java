@@ -1,13 +1,16 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.impl;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.utils.KeystoreTypeEnum;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.crypto.spec.SecretKeySpec;
+
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -21,20 +24,24 @@ import java.util.stream.Collectors;
 @Service
 public class CryptographicStorageServiceImpl implements ICryptographicStorageService {
 
-
     private static final int SERVER_KEY_SIZE = 24;
 
     // Because Java does not know Skinny64, specify AES instead
     private static final String KEYSTORE_KG_ALGONAME = "AES";
 
-    //private static final String ALIAS_SERVER_ECDH_PUBLIC_KEY = "server-ecdh-key";
+    // private static final String ALIAS_SERVER_ECDH_PUBLIC_KEY = "server-ecdh-key";
     private static final String ALIAS_SERVER_ECDH_PRIVATE_KEY = "register-key"; // ECDH
-    //private static final String ALIAS_SERVER_KEK = "server-key-encryption-key;
+    // private static final String ALIAS_SERVER_KEK = "server-key-encryption-key;
+
     private static final String ALIAS_CLIENT_KEK = "key-encryption-key"; // KEK
+
     private static final String ALIAS_FEDERATION_KEY = "federation-key"; // K_G
+
     private static final String ALIAS_SERVER_KEY_PREFIX = "server-key-"; // K_S
 
-    private static final String KEYSTORE_TYPE = "PKCS11";
+    private static final String PKCS11_KEYSTORE_TYPE = "PKCS11";
+
+    private static final String PKCS12_KEYSTORE_TYPE = "pkcs12";
 
     private KeyPair keyPair;
 
@@ -45,18 +52,21 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     private Map<String, Key> kekCache;
 
     private Provider provider;
+
     private KeyStore keyStore;
 
     private Key federationKeyCached;
 
+    private char[] keyPassword;
+
     @Override
-    public void init(String password, String configFile) {
+    public void init(String password, String configFile, KeystoreTypeEnum keystoreTypeEnum, Resource keystoreResource) {
 
         if (!StringUtils.hasText(password) || !StringUtils.hasText(configFile)) {
             throw new IllegalArgumentException("The init argument cannot be empty");
         }
 
-        boolean hsmLoadSuccessful = this.loadSecurityProvider(password, configFile);
+        boolean hsmLoadSuccessful = this.loadSecurityProvider(password, configFile, keystoreTypeEnum, keystoreResource);
         if (!hsmLoadSuccessful) {
             throw new RuntimeException("Could not add security provider");
         }
@@ -65,18 +75,40 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
         kekCache = new HashMap<>();
     }
 
-    private boolean loadSecurityProvider(String password, String configFile) {
+    private boolean loadSecurityProvider(String password, String configFile, KeystoreTypeEnum keystoreTypeEnum,
+            Resource keystoreResource) {
         try {
-
-            // For JDK 1.9+, uncomment line below and delete code above
-            this.provider = Security.getProvider("SunPKCS11").configure(configFile);
-
             char[] keyStorePassword = password.toCharArray();
-            this.keyStore = KeyStore.getInstance(KEYSTORE_TYPE, this.provider);
-            this.keyStore.load(null, keyStorePassword);
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | ProviderException e) {
 
-            log.error("An expected error occurred when trying to initialize the keyStore {} due to {}", e.getClass(), e.getMessage());
+            switch (keystoreTypeEnum) {
+                case PKCS11:
+                    this.provider = Security.getProvider("SunPKCS11").configure(configFile);
+
+                    this.keyStore = KeyStore.getInstance(PKCS11_KEYSTORE_TYPE, this.provider);
+                    this.keyStore.load(null, keyStorePassword);
+
+                    this.keyPassword = null;
+                    break;
+                case PKCS12:
+                    this.keyStore = KeyStore.getInstance(PKCS12_KEYSTORE_TYPE);
+                    this.keyStore.load(keystoreResource.getInputStream(), keyStorePassword);
+                    // In PKCS12, password is mandatory
+                    // see -keypass attribute in official documentation :
+                    // https://docs.oracle.com/javase/7/docs/technotes/tools/windows/keytool.html
+                    this.keyPassword = password.toCharArray();
+                    break;
+                default:
+                    throw new UnsupportedOperationException(
+                            "keystore type " + keystoreTypeEnum + " is not managed by robert crypto application"
+                    );
+            }
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException
+                | ProviderException e) {
+
+            log.error(
+                    "An expected error occurred when trying to initialize the keyStore {} due to {}", e.getClass(),
+                    e.getMessage()
+            );
             return false;
         }
         return true;
@@ -89,7 +121,10 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
             try {
                 return this.keyStore.containsAlias(alias);
             } catch (KeyStoreException e) {
-                log.info("An expected error occurred when trying to check if keystore contains the alias {} due to {}", alias, e.getMessage());
+                log.info(
+                        "An expected error occurred when trying to check if keystore contains the alias {} due to {}",
+                        alias, e.getMessage()
+                );
             }
         }
         return false;
@@ -110,8 +145,10 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
             synchronized (protectHsmReload) {
                 if (this.keyPair == null) {
                     try {
-                        PrivateKey privateKey = (PrivateKey) this.keyStore.getKey(ALIAS_SERVER_ECDH_PRIVATE_KEY, null);
-                        PublicKey publicKey = this.keyStore.getCertificate(ALIAS_SERVER_ECDH_PRIVATE_KEY).getPublicKey();
+                        PrivateKey privateKey = (PrivateKey) this.keyStore
+                                .getKey(ALIAS_SERVER_ECDH_PRIVATE_KEY, this.keyPassword);
+                        PublicKey publicKey = this.keyStore.getCertificate(ALIAS_SERVER_ECDH_PRIVATE_KEY)
+                                .getPublicKey();
 
                         this.keyPair = new KeyPair(publicKey, privateKey);
                         return Optional.ofNullable(this.keyPair);
@@ -133,10 +170,12 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
         synchronized (protectHsmReload) {
             try {
                 if (this.contains(alias)) {
-                    return this.keyStore.getKey(alias, null).getEncoded();
+                    return this.keyStore.getKey(alias, this.keyPassword).getEncoded();
                 }
             } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
-                log.error("An expected error occurred when trying to get the entry {} due to {}", alias, e.getMessage());
+                log.error(
+                        "An expected error occurred when trying to get the entry {} due to {}", alias, e.getMessage()
+                );
             }
         }
         return null;
@@ -150,8 +189,10 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
 
     @Override
     public Key getKeyForEncryptingClientKeys() {
-        return getKeyForEncryptingKeys(ALIAS_CLIENT_KEK,
-                "Unable to retrieve key for encrypting keys (KEK) for client from HSM");
+        return getKeyForEncryptingKeys(
+                ALIAS_CLIENT_KEK,
+                "Unable to retrieve key for encrypting keys (KEK) for client from HSM"
+        );
     }
 
     private Key getKeyForEncryptingKeys(String alias, String errorMessage) {
@@ -163,10 +204,11 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
                 if (!this.kekCache.containsKey(alias)) {
                     try {
 
-                        Key key = this.keyStore.getKey(alias, null);
+                        Key key = this.keyStore.getKey(alias, this.keyPassword);
                         this.kekCache.put(alias, key);
                         return key;
-                    } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException | IllegalStateException e) {
+                    } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException
+                            | IllegalStateException e) {
                         log.error(errorMessage);
                     }
                 } else {
@@ -182,10 +224,6 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     public byte[] getServerKey(int epochId, long serviceTimeStart, boolean takePreviousDaysKey) {
 
         LocalDate dateFromEpoch = TimeUtils.getDateFromEpoch(epochId, serviceTimeStart);
-        if (Objects.isNull(dateFromEpoch)) {
-            log.error("The date from epoch {} from the time start {} is null", epochId, serviceTimeStart);
-            return null;
-        }
 
         if (takePreviousDaysKey) {
             dateFromEpoch = dateFromEpoch.minusDays(1);
@@ -208,7 +246,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
                         if (!this.keyStore.containsAlias(alias)) {
                             log.error("Key store does not contain key for alias {}", alias);
                         } else {
-                            Key key = this.keyStore.getKey(alias, null);
+                            Key key = this.keyStore.getKey(alias, this.keyPassword);
                             serverKey = key.getEncoded();
                             this.serverKeyCache.put(alias, serverKey);
                         }
@@ -218,7 +256,10 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
                 }
             }
         } catch (Exception e) {
-            log.error("An expected error occurred when trying to get the alias {} due to {}", dateFromEpoch, e.getMessage());
+            log.error(
+                    "An expected error occurred when trying to get the alias {} due to {}", dateFromEpoch,
+                    e.getMessage()
+            );
         }
 
         return serverKey;
@@ -249,11 +290,14 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
                     if (this.federationKeyCached == null) {
                         if (this.keyStore.containsAlias(ALIAS_FEDERATION_KEY)) {
                             log.info("Fetching and caching federation key from keystore");
-                            Key federationKeyFromHSM = this.keyStore.getKey(ALIAS_FEDERATION_KEY, null);
+                            Key federationKeyFromHSM = this.keyStore.getKey(ALIAS_FEDERATION_KEY, this.keyPassword);
 
                             // TODO: review this and create issue tracking this behaviour
-                            // Copy key content in new key to prevent any delegation to HSM and perform encryption in Java
-                            this.federationKeyCached = new SecretKeySpec(federationKeyFromHSM.getEncoded(), KEYSTORE_KG_ALGONAME);
+                            // Copy key content in new key to prevent any delegation to HSM and perform
+                            // encryption in Java
+                            this.federationKeyCached = new SecretKeySpec(
+                                    federationKeyFromHSM.getEncoded(), KEYSTORE_KG_ALGONAME
+                            );
                         }
                     }
                 }
@@ -267,7 +311,8 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     private final Object protectHsmReload = new Object();
 
     @Override
-    public boolean reloadHSM(String pin, String configName) {
+    public boolean reloadHSM(String pin, String configName, KeystoreTypeEnum keystoreTypeEnum,
+            Resource keystoreResource) {
         log.info("HSM reload requested");
         synchronized (protectHsmReload) {
             log.info("Removing security provider");
@@ -279,7 +324,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
             this.kekCache.clear();
             log.info("Flushed cached keys");
 
-            boolean reloadResult = this.loadSecurityProvider(pin, configName);
+            boolean reloadResult = this.loadSecurityProvider(pin, configName, keystoreTypeEnum, keystoreResource);
 
             if (!reloadResult) {
                 log.error("Could not reload Security Provider for HSM");
@@ -337,7 +382,10 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
         }
 
         if (!CollectionUtils.isEmpty(this.kekCache)) {
-            aliases.addAll(this.kekCache.keySet().stream().map(elt -> String.format("Key Encryption Key '%s'", elt)).collect(Collectors.toList()));
+            aliases.addAll(
+                    this.kekCache.keySet().stream().map(elt -> String.format("Key Encryption Key '%s'", elt))
+                            .collect(Collectors.toList())
+            );
         }
 
         if (!Objects.isNull(this.federationKeyCached)) {
@@ -345,7 +393,10 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
         }
 
         if (!CollectionUtils.isEmpty(this.serverKeyCache)) {
-            aliases.addAll(this.serverKeyCache.keySet().stream().map(elt -> String.format("Server Key '%s'", elt)).collect(Collectors.toList()));
+            aliases.addAll(
+                    this.serverKeyCache.keySet().stream().map(elt -> String.format("Server Key '%s'", elt))
+                            .collect(Collectors.toList())
+            );
         }
 
         if (aliases.size() == 0) {

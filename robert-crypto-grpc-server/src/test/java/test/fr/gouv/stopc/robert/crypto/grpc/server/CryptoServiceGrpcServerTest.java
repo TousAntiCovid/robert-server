@@ -1,60 +1,12 @@
 package test.fr.gouv.stopc.robert.crypto.grpc.server;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import javax.crypto.KeyGenerator;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.CryptoServiceGrpcServer;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplStub;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.service.ICryptoServerConfigurationService;
 import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl;
 import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.ECDHKeyServiceImpl;
@@ -78,14 +30,36 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
+
+import java.io.IOException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
@@ -93,7 +67,9 @@ import test.fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
 class CryptoServiceGrpcServerTest {
 
     private final static String UNEXPECTED_FAILURE_MESSAGE = "Should not fail";
+
     private final static byte[] SERVER_COUNTRY_CODE = new byte[] { (byte) 0x21 };
+
     private final static int NUMBER_OF_DAYS_FOR_BUNDLES = 4;
 
     private final static int MAX_EPOCH_DOUBLE_KS_CHECK = 672;
@@ -129,33 +105,38 @@ class CryptoServiceGrpcServerTest {
     void beforeEach() throws IOException {
 
         serverConfigurationService = new ICryptoServerConfigurationService() {
-            final LocalDate ld = LocalDate.of(2020,6,1);
+
+            final LocalDate ld = LocalDate.of(2020, 6, 1);
+
             final ZonedDateTime zdt = ld.atStartOfDay().atZone(ZoneId.of("UTC"));
+
             long timeStartNtp = TimeUtils.convertUnixMillistoNtpSeconds(zdt.toInstant().toEpochMilli());
 
             @Override
-             public long getServiceTimeStart() {
-                 return timeStartNtp;
-             }
+            public long getServiceTimeStart() {
+                return timeStartNtp;
+            }
 
-         };
+        };
 
         cryptoService = new CryptoServiceImpl();
 
         clientStorageService = new MockClientKeyStorageService();
 
-        service = new CryptoGrpcServiceBaseImpl(serverConfigurationService,
+        service = new CryptoGrpcServiceBaseImpl(
+                serverConfigurationService,
                 cryptoService,
                 keyService,
                 clientStorageService,
                 cryptographicStorageService,
-                propertyLoader);
+                propertyLoader
+        );
 
         when(this.cryptographicStorageService.getServerKeyPair())
-        .thenReturn(Optional.ofNullable(CryptoTestUtils.generateECDHKeyPair()));
+                .thenReturn(Optional.ofNullable(CryptoTestUtils.generateECDHKeyPair()));
 
         when(this.propertyLoader.getHelloMessageTimeStampTolerance())
-        .thenReturn(180);
+                .thenReturn(180);
 
         byte[] keyToEncodeKeys = new byte[32];
         new SecureRandom().nextBytes(keyToEncodeKeys);
@@ -166,12 +147,14 @@ class CryptoServiceGrpcServerTest {
 
         server = new CryptoServiceGrpcServer(
                 InProcessServerBuilder.forName(serverName)
-                .directExecutor(),
+                        .directExecutor(),
                 0,
-                service);
+                service
+        );
         server.start();
         inProcessChannel = grpcCleanup.register(
-                InProcessChannelBuilder.forName(serverName).directExecutor().build());
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+        );
 
         this.currentEpochId = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
 
@@ -201,21 +184,24 @@ class CryptoServiceGrpcServerTest {
         doReturn(serverKeys).when(this.cryptographicStorageService).getServerKeys(
                 this.currentEpochId,
                 this.serverConfigurationService.getServiceTimeStart(),
-                4);
+                4
+        );
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        CreateRegistrationResponse createRegistrationResponse =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.createRegistration(req, observer),
-                        (t) -> fail(),
-                        res);
+        CreateRegistrationResponse createRegistrationResponse = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.createRegistration(req, observer),
+                (t) -> fail(),
+                res
+        );
 
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(createRegistrationResponse.getIdA().toByteArray()));
         byte[] tuples = createRegistrationResponse.getTuples().toByteArray();
         assertTrue(ByteUtils.isNotEmpty(tuples));
-        assertTrue(checkTuples(createRegistrationResponse.getIdA().toByteArray(), tuples, this.currentEpochId, serverKeys));
+        assertTrue(
+                checkTuples(createRegistrationResponse.getIdA().toByteArray(), tuples, this.currentEpochId, serverKeys)
+        );
     }
 
     private byte[] getIdFromDecryptedEBID(byte[] ebid) {
@@ -236,19 +222,25 @@ class CryptoServiceGrpcServerTest {
         for (CryptoGrpcServiceBaseImpl.EphemeralTupleJson tuple : tuples) {
             int epochIdFromTuple = tuple.getEpochId();
             try {
-                byte[] decryptedEbid = this.cryptoService.decryptEBID(new CryptoSkinny64(key), tuple.getKey().getEbid());
+                byte[] decryptedEbid = this.cryptoService
+                        .decryptEBID(new CryptoSkinny64(key), tuple.getKey().getEbid());
                 byte[] idFromMessage = getIdFromDecryptedEBID(decryptedEbid);
                 if (id == null) {
                     id = idFromMessage;
                 } else {
                     if (!Arrays.equals(id, idFromMessage)) {
-                        log.error("ids do not match from first message {} and from other message {}", id, idFromMessage);
+                        log.error(
+                                "ids do not match from first message {} and from other message {}", id, idFromMessage
+                        );
                         atLeastOneError = true;
                     }
                 }
                 int epochIdFromMessage = getEpochIdFromDecryptedEBID(decryptedEbid);
                 if (epochIdFromMessage != epochIdFromTuple) {
-                    log.error("epoch ids do not match from message {} and from tuple {}", epochIdFromMessage, epochIdFromTuple);
+                    log.error(
+                            "epoch ids do not match from message {} and from tuple {}", epochIdFromMessage,
+                            epochIdFromTuple
+                    );
                     atLeastOneError = true;
                 }
             } catch (RobertServerCryptoException e) {
@@ -259,9 +251,10 @@ class CryptoServiceGrpcServerTest {
         return !atLeastOneError;
     }
 
-    private boolean checkTuplesContentMatchesKeysForDays(Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> decodedTuples,
-                                                      int epochId,
-                                                      byte[][] serverKeys) {
+    private boolean checkTuplesContentMatchesKeysForDays(
+            Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> decodedTuples,
+            int epochId,
+            byte[][] serverKeys) {
 
         ArrayList<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> list = new ArrayList(decodedTuples);
 
@@ -285,8 +278,11 @@ class CryptoServiceGrpcServerTest {
             ObjectMapper objectMapper = new ObjectMapper();
             Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> decodedTuples = objectMapper.readValue(
                     decryptedTuples,
-                    new TypeReference<Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson>>(){});
-            boolean sizeMatches = ((NUMBER_OF_DAYS_FOR_BUNDLES - 1) * 96 + TimeUtils.remainingEpochsForToday(epochId)) == decodedTuples.size();
+                    new TypeReference<Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson>>() {
+                    }
+            );
+            boolean sizeMatches = ((NUMBER_OF_DAYS_FOR_BUNDLES - 1) * 96
+                    + TimeUtils.remainingEpochsForToday(epochId)) == decodedTuples.size();
 
             return sizeMatches && checkTuplesContentMatchesKeysForDays(decodedTuples, epochId, serverKeys);
         } catch (RobertServerCryptoException | IOException e) {
@@ -309,12 +305,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        CreateRegistrationResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.createRegistration(req, observer),
-                        (t) -> fail(),
-                        res);
+        CreateRegistrationResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.createRegistration(req, observer),
+                (t) -> fail(),
+                res
+        );
 
         assertTrue(!res.isError());
         assertTrue(response.hasError());
@@ -332,12 +328,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        CreateRegistrationResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.createRegistration(req, observer),
-                        (t) -> fail(),
-                        res);
+        CreateRegistrationResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.createRegistration(req, observer),
+                (t) -> fail(),
+                res
+        );
 
         assertTrue(!res.isError());
         assertTrue(response.hasError());
@@ -346,7 +342,8 @@ class CryptoServiceGrpcServerTest {
 
     @Test
     void testCreateRegistrationClientPublicKeyImproperECFails() {
-        // Client public key generated with EC curve "secp256k1" instead of server's choice of "secp256*r*1"
+        // Client public key generated with EC curve "secp256k1" instead of server's
+        // choice of "secp256*r*1"
         CreateRegistrationRequest request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(CryptoTestUtils.generateECDHPublicKey("secp256k1")))
@@ -356,12 +353,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        CreateRegistrationResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.createRegistration(req, observer),
-                        (t) -> fail(),
-                        res);
+        CreateRegistrationResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.createRegistration(req, observer),
+                (t) -> fail(),
+                res
+        );
 
         assertTrue(!res.isError());
         assertTrue(response.hasError());
@@ -373,11 +370,17 @@ class CryptoServiceGrpcServerTest {
     @Getter
     @Builder
     static class AuthRequestBundle {
+
         private byte[] ebid;
+
         private int epochId;
+
         private long time;
+
         private byte[] mac;
+
         private DigestSaltEnum requestType;
+
         private byte[] serverKey;
     }
 
@@ -394,7 +397,9 @@ class CryptoServiceGrpcServerTest {
         System.arraycopy(digest, 0, toHash, 0, digest.length);
         System.arraycopy(ebid, 0, toHash, digest.length, ebid.length);
         System.arraycopy(ByteUtils.intToBytes(epochId), 0, toHash, digest.length + ebid.length, Integer.BYTES);
-        System.arraycopy(ByteUtils.longToBytes(time), 4, toHash, digest.length + ebid.length + Integer.BYTES, Integer.BYTES);
+        System.arraycopy(
+                ByteUtils.longToBytes(time), 4, toHash, digest.length + ebid.length + Integer.BYTES, Integer.BYTES
+        );
 
         try {
             CryptoHMACSHA256 hmacsha256 = new CryptoHMACSHA256(keyForMac);
@@ -427,15 +432,16 @@ class CryptoServiceGrpcServerTest {
     }
 
     private AuthRequestBundle generateAuthRequestBundleWithTimeDeltaAndOtherKS(byte[] id,
-                                                                               byte[] keyForMac,
-                                                                               DigestSaltEnum digestSalt,
-                                                                               long timeDelta,
-                                                                               OtherKSEnum otherKs) {
+            byte[] keyForMac,
+            DigestSaltEnum digestSalt,
+            long timeDelta,
+            OtherKSEnum otherKs) {
 
         long time = getCurrentTimeNTPSeconds();
         int epochId = TimeUtils.getNumberOfEpochsBetween(
                 this.serverConfigurationService.getServiceTimeStart(),
-                time - timeDelta);
+                time - timeDelta
+        );
 
         // Mock K_S
         byte[] ks = new byte[24];
@@ -446,7 +452,7 @@ class CryptoServiceGrpcServerTest {
         new SecureRandom().nextBytes(ksNext);
 
         byte[] ksToUseToEncryptEBID;
-        switch(otherKs) {
+        switch (otherKs) {
             case PREVIOUS:
                 ksToUseToEncryptEBID = ksPrevious;
                 break;
@@ -458,18 +464,20 @@ class CryptoServiceGrpcServerTest {
                 ksToUseToEncryptEBID = ks;
                 break;
         }
-        
+
         byte[] ebid = generateEbid(id, epochId, ksToUseToEncryptEBID);
         doReturn(Arrays.copyOf(ks, ks.length))
                 .when(this.cryptographicStorageService).getServerKey(
                         epochId,
                         this.serverConfigurationService.getServiceTimeStart(),
-                        false);
+                        false
+                );
         doReturn(Arrays.copyOf(ksPrevious, ksPrevious.length))
                 .when(this.cryptographicStorageService).getServerKey(
                         epochId,
                         this.serverConfigurationService.getServiceTimeStart(),
-                        true);
+                        true
+                );
 
         return new AuthRequestBundle().builder()
                 .ebid(ebid)
@@ -497,7 +505,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY);
+                DigestSaltEnum.DELETE_HISTORY
+        );
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -510,12 +519,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
@@ -529,7 +538,8 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.DELETE_HISTORY,
                 900 * 3,
-                OtherKSEnum.NONE); // ebid will be 3-epochs old
+                OtherKSEnum.NONE
+        ); // ebid will be 3-epochs old
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -542,12 +552,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
@@ -559,7 +569,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY);
+                DigestSaltEnum.DELETE_HISTORY
+        );
 
         byte[] fakeEbid = new byte[8];
         new SecureRandom().nextBytes(fakeEbid);
@@ -575,12 +586,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
 
         assertTrue(!res.isError());
         assertTrue(response.hasError());
@@ -593,12 +604,13 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY);
+                DigestSaltEnum.DELETE_HISTORY
+        );
 
         // Mess up with mac
         byte[] mac = new byte[32];
         System.arraycopy(bundle.getMac(), 0, mac, 0, bundle.getMac().length);
-        mac[3] = (byte)(mac[3] ^ 0x4);
+        mac[3] = (byte) (mac[3] ^ 0x4);
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -611,12 +623,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -628,7 +640,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.UNREGISTER);
+                DigestSaltEnum.UNREGISTER
+        );
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -641,12 +654,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -658,7 +671,16 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY);
+                DigestSaltEnum.DELETE_HISTORY
+        );
+
+        byte[] ks = ByteUtils.generateRandom(24);
+
+        doReturn(ks).when(this.cryptographicStorageService).getServerKey(
+                bundle.getEpochId() + 1,
+                this.serverConfigurationService.getServiceTimeStart(),
+                false
+        );
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -671,15 +693,46 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
+    }
+
+    @Test
+    void testGetIdFromAuthRequestFailsCauseNoServerKeyFound() {
+        Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
+        AuthRequestBundle bundle = generateAuthRequestBundle(
+                clientIdentifierBundle.get().getId(),
+                clientIdentifierBundle.get().getKeyForMac(),
+                DigestSaltEnum.DELETE_HISTORY
+        );
+
+        // Given
+        GetIdFromAuthRequest request = GetIdFromAuthRequest
+                .newBuilder()
+                .setEbid(ByteString.copyFrom(bundle.getEbid()))
+                .setEpochId(bundle.getEpochId() + 1)
+                .setTime(bundle.getTime())
+                .setMac(ByteString.copyFrom(bundle.getMac()))
+                .setRequestType(bundle.getRequestType().getValue()) // Select a request type
+                .build();
+
+        ObserverExecutionResult res = new ObserverExecutionResult(false);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 430);
     }
 
     @Test
@@ -688,7 +741,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY);
+                DigestSaltEnum.DELETE_HISTORY
+        );
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -697,16 +751,16 @@ class CryptoServiceGrpcServerTest {
                 .setEpochId(bundle.getEpochId())
                 .setTime(bundle.getTime())
                 .setMac(ByteString.copyFrom(bundle.getMac()))
-                .setRequestType((byte)0x7) // Select a request type
+                .setRequestType((byte) 0x7) // Select a request type
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -718,7 +772,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY);
+                DigestSaltEnum.DELETE_HISTORY
+        );
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -731,12 +786,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -747,19 +802,22 @@ class CryptoServiceGrpcServerTest {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
 
         byte[] modifiedId = new byte[5];
-        System.arraycopy(clientIdentifierBundle.get().getId(),
+        System.arraycopy(
+                clientIdentifierBundle.get().getId(),
                 0,
                 modifiedId,
                 0,
-                clientIdentifierBundle.get().getId().length);
+                clientIdentifierBundle.get().getId().length
+        );
 
         // Modify ID slightly
-        modifiedId[4] = (byte)(modifiedId[4] ^ 0x4);
+        modifiedId[4] = (byte) (modifiedId[4] ^ 0x4);
 
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 modifiedId,
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY);
+                DigestSaltEnum.DELETE_HISTORY
+        );
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -772,12 +830,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 404);
@@ -791,12 +849,15 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.DELETE_HISTORY,
                 0L,
-                OtherKSEnum.PREVIOUS);
+                OtherKSEnum.PREVIOUS
+        );
 
         if (bundle.getEpochId() >= MAX_EPOCH_DOUBLE_KS_CHECK) {
-            log.warn("Outside of K_S patch period ({}); current epoch: {}",
+            log.warn(
+                    "Outside of K_S patch period ({}); current epoch: {}",
                     MAX_EPOCH_DOUBLE_KS_CHECK,
-                    bundle.getEpochId());
+                    bundle.getEpochId()
+            );
             return;
         }
 
@@ -811,12 +872,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
@@ -830,7 +891,8 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.DELETE_HISTORY,
                 0L,
-                OtherKSEnum.NEXT);
+                OtherKSEnum.NEXT
+        );
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -843,12 +905,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -862,7 +924,8 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.DELETE_HISTORY,
                 -270000L,
-                OtherKSEnum.NONE);
+                OtherKSEnum.NONE
+        );
 
         // Given
         GetIdFromAuthRequest request = GetIdFromAuthRequest
@@ -875,12 +938,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromAuthResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromAuth(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromAuthResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromAuth(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
@@ -892,7 +955,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.UNREGISTER);
+                DigestSaltEnum.UNREGISTER
+        );
 
         // Given
         DeleteIdRequest request = DeleteIdRequest
@@ -904,12 +968,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        DeleteIdResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> fail(),
-                        res);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
@@ -920,19 +984,22 @@ class CryptoServiceGrpcServerTest {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
 
         byte[] modifiedId = new byte[5];
-        System.arraycopy(clientIdentifierBundle.get().getId(),
+        System.arraycopy(
+                clientIdentifierBundle.get().getId(),
                 0,
                 modifiedId,
                 0,
-                clientIdentifierBundle.get().getId().length);
+                clientIdentifierBundle.get().getId().length
+        );
 
         // Modify ID slightly
-        modifiedId[4] = (byte)(modifiedId[4] ^ 0x4);
+        modifiedId[4] = (byte) (modifiedId[4] ^ 0x4);
 
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 modifiedId,
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.UNREGISTER);
+                DigestSaltEnum.UNREGISTER
+        );
 
         // Given
         DeleteIdRequest request = DeleteIdRequest
@@ -944,12 +1011,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        DeleteIdResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> fail(),
-                        res);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 404);
@@ -962,7 +1029,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.UNREGISTER);
+                DigestSaltEnum.UNREGISTER
+        );
 
         byte[] fakeEbid = new byte[8];
         new SecureRandom().nextBytes(fakeEbid);
@@ -977,12 +1045,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        DeleteIdResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> fail(),
-                        res);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -995,12 +1063,13 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.UNREGISTER);
+                DigestSaltEnum.UNREGISTER
+        );
 
         // Mess up with mac
         byte[] mac = new byte[32];
         System.arraycopy(bundle.getMac(), 0, mac, 0, bundle.getMac().length);
-        mac[3] = (byte)(mac[3] ^ 0x4);
+        mac[3] = (byte) (mac[3] ^ 0x4);
 
         // Given
         DeleteIdRequest request = DeleteIdRequest
@@ -1012,12 +1081,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        DeleteIdResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> fail(),
-                        res);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -1029,7 +1098,16 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.UNREGISTER);
+                DigestSaltEnum.UNREGISTER
+        );
+
+        byte[] ks = ByteUtils.generateRandom(24);
+
+        doReturn(ks).when(this.cryptographicStorageService).getServerKey(
+                bundle.getEpochId() + 1,
+                this.serverConfigurationService.getServiceTimeStart(),
+                false
+        );
 
         // Given
         DeleteIdRequest request = DeleteIdRequest
@@ -1041,15 +1119,46 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        DeleteIdResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> fail(),
-                        res);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
+    }
+
+    @Test
+    void testDeleteIdFailsCauseNoServerKeyAvailable() {
+        Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
+
+        AuthRequestBundle bundle = generateAuthRequestBundle(
+                clientIdentifierBundle.get().getId(),
+                clientIdentifierBundle.get().getKeyForMac(),
+                DigestSaltEnum.UNREGISTER
+        );
+
+        // Given
+        DeleteIdRequest request = DeleteIdRequest
+                .newBuilder()
+                .setEbid(ByteString.copyFrom(bundle.getEbid()))
+                .setEpochId(bundle.getEpochId() + 1)
+                .setTime(bundle.getTime())
+                .setMac(ByteString.copyFrom(bundle.getMac()))
+                .build();
+
+        ObserverExecutionResult res = new ObserverExecutionResult(false);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 430);
     }
 
     @Test
@@ -1058,7 +1167,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.UNREGISTER);
+                DigestSaltEnum.UNREGISTER
+        );
 
         // Given
         DeleteIdRequest request = DeleteIdRequest
@@ -1070,12 +1180,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        DeleteIdResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> fail(),
-                        res);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -1089,12 +1199,15 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.UNREGISTER,
                 0L,
-                OtherKSEnum.PREVIOUS);
+                OtherKSEnum.PREVIOUS
+        );
 
         if (bundle.getEpochId() >= MAX_EPOCH_DOUBLE_KS_CHECK) {
-            log.warn("Outside of K_S patch period ({}); current epoch: {}",
+            log.warn(
+                    "Outside of K_S patch period ({}); current epoch: {}",
                     MAX_EPOCH_DOUBLE_KS_CHECK,
-                    bundle.getEpochId());
+                    bundle.getEpochId()
+            );
             return;
         }
 
@@ -1108,12 +1221,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        DeleteIdResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> fail(),
-                        res);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
 
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
@@ -1128,7 +1241,8 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.UNREGISTER,
                 0L,
-                OtherKSEnum.NEXT);
+                OtherKSEnum.NEXT
+        );
 
         // Given
         DeleteIdRequest request = DeleteIdRequest
@@ -1140,12 +1254,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        DeleteIdResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.deleteId(req, observer),
-                        (t) -> fail(),
-                        res);
+        DeleteIdResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.deleteId(req, observer),
+                (t) -> fail(),
+                res
+        );
 
         assertTrue(!res.isError());
         assertTrue(response.hasError());
@@ -1158,13 +1272,18 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.STATUS);
+                DigestSaltEnum.STATUS
+        );
 
         byte[][] serverKeys = generateRandomServerKeys();
 
-        when(this.cryptographicStorageService.getServerKeys(this.currentEpochId,
-                this.serverConfigurationService.getServiceTimeStart(),
-                4))
+        when(
+                this.cryptographicStorageService.getServerKeys(
+                        this.currentEpochId,
+                        this.serverConfigurationService.getServiceTimeStart(),
+                        4
+                )
+        )
                 .thenReturn(serverKeys);
 
         // Given
@@ -1180,16 +1299,21 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromStatusResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
-        assertTrue(checkTuples(response.getIdA().toByteArray(), response.getTuples().toByteArray(), this.currentEpochId, serverKeys));
+        assertTrue(
+                checkTuples(
+                        response.getIdA().toByteArray(), response.getTuples().toByteArray(), this.currentEpochId,
+                        serverKeys
+                )
+        );
     }
 
     private byte[][] generateRandomServerKeys() {
@@ -1209,13 +1333,17 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.STATUS,
                 900 * 3,
-                OtherKSEnum.NONE); // ebid will be 3-epochs old
+                OtherKSEnum.NONE
+        ); // ebid will be 3-epochs old
 
         byte[][] serverKeys = generateRandomServerKeys();
-        when(this.cryptographicStorageService.getServerKeys(
-                bundle.getEpochId(),
-                this.serverConfigurationService.getServiceTimeStart(),
-                4)).thenReturn(serverKeys);
+        when(
+                this.cryptographicStorageService.getServerKeys(
+                        bundle.getEpochId(),
+                        this.serverConfigurationService.getServiceTimeStart(),
+                        4
+                )
+        ).thenReturn(serverKeys);
 
         // Given
         GetIdFromStatusRequest request = GetIdFromStatusRequest
@@ -1230,12 +1358,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromStatusResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
@@ -1247,7 +1375,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.STATUS);
+                DigestSaltEnum.STATUS
+        );
 
         byte[] fakeEbid = new byte[8];
         new SecureRandom().nextBytes(fakeEbid);
@@ -1262,12 +1391,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromStatusResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -1279,12 +1408,13 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.STATUS);
+                DigestSaltEnum.STATUS
+        );
 
         // Mess up with mac
         byte[] mac = new byte[32];
         System.arraycopy(bundle.getMac(), 0, mac, 0, bundle.getMac().length);
-        mac[3] = (byte)(mac[3] ^ 0x4);
+        mac[3] = (byte) (mac[3] ^ 0x4);
 
         // Given
         GetIdFromStatusRequest request = GetIdFromStatusRequest
@@ -1296,12 +1426,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromStatusResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -1313,7 +1443,16 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.STATUS);
+                DigestSaltEnum.STATUS
+        );
+
+        byte[] ks = ByteUtils.generateRandom(24);
+
+        doReturn(ks).when(this.cryptographicStorageService).getServerKey(
+                bundle.getEpochId() + 1,
+                this.serverConfigurationService.getServiceTimeStart(),
+                false
+        );
 
         // Given
         GetIdFromStatusRequest request = GetIdFromStatusRequest
@@ -1325,15 +1464,46 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromStatusResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
+    }
+
+    @Test
+    void testGetIdFromStatusFailsCauseNoServerKeyFound() {
+
+        Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
+        AuthRequestBundle bundle = generateAuthRequestBundle(
+                clientIdentifierBundle.get().getId(),
+                clientIdentifierBundle.get().getKeyForMac(),
+                DigestSaltEnum.STATUS
+        );
+
+        // Given
+        GetIdFromStatusRequest request = GetIdFromStatusRequest
+                .newBuilder()
+                .setEbid(ByteString.copyFrom(bundle.getEbid()))
+                .setEpochId(bundle.getEpochId() + 1)
+                .setTime(bundle.getTime())
+                .setMac(ByteString.copyFrom(bundle.getMac()))
+                .build();
+
+        ObserverExecutionResult res = new ObserverExecutionResult(false);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
+        assertTrue(!res.isError());
+        assertTrue(response.hasError());
+        assertTrue(response.getError().getCode() == 430);
     }
 
     @Test
@@ -1342,7 +1512,8 @@ class CryptoServiceGrpcServerTest {
         AuthRequestBundle bundle = generateAuthRequestBundle(
                 clientIdentifierBundle.get().getId(),
                 clientIdentifierBundle.get().getKeyForMac(),
-                DigestSaltEnum.STATUS);
+                DigestSaltEnum.STATUS
+        );
 
         // Given
         GetIdFromStatusRequest request = GetIdFromStatusRequest
@@ -1354,12 +1525,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromStatusResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -1373,20 +1544,27 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.STATUS,
                 0L,
-                OtherKSEnum.PREVIOUS);
+                OtherKSEnum.PREVIOUS
+        );
 
         if (bundle.getEpochId() >= MAX_EPOCH_DOUBLE_KS_CHECK) {
-            log.warn("Outside of K_S patch period ({}); current epoch: {}",
+            log.warn(
+                    "Outside of K_S patch period ({}); current epoch: {}",
                     MAX_EPOCH_DOUBLE_KS_CHECK,
-                    bundle.getEpochId());
+                    bundle.getEpochId()
+            );
             return;
         }
 
         byte[][] serverKeys = generateRandomServerKeys();
 
-        when(this.cryptographicStorageService.getServerKeys(this.currentEpochId,
-                this.serverConfigurationService.getServiceTimeStart(),
-                4))
+        when(
+                this.cryptographicStorageService.getServerKeys(
+                        this.currentEpochId,
+                        this.serverConfigurationService.getServiceTimeStart(),
+                        4
+                )
+        )
                 .thenReturn(serverKeys);
 
         // Given
@@ -1402,16 +1580,21 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromStatusResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
-        assertTrue(checkTuples(response.getIdA().toByteArray(), response.getTuples().toByteArray(), this.currentEpochId, serverKeys));
+        assertTrue(
+                checkTuples(
+                        response.getIdA().toByteArray(), response.getTuples().toByteArray(), this.currentEpochId,
+                        serverKeys
+                )
+        );
     }
 
     @Test
@@ -1422,13 +1605,18 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.STATUS,
                 0L,
-                OtherKSEnum.NEXT);
+                OtherKSEnum.NEXT
+        );
 
         byte[][] serverKeys = generateRandomServerKeys();
 
-        when(this.cryptographicStorageService.getServerKeys(this.currentEpochId,
-                this.serverConfigurationService.getServiceTimeStart(),
-                4))
+        when(
+                this.cryptographicStorageService.getServerKeys(
+                        this.currentEpochId,
+                        this.serverConfigurationService.getServiceTimeStart(),
+                        4
+                )
+        )
                 .thenReturn(serverKeys);
 
         // Given
@@ -1444,12 +1632,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetIdFromStatusResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getIdFromStatus(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetIdFromStatusResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getIdFromStatus(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -1460,19 +1648,24 @@ class CryptoServiceGrpcServerTest {
     @Builder
     @Getter
     private static class HelloMessageBundle {
+
         private byte[] ebid;
+
         private byte[] ecc;
+
         private byte[] mac;
+
         private int timeSent;
+
         private long timeReceived;
     }
 
     private HelloMessageBundle generateHelloMessage(byte[] id,
-                                                    byte[][] serverKeys,
-                                                    byte[] keyForMac,
-                                                    DigestSaltEnum digestSalt,
-                                                    int delta,
-                                                    OtherKSEnum otherKSEnum) {
+            byte[][] serverKeys,
+            byte[] keyForMac,
+            DigestSaltEnum digestSalt,
+            int delta,
+            OtherKSEnum otherKSEnum) {
 
         final LocalDateTime ldt = LocalDateTime.of(2020, 6, 1, 00, 00);
         final ZonedDateTime zdt = ldt.atZone(ZoneId.of("UTC"));
@@ -1486,24 +1679,32 @@ class CryptoServiceGrpcServerTest {
         byte[] ksNext = ByteUtils.generateRandom(24);
 
         doReturn(ks).when(this.cryptographicStorageService)
-                .getServerKey(epochId,
+                .getServerKey(
+                        epochId,
                         this.serverConfigurationService.getServiceTimeStart(),
-                        false);
+                        false
+                );
         doReturn(ksNext).when(this.cryptographicStorageService)
-                .getServerKey(epochId + 1,
+                .getServerKey(
+                        epochId + 1,
                         this.serverConfigurationService.getServiceTimeStart(),
-                        false);
+                        false
+                );
         doReturn(ksPrevious).when(this.cryptographicStorageService)
-                .getServerKey(epochId - 1,
+                .getServerKey(
+                        epochId - 1,
                         this.serverConfigurationService.getServiceTimeStart(),
-                        false);
+                        false
+                );
         doReturn(ksPrevious).when(this.cryptographicStorageService)
-                .getServerKey(epochId,
+                .getServerKey(
+                        epochId,
                         this.serverConfigurationService.getServiceTimeStart(),
-                        true);
+                        true
+                );
 
         byte[] serverKey;
-        switch(otherKSEnum) {
+        switch (otherKSEnum) {
             case PREVIOUS:
                 serverKey = ksPrevious;
                 break;
@@ -1527,7 +1728,8 @@ class CryptoServiceGrpcServerTest {
             ecc = this.cryptoService.encryptCountryCode(
                     new CryptoAESECB(this.cryptographicStorageService.getFederationKey()),
                     ebid,
-                    SERVER_COUNTRY_CODE[0]);
+                    SERVER_COUNTRY_CODE[0]
+            );
             System.arraycopy(ecc, 0, hello, 0, 1);
             System.arraycopy(ebid, 0, hello, 1, ebid.length);
             System.arraycopy(ByteUtils.longToBytes(time), 6, hello, 1 + ebid.length, 2);
@@ -1541,7 +1743,7 @@ class CryptoServiceGrpcServerTest {
                 .ebid(ebid)
                 .ecc(ecc)
                 .timeReceived(time + 1)
-                .timeSent((int)time)
+                .timeSent((int) time)
                 .mac(mac)
                 .build();
     }
@@ -1561,7 +1763,8 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.HELLO,
                 3000,
-                OtherKSEnum.NONE);
+                OtherKSEnum.NONE
+        );
 
         // Given
         GetInfoFromHelloMessageRequest request = GetInfoFromHelloMessageRequest
@@ -1575,12 +1778,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetInfoFromHelloMessageResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetInfoFromHelloMessageResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
@@ -1599,12 +1802,13 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.HELLO,
                 5000,
-                OtherKSEnum.NONE);
+                OtherKSEnum.NONE
+        );
 
         // Mess up with mac
         byte[] mac = new byte[5];
         System.arraycopy(bundle.getMac(), 0, mac, 0, bundle.getMac().length);
-        mac[3] = (byte)(mac[3] ^ 0x4);
+        mac[3] = (byte) (mac[3] ^ 0x4);
 
         // Given
         GetInfoFromHelloMessageRequest request = GetInfoFromHelloMessageRequest
@@ -1618,12 +1822,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetInfoFromHelloMessageResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetInfoFromHelloMessageResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -1641,7 +1845,8 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.HELLO,
                 5000,
-                OtherKSEnum.NONE);
+                OtherKSEnum.NONE
+        );
 
         byte[] fakeEbid = new byte[8];
         new SecureRandom().nextBytes(fakeEbid);
@@ -1658,12 +1863,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetInfoFromHelloMessageResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetInfoFromHelloMessageResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(!response.hasError());
         assertTrue(response.getIdA().isEmpty());
@@ -1687,7 +1892,8 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.HELLO,
                 5000,
-                OtherKSEnum.PREVIOUS);
+                OtherKSEnum.PREVIOUS
+        );
 
         final LocalDateTime ldt = LocalDateTime.of(2020, 6, 1, 00, 00);
         final ZonedDateTime zdt = ldt.atZone(ZoneId.of("UTC"));
@@ -1697,9 +1903,11 @@ class CryptoServiceGrpcServerTest {
         int epochId = TimeUtils.getNumberOfEpochsBetween(otherTimeStart, time);
 
         if (epochId >= MAX_EPOCH_DOUBLE_KS_CHECK) {
-            log.warn("Outside of K_S patch period ({}); current epoch: {}",
+            log.warn(
+                    "Outside of K_S patch period ({}); current epoch: {}",
                     MAX_EPOCH_DOUBLE_KS_CHECK,
-                    epochId);
+                    epochId
+            );
             return;
         }
 
@@ -1715,12 +1923,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetInfoFromHelloMessageResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetInfoFromHelloMessageResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
@@ -1743,7 +1951,8 @@ class CryptoServiceGrpcServerTest {
                 clientIdentifierBundle.get().getKeyForMac(),
                 DigestSaltEnum.HELLO,
                 3000,
-                OtherKSEnum.NEXT);
+                OtherKSEnum.NEXT
+        );
 
         // Given
         GetInfoFromHelloMessageRequest request = GetInfoFromHelloMessageRequest
@@ -1757,12 +1966,12 @@ class CryptoServiceGrpcServerTest {
                 .build();
 
         ObserverExecutionResult res = new ObserverExecutionResult(false);
-        GetInfoFromHelloMessageResponse response =
-                sendCryptoRequest(
-                        request,
-                        (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
-                        (t) -> fail(),
-                        res);
+        GetInfoFromHelloMessageResponse response = sendCryptoRequest(
+                request,
+                (stub, req, observer) -> stub.getInfoFromHelloMessage(req, observer),
+                (t) -> fail(),
+                res
+        );
         assertTrue(!res.isError());
         assertTrue(response.hasError());
         assertTrue(response.getError().getCode() == 400);
@@ -1774,18 +1983,22 @@ class CryptoServiceGrpcServerTest {
     @Setter
     @Builder
     static class ObserverExecutionResult {
+
         boolean error;
     }
 
-    interface StubExecution<T,U> {
+    interface StubExecution<T, U> {
+
         void execute(CryptoGrpcServiceImplStub stub, T t, StreamObserver<U> u);
     }
 
     interface HandleError {
+
         void execute(Throwable t);
     }
 
-    <T, U> U sendCryptoRequest(T request, StubExecution<T, U> stubExecution, HandleError handleError, ObserverExecutionResult res) {
+    <T, U> U sendCryptoRequest(T request, StubExecution<T, U> stubExecution, HandleError handleError,
+            ObserverExecutionResult res) {
         try {
             CryptoGrpcServiceImplStub stub = CryptoGrpcServiceImplGrpc.newStub(this.inProcessChannel);
 
@@ -1793,8 +2006,8 @@ class CryptoServiceGrpcServerTest {
 
             final CountDownLatch latch = new CountDownLatch(1);
 
-            StreamObserver<U> responseObserver =
-                    new StreamObserver<U>() {
+            StreamObserver<U> responseObserver = new StreamObserver<U>() {
+
                 @Override
                 public void onNext(U value) {
                     response.add(value);
@@ -1814,7 +2027,7 @@ class CryptoServiceGrpcServerTest {
 
             stubExecution.execute(stub, request, responseObserver);
             // When
-            //stub.createRegistration(request, responseObserver);
+            // stub.createRegistration(request, responseObserver);
 
             if (res.isError()) {
                 return null;
@@ -1847,19 +2060,19 @@ class CryptoServiceGrpcServerTest {
             return i == MAX_ID_CREATION_ATTEMPTS ? null : id;
         }
 
-        public byte [] generateRandomKey() {
-            byte [] ka = null;
+        public byte[] generateRandomKey() {
+            byte[] ka = null;
 
             try {
                 KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
 
-                //Creating a SecureRandom object
+                // Creating a SecureRandom object
                 SecureRandom secRandom = new SecureRandom();
 
-                //Initializing the KeyGenerator
+                // Initializing the KeyGenerator
                 keyGen.init(secRandom);
 
-                //Creating/Generating a key
+                // Creating/Generating a key
                 Key key = keyGen.generateKey();
                 ka = key.getEncoded();
             } catch (NoSuchAlgorithmException e) {
@@ -1904,15 +2117,19 @@ class CryptoServiceGrpcServerTest {
         }
 
         private class ByteArray {
+
             public final byte[] bytes;
+
             public ByteArray(byte[] bytes) {
                 this.bytes = bytes;
             }
+
             @Override
             public boolean equals(Object rhs) {
                 return rhs != null && rhs instanceof ByteArray
-                        && Arrays.equals(bytes, ((ByteArray)rhs).bytes);
+                        && Arrays.equals(bytes, ((ByteArray) rhs).bytes);
             }
+
             @Override
             public int hashCode() {
                 return Arrays.hashCode(bytes);

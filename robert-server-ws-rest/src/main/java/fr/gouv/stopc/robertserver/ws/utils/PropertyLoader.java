@@ -1,9 +1,10 @@
 package fr.gouv.stopc.robertserver.ws.utils;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import lombok.Getter;
+import java.net.URI;
 
 @Getter
 @Component
@@ -25,19 +26,14 @@ public class PropertyLoader {
     private String captchaHostname;
 
     /**
-     * @return the successful code from the verification by the internal captcha service
+     * @return the successful code from the verification by the internal captcha
+     *         service
      */
     @Value("${captcha.internal.success.code}")
     private String captchaSuccessCode;
 
-    @Value("${submission.code.server.host}")
-    private String serverCodeHost;
-
-    @Value("${submission.code.server.port}")
-    private String serverCodePort;
-
-    @Value("${submission.code.server.verify.path}")
-    private String serverCodeVerificationPath;
+    @Value("${submission.code.server.url}")
+    private URI serverCodeUrl;
 
     @Value("${robert.esr.limit}")
     private Integer esrLimit;
@@ -75,10 +71,9 @@ public class PropertyLoader {
     @Value("${robert.jwt.use-transient-key}")
     private Boolean jwtUseTransientKey;
 
-
     @Value("${robert.server.disable-check-captcha}")
-	private Boolean disableCaptcha;
-	
-	@Value("${robert.server.disable-check-token}")
-	private Boolean disableCheckToken;
+    private Boolean disableCaptcha;
+
+    @Value("${robert.server.disable-check-token}")
+    private Boolean disableCheckToken;
 }

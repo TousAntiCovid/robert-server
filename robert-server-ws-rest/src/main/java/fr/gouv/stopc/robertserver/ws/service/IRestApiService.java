@@ -7,7 +7,7 @@ import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 
 public interface IRestApiService {
 
-    Optional<VerifyResponseDto> verifyReportToken(String token, String type);
+    Optional<VerifyResponseDto> verifyReportToken(String token);
 
     void registerPushNotif(PushInfoVo pushInfoVo);
 

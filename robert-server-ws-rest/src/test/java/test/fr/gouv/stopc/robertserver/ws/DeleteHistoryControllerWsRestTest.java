@@ -1,39 +1,8 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.net.URI;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
-import javax.crypto.KeyGenerator;
-import javax.inject.Inject;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthResponse;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
@@ -55,13 +24,34 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.*;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.crypto.KeyGenerator;
+import javax.inject.Inject;
+
+import java.net.URI;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application.properties")
 @Slf4j
 public class DeleteHistoryControllerWsRestTest {
-
 
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
     private String pathPrefixV2;
@@ -128,8 +118,10 @@ public class DeleteHistoryControllerWsRestTest {
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
         // WHEN
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.GET,
-                this.requestEntity, String.class);
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl.toString(), HttpMethod.GET,
+                this.requestEntity, String.class
+        );
         // THEN
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
         verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
@@ -148,13 +140,19 @@ public class DeleteHistoryControllerWsRestTest {
 
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
-        System.arraycopy(ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length);
+        System.arraycopy(
+                ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length
+        );
 
-        doReturn(Optional.of(GetIdFromAuthResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(idA))
-                .setEpochId(this.currentEpoch)
-                .build()))
-        .when(this.cryptoServerClient).getIdFromAuth(any());
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setEpochId(this.currentEpoch)
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
@@ -170,37 +168,117 @@ public class DeleteHistoryControllerWsRestTest {
         callWsAndAssertResponse(reg, this.requestBody, HttpStatus.OK, 2, 1);
     }
 
-    /** Test the access for API V2, should not be used since API V4 */
+    @Test
+    public void testDeleteHistoryFailsCauseNoKey() {
+        // GIVEN
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(true)
+                .isNotified(false)
+                .lastStatusRequestEpoch(this.currentEpoch - 3).build();
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
+        System.arraycopy(
+                ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length
+        );
+
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setEpochId(this.currentEpoch)
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setError(
+                                        ErrorMessage.newBuilder()
+                                                .setCode(430)
+                                                .setDescription("error")
+                                                .build()
+                                )
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        this.requestBody = DeleteHistoryRequestVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(this.currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2]))
+                .build();
+
+        this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
+
+        ResponseEntity<DeleteHistoryResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, DeleteHistoryResponseDto.class
+        );
+        // THEN
+        assertEquals(430, response.getStatusCodeValue());
+    }
+
+    /**
+     * Test the access for API V2, should not be used since API V4
+     */
     @Test
     public void testAccessV2() {
-        deleteHistoryWithExposedEpochsSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.DELETE_HISTORY).build().encode().toUri());
+        deleteHistoryWithExposedEpochsSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.DELETE_HISTORY).build().encode()
+                        .toUri()
+        );
     }
 
     /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
-        deleteHistoryWithExposedEpochsSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.DELETE_HISTORY).build().encode().toUri());
+        deleteHistoryWithExposedEpochsSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.DELETE_HISTORY).build().encode()
+                        .toUri()
+        );
     }
 
     /** Test the access for API V4, should not be used since API V5 */
     @Test
     public void testAccessV4() {
-        deleteHistoryWithExposedEpochsSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.DELETE_HISTORY).build().encode().toUri());
+        deleteHistoryWithExposedEpochsSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.DELETE_HISTORY).build().encode()
+                        .toUri()
+        );
     }
 
-    /** Test the access for API V5, should not be used since API V6 */
+    /**
+     * Test the access for API V5, should not be used since API V6
+     */
     @Test
     public void testAccessV5() {
-        deleteHistoryWithExposedEpochsSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.DELETE_HISTORY).build().encode().toUri());
+        deleteHistoryWithExposedEpochsSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.DELETE_HISTORY).build().encode()
+                        .toUri()
+        );
     }
 
-    /** {@link #deleteHistoryWithExposedEpochsSucceeds(URI)} and shortcut to test for API V2 exposure */
+    /**
+     * {@link #deleteHistoryWithExposedEpochsSucceeds(URI)} and shortcut to test for
+     * API V2 exposure
+     */
     @Test
     public void testDeleteHistoryWithExposedEpochsSucceedsV3() {
         deleteHistoryWithExposedEpochsSucceeds(this.targetUrl);
     }
 
-    protected  void deleteHistoryWithExposedEpochsSucceeds(URI targetUrl) {
+    protected void deleteHistoryWithExposedEpochsSucceeds(URI targetUrl) {
         // GIVEN
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
@@ -213,14 +291,20 @@ public class DeleteHistoryControllerWsRestTest {
 
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
-        System.arraycopy(ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length);
+        System.arraycopy(
+                ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length
+        );
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
-        doReturn(Optional.of(GetIdFromAuthResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(idA))
-                .setEpochId(this.currentEpoch)
-                .build()))
-        .when(this.cryptoServerClient).getIdFromAuth(any());
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setEpochId(this.currentEpoch)
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, this.currentEpoch);
 
@@ -233,8 +317,10 @@ public class DeleteHistoryControllerWsRestTest {
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
         // WHEN
-        ResponseEntity<DeleteHistoryResponseDto> response = this.restTemplate.exchange(targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, DeleteHistoryResponseDto.class);
+        ResponseEntity<DeleteHistoryResponseDto> response = this.restTemplate.exchange(
+                targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, DeleteHistoryResponseDto.class
+        );
 
         // THEN
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -261,13 +347,19 @@ public class DeleteHistoryControllerWsRestTest {
 
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
-        System.arraycopy(ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length);
+        System.arraycopy(
+                ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length
+        );
 
-        doReturn(Optional.of(GetIdFromAuthResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(idA))
-                .setEpochId(this.currentEpoch)
-                .build()))
-        .when(this.cryptoServerClient).getIdFromAuth(any());
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setEpochId(this.currentEpoch)
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, this.currentEpoch);
 
@@ -317,13 +409,19 @@ public class DeleteHistoryControllerWsRestTest {
 
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch - 10), 1, decryptedEbid, 0,
-                decryptedEbid.length - idA.length);
-        doReturn(Optional.of(GetIdFromAuthResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(idA))
-                .setEpochId(this.currentEpoch - 10)
-                .build()))
-        .when(this.cryptoServerClient).getIdFromAuth(any());
+        System.arraycopy(
+                ByteUtils.intToBytes(currentEpoch - 10), 1, decryptedEbid, 0,
+                decryptedEbid.length - idA.length
+        );
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setEpochId(this.currentEpoch - 10)
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
 
         this.requestBody = DeleteHistoryRequestVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -341,8 +439,10 @@ public class DeleteHistoryControllerWsRestTest {
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
 
-        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, this.currentEpoch,
-                0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1));
+        byte[][] reqContent = createEBIDTimeMACFor(
+                idA, kA, this.currentEpoch,
+                0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1)
+        );
 
         this.requestBody = DeleteHistoryRequestVo.builder().ebid(Base64.encode(reqContent[0]))
                 .time(Base64.encode(reqContent[1])).mac(Base64.encode(reqContent[2])).build();
@@ -357,8 +457,10 @@ public class DeleteHistoryControllerWsRestTest {
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
 
-        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, this.currentEpoch,
-                0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1));
+        byte[][] reqContent = createEBIDTimeMACFor(
+                idA, kA, this.currentEpoch,
+                0 - (this.propertyLoader.getRequestTimeDeltaTolerance() + 1)
+        );
 
         this.requestBody = DeleteHistoryRequestVo.builder().ebid(Base64.encode(reqContent[0]))
                 .time(Base64.encode(reqContent[1])).mac(Base64.encode(reqContent[2])).build();
@@ -412,7 +514,9 @@ public class DeleteHistoryControllerWsRestTest {
 
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
-        System.arraycopy(ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length);
+        System.arraycopy(
+                ByteUtils.intToBytes(this.currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length
+        );
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(ArgumentMatchers.any());
         doReturn(Optional.empty()).when(this.cryptoServerClient).getIdFromAuth(any());
@@ -514,8 +618,10 @@ public class DeleteHistoryControllerWsRestTest {
     private byte[][] createEBIDTimeMACFor(byte[] id, byte[] ka, int currentEpoch, int adjustTimeBySeconds) {
         byte[][] res = new byte[3][];
         try {
-            res[0] = this.cryptoService.generateEBID(new CryptoSkinny64(this.serverKey),
-                    currentEpoch, id);
+            res[0] = this.cryptoService.generateEBID(
+                    new CryptoSkinny64(this.serverKey),
+                    currentEpoch, id
+            );
             res[1] = this.generateTime32(adjustTimeBySeconds);
             res[2] = this.generateMACforESR(res[0], res[1], ka);
         } catch (Exception e) {
@@ -528,8 +634,10 @@ public class DeleteHistoryControllerWsRestTest {
             HttpStatus expectedStatus, int findByIdCalls, int saveRegistrationCalls) {
         this.requestEntity = new HttpEntity<>(this.requestBody, this.headers);
 
-        ResponseEntity<DeleteHistoryResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, DeleteHistoryResponseDto.class);
+        ResponseEntity<DeleteHistoryResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, DeleteHistoryResponseDto.class
+        );
         // THEN
         assertEquals(expectedStatus, response.getStatusCode());
         verify(this.registrationService, times(findByIdCalls)).findById(ArgumentMatchers.any());

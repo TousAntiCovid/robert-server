@@ -159,6 +159,8 @@ paths:
           description: bad request
         "401":
           description: invalid authentication
+        "430":
+          description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /report:
     post:
       tags: []
@@ -213,6 +215,8 @@ paths:
           description: bad request
         "401":
           description: invalid authentication
+        "430":
+          description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /deleteExposureHistory:
     post:
       tags: []
@@ -236,6 +240,8 @@ paths:
           description: bad request
         "401":
           description: invalid authentication
+        "430":
+          description: No server key was found to decrypt Encrypted Bluetooth IDentifier
 externalDocs:
   description: Find out more about ROBERT
   url: https://github.com/ROBERT-proximity-tracing/
@@ -544,7 +550,7 @@ components:
       properties:
         timeCollectedOnDevice:
           type: integer
-          format: int32
+          format: int64
           description: Timestamp at which the current device collected the HELLO messages
         timeFromHelloMessage:
           type: integer

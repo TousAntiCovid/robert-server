@@ -67,6 +67,13 @@ paths:
       responses:
         "200":
           description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  riskLevel:
+                    type: integer
         "400":
           description: Bad request, something is incorrect in the request
         "500":
