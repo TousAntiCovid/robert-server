@@ -48,6 +48,16 @@ services:
       - "8086:8086"
     depends_on:
       - robert-crypto-grpc-server
+  robert-server-batch:
+    build:
+      context: ./robert-server-batch
+      dockerfile: ./src/main/docker/Dockerfile
+    environment:
+      - ROBERT_CRYPTO_SERVER_HOST=robert-crypto-grpc-server
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
+    depends_on:
+      - mongo
+      - robert-crypto-grpc-server
   mock-captcha:
     image: mockserver/mockserver:mockserver-5.11.2
     command: -logLevel DEBUG -serverPort 8055

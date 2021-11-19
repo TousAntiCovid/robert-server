@@ -19,6 +19,7 @@
         <cucumber.version>7.0.0</cucumber.version>
         <junit-platform.version>1.8.1</junit-platform.version>
         <junit-jupiter.version>5.8.1</junit-jupiter.version>
+        <prettytime-nlp.version>5.0.2.Final</prettytime-nlp.version>
     </properties>
 
     <dependencies>
@@ -34,7 +35,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.ocpsoft.prettytime</groupId>
+            <artifactId>prettytime-nlp</artifactId>
+            <version>${prettytime-nlp.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
