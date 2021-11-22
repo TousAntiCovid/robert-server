@@ -43,8 +43,6 @@ public class AppMobile {
 
     private final KeyPair keyPair;
 
-    private String captchaId;
-
     private long timeStartInNtpSeconds;
 
     List<Contact> contacts = new ArrayList<>();
