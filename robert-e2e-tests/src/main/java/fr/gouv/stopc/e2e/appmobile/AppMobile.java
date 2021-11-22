@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 import static fr.gouv.stopc.e2e.appmobile.model.EcdhUtils.deriveKeysFromBackendPublicKey;
 import static fr.gouv.stopc.e2e.appmobile.model.EcdhUtils.generateKeyPair;
@@ -44,8 +43,6 @@ public class AppMobile {
 
     private final KeyPair keyPair;
 
-    private String captchaId;
-
     private long timeStartInNtpSeconds;
 
     List<Contact> contacts = new ArrayList<>();
@@ -54,7 +51,6 @@ public class AppMobile {
 
     private ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
 
-    @SneakyThrows
     public AppMobile(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
         this.keyPair = generateKeyPair();
@@ -100,7 +96,7 @@ public class AppMobile {
     private void resolveCaptchaAndRegister() {
         // We generate a fake Captcha id which we will use to differentiate mobile
         // applications
-        captchaId = RandomStringUtils.random(7, true, false);
+        final var captchaId = RandomStringUtils.random(7, true, false);
 
         // We simulate the user visual captcha resolution and we call the robert
         // endpoint
@@ -197,8 +193,8 @@ public class AppMobile {
     private EphemeralTupleJson getTupleByDateInUnixMillis(final long timeInUnixMillis) {
         return decodedTuples.stream()
                 .filter(e -> e.getEpochId() == TimeUtils.getCurrentEpochFromTo(timeStartInNtpSeconds, timeInUnixMillis))
-                .collect(Collectors.toList())
-                .get(0);
+                .findFirst()
+                .orElseThrow();
     }
 
     private HelloMessageDetail generateHelloMessage(final AppMobile appMobile,
