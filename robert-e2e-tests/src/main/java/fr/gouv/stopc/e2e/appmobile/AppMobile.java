@@ -15,12 +15,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.KeyPair;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Stream;
 
 import static fr.gouv.stopc.e2e.appmobile.model.EcdhUtils.deriveKeysFromBackendPublicKey;
 import static fr.gouv.stopc.e2e.appmobile.model.EcdhUtils.generateKeyPair;
@@ -30,7 +31,6 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.util.Arrays.copyOfRange;
 import static java.util.Base64.getEncoder;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -43,6 +43,8 @@ public class AppMobile {
 
     private final KeyPair keyPair;
 
+    private String captchaId;
+
     private long timeStartInNtpSeconds;
 
     List<Contact> contacts = new ArrayList<>();
@@ -51,6 +53,7 @@ public class AppMobile {
 
     private ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
 
+    @SneakyThrows
     public AppMobile(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
         this.keyPair = generateKeyPair();
@@ -129,11 +132,10 @@ public class AppMobile {
 
     public void generateContactsWithOtherApps(final AppMobile otherMobileApp,
             final Instant startDate,
-            final int durationOfExchangeInMin) {
-        var numberOfContacts = contacts.size();
-        generateHelloMessageDuring(otherMobileApp, startDate, durationOfExchangeInMin);
-        assertThat(contacts.size()).as("There is more contact(s) in the contact list.")
-                .isGreaterThan(numberOfContacts);
+            final Duration durationOfExchange) {
+        final var endDate = startDate.plus(durationOfExchange);
+        Stream.iterate(startDate, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
+                .forEach(i -> exchangeEbIdWithRand(otherMobileApp, i.toEpochMilli()));
     }
 
     public void reportContacts() {
@@ -268,23 +270,6 @@ public class AppMobile {
                 .build();
         contacts.add(newContact);
         return newContact;
-    }
-
-    private void generateHelloMessageDuring(final AppMobile otherMobileApp,
-            final Instant startDate,
-            final Integer durationOfExchangeInMin) {
-
-        long initialTime = startDate.toEpochMilli();
-        var durationOfExchangeInStepsOfTenSec = durationOfExchangeInMin * 6;
-
-        log.info("Start of exchange : {}", DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(initialTime)));
-        for (var i = 0; i < durationOfExchangeInStepsOfTenSec; i++) {
-            // NOTE : In theory, we need an exchange of 40 minutes and send 1 message per
-            // second
-            initialTime += 10000; // steps of 10 seconds
-            exchangeEbIdWithRand(otherMobileApp, initialTime);
-        }
-        log.info("End of exchange : {}", DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(initialTime)));
     }
 
 }

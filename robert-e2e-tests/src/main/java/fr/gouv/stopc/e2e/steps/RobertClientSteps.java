@@ -8,6 +8,7 @@ import io.restassured.specification.RequestSpecification;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,16 +46,16 @@ public class RobertClientSteps {
         applicationMobileMap.put(userName, app);
     }
 
-    @Given("{naturalTime}, {word} was near {word} during {int} minutes")
+    @Given("{naturalFutureTime}, {word} will be near {word} during {duration}")
     public void generateContactsBetweenTwoUsersWithDuration(final Instant startDate,
             final String firstUserName,
             final String secondUserName,
-            final int durationOfExchangeInMin) {
+            final Duration durationOfExchange) {
         AppMobile mainMobileApp = applicationMobileMap.get(firstUserName);
         mainMobileApp.generateContactsWithOtherApps(
                 applicationMobileMap.get(secondUserName),
                 startDate,
-                durationOfExchangeInMin
+                durationOfExchange
         );
     }
 

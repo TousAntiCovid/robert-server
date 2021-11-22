@@ -1,7 +1,7 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class RobertBatchSteps {
 
     private final ApplicationProperties applicationProperties;
 
-    @Given("the robert batch pass")
+    @When("robert batch has been triggered")
     @SneakyThrows
     public void launchBatch() {
         final var builder = new ProcessBuilder(applicationProperties.getBatchCommand().split(" "));
@@ -34,10 +34,10 @@ public class RobertBatchSteps {
         boolean hasExited = process.waitFor(60, SECONDS);
         background.shutdownNow();
         assertThat(hasExited)
-                .as("Robert batch wasn't in timeout")
+                .as("Robert batch execution timed out after 60 seconds")
                 .isTrue();
         assertThat(process.exitValue())
-                .as("Robert batch has not failed")
+                .as("Robert batch process exit code")
                 .isEqualTo(0);
     }
 
