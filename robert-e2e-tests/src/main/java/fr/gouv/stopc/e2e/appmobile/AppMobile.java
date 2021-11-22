@@ -51,7 +51,6 @@ public class AppMobile {
 
     private ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
 
-    @SneakyThrows
     public AppMobile(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
         this.keyPair = generateKeyPair();
