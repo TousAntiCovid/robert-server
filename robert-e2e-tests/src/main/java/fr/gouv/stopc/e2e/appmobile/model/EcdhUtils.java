@@ -11,8 +11,6 @@ import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Objects;
-import java.util.Optional;
 
 @Slf4j
 public class EcdhUtils {
@@ -36,28 +34,18 @@ public class EcdhUtils {
      * @return keys generated from shared secret and the server public key
      * @throws RobertServerCryptoException
      */
-    public static Optional<ClientIdentifierBundle> deriveKeysFromBackendPublicKey(byte[] clientPublicKey,
+    public static ClientIdentifierBundle deriveKeysFromBackendPublicKey(byte[] clientPublicKey,
             KeyPair appMobileKeyPair)
             throws RobertServerCryptoException {
         byte[] sharedSecret = generateSharedSecret(clientPublicKey, appMobileKeyPair);
 
-        if (Objects.isNull(sharedSecret)) {
-            return Optional.empty();
-        }
-
         byte[] kaMac = deriveKeyForMacFromBackendPublicKey(sharedSecret);
         byte[] kaTuples = deriveKeyForTuplesFromBackendPublicKey(sharedSecret);
 
-        if (Objects.isNull(kaMac) || Objects.isNull(kaTuples)) {
-            return Optional.empty();
-        }
-
-        return Optional.of(
-                ClientIdentifierBundle.builder()
-                        .keyForMac(kaMac)
-                        .keyForTuples(kaTuples)
-                        .build()
-        );
+        return ClientIdentifierBundle.builder()
+                .keyForMac(kaMac)
+                .keyForTuples(kaTuples)
+                .build();
     }
 
     private static byte[] deriveKeyForMacFromBackendPublicKey(byte[] sharedSecret) throws RobertServerCryptoException {

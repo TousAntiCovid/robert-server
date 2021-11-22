@@ -1,12 +1,14 @@
 package fr.gouv.stopc.e2e.appmobile;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.gouv.stopc.e2e.appmobile.model.CaptchaSolution;
 import fr.gouv.stopc.e2e.appmobile.model.ClientIdentifierBundle;
+import fr.gouv.stopc.e2e.appmobile.model.EcdhUtils;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import fr.gouv.stopc.e2e.external.common.utils.TimeUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.CryptoHMACSHA256;
+import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.e2e.robert.model.*;
 import io.restassured.specification.RequestSpecification;
@@ -14,6 +16,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
+import java.io.IOException;
 import java.security.KeyPair;
 import java.time.Duration;
 import java.time.Instant;
@@ -23,8 +26,6 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
-import static fr.gouv.stopc.e2e.appmobile.model.EcdhUtils.deriveKeysFromBackendPublicKey;
-import static fr.gouv.stopc.e2e.appmobile.model.EcdhUtils.generateKeyPair;
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
 import static fr.gouv.stopc.e2e.external.common.utils.ByteUtils.*;
 import static io.restassured.RestAssured.given;
@@ -32,31 +33,30 @@ import static io.restassured.http.ContentType.JSON;
 import static java.util.Arrays.copyOfRange;
 import static java.util.Base64.getEncoder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 
 @Slf4j
 public class AppMobile {
 
-    private static final String CAPTCHA_BYPASS_SOLUTION = "IEDX";
-
     private final ApplicationProperties applicationProperties;
 
-    private final KeyPair keyPair;
+    private final List<Contact> contacts = new ArrayList<>();
 
-    private long timeStartInNtpSeconds;
+    private final List<EphemeralTupleJson> decodedTuples = new ArrayList<>();
 
-    List<Contact> contacts = new ArrayList<>();
+    private final KeyPair keyPair = EcdhUtils.generateKeyPair();
 
-    private List<EphemeralTupleJson> decodedTuples;
+    private final ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
 
-    private ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
+    private final long timeStartInNtpSeconds;
 
     public AppMobile(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
-        this.keyPair = generateKeyPair();
-        generateKeyForTuples();
-        requestCaptchaChallenge();
-        resolveCaptchaAndRegister();
+        final var robertPublicKey = Base64.getDecoder().decode(applicationProperties.getCryptoPublicKey());
+        this.clientIdentifierBundleWithPublicKey = EcdhUtils.deriveKeysFromBackendPublicKey(robertPublicKey, keyPair);
+
+        final var captchaSolution = resolveMockedCaptchaChallenge();
+        final var registerResponse = register(captchaSolution.getId(), captchaSolution.getAnswer());
+        this.timeStartInNtpSeconds = registerResponse.getTimeStart();
     }
 
     private RequestSpecification givenRobertBaseUri() {
@@ -65,7 +65,14 @@ public class AppMobile {
                 .contentType(JSON);
     }
 
-    private void requestCaptchaChallenge() {
+    private CaptchaSolution resolveMockedCaptchaChallenge() {
+        // We generate a fake Captcha id which we will be used to differentiate mobile
+        // applications
+        final var captchaId = RandomStringUtils.random(7, true, false);
+
+        // We simulate the user visual captcha resolution and we call the robert
+        // endpoint
+
         // The mobile application ask a captcha id challenge from the captcha server
         var captchaChallengeId = givenRobertBaseUri()
                 .body(
@@ -77,9 +84,6 @@ public class AppMobile {
                 .when()
                 .post("/api/v6/captcha")
                 .then()
-                .statusCode(200)
-                .contentType(JSON)
-                .body("captchaId", notNullValue())
                 .extract()
                 .path("captchaId");
 
@@ -91,40 +95,43 @@ public class AppMobile {
                 .then()
                 .statusCode(200)
                 .contentType("image/png");
+
+        // The user reads the image content
+        return new CaptchaSolution(captchaId, "ABCD");
     }
 
-    private void resolveCaptchaAndRegister() {
-        // We generate a fake Captcha id which we will use to differentiate mobile
-        // applications
-        final var captchaId = RandomStringUtils.random(7, true, false);
-
-        // We simulate the user visual captcha resolution and we call the robert
-        // endpoint
-        var register = RegisterRequest.builder()
-                .captcha(CAPTCHA_BYPASS_SOLUTION)
-                .captchaId(captchaId)
-                .clientPublicECDHKey(getPublicKey())
-                .pushInfo(
-                        PushInfo.builder()
-                                .token("string")
-                                .locale("fr")
-                                .timezone("Europe/Paris")
+    private RegisterSuccessResponse register(String captchaId, String captchaSolution) {
+        final var registerResponse = givenRobertBaseUri()
+                .body(
+                        RegisterRequest.builder()
+                                .captcha(captchaSolution)
+                                .captchaId(captchaId)
+                                .clientPublicECDHKey(getPublicKey())
+                                .pushInfo(
+                                        PushInfo.builder()
+                                                .token("string")
+                                                .locale("fr")
+                                                .timezone("Europe/Paris")
+                                                .build()
+                                )
                                 .build()
                 )
-                .build();
-
-        var registerSuccessResponse = given()
-                .contentType(JSON)
-                .body(register)
                 .when()
-                .post(applicationProperties.getWsRestBaseUrl().concat("/api/v6/register"))
+                .post("/api/v6/register")
                 .then()
-                .statusCode(201)
-                .contentType(JSON)
                 .extract()
                 .as(RegisterSuccessResponse.class);
 
-        decryptRegisterResponse(registerSuccessResponse);
+        final var aesGcm = new CryptoAESGCM(clientIdentifierBundleWithPublicKey.getKeyForTuples());
+        try {
+            final var decodedTuples = new ObjectMapper()
+                    .readValue(aesGcm.decrypt(registerResponse.getTuples()), EphemeralTupleJson[].class);
+            this.decodedTuples.addAll(List.of(decodedTuples));
+        } catch (RobertServerCryptoException | IOException e) {
+            throw new RuntimeException("Error during /register procedure", e);
+        }
+
+        return registerResponse;
     }
 
     public void generateContactsWithOtherApps(final AppMobile otherMobileApp,
@@ -154,30 +161,6 @@ public class AppMobile {
                 .contentType(JSON)
                 .body("success", equalTo(true))
                 .body("message", equalTo("Successful operation"));
-    }
-
-    private void decryptRegisterResponse(final RegisterSuccessResponse registerData) {
-        timeStartInNtpSeconds = registerData.getTimeStart();
-        updateTuples(registerData.getTuples());
-    }
-
-    @SneakyThrows
-    private void updateTuples(final byte[] encryptedTuples) {
-        var aesGcm = new CryptoAESGCM(clientIdentifierBundleWithPublicKey.getKeyForTuples());
-
-        decodedTuples = new ObjectMapper().readValue(
-                aesGcm.decrypt(encryptedTuples),
-                new TypeReference<>() {
-                }
-        );
-    }
-
-    @SneakyThrows
-    private void generateKeyForTuples() {
-        deriveKeysFromBackendPublicKey(
-                Base64.getDecoder().decode(applicationProperties.getCryptoPublicKey()), keyPair
-        )
-                .ifPresent(clientIdentifierBundle -> clientIdentifierBundleWithPublicKey = clientIdentifierBundle);
     }
 
     private String getPublicKey() {
