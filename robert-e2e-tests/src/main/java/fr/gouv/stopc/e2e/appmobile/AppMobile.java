@@ -3,7 +3,6 @@ package fr.gouv.stopc.e2e.appmobile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.stopc.e2e.appmobile.model.ClientIdentifierBundle;
-import fr.gouv.stopc.e2e.appmobile.model.StreamGobbler;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import fr.gouv.stopc.e2e.external.common.utils.TimeUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
@@ -15,14 +14,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import java.nio.file.Path;
 import java.security.KeyPair;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -34,7 +31,6 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.util.Arrays.copyOfRange;
 import static java.util.Base64.getEncoder;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -135,11 +131,11 @@ public class AppMobile {
         decryptRegisterResponse(registerSuccessResponse);
     }
 
-    public void generateContactsWithOtherApps(final List<AppMobile> otherApps,
+    public void generateContactsWithOtherApps(final AppMobile otherMobileApp,
             final Instant startDate,
             final int durationOfExchangeInMin) {
         var numberOfContacts = contacts.size();
-        generateHelloMessageDuring(otherApps, startDate, durationOfExchangeInMin);
+        generateHelloMessageDuring(otherMobileApp, startDate, durationOfExchangeInMin);
         assertThat(contacts.size()).as("There is more contact(s) in the contact list.")
                 .isGreaterThan(numberOfContacts);
     }
@@ -212,8 +208,6 @@ public class AppMobile {
         var ebid = appMobile.getTupleByDateInUnixMillis(timeAsUnixMilli).getKey().getEbid();
         var ecc = appMobile.getTupleByDateInUnixMillis(timeAsUnixMilli).getKey().getEcc();
 
-        // Time contains the 16 less significant bits of the current NTP "seconds"
-        // timestamp of App A (>= 18 hours) (Time p8 ROBERT-specification...)
         var timeAsNtpSeconds = TimeUtils.convertUnixMillistoNtpSeconds(timeAsUnixMilli);
 
         byte[] timeHello = new byte[4];
@@ -252,16 +246,14 @@ public class AppMobile {
         return copyOfRange(encryptedMac, 0, 5);
     }
 
-    private void exchangeEbIdWithRand(final List<AppMobile> otherAppMobileList, final long timeInUnixMillis) {
-        for (AppMobile otherAppMobile : otherAppMobileList) {
-            var helloMessageDetail = generateHelloMessage(
-                    otherAppMobile,
-                    timeInUnixMillis,
-                    ThreadLocalRandom.current().nextInt(-10, 3)
-            );
-            getOrCreateContact(otherAppMobile.getTupleByDateInUnixMillis(timeInUnixMillis).getKey())
-                    .addIdsItem(helloMessageDetail);
-        }
+    private void exchangeEbIdWithRand(final AppMobile otherMobileApp, final long timeInUnixMillis) {
+        var helloMessageDetail = generateHelloMessage(
+                otherMobileApp,
+                timeInUnixMillis,
+                ThreadLocalRandom.current().nextInt(-10, 3)
+        );
+        getOrCreateContact(otherMobileApp.getTupleByDateInUnixMillis(timeInUnixMillis).getKey())
+                .addIdsItem(helloMessageDetail);
     }
 
     private Contact getOrCreateContact(final EphemeralTupleJson.EphemeralTupleEbidEccJson tuple) {
@@ -282,7 +274,7 @@ public class AppMobile {
         return newContact;
     }
 
-    private void generateHelloMessageDuring(final List<AppMobile> otherMobileApps,
+    private void generateHelloMessageDuring(final AppMobile otherMobileApp,
             final Instant startDate,
             final Integer durationOfExchangeInMin) {
 
@@ -294,27 +286,9 @@ public class AppMobile {
             // NOTE : In theory, we need an exchange of 40 minutes and send 1 message per
             // second
             initialTime += 10000; // steps of 10 seconds
-            exchangeEbIdWithRand(otherMobileApps, initialTime);
+            exchangeEbIdWithRand(otherMobileApp, initialTime);
         }
         log.info("End of exchange : {}", DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(initialTime)));
-    }
-
-    @SneakyThrows
-    public static void triggerBatch(ApplicationProperties applicationProperties) {
-        final var builder = new ProcessBuilder(applicationProperties.getBatchCommand().split(" "));
-        builder.directory(Path.of(".").toFile());
-        final var process = builder.start();
-        final var background = Executors.newFixedThreadPool(2);
-        background.submit(new StreamGobbler(process.getInputStream(), log::debug));
-        background.submit(new StreamGobbler(process.getErrorStream(), log::error));
-        boolean hasExited = process.waitFor(30, SECONDS);
-        background.shutdownNow();
-        if (!hasExited) {
-            throw new RuntimeException("Robert batch timeout");
-        }
-        if (process.exitValue() != 0) {
-            throw new RuntimeException("Robert batch failed");
-        }
     }
 
 }
