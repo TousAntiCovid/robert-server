@@ -2,6 +2,7 @@ package fr.gouv.stopc.e2e.appmobile.model;
 
 import fr.gouv.stopc.e2e.external.crypto.CryptoHMACSHA256;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.KeyAgreement;
@@ -20,7 +21,8 @@ public class EcdhUtils {
 
     private final static String HASH_TUPLES = "tuples";
 
-    public static KeyPair generateKeyPair() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+    @SneakyThrows
+    public static KeyPair generateKeyPair() {
 
         // Generate ephemeral ECDH keypair
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
