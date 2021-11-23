@@ -2,36 +2,30 @@ package fr.gouv.stopc.e2e.appmobile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.stopc.e2e.appmobile.model.CaptchaSolution;
-import fr.gouv.stopc.e2e.appmobile.model.ClientIdentifierBundle;
-import fr.gouv.stopc.e2e.appmobile.model.EcdhUtils;
+import fr.gouv.stopc.e2e.appmobile.model.ClientKeys;
+import fr.gouv.stopc.e2e.appmobile.model.ContactTuple;
+import fr.gouv.stopc.e2e.appmobile.model.HelloMessage;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.e2e.external.common.utils.TimeUtils;
+import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
-import fr.gouv.stopc.e2e.external.crypto.CryptoHMACSHA256;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.e2e.robert.model.*;
 import io.restassured.specification.RequestSpecification;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.IOException;
-import java.security.KeyPair;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
-import static fr.gouv.stopc.e2e.external.common.utils.ByteUtils.*;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static java.util.Arrays.copyOfRange;
-import static java.util.Base64.getEncoder;
+import static java.util.stream.Collectors.toMap;
 import static org.hamcrest.Matchers.equalTo;
 
 @Slf4j
@@ -39,24 +33,22 @@ public class AppMobile {
 
     private final ApplicationProperties applicationProperties;
 
-    private final List<Contact> contacts = new ArrayList<>();
+    private final ClientKeys clientKeys;
 
-    private final List<EphemeralTupleJson> decodedTuples = new ArrayList<>();
+    private final Map<Integer, ContactTuple> contactTupleByEpochId = new HashMap<>();
 
-    private final KeyPair keyPair = EcdhUtils.generateKeyPair();
+    private final Map<ContactTuple, Contact> receivedHelloMessages = new HashMap<>();
 
-    private final ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
-
-    private final long timeStartInNtpSeconds;
+    private final EpochClock clock;
 
     public AppMobile(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
-        final var robertPublicKey = Base64.getDecoder().decode(applicationProperties.getCryptoPublicKey());
-        this.clientIdentifierBundleWithPublicKey = EcdhUtils.deriveKeysFromBackendPublicKey(robertPublicKey, keyPair);
+        this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
+                .build();
 
         final var captchaSolution = resolveMockedCaptchaChallenge();
         final var registerResponse = register(captchaSolution.getId(), captchaSolution.getAnswer());
-        this.timeStartInNtpSeconds = registerResponse.getTimeStart();
+        this.clock = new EpochClock(registerResponse.getTimeStart());
     }
 
     private RequestSpecification givenRobertBaseUri() {
@@ -101,12 +93,15 @@ public class AppMobile {
     }
 
     private RegisterSuccessResponse register(String captchaId, String captchaSolution) {
+        final var publicKey = Base64.getEncoder()
+                .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
+
         final var registerResponse = givenRobertBaseUri()
                 .body(
                         RegisterRequest.builder()
                                 .captcha(captchaSolution)
                                 .captchaId(captchaId)
-                                .clientPublicECDHKey(getPublicKey())
+                                .clientPublicECDHKey(publicKey)
                                 .pushInfo(
                                         PushInfo.builder()
                                                 .token("string")
@@ -122,11 +117,18 @@ public class AppMobile {
                 .extract()
                 .as(RegisterSuccessResponse.class);
 
-        final var aesGcm = new CryptoAESGCM(clientIdentifierBundleWithPublicKey.getKeyForTuples());
+        final var aesGcm = new CryptoAESGCM(clientKeys.getKeyForTuples());
         try {
-            final var decodedTuples = new ObjectMapper()
+            final var tuples = new ObjectMapper()
                     .readValue(aesGcm.decrypt(registerResponse.getTuples()), EphemeralTupleJson[].class);
-            this.decodedTuples.addAll(List.of(decodedTuples));
+            final var tuplesByEpochId = Arrays.stream(tuples)
+                    .collect(
+                            toMap(
+                                    EphemeralTupleJson::getEpochId,
+                                    tuple -> new ContactTuple(tuple.getKey().getEbid(), tuple.getKey().getEcc())
+                            )
+                    );
+            contactTupleByEpochId.putAll(tuplesByEpochId);
         } catch (RobertServerCryptoException | IOException e) {
             throw new RuntimeException("Error during /register procedure", e);
         }
@@ -134,12 +136,37 @@ public class AppMobile {
         return registerResponse;
     }
 
-    public void generateContactsWithOtherApps(final AppMobile otherMobileApp,
-            final Instant startDate,
-            final Duration durationOfExchange) {
-        final var endDate = startDate.plus(durationOfExchange);
-        Stream.iterate(startDate, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .forEach(i -> exchangeEbIdWithRand(otherMobileApp, i.toEpochMilli()));
+    public void exchangeHelloMessagesWith(final AppMobile otherMobileApp, final Instant startInstant,
+            final Duration exchangeDuration) {
+        final var endDate = startInstant.plus(exchangeDuration);
+
+        Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
+                .map(this::produceHelloMessage)
+                .forEach(otherMobileApp::receiveHelloMessage);
+
+        Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
+                .map(otherMobileApp::produceHelloMessage)
+                .forEach(this::receiveHelloMessage);
+    }
+
+    private void receiveHelloMessage(HelloMessage helloMessage) {
+        final var randomRssiCalibrated = ThreadLocalRandom.current().nextInt(-10, 3);
+        final var time = clock.at(helloMessage.getTime());
+        final var contact = receivedHelloMessages.computeIfAbsent(
+                helloMessage.getContactTuple(), tuple -> Contact.builder()
+                        .ebid(tuple.getEbid())
+                        .ecc(tuple.getEcc())
+                        .ids(new ArrayList<>())
+                        .build()
+        );
+        contact.addIdsItem(
+                HelloMessageDetail.builder()
+                        .rssiCalibrated(randomRssiCalibrated)
+                        .timeCollectedOnDevice(time.asNtpTimestamp())
+                        .timeFromHelloMessage(ByteUtils.bytesToInt(helloMessage.getEncodedTime()))
+                        .mac(helloMessage.getMac())
+                        .build()
+        );
     }
 
     public void reportContacts() {
@@ -148,7 +175,7 @@ public class AppMobile {
                 .body(
                         ReportBatchRequest.builder()
                                 .token("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-                                .contacts(contacts)
+                                .contacts(new ArrayList<>(receivedHelloMessages.values()))
                                 .build()
                 )
                 .when()
@@ -163,93 +190,13 @@ public class AppMobile {
                 .body("message", equalTo("Successful operation"));
     }
 
-    private String getPublicKey() {
-        return getEncoder().encodeToString(keyPair.getPublic().getEncoded());
-    }
-
-    @SneakyThrows
-    private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument) {
-        return cryptoHMACSHA256S.encrypt(addAll(new byte[] { HELLO.getValue() }, argument));
-    }
-
-    private EphemeralTupleJson getTupleByDateInUnixMillis(final long timeInUnixMillis) {
-        return decodedTuples.stream()
-                .filter(e -> e.getEpochId() == TimeUtils.getCurrentEpochFromTo(timeStartInNtpSeconds, timeInUnixMillis))
-                .findFirst()
-                .orElseThrow();
-    }
-
-    private HelloMessageDetail generateHelloMessage(final AppMobile appMobile,
-            final long timeAsUnixMilli,
-            final int rssiCalibrated) {
-
-        var ebid = appMobile.getTupleByDateInUnixMillis(timeAsUnixMilli).getKey().getEbid();
-        var ecc = appMobile.getTupleByDateInUnixMillis(timeAsUnixMilli).getKey().getEcc();
-
-        var timeAsNtpSeconds = TimeUtils.convertUnixMillistoNtpSeconds(timeAsUnixMilli);
-
-        byte[] timeHello = new byte[4];
-        System.arraycopy(longToBytes(timeAsNtpSeconds), 4, timeHello, 0, 4);
-
-        // Clear out the first two bytes
-        timeHello[0] = (byte) (timeHello[0] & 0x00);
-        timeHello[1] = (byte) (timeHello[1] & 0x00);
-
-        return HelloMessageDetail.builder()
-                .timeCollectedOnDevice(timeAsNtpSeconds)
-                .timeFromHelloMessage(bytesToInt(timeHello))
-                .mac(appMobile.generateMACforHelloMessage(ebid, ecc, timeHello))
-                .rssiCalibrated(rssiCalibrated)
-                .build();
-    }
-
-    @SneakyThrows
-    private byte[] generateMACforHelloMessage(final byte[] ebid,
-            final byte[] ecc,
-            final byte[] timeHelloMessage) {
-        // Merge arrays
-        // HMAC-256
-        // return hash
-        var mai = new byte[ebid.length + ecc.length + 2];
-        System.arraycopy(ecc, 0, mai, 0, ecc.length);
-        System.arraycopy(ebid, 0, mai, ecc.length, ebid.length);
-        // take into account the 2 last bytes
-        System.arraycopy(timeHelloMessage, 2, mai, ecc.length + ebid.length, 2);
-
-        var encryptedMac = generateHMAC(
-                new CryptoHMACSHA256(clientIdentifierBundleWithPublicKey.getKeyForMac()), mai
-        );
-
-        // Truncate the result from 0 to 40-bits
-        return copyOfRange(encryptedMac, 0, 5);
-    }
-
-    private void exchangeEbIdWithRand(final AppMobile otherMobileApp, final long timeInUnixMillis) {
-        var helloMessageDetail = generateHelloMessage(
-                otherMobileApp,
-                timeInUnixMillis,
-                ThreadLocalRandom.current().nextInt(-10, 3)
-        );
-        getOrCreateContact(otherMobileApp.getTupleByDateInUnixMillis(timeInUnixMillis).getKey())
-                .addIdsItem(helloMessageDetail);
-    }
-
-    private Contact getOrCreateContact(final EphemeralTupleJson.EphemeralTupleEbidEccJson tuple) {
-        return contacts.stream()
-                .filter(c -> c.getEbid() == tuple.getEbid())
-                .filter(c -> c.getEcc() == tuple.getEcc())
-                .findFirst()
-                .orElseGet(() -> createAndAddNewContact(tuple));
-    }
-
-    private Contact createAndAddNewContact(final EphemeralTupleJson.EphemeralTupleEbidEccJson tuple) {
-        var newContact = Contact.builder()
+    private HelloMessage produceHelloMessage(Instant helloMessageTime) {
+        final var epochId = clock.at(helloMessageTime).getEpochId();
+        final var tuple = contactTupleByEpochId.get(epochId);
+        return HelloMessage.builder(HELLO, clientKeys.getKeyForMac())
                 .ebid(tuple.getEbid())
                 .ecc(tuple.getEcc())
-                .ids(new ArrayList<>())
+                .time(helloMessageTime)
                 .build();
-        contacts.add(newContact);
-        return newContact;
     }
-
 }
