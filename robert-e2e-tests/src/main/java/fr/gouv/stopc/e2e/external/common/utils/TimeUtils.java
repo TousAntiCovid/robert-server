@@ -1,10 +1,5 @@
 package fr.gouv.stopc.e2e.external.common.utils;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.concurrent.ThreadLocalRandom;
-
 public final class TimeUtils {
 
     // Number of seconds to fill the gap between UNIX timestamp (1/1/1970) and NTP
@@ -13,10 +8,6 @@ public final class TimeUtils {
 
     // Epoch duration is 15 minutes so 15 * 60 = 900 seconds
     public final static int EPOCH_DURATION_SECS = 900;
-
-    public final static int EPOCHS_PER_DAY = 4 * 24;
-
-    public final static long SECONDS_PER_DAY = 86400;
 
     private TimeUtils() {
         throw new AssertionError();
@@ -52,127 +43,7 @@ public final class TimeUtils {
         return Integer.parseInt(Long.toString(numberEpochs));
     }
 
-    /**
-     * Easier way to get the current epoch from the provided start time
-     * 
-     * @param timeStart as NTP timestamp in *seconds*
-     * @return current epoch
-     */
-    public static int getCurrentEpochFrom(final long timeStart) {
-        return getNumberOfEpochsBetween(timeStart, convertUnixMillistoNtpSeconds(System.currentTimeMillis()));
-    }
-
-    /**
-     * Get the NTP time in *seconds* from an epoch relative to timeStart (NTP time
-     * in seconds)
-     * 
-     * @param epoch     an Epoch
-     * @param timeStart as NTP timestamp in *seconds*
-     * @return
-     */
-    public static long getNtpSeconds(int epoch, long timeStart) {
-        return (EPOCH_DURATION_SECS * epoch) + timeStart;
-    }
-
-    /**
-     * Get timestamp truncated to the DAY at noon.
-     * 
-     * @param timestamp the timestamp in seconds
-     * @return the rounded timestamp
-     */
-    public static long dayTruncatedTimestamp(long timestamp) {
-        return timestamp - (timestamp % SECONDS_PER_DAY);
-    }
-
-    /**
-     * Get a random date between J-1, J, J+1 (uniform distribution)
-     * 
-     * @param ntpInstant the NTP timestamp representing to randomize
-     * @return a randomized NTP timestamp
-     */
-    public static Long randomizedDate(long ntpInstant) {
-        int randomDay = ThreadLocalRandom.current().nextInt(-1, 2);
-        return ntpInstant + randomDay * SECONDS_PER_DAY;
-    }
-
-    /**
-     * Get a random date between J-1, J, J+1 (uniform distribution) assuming the
-     * randomized value can't be in future
-     * 
-     * @param ntpInstant the NTP timestamp representing to randomize
-     * @return a randomized NTP timestamp
-     */
-    public static long getRandomizedDateNotInFuture(long ntpInstant) {
-        long currentNtpInstant = convertUnixMillistoNtpSeconds(System.currentTimeMillis());
-        long randomizedDate = randomizedDate(ntpInstant);
-        return currentNtpInstant < randomizedDate ? currentNtpInstant : randomizedDate;
-    }
-
-    /**
-     * @param epoch
-     * @param timeStart in NTP seconds
-     * @return
-     */
-    public static LocalDate getDateFromEpoch(int epoch, long timeStart) {
-        String timezone = epoch < 960 ? "Europe/Paris" : "UTC";
-
-        long fromUnixMillis = (getNtpSeconds(epoch, timeStart) - SECONDS_FROM_01_01_1900_TO_01_01_1970) * 1000;
-        return Instant.ofEpochMilli(fromUnixMillis).atZone(ZoneId.of(timezone)).toLocalDate();
-    }
-
-    public static int remainingEpochsForToday(int epochId) {
-        if (epochId >= 960) {
-            return EPOCHS_PER_DAY - epochId % EPOCHS_PER_DAY;
-        } else if (epochId >= 952) {
-            return (960 - epochId) + 96;
-        } else {
-            return 1 + (EPOCHS_PER_DAY + 87 - (epochId % EPOCHS_PER_DAY)) % EPOCHS_PER_DAY;
-        }
-    }
-
-    public static int USHORT_MAX = 65535;
-
-    public static boolean toleranceCheckWithWrap(long ts, long tr, int tolerance) {
-        if (tr == ts) {
-            return true;
-        }
-
-        // ts will always be inferior to tr
-        if (tr < ts) {
-            long temp = ts;
-            ts = tr;
-            tr = temp;
-        }
-
-        // If value is not in min/max zones that may cause overflow
-        if (Math.abs(tr - ts) <= tolerance) {
-            return true;
-        } else {
-            // Overflow risk
-
-            // ts is in min zone, value may overflow to max zone
-            if (ts < tolerance) {
-                // tr is between 0 and ts
-                if (tr < ts) {
-                    return true;
-                } else {
-                    // tr is in max zone but within tolerance
-                    if (tr > USHORT_MAX - (tolerance - ts)) {
-                        return true;
-                    } else {
-                        // tr is in max zone but outside tolerance
-                        return false;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    public static Long randomizedDate(String longAsString) {
-        return Long.getLong(longAsString);
-    }
-
-    public static void randomizedDate() {
+    public static int getCurrentEpochFromTo(final long timeStart, final long timeTo) {
+        return getNumberOfEpochsBetween(timeStart, convertUnixMillistoNtpSeconds(timeTo));
     }
 }

@@ -14,4 +14,6 @@ public class ApplicationProperties {
     private final String wsRestBaseUrl;
 
     private final String cryptoPublicKey;
+
+    private final String batchCommand;
 }
