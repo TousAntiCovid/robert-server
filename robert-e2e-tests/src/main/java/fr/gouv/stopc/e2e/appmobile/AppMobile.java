@@ -4,12 +4,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.stopc.e2e.appmobile.model.ClientIdentifierBundle;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
+import fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum;
+import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.common.utils.TimeUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.CryptoHMACSHA256;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.e2e.robert.model.*;
+import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -50,6 +54,9 @@ public class AppMobile {
     private List<EphemeralTupleJson> decodedTuples;
 
     private ClientIdentifierBundle clientIdentifierBundleWithPublicKey;
+
+    @Getter
+    private ExposureStatusResponse lastExposureStatusResponse;
 
     public AppMobile(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
@@ -127,7 +134,72 @@ public class AppMobile {
         decryptRegisterResponse(registerSuccessResponse);
     }
 
-    public void generateContactsWithOtherApps(final AppMobile otherMobileApp,
+    public void requestStatus() {
+        final var authenticatedRequest = prepareAuthRequest(DigestSaltEnum.STATUS);
+
+        ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
+        exposureStatusRequest.setEbid(authenticatedRequest.getEbid());
+        exposureStatusRequest.setEpochId(authenticatedRequest.getEpochId());
+        exposureStatusRequest.setTime(authenticatedRequest.getTime());
+        exposureStatusRequest.setMac(authenticatedRequest.getMac());
+
+        lastExposureStatusResponse = given()
+                .contentType(ContentType.JSON)
+                .body(exposureStatusRequest)
+                .when()
+                .post(this.applicationProperties.getWsRestBaseUrl().concat("/api/v6/status"))
+                .as(ExposureStatusResponse.class);
+
+        updateTuples(lastExposureStatusResponse.getTuples());
+    }
+
+    public AuthentifiedRequest prepareAuthRequest(final DigestSaltEnum saltEnum) {
+
+        final var tuple = getTupleByDateInUnixMillis(System.currentTimeMillis());
+
+        final var ebid = tuple.getKey().getEbid();
+        final var epochId = tuple.getEpochId();
+        final var time = generateTime32(System.currentTimeMillis());
+        final var mac = generateMAC(ebid, epochId, time, saltEnum);
+
+        AuthentifiedRequest authentifiedRequest = new AuthentifiedRequest();
+        authentifiedRequest.setEbid(ebid);
+        authentifiedRequest.setEpochId(epochId);
+        authentifiedRequest.setTime(time);
+        authentifiedRequest.setMac(mac);
+
+        return authentifiedRequest;
+    }
+
+    private byte[] generateTime32(final long unixTimeInMillis) {
+        var tsInSeconds = longToBytes(TimeUtils.convertUnixMillistoNtpSeconds(unixTimeInMillis));
+        var time = new byte[4];
+        System.arraycopy(tsInSeconds, 4, time, 0, 4);
+
+        return time;
+    }
+
+    private byte[] generateMAC(final byte[] ebid, final int epochId, final byte[] time, final DigestSaltEnum saltEnum) {
+        // Merge arrays
+        // HMAC-256
+        // return hash
+        var agg = new byte[8 + 4 + 4];
+        System.arraycopy(ebid, 0, agg, 0, ebid.length);
+        System.arraycopy(ByteUtils.intToBytes(epochId), 0, agg, ebid.length, Integer.BYTES);
+        System.arraycopy(time, 0, agg, ebid.length + Integer.BYTES, time.length);
+
+        byte[] mac = new byte[32];
+        try {
+            mac = this.generateHMAC(
+                    new CryptoHMACSHA256(clientIdentifierBundleWithPublicKey.getKeyForMac()), agg, saltEnum
+            );
+        } catch (Exception e) {
+            log.info("Problem generating SHA256");
+        }
+        return mac;
+    }
+
+    public void generateContactsWithOtherApp(final AppMobile otherMobileApp,
             final Instant startDate,
             final Duration durationOfExchange) {
         final var endDate = startDate.plus(durationOfExchange);
@@ -163,7 +235,7 @@ public class AppMobile {
 
     @SneakyThrows
     private void updateTuples(final byte[] encryptedTuples) {
-        var aesGcm = new CryptoAESGCM(clientIdentifierBundleWithPublicKey.getKeyForTuples());
+        final var aesGcm = new CryptoAESGCM(clientIdentifierBundleWithPublicKey.getKeyForTuples());
 
         decodedTuples = new ObjectMapper().readValue(
                 aesGcm.decrypt(encryptedTuples),
@@ -185,8 +257,9 @@ public class AppMobile {
     }
 
     @SneakyThrows
-    private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument) {
-        return cryptoHMACSHA256S.encrypt(addAll(new byte[] { HELLO.getValue() }, argument));
+    private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument,
+            DigestSaltEnum saltEnum) {
+        return cryptoHMACSHA256S.encrypt(addAll(new byte[] { saltEnum.getValue() }, argument));
     }
 
     private EphemeralTupleJson getTupleByDateInUnixMillis(final long timeInUnixMillis) {
@@ -234,7 +307,7 @@ public class AppMobile {
         System.arraycopy(timeHelloMessage, 2, mai, ecc.length + ebid.length, 2);
 
         var encryptedMac = generateHMAC(
-                new CryptoHMACSHA256(clientIdentifierBundleWithPublicKey.getKeyForMac()), mai
+                new CryptoHMACSHA256(clientIdentifierBundleWithPublicKey.getKeyForMac()), mai, HELLO
         );
 
         // Truncate the result from 0 to 40-bits
