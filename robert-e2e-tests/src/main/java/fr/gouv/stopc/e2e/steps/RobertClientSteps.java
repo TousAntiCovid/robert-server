@@ -52,7 +52,7 @@ public class RobertClientSteps {
             final String secondUserName,
             final Duration durationOfExchange) {
         AppMobile mainMobileApp = applicationMobileMap.get(firstUserName);
-        mainMobileApp.generateContactsWithOtherApps(
+        mainMobileApp.exchangeHelloMessagesWith(
                 applicationMobileMap.get(secondUserName),
                 startDate,
                 durationOfExchange
