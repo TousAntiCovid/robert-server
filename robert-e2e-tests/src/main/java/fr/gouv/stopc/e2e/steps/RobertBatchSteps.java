@@ -35,7 +35,7 @@ public class RobertBatchSteps {
         final var process = builder.start();
         final var background = Executors.newFixedThreadPool(2);
         background.submit(new StreamGobbler(process.getInputStream(), log::debug));
-        background.submit(new StreamGobbler(process.getErrorStream(), log::error));
+        background.submit(new StreamGobbler(process.getErrorStream(), log::debug));
         boolean hasExited = process.waitFor(60, SECONDS);
         background.shutdownNow();
         assertThat(hasExited)
