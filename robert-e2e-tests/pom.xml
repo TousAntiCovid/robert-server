@@ -147,7 +147,7 @@
                     </modelPackage>
                     <configOptions>
                         <library>rest-assured</library>
-                        <dateLibrary>java8-localdatetime</dateLibrary>
+                        <dateLibrary>java8</dateLibrary>
                         <useTags>true</useTags>
                         <additionalModelTypeAnnotations>
                             @lombok.Builder

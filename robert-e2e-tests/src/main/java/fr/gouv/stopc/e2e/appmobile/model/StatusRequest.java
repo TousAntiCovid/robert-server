@@ -21,6 +21,9 @@ import static fr.gouv.stopc.e2e.external.common.utils.ByteUtils.longToBytes;
 @Slf4j
 public class StatusRequest {
 
+    /**
+     * The epoch identifier (number of epoch between startup and now)
+     */
     int epochId;
 
     /**
@@ -29,13 +32,12 @@ public class StatusRequest {
     byte[] ebid;
 
     /**
-     * Hello Message generation time.
+     * Status Request generation time.
      */
     byte[] time;
 
     /**
-     * a HMAC − SHA256(KA,c1 | MA,i) truncated to 40 bits (c1 is the 8-bit prefix
-     * ”01”)
+     * a HMAC − SHA256(ebid, epochId, date)
      */
     byte[] mac;
 
@@ -44,22 +46,23 @@ public class StatusRequest {
         final var base64 = Base64.getEncoder();
         final var ebidB64 = base64.encodeToString(ebid);
         final var macB64 = base64.encodeToString(mac);
-        return String.format("HelloMessage(ebid=%s, ecc=%s, time=%s, mac=%s)", ebidB64, time, macB64);
+        return String
+                .format("StatusRequest(epoch=%s, ebid=%s, time=%s, mac=%s)", epochId, ebidB64, time.toString(), macB64);
     }
 
-    public static StatusRequest.StatusRequestBuilder builder(final Instant instantTime, DigestSaltEnum digestSalt,
+    public static StatusRequest.StatusRequestBuilder builder(final Instant date, DigestSaltEnum digestSalt,
             byte[] macKey, int epochId) {
         final var macCipher = new CryptoHMACSHA256(macKey);
-        final var instantTimes = generateTime32(instantTime);
-        return new StatusRequest.StatusRequestBuilderWithMac(digestSalt, macCipher, epochId, instantTimes);
+        final var byteTime = generateTime32(date);
+        return new StatusRequest.StatusRequestBuilderWithMac(digestSalt, macCipher, epochId, byteTime);
     }
 
-    public static byte[] generateTime32(Instant instantTime) {
-        var tsInSeconds = longToBytes(TimeUtils.convertUnixMillistoNtpSeconds(instantTime.toEpochMilli()));
-        var time = new byte[4];
-        System.arraycopy(tsInSeconds, 4, time, 0, 4);
+    public static byte[] generateTime32(Instant date) {
+        var tsInSeconds = longToBytes(TimeUtils.convertUnixMillistoNtpSeconds(date.toEpochMilli()));
+        var byteTime = new byte[4];
+        System.arraycopy(tsInSeconds, 4, byteTime, 0, 4);
 
-        return time;
+        return byteTime;
     }
 
     @RequiredArgsConstructor
@@ -71,25 +74,24 @@ public class StatusRequest {
 
         private final int epochId;
 
-        private final byte[] instantTime;
+        private final byte[] byteDate;
 
         @Override
         public StatusRequest.StatusRequestBuilder mac(byte[] mac) {
             throw new UnsupportedOperationException(
-                    "'mac' is an attributed derived from 'ebid', 'ecc' and 'time' using builder's 'macKey'"
+                    "'mac' is an attributed derived from 'ebid', 'epochId' and 'time' using builder's 'macKey'"
             );
         }
 
         public StatusRequest build() {
             final var original = super.build();
             final var ebid = original.getEbid();
-            final var time = instantTime;
 
             // Merge arrays
-            var agg = new byte[8 + 4 + 4];
+            var agg = new byte[ebid.length + Integer.BYTES + byteDate.length];
             System.arraycopy(ebid, 0, agg, 0, ebid.length);
             System.arraycopy(ByteUtils.intToBytes(epochId), 0, agg, ebid.length, Integer.BYTES);
-            System.arraycopy(time, 0, agg, ebid.length + Integer.BYTES, time.length);
+            System.arraycopy(byteDate, 0, agg, ebid.length + Integer.BYTES, byteDate.length);
 
             byte[] mac = new byte[32];
             try {
@@ -99,7 +101,7 @@ public class StatusRequest {
             } catch (Exception e) {
                 log.info("Problem generating SHA256");
             }
-            return new StatusRequest(epochId, ebid, time, mac);
+            return new StatusRequest(epochId, ebid, byteDate, mac);
         }
 
         @SneakyThrows
