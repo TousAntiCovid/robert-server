@@ -1,11 +1,9 @@
 package fr.gouv.stopc.e2e.appmobile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.stopc.e2e.appmobile.model.CaptchaSolution;
-import fr.gouv.stopc.e2e.appmobile.model.ClientKeys;
-import fr.gouv.stopc.e2e.appmobile.model.ContactTuple;
-import fr.gouv.stopc.e2e.appmobile.model.HelloMessage;
+import fr.gouv.stopc.e2e.appmobile.model.*;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
+import fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum;
 import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
@@ -40,6 +38,8 @@ public class AppMobile {
     private final Map<ContactTuple, Contact> receivedHelloMessages = new HashMap<>();
 
     private final EpochClock clock;
+
+    private ExposureStatusResponse lastExposureStatusResponse;
 
     public AppMobile(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
@@ -117,10 +117,16 @@ public class AppMobile {
                 .extract()
                 .as(RegisterSuccessResponse.class);
 
+        updateTuples(registerResponse.getTuples());
+
+        return registerResponse;
+    }
+
+    public void updateTuples(final byte[] encryptedTuples) {
         final var aesGcm = new CryptoAESGCM(clientKeys.getKeyForTuples());
         try {
             final var tuples = new ObjectMapper()
-                    .readValue(aesGcm.decrypt(registerResponse.getTuples()), EphemeralTupleJson[].class);
+                    .readValue(aesGcm.decrypt(encryptedTuples), EphemeralTupleJson[].class);
             final var tuplesByEpochId = Arrays.stream(tuples)
                     .collect(
                             toMap(
@@ -132,8 +138,6 @@ public class AppMobile {
         } catch (RobertServerCryptoException | IOException e) {
             throw new RuntimeException("Error during /register procedure", e);
         }
-
-        return registerResponse;
     }
 
     public void exchangeHelloMessagesWith(final AppMobile otherMobileApp, final Instant startInstant,
@@ -141,11 +145,11 @@ public class AppMobile {
         final var endDate = startInstant.plus(exchangeDuration);
 
         Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .map(this::produceHelloMessage)
+                .map(e -> produceHelloMessage(e, HELLO))
                 .forEach(otherMobileApp::receiveHelloMessage);
 
         Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .map(otherMobileApp::produceHelloMessage)
+                .map(e -> otherMobileApp.produceHelloMessage(e, HELLO))
                 .forEach(this::receiveHelloMessage);
     }
 
@@ -190,13 +194,45 @@ public class AppMobile {
                 .body("message", equalTo("Successful operation"));
     }
 
-    private HelloMessage produceHelloMessage(Instant helloMessageTime) {
+    private HelloMessage produceHelloMessage(Instant helloMessageTime, final DigestSaltEnum saltEnum) {
         final var epochId = clock.at(helloMessageTime).getEpochId();
         final var tuple = contactTupleByEpochId.get(epochId);
-        return HelloMessage.builder(HELLO, clientKeys.getKeyForMac())
+        return HelloMessage.builder(saltEnum, clientKeys.getKeyForMac())
                 .ebid(tuple.getEbid())
                 .ecc(tuple.getEcc())
                 .time(helloMessageTime)
                 .build();
     }
+
+    public void requestStatus() {
+        var inst = Instant.now();
+        final var epochId = clock.at(inst).getEpochId();
+        final var tuple = contactTupleByEpochId.get(epochId);
+        StatusRequest newStatusRequest = StatusRequest
+                .builder(inst, DigestSaltEnum.STATUS, clientKeys.getKeyForMac(), epochId)
+                .ebid(tuple.getEbid())
+                .build();
+
+        lastExposureStatusResponse = given()
+                .contentType(JSON)
+                .body(newStatusRequest)
+                .when()
+                .post(this.applicationProperties.getWsRestBaseUrl().concat("/api/v6/status"))
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .extract()
+                .as(ExposureStatusResponse.class);
+
+        updateTuples(lastExposureStatusResponse.getTuples());
+    }
+
+    public int getRiskLevel() {
+        var status = 0;
+        if (null != lastExposureStatusResponse && null != lastExposureStatusResponse.getRiskLevel()) {
+            status = lastExposureStatusResponse.getRiskLevel();
+        }
+        return status;
+    }
+
 }
