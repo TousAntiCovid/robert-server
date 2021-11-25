@@ -68,24 +68,22 @@ public class RobertClientSteps {
     }
 
     @Then("{word} is notified at risk")
-    public void isNotifiedAtRisk(String userName) {
+    public void isNotifiedAtRisk(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
         AppMobile mainMobileApp = applicationMobileMap.get(userName);
-        mainMobileApp.requestStatus();
-        assertThat(mainMobileApp.getRiskLevel())
-                .as("User is at risk")
+        assertThat(mainMobileApp.requestStatus())
+                .as("User risk level")
                 .isEqualTo(4);
     }
 
     @Then("{word} has no notification")
-    public void isNotNotifiedAtRisk(String userName) {
+    public void isNotNotifiedAtRisk(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
         AppMobile mainMobileApp = applicationMobileMap.get(userName);
-        mainMobileApp.requestStatus();
-        assertThat(mainMobileApp.getRiskLevel())
-                .as("User is not at risk")
+        assertThat(mainMobileApp.requestStatus())
+                .as("User risk level")
                 .isEqualTo(0);
     }
 

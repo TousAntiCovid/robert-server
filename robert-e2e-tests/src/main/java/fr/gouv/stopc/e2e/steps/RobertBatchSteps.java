@@ -24,7 +24,7 @@ public class RobertBatchSteps {
 
     @And("robert batch as not been executed yet")
     public void batchDoesNotExecute() {
-
+        // Nothing to do
     }
 
     @And("robert batch has been triggered")

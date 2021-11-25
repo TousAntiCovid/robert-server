@@ -39,8 +39,6 @@ public class AppMobile {
 
     private final EpochClock clock;
 
-    private ExposureStatusResponse lastExposureStatusResponse;
-
     public AppMobile(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
@@ -204,16 +202,15 @@ public class AppMobile {
                 .build();
     }
 
-    public void requestStatus() {
-        var inst = Instant.now();
-        final var epochId = clock.at(inst).getEpochId();
-        final var tuple = contactTupleByEpochId.get(epochId);
-        StatusRequest newStatusRequest = StatusRequest
-                .builder(inst, DigestSaltEnum.STATUS, clientKeys.getKeyForMac(), epochId)
+    public int requestStatus() {
+        final var now = clock.now();
+        final var tuple = contactTupleByEpochId.get(now.getEpochId());
+        final var newStatusRequest = StatusRequest
+                .builder(DigestSaltEnum.STATUS, clientKeys.getKeyForMac(), now)
                 .ebid(tuple.getEbid())
                 .build();
 
-        lastExposureStatusResponse = given()
+        final var lastExposureStatusResponse = given()
                 .contentType(JSON)
                 .body(newStatusRequest)
                 .when()
@@ -225,11 +222,9 @@ public class AppMobile {
                 .as(ExposureStatusResponse.class);
 
         updateTuples(lastExposureStatusResponse.getTuples());
-    }
 
-    public int getRiskLevel() {
         var status = 0;
-        if (null != lastExposureStatusResponse && null != lastExposureStatusResponse.getRiskLevel()) {
+        if (null != lastExposureStatusResponse.getRiskLevel()) {
             status = lastExposureStatusResponse.getRiskLevel();
         }
         return status;
