@@ -42,7 +42,7 @@ public class RobertClientSteps {
                 .body("status", equalTo("UP"));
     }
 
-    @Given("{word} install the application TAC")
+    @Given("{word} install/installs the application TAC")
     public void createAppMobile(final String userName) {
         AppMobile app = new AppMobile(applicationProperties);
         applicationMobileMap.put(userName, app);
