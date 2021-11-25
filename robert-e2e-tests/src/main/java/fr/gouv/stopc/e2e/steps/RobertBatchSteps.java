@@ -1,7 +1,7 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import io.cucumber.java.en.When;
+import io.cucumber.java.en.And;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,12 @@ public class RobertBatchSteps {
 
     private final ApplicationProperties applicationProperties;
 
-    @When("robert batch has been triggered")
+    @And("robert batch as not been executed yet")
+    public void batchDoesNotExecute() {
+
+    }
+
+    @And("robert batch has been triggered")
     @SneakyThrows
     public void launchBatch() {
         final var builder = new ProcessBuilder(applicationProperties.getBatchCommand().split(" "));
