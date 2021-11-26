@@ -1,11 +1,9 @@
 package fr.gouv.stopc.e2e.appmobile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.stopc.e2e.appmobile.model.CaptchaSolution;
-import fr.gouv.stopc.e2e.appmobile.model.ClientKeys;
-import fr.gouv.stopc.e2e.appmobile.model.ContactTuple;
-import fr.gouv.stopc.e2e.appmobile.model.HelloMessage;
+import fr.gouv.stopc.e2e.appmobile.model.*;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
+import fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum;
 import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
@@ -41,7 +39,7 @@ public class AppMobile {
 
     private final EpochClock clock;
 
-    public AppMobile(ApplicationProperties applicationProperties) {
+    public AppMobile(final ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
@@ -66,7 +64,7 @@ public class AppMobile {
         // endpoint
 
         // The mobile application ask a captcha id challenge from the captcha server
-        var captchaChallengeId = givenRobertBaseUri()
+        final var captchaChallengeId = givenRobertBaseUri()
                 .body(
                         CaptchaGenerationRequest.builder()
                                 .locale("fr")
@@ -92,7 +90,7 @@ public class AppMobile {
         return new CaptchaSolution(captchaId, "ABCD");
     }
 
-    private RegisterSuccessResponse register(String captchaId, String captchaSolution) {
+    private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {
         final var publicKey = Base64.getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
 
@@ -117,10 +115,16 @@ public class AppMobile {
                 .extract()
                 .as(RegisterSuccessResponse.class);
 
+        updateTuples(registerResponse.getTuples());
+
+        return registerResponse;
+    }
+
+    private void updateTuples(final byte[] encryptedTuples) {
         final var aesGcm = new CryptoAESGCM(clientKeys.getKeyForTuples());
         try {
             final var tuples = new ObjectMapper()
-                    .readValue(aesGcm.decrypt(registerResponse.getTuples()), EphemeralTupleJson[].class);
+                    .readValue(aesGcm.decrypt(encryptedTuples), EphemeralTupleJson[].class);
             final var tuplesByEpochId = Arrays.stream(tuples)
                     .collect(
                             toMap(
@@ -132,8 +136,6 @@ public class AppMobile {
         } catch (RobertServerCryptoException | IOException e) {
             throw new RuntimeException("Error during /register procedure", e);
         }
-
-        return registerResponse;
     }
 
     public void exchangeHelloMessagesWith(final AppMobile otherMobileApp, final Instant startInstant,
@@ -149,7 +151,7 @@ public class AppMobile {
                 .forEach(this::receiveHelloMessage);
     }
 
-    private void receiveHelloMessage(HelloMessage helloMessage) {
+    private void receiveHelloMessage(final HelloMessage helloMessage) {
         final var randomRssiCalibrated = ThreadLocalRandom.current().nextInt(-10, 3);
         final var time = clock.at(helloMessage.getTime());
         final var contact = receivedHelloMessages.computeIfAbsent(
@@ -190,7 +192,7 @@ public class AppMobile {
                 .body("message", equalTo("Successful operation"));
     }
 
-    private HelloMessage produceHelloMessage(Instant helloMessageTime) {
+    private HelloMessage produceHelloMessage(final Instant helloMessageTime) {
         final var epochId = clock.at(helloMessageTime).getEpochId();
         final var tuple = contactTupleByEpochId.get(epochId);
         return HelloMessage.builder(HELLO, clientKeys.getKeyForMac())
@@ -199,4 +201,33 @@ public class AppMobile {
                 .time(helloMessageTime)
                 .build();
     }
+
+    public int requestStatus() {
+        final var now = clock.now();
+        final var tuple = contactTupleByEpochId.get(now.getEpochId());
+        final var newStatusRequest = StatusRequest
+                .builder(DigestSaltEnum.STATUS, clientKeys.getKeyForMac(), now)
+                .ebid(tuple.getEbid())
+                .build();
+
+        final var lastExposureStatusResponse = given()
+                .contentType(JSON)
+                .body(newStatusRequest)
+                .when()
+                .post(this.applicationProperties.getWsRestBaseUrl().concat("/api/v6/status"))
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .extract()
+                .as(ExposureStatusResponse.class);
+
+        updateTuples(lastExposureStatusResponse.getTuples());
+
+        var status = 0;
+        if (null != lastExposureStatusResponse.getRiskLevel()) {
+            status = lastExposureStatusResponse.getRiskLevel();
+        }
+        return status;
+    }
+
 }

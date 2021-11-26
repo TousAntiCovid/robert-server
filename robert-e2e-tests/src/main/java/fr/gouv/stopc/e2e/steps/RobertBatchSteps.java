@@ -22,6 +22,11 @@ public class RobertBatchSteps {
 
     private final ApplicationProperties applicationProperties;
 
+    @When("robert batch as not been executed yet")
+    public void batchDoesNotExecute() {
+        // Nothing to do
+    }
+
     @When("robert batch has been triggered")
     @SneakyThrows
     public void launchBatch() {
