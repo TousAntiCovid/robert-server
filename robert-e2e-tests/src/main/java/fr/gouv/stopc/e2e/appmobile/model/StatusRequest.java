@@ -23,7 +23,7 @@ import static fr.gouv.stopc.e2e.external.common.utils.ByteUtils.longToBytes;
  *     |                    StatusRequest (128 bits)                    |
  *     +----------------------------------------------------------------+
  *     | EpochId      | EBID           | Time           | MAC           |
- *     |     (8 bits) |      (64 bits) |      (16 bits) |     (40 bits) |
+ *     |     (8 bits) |      (64 bits) |      (16 bits) |     (32 bits) |
  *     +----------------------------------------------------------------+
  * </pre>
  *
@@ -94,7 +94,7 @@ public class StatusRequest {
             final var epochId = time.getEpochId();
 
             // Keep 4 significant bytes
-            var tsInSeconds = longToBytes(time.asNtpTimestamp());
+            final var tsInSeconds = longToBytes(time.asNtpTimestamp());
             var byteDate = new byte[4];
             System.arraycopy(tsInSeconds, 4, byteDate, 0, 4);
 
@@ -110,14 +110,14 @@ public class StatusRequest {
                         macCipher, agg, digestSalt
                 );
             } catch (Exception e) {
-                throw new RuntimeException("Problem generating SHA256");
+                throw new RuntimeException("Problem generating SHA256", e);
             }
             return new StatusRequest(epochId, ebid, byteDate, mac);
         }
 
         @SneakyThrows
         private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument,
-                DigestSaltEnum saltEnum) {
+                final DigestSaltEnum saltEnum) {
             return cryptoHMACSHA256S.encrypt(addAll(new byte[] { saltEnum.getValue() }, argument));
         }
     }

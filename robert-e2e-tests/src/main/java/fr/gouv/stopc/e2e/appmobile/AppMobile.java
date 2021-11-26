@@ -39,7 +39,7 @@ public class AppMobile {
 
     private final EpochClock clock;
 
-    public AppMobile(ApplicationProperties applicationProperties) {
+    public AppMobile(final ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
@@ -64,7 +64,7 @@ public class AppMobile {
         // endpoint
 
         // The mobile application ask a captcha id challenge from the captcha server
-        var captchaChallengeId = givenRobertBaseUri()
+        final var captchaChallengeId = givenRobertBaseUri()
                 .body(
                         CaptchaGenerationRequest.builder()
                                 .locale("fr")
@@ -90,7 +90,7 @@ public class AppMobile {
         return new CaptchaSolution(captchaId, "ABCD");
     }
 
-    private RegisterSuccessResponse register(String captchaId, String captchaSolution) {
+    private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {
         final var publicKey = Base64.getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
 
@@ -120,7 +120,7 @@ public class AppMobile {
         return registerResponse;
     }
 
-    public void updateTuples(final byte[] encryptedTuples) {
+    private void updateTuples(final byte[] encryptedTuples) {
         final var aesGcm = new CryptoAESGCM(clientKeys.getKeyForTuples());
         try {
             final var tuples = new ObjectMapper()
@@ -151,7 +151,7 @@ public class AppMobile {
                 .forEach(this::receiveHelloMessage);
     }
 
-    private void receiveHelloMessage(HelloMessage helloMessage) {
+    private void receiveHelloMessage(final HelloMessage helloMessage) {
         final var randomRssiCalibrated = ThreadLocalRandom.current().nextInt(-10, 3);
         final var time = clock.at(helloMessage.getTime());
         final var contact = receivedHelloMessages.computeIfAbsent(
@@ -192,7 +192,7 @@ public class AppMobile {
                 .body("message", equalTo("Successful operation"));
     }
 
-    private HelloMessage produceHelloMessage(Instant helloMessageTime, final DigestSaltEnum saltEnum) {
+    private HelloMessage produceHelloMessage(final Instant helloMessageTime, final DigestSaltEnum saltEnum) {
         final var epochId = clock.at(helloMessageTime).getEpochId();
         final var tuple = contactTupleByEpochId.get(epochId);
         return HelloMessage.builder(saltEnum, clientKeys.getKeyForMac())
