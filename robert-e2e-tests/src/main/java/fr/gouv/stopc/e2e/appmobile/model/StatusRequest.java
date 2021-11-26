@@ -22,8 +22,8 @@ import static fr.gouv.stopc.e2e.external.common.utils.ByteUtils.longToBytes;
  *     +----------------------------------------------------------------+
  *     |                    StatusRequest (128 bits)                    |
  *     +----------------------------------------------------------------+
- *     | EpochId      | EBID           | Time           | MAC           |
- *     |     (8 bits) |      (64 bits) |      (16 bits) |     (32 bits) |
+ *     | EBID          | EpochId       | Time           | MAC           |
+ *     |     (64 bits) |      (8 bits) |      (16 bits) |     (32 bits) |
  *     +----------------------------------------------------------------+
  * </pre>
  *
