@@ -21,6 +21,10 @@ public class EpochClock {
         return new RobertInstant(startNtpTimestamp, time);
     }
 
+    public RobertInstant now() {
+        return at(Instant.now());
+    }
+
     @RequiredArgsConstructor
     public static class RobertInstant {
 

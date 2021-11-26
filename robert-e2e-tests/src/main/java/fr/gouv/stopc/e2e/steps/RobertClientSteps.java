@@ -3,6 +3,7 @@ package fr.gouv.stopc.e2e.steps;
 import fr.gouv.stopc.e2e.appmobile.AppMobile;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.specification.RequestSpecification;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 @Slf4j
@@ -40,10 +42,10 @@ public class RobertClientSteps {
                 .body("status", equalTo("UP"));
     }
 
-    @Given("{word} install the application TAC")
+    @Given("{word} install(s) the application TAC")
     public void createAppMobile(final String userName) {
-        AppMobile app = new AppMobile(applicationProperties);
-        applicationMobileMap.put(userName, app);
+        final AppMobile mobileApp = new AppMobile(applicationProperties);
+        applicationMobileMap.put(userName, mobileApp);
     }
 
     @Given("{naturalFutureTime}, {word} will be near {word} during {duration}")
@@ -51,18 +53,38 @@ public class RobertClientSteps {
             final String firstUserName,
             final String secondUserName,
             final Duration durationOfExchange) {
-        AppMobile mainMobileApp = applicationMobileMap.get(firstUserName);
-        mainMobileApp.exchangeHelloMessagesWith(
+        final AppMobile mobileApp = applicationMobileMap.get(firstUserName);
+        mobileApp.exchangeHelloMessagesWith(
                 applicationMobileMap.get(secondUserName),
                 startDate,
                 durationOfExchange
         );
     }
 
-    @When("{word} report himself sick")
+    @When("{word} report himself/herself/myself sick")
     public void reportContacts(final String userName) {
-        AppMobile mainMobileApp = applicationMobileMap.get(userName);
-        mainMobileApp.reportContacts();
+        final AppMobile mobileApp = applicationMobileMap.get(userName);
+        mobileApp.reportContacts();
+    }
+
+    @Then("{word} is notified at risk")
+    public void isNotifiedAtRisk(final String userName) {
+        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
+        // in other way we'll not be able to call status endpoint during 2 min
+        final AppMobile mobileApp = applicationMobileMap.get(userName);
+        assertThat(mobileApp.requestStatus())
+                .as("User risk level")
+                .isEqualTo(4);
+    }
+
+    @Then("{word} has no notification")
+    public void isNotNotifiedAtRisk(final String userName) {
+        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
+        // in other way we'll not be able to call status endpoint during 2 min
+        final AppMobile mobileApp = applicationMobileMap.get(userName);
+        assertThat(mobileApp.requestStatus())
+                .as("User risk level")
+                .isEqualTo(0);
     }
 
 }
