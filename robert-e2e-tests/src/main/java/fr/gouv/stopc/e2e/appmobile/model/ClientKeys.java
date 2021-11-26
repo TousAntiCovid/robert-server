@@ -30,9 +30,9 @@ public class ClientKeys {
     @RequiredArgsConstructor
     public static class ClientIdentifierBundleBuilder {
 
-        private final static String HASH_MAC = "mac";
+        private static final String HASH_MAC = "mac";
 
-        private final static String HASH_TUPLES = "tuples";
+        private static final String HASH_TUPLES = "tuples";
 
         private final byte[] backendPublicKey;
 

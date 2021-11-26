@@ -3,13 +3,13 @@ package fr.gouv.stopc.e2e.appmobile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.stopc.e2e.appmobile.model.*;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum;
 import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
-import fr.gouv.stopc.e2e.robert.model.*;
-import io.restassured.specification.RequestSpecification;
+import fr.gouv.stopc.robert.client.api.CaptchaApi;
+import fr.gouv.stopc.robert.client.api.DefaultApi;
+import fr.gouv.stopc.robert.client.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -21,13 +21,15 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
-import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
 import static java.util.stream.Collectors.toMap;
-import static org.hamcrest.Matchers.equalTo;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 @Slf4j
 public class AppMobile {
+
+    private final String username;
 
     private final ApplicationProperties applicationProperties;
 
@@ -39,20 +41,22 @@ public class AppMobile {
 
     private final EpochClock clock;
 
-    public AppMobile(final ApplicationProperties applicationProperties) {
+    private final CaptchaApi captchaApi;
+
+    private final DefaultApi robertApi;
+
+    public AppMobile(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
+            DefaultApi robertApi) {
+        this.username = username;
         this.applicationProperties = applicationProperties;
+        this.captchaApi = captchaApi;
+        this.robertApi = robertApi;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
 
         final var captchaSolution = resolveMockedCaptchaChallenge();
         final var registerResponse = register(captchaSolution.getId(), captchaSolution.getAnswer());
         this.clock = new EpochClock(registerResponse.getTimeStart());
-    }
-
-    private RequestSpecification givenRobertBaseUri() {
-        return given()
-                .baseUri(applicationProperties.getWsRestBaseUrl())
-                .contentType(JSON);
     }
 
     private CaptchaSolution resolveMockedCaptchaChallenge() {
@@ -64,27 +68,19 @@ public class AppMobile {
         // endpoint
 
         // The mobile application ask a captcha id challenge from the captcha server
-        final var captchaChallengeId = givenRobertBaseUri()
-                .body(
-                        CaptchaGenerationRequest.builder()
-                                .locale("fr")
-                                .type("IMAGE")
-                                .build()
-                )
-                .when()
-                .post("/api/v6/captcha")
-                .then()
-                .extract()
-                .path("captchaId");
+
+        final var captchaChallenge = captchaApi.captcha(
+                CaptchaGenerationRequest.builder()
+                        .locale("fr")
+                        .type("IMAGE")
+                        .build()
+        );
 
         // The mobile application ask for an image captcha with the received captcha id
         // challenge
-        givenRobertBaseUri()
-                .when()
-                .get("/api/v6/captcha/{captchaId}/image", captchaChallengeId)
-                .then()
-                .statusCode(200)
-                .contentType("image/png");
+        final var response = captchaApi.captchaChallengeImageWithHttpInfo(captchaChallenge.getId());
+        assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
+        assertThat("image content", response.getData(), notNullValue());
 
         // The user reads the image content
         return new CaptchaSolution(captchaId, "ABCD");
@@ -94,26 +90,20 @@ public class AppMobile {
         final var publicKey = Base64.getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
 
-        final var registerResponse = givenRobertBaseUri()
-                .body(
-                        RegisterRequest.builder()
-                                .captcha(captchaSolution)
-                                .captchaId(captchaId)
-                                .clientPublicECDHKey(publicKey)
-                                .pushInfo(
-                                        PushInfo.builder()
-                                                .token("string")
-                                                .locale("fr")
-                                                .timezone("Europe/Paris")
-                                                .build()
-                                )
-                                .build()
-                )
-                .when()
-                .post("/api/v6/register")
-                .then()
-                .extract()
-                .as(RegisterSuccessResponse.class);
+        final var registerResponse = robertApi.register(
+                RegisterRequest.builder()
+                        .captcha(captchaSolution)
+                        .captchaId(captchaId)
+                        .clientPublicECDHKey(publicKey)
+                        .pushInfo(
+                                PushInfo.builder()
+                                        .token("device-" + username)
+                                        .locale("fr")
+                                        .timezone("Europe/Paris")
+                                        .build()
+                        )
+                        .build()
+        );
 
         updateTuples(registerResponse.getTuples());
 
@@ -172,24 +162,14 @@ public class AppMobile {
     }
 
     public void reportContacts() {
-        given()
-                .contentType(JSON)
-                .body(
-                        ReportBatchRequest.builder()
-                                .token("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-                                .contacts(new ArrayList<>(receivedHelloMessages.values()))
-                                .build()
-                )
-                .when()
-                .post(
-                        applicationProperties.getWsRestBaseUrl()
-                                .concat("/api/v6/report")
-                )
-                .then()
-                .statusCode(200)
-                .contentType(JSON)
-                .body("success", equalTo(true))
-                .body("message", equalTo("Successful operation"));
+        final var reportResponse = robertApi.reportBatch(
+                ReportBatchRequest.builder()
+                        .token("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                        .contacts(new ArrayList<>(receivedHelloMessages.values()))
+                        .build()
+        );
+        assertThat("response attribute 'success'", reportResponse.getSuccess(), equalTo(true));
+        assertThat("response attribute 'message'", reportResponse.getMessage(), equalTo("Successful operation"));
     }
 
     private HelloMessage produceHelloMessage(final Instant helloMessageTime) {
@@ -204,30 +184,18 @@ public class AppMobile {
 
     public int requestStatus() {
         final var now = clock.now();
-        final var tuple = contactTupleByEpochId.get(now.getEpochId());
-        final var newStatusRequest = StatusRequest
-                .builder(DigestSaltEnum.STATUS, clientKeys.getKeyForMac(), now)
-                .ebid(tuple.getEbid())
-                .build();
-
-        final var lastExposureStatusResponse = given()
-                .contentType(JSON)
-                .body(newStatusRequest)
-                .when()
-                .post(this.applicationProperties.getWsRestBaseUrl().concat("/api/v6/status"))
-                .then()
-                .statusCode(200)
-                .contentType(JSON)
-                .extract()
-                .as(ExposureStatusResponse.class);
-
+        final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
+        final var lastExposureStatusResponse = robertApi.eSR(
+                RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
+                        .exposureStatusRequest(currentEpochTuple.getEbid(), now)
+                        .build()
+        );
         updateTuples(lastExposureStatusResponse.getTuples());
-
-        var status = 0;
-        if (null != lastExposureStatusResponse.getRiskLevel()) {
-            status = lastExposureStatusResponse.getRiskLevel();
+        if (lastExposureStatusResponse.getRiskLevel() == null) {
+            return 0;
+        } else {
+            return lastExposureStatusResponse.getRiskLevel();
         }
-        return status;
     }
 
 }

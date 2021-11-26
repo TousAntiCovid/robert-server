@@ -17,9 +17,13 @@
     <properties>
         <java.version>11</java.version>
         <cucumber.version>7.0.0</cucumber.version>
+        <gson-fire.version>1.8.5</gson-fire.version>
+        <jsr305.version>3.0.2</jsr305.version>
         <junit-platform.version>1.8.1</junit-platform.version>
         <junit-jupiter.version>5.8.1</junit-jupiter.version>
+        <okhttp3.version>4.9.1</okhttp3.version>
         <prettytime-nlp.version>5.0.2.Final</prettytime-nlp.version>
+        <swagger-annotations.version>1.6.3</swagger-annotations.version>
     </properties>
 
     <dependencies>
@@ -32,8 +36,33 @@
             <artifactId>spring-boot-starter-test</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>${swagger-annotations.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${jsr305.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.gsonfire</groupId>
+            <artifactId>gson-fire</artifactId>
+            <version>${gson-fire.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>${okhttp3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
         </dependency>
         <dependency>
             <groupId>org.ocpsoft.prettytime</groupId>
@@ -44,10 +73,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
@@ -78,35 +103,6 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger2</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.gsonfire</groupId>
-            <artifactId>gson-fire</artifactId>
-            <version>1.8.5</version>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okio</groupId>
-            <artifactId>okio</artifactId>
-            <version>2.10.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>1.6.3</version>
         </dependency>
     </dependencies>
 
@@ -141,20 +137,22 @@
                         ${project.basedir}/../robert-server-ws-rest/src/main/resources/api-robert-server-v1.yaml
                     </inputSpec>
                     <generatorName>java</generatorName>
-                    <generateApis>false</generateApis>
+                    <apiPackage>
+                        fr.gouv.stopc.robert.client.api
+                    </apiPackage>
                     <modelPackage>
-                        fr.gouv.stopc.e2e.robert.model
+                        fr.gouv.stopc.robert.client.model
                     </modelPackage>
                     <configOptions>
-                        <library>rest-assured</library>
+                        <library>okhttp-gson</library>
                         <dateLibrary>java8</dateLibrary>
-                        <useTags>true</useTags>
+                        <openApiNullable>false</openApiNullable>
+                        <useRuntimeException>true</useRuntimeException>
                         <additionalModelTypeAnnotations>
                             @lombok.Builder
                             @lombok.AllArgsConstructor
                             @lombok.NoArgsConstructor
                         </additionalModelTypeAnnotations>
-                        <unhandledException>true</unhandledException>
                     </configOptions>
                 </configuration>
                 <executions>

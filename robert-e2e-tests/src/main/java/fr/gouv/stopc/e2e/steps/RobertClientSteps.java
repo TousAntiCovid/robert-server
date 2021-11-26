@@ -2,10 +2,11 @@ package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.e2e.appmobile.AppMobile;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
+import fr.gouv.stopc.robert.client.api.CaptchaApi;
+import fr.gouv.stopc.robert.client.api.DefaultApi;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.restassured.specification.RequestSpecification;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,18 +26,20 @@ public class RobertClientSteps {
 
     private final ApplicationProperties applicationProperties;
 
-    private final Map<String, AppMobile> applicationMobileMap = new HashMap<>();
+    private final DefaultApi robertApi;
 
-    private RequestSpecification givenRobertBaseUri() {
-        return given()
-                .baseUri(applicationProperties.getWsRestBaseUrl())
-                .contentType(JSON);
-    }
+    private final CaptchaApi captchaApi;
+
+    private final Map<String, AppMobile> applicationMobileMap = new HashMap<>();
 
     @Given("application robert ws rest is ready")
     public void applicationRobertIsReady() {
-        givenRobertBaseUri()
-                .get("/actuator/health")
+        given()
+                .baseUri(applicationProperties.getWsRestBaseUrl().toString())
+                .contentType(JSON)
+
+                .when().get("/actuator/health")
+
                 .then()
                 .statusCode(200)
                 .body("status", equalTo("UP"));
@@ -44,7 +47,7 @@ public class RobertClientSteps {
 
     @Given("{word} install(s) the application TAC")
     public void createAppMobile(final String userName) {
-        final AppMobile mobileApp = new AppMobile(applicationProperties);
+        final var mobileApp = new AppMobile(userName, applicationProperties, captchaApi, robertApi);
         applicationMobileMap.put(userName, mobileApp);
     }
 
