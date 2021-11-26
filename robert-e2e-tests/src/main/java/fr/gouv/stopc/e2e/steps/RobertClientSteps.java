@@ -47,8 +47,8 @@ public class RobertClientSteps {
 
     @Given("{word} install(s) the application TAC")
     public void createAppMobile(final String userName) {
-        final var app = new AppMobile(userName, applicationProperties, captchaApi, robertApi);
-        applicationMobileMap.put(userName, app);
+        final var mobileApp = new AppMobile(userName, applicationProperties, captchaApi, robertApi);
+        applicationMobileMap.put(userName, mobileApp);
     }
 
     @Given("{naturalFutureTime}, {word} will be near {word} during {duration}")
