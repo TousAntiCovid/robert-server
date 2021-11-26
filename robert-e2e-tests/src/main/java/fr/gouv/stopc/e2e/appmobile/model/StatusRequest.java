@@ -103,15 +103,8 @@ public class StatusRequest {
             System.arraycopy(ebid, 0, agg, 0, ebid.length);
             System.arraycopy(ByteUtils.intToBytes(epochId), 0, agg, ebid.length, Integer.BYTES);
             System.arraycopy(byteDate, 0, agg, ebid.length + Integer.BYTES, byteDate.length);
+            final var mac = this.generateHMAC(macCipher, agg, digestSalt);
 
-            byte[] mac = new byte[32];
-            try {
-                mac = this.generateHMAC(
-                        macCipher, agg, digestSalt
-                );
-            } catch (Exception e) {
-                throw new RuntimeException("Problem generating SHA256", e);
-            }
             return new StatusRequest(epochId, ebid, byteDate, mac);
         }
 
