@@ -44,8 +44,8 @@ public class RobertClientSteps {
 
     @Given("{word} install(s) the application TAC")
     public void createAppMobile(final String userName) {
-        AppMobile app = new AppMobile(applicationProperties);
-        applicationMobileMap.put(userName, app);
+        final AppMobile mobileApp = new AppMobile(applicationProperties);
+        applicationMobileMap.put(userName, mobileApp);
     }
 
     @Given("{naturalFutureTime}, {word} will be near {word} during {duration}")
@@ -53,8 +53,8 @@ public class RobertClientSteps {
             final String firstUserName,
             final String secondUserName,
             final Duration durationOfExchange) {
-        AppMobile mainMobileApp = applicationMobileMap.get(firstUserName);
-        mainMobileApp.exchangeHelloMessagesWith(
+        final AppMobile mobileApp = applicationMobileMap.get(firstUserName);
+        mobileApp.exchangeHelloMessagesWith(
                 applicationMobileMap.get(secondUserName),
                 startDate,
                 durationOfExchange
@@ -63,16 +63,16 @@ public class RobertClientSteps {
 
     @When("{word} report himself/herself/myself sick")
     public void reportContacts(final String userName) {
-        AppMobile mainMobileApp = applicationMobileMap.get(userName);
-        mainMobileApp.reportContacts();
+        final AppMobile mobileApp = applicationMobileMap.get(userName);
+        mobileApp.reportContacts();
     }
 
     @Then("{word} is notified at risk")
     public void isNotifiedAtRisk(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
-        AppMobile mainMobileApp = applicationMobileMap.get(userName);
-        assertThat(mainMobileApp.requestStatus())
+        final AppMobile mobileApp = applicationMobileMap.get(userName);
+        assertThat(mobileApp.requestStatus())
                 .as("User risk level")
                 .isEqualTo(4);
     }
@@ -81,8 +81,8 @@ public class RobertClientSteps {
     public void isNotNotifiedAtRisk(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
-        AppMobile mainMobileApp = applicationMobileMap.get(userName);
-        assertThat(mainMobileApp.requestStatus())
+        final AppMobile mobileApp = applicationMobileMap.get(userName);
+        assertThat(mobileApp.requestStatus())
                 .as("User risk level")
                 .isEqualTo(0);
     }
