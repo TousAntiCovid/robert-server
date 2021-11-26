@@ -143,11 +143,11 @@ public class AppMobile {
         final var endDate = startInstant.plus(exchangeDuration);
 
         Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .map(e -> produceHelloMessage(e, HELLO))
+                .map(this::produceHelloMessage)
                 .forEach(otherMobileApp::receiveHelloMessage);
 
         Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .map(e -> otherMobileApp.produceHelloMessage(e, HELLO))
+                .map(otherMobileApp::produceHelloMessage)
                 .forEach(this::receiveHelloMessage);
     }
 
@@ -192,10 +192,10 @@ public class AppMobile {
                 .body("message", equalTo("Successful operation"));
     }
 
-    private HelloMessage produceHelloMessage(final Instant helloMessageTime, final DigestSaltEnum saltEnum) {
+    private HelloMessage produceHelloMessage(final Instant helloMessageTime) {
         final var epochId = clock.at(helloMessageTime).getEpochId();
         final var tuple = contactTupleByEpochId.get(epochId);
-        return HelloMessage.builder(saltEnum, clientKeys.getKeyForMac())
+        return HelloMessage.builder(HELLO, clientKeys.getKeyForMac())
                 .ebid(tuple.getEbid())
                 .ecc(tuple.getEcc())
                 .time(helloMessageTime)
