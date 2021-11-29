@@ -1,6 +1,7 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -10,8 +11,8 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -21,6 +22,20 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class RobertBatchSteps {
 
     private final ApplicationProperties applicationProperties;
+
+    private final List<String> processErrorLogs;
+
+    private final List<String> processLogs;
+
+    private void getLogsListFromProcessInputStream(final InputStream processStdOutput, List<String> lineList) {
+        lineList.clear();
+        new BufferedReader(new InputStreamReader(processStdOutput))
+                .lines()
+                .forEach(line -> {
+                    lineList.add(line);
+                    log.debug(line);
+                });
+    }
 
     @When("robert batch as not been executed yet")
     public void batchDoesNotExecute() {
@@ -34,8 +49,10 @@ public class RobertBatchSteps {
         builder.directory(Path.of(".").toFile());
         final var process = builder.start();
         final var background = Executors.newFixedThreadPool(2);
-        background.submit(new StreamGobbler(process.getInputStream(), log::debug));
-        background.submit(new StreamGobbler(process.getErrorStream(), log::debug));
+
+        getLogsListFromProcessInputStream(process.getInputStream(), processLogs);
+        getLogsListFromProcessInputStream(process.getErrorStream(), processErrorLogs);
+
         boolean hasExited = process.waitFor(60, SECONDS);
         background.shutdownNow();
         assertThat(hasExited)
@@ -46,22 +63,14 @@ public class RobertBatchSteps {
                 .isEqualTo(0);
     }
 
-    private static class StreamGobbler implements Runnable {
-
-        private final InputStream inputStream;
-
-        private final Consumer<String> consumer;
-
-        public StreamGobbler(final InputStream inputStream, final Consumer<String> consumer) {
-            this.inputStream = inputStream;
-            this.consumer = consumer;
-        }
-
-        @Override
-        public void run() {
-            new BufferedReader(new InputStreamReader(inputStream))
-                    .lines()
-                    .forEach(consumer);
-        }
+    @Then("robert batch has discarded the hello messages")
+    public void checkDiscardedErrorInBatch() {
+        var nbDiscardedHello = processLogs
+                .stream()
+                .filter(line -> line.contains("Could not find keys for id, discarding the hello message"))
+                .count();
+        assertThat(nbDiscardedHello)
+                .as("Robert batch process number of discarded hello message")
+                .isGreaterThan(0);
     }
 }

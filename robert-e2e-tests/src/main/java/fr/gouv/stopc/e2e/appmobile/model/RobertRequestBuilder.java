@@ -9,11 +9,12 @@ import fr.gouv.stopc.robert.client.model.AuthentifiedRequest;
 import fr.gouv.stopc.robert.client.model.AuthentifiedRequest.AuthentifiedRequestBuilder;
 import fr.gouv.stopc.robert.client.model.ExposureStatusRequest;
 import fr.gouv.stopc.robert.client.model.ExposureStatusRequest.ExposureStatusRequestBuilder;
+import fr.gouv.stopc.robert.client.model.UnregisterRequest;
+import fr.gouv.stopc.robert.client.model.UnregisterRequest.UnregisterRequestBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
-import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.DELETE_HISTORY;
-import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.STATUS;
+import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.*;
 import static lombok.AccessLevel.PRIVATE;
 
 /**
@@ -38,9 +39,18 @@ public class RobertRequestBuilder {
                 .mac(auth.mac);
     }
 
-    public AuthentifiedRequestBuilder unregisterRequest(final byte[] ebid, final RobertInstant time) {
+    public AuthentifiedRequestBuilder deleteExposureHistory(final byte[] ebid, final RobertInstant time) {
         final var auth = new RequestAuth(DELETE_HISTORY, ebid, time);
         return AuthentifiedRequest.builder()
+                .ebid(auth.ebid)
+                .epochId(auth.epochId)
+                .time(auth.time)
+                .mac(auth.mac);
+    }
+
+    public UnregisterRequestBuilder unregisterRequest(final byte[] ebid, final RobertInstant time) {
+        final var auth = new RequestAuth(UNREGISTER, ebid, time);
+        return UnregisterRequest.builder()
                 .ebid(auth.ebid)
                 .epochId(auth.epochId)
                 .time(auth.time)
