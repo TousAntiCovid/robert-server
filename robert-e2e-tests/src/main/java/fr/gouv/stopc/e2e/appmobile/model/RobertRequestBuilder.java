@@ -5,11 +5,14 @@ import fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum;
 import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoHMACSHA256;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
+import fr.gouv.stopc.robert.client.model.AuthentifiedRequest;
+import fr.gouv.stopc.robert.client.model.AuthentifiedRequest.AuthentifiedRequestBuilder;
 import fr.gouv.stopc.robert.client.model.ExposureStatusRequest;
 import fr.gouv.stopc.robert.client.model.ExposureStatusRequest.ExposureStatusRequestBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
+import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.DELETE_HISTORY;
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.STATUS;
 import static lombok.AccessLevel.PRIVATE;
 
@@ -29,6 +32,15 @@ public class RobertRequestBuilder {
     public ExposureStatusRequestBuilder exposureStatusRequest(final byte[] ebid, final RobertInstant time) {
         final var auth = new RequestAuth(STATUS, ebid, time);
         return ExposureStatusRequest.builder()
+                .ebid(auth.ebid)
+                .epochId(auth.epochId)
+                .time(auth.time)
+                .mac(auth.mac);
+    }
+
+    public AuthentifiedRequestBuilder unregisterRequest(final byte[] ebid, final RobertInstant time) {
+        final var auth = new RequestAuth(DELETE_HISTORY, ebid, time);
+        return AuthentifiedRequest.builder()
                 .ebid(auth.ebid)
                 .epochId(auth.epochId)
                 .time(auth.time)

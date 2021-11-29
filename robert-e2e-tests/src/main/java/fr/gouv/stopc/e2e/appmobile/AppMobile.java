@@ -198,4 +198,16 @@ public class AppMobile {
         }
     }
 
+    public void deleteExposureHistory() {
+        final var now = clock.now();
+        final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
+        var deleteResponse = robertApi.deleteExposureHistory(
+                RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
+                        .unregisterRequest(currentEpochTuple.getEbid(), now)
+                        .build()
+        );
+        assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
+        receivedHelloMessages.clear();
+    }
+
 }

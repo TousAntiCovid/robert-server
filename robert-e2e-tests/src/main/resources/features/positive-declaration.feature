@@ -39,3 +39,25 @@ Feature: Covid-19 positive declaration
     When Paul report himself sick
     And robert batch has been triggered
     Then Sarah has no notification
+
+  Scenario: One People wich was in contact during a small period with a sick person and which deletes her history
+  will not be notified at risk if he will met during an other small preiod an other sick person
+    Given tomorrow at 23:45, Paul will be near Sarah during 15 minutes
+    When Paul report himself sick
+    And robert batch has been triggered
+    And Sarah delete her risk exposure history
+    Given in two days at 00:00, John will be near Sarah during 15 minutes
+    When John report himself sick
+    And robert batch has been triggered
+    Then Sarah has no notification
+
+  Scenario: One People wich was in contact during a small period with a sick person and which does not deletes her history
+  will be notified at risk if he will met during an other small preiod an other sick person
+    Given tomorrow at 23:45, Paul will be near Sarah during 15 minutes
+    When Paul report himself sick
+    And robert batch has been triggered
+    And Sarah does not delete her risk exposure history
+    Given in two days at 00:00, John will be near Sarah during 15 minutes
+    When John report himself sick
+    And robert batch has been triggered
+    Then Sarah is notified at risk
