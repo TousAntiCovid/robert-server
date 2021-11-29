@@ -90,4 +90,13 @@ public class RobertClientSteps {
                 .isEqualTo(0);
     }
 
+    @When("{word} delete his/her/my risk exposure history")
+    public void deleteExposureHistory(final String userName) {
+        applicationMobileMap.get(userName).deleteExposureHistory();
+    }
+
+    @When("{word} does not delete his/her risk exposure history")
+    public void notDeleteExposureHistory(final String userName) {
+        // Nothing to do
+    }
 }
