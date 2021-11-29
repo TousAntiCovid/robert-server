@@ -91,13 +91,12 @@ public class RobertClientSteps {
     }
 
     @When("{word} delete his/her/my risk exposure history")
-    public void deleteExposureHistory(String userName) {
-        final AppMobile mobileApp = applicationMobileMap.get(userName);
-        mobileApp.deleteExposureHistory();
+    public void deleteExposureHistory(final String userName) {
+        applicationMobileMap.get(userName).deleteExposureHistory();
     }
 
     @When("{word} does not delete his/her risk exposure history")
-    public void notDeleteExposureHistory(String userName) {
+    public void notDeleteExposureHistory(final String userName) {
         // Nothing to do
     }
 }

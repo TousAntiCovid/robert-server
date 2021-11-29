@@ -201,7 +201,7 @@ public class AppMobile {
     public void deleteExposureHistory() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
-        var deleteResponse = robertApi.deleteExposureHistory(
+        final var deleteResponse = robertApi.deleteExposureHistory(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .unregisterRequest(currentEpochTuple.getEbid(), now)
                         .build()

@@ -40,8 +40,7 @@ Feature: Covid-19 positive declaration
     And robert batch has been triggered
     Then Sarah has no notification
 
-  Scenario: One People wich was in contact during a small period with a sick person and which deletes her history
-  will not be notified at risk if he will met during an other small preiod an other sick person
+  Scenario: One People delete his exposure history
     Given tomorrow at 23:45, Paul will be near Sarah during 15 minutes
     When Paul report himself sick
     And robert batch has been triggered
@@ -51,8 +50,7 @@ Feature: Covid-19 positive declaration
     And robert batch has been triggered
     Then Sarah has no notification
 
-  Scenario: One People wich was in contact during a small period with a sick person and which does not deletes her history
-  will be notified at risk if he will met during an other small preiod an other sick person
+  Scenario: One People does not delete his exposure history
     Given tomorrow at 23:45, Paul will be near Sarah during 15 minutes
     When Paul report himself sick
     And robert batch has been triggered
