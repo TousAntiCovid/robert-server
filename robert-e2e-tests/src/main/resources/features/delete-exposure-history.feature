@@ -1,6 +1,7 @@
 Feature: Covid-19 risk exposure deletion
   As a user
   I want to be able to delete my exposure history
+  In order to assert my right to be forgotten
 
   Background:
     Given John installs the application TAC
