@@ -13,4 +13,4 @@ Feature: Covid-19 positive declaration
     When Paul report himself sick
     When Sarah unregisters her application
     And robert batch has been triggered
-    Then robert batch has discarded the hello messages
+    Then robert batch logs contains: "Could not find keys for id, discarding the hello message"
