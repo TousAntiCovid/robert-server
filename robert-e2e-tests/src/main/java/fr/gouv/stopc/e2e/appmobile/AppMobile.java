@@ -207,7 +207,6 @@ public class AppMobile {
                         .build()
         );
         assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
-        receivedHelloMessages.clear();
     }
 
 }
