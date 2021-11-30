@@ -99,4 +99,9 @@ public class RobertClientSteps {
     public void notDeleteExposureHistory(final String userName) {
         // Nothing to do
     }
+
+    @When("{word} unregister(s) his/her/my application")
+    public void unregister(final String userName) {
+        applicationMobileMap.get(userName).unregister();
+    }
 }
