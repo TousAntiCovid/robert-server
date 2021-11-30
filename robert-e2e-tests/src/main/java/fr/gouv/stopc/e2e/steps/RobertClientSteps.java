@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -51,17 +52,19 @@ public class RobertClientSteps {
         applicationMobileMap.put(userName, mobileApp);
     }
 
-    @Given("{naturalFutureTime}, {word} will be near {word} during {duration}")
+    @Given("{naturalFutureTime}, {word} will be near {wordList} during {duration}")
     public void generateContactsBetweenTwoUsersWithDuration(final Instant startDate,
             final String firstUserName,
-            final String secondUserName,
+            final List<String> userList,
             final Duration durationOfExchange) {
         final AppMobile mobileApp = applicationMobileMap.get(firstUserName);
-        mobileApp.exchangeHelloMessagesWith(
-                applicationMobileMap.get(secondUserName),
-                startDate,
-                durationOfExchange
-        );
+        for (String userName : userList) {
+            mobileApp.exchangeHelloMessagesWith(
+                    applicationMobileMap.get(userName),
+                    startDate,
+                    durationOfExchange
+            );
+        }
     }
 
     @When("{word} report himself/herself/myself sick")

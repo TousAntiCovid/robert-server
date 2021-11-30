@@ -21,9 +21,7 @@ Feature: Covid-19 positive declaration
     Then Sarah is notified at risk
 
   Scenario: Two people are notified when someone declare himself positive
-#    TODO : target : "Given one,two,three met during 60 minutes"
-    Given tomorrow at 12:00, John will be near Sarah during 60 minutes
-    And tomorrow at 12:00, John will be near Paul during 60 minutes
+    Given tomorrow at 12:00, John will be near Sarah and Paul during 60 minutes
     When John report himself sick
     And robert batch has been triggered
     Then Sarah is notified at risk

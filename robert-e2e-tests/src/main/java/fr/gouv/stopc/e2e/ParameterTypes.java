@@ -6,6 +6,8 @@ import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -48,5 +50,10 @@ public class ParameterTypes {
         final var amount = Integer.parseInt(amountExpression);
         final var unit = ChronoUnit.valueOf(unitExpression.toUpperCase());
         return Duration.of(amount, unit);
+    }
+
+    @ParameterType(".*")
+    public List<String> wordList(final String words) {
+        return Arrays.asList(words.split("\\s*,\\s*|\\s*and\\s*"));
     }
 }
