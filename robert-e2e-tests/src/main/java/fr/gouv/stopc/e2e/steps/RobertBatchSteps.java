@@ -6,7 +6,7 @@ import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
+import org.assertj.core.api.AssertionsForClassTypes;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @AllArgsConstructor
@@ -45,17 +45,17 @@ public class RobertBatchSteps {
 
         boolean hasExited = process.waitFor(60, SECONDS);
         background.shutdownNow();
-        assertThat(hasExited)
+        AssertionsForClassTypes.assertThat(hasExited)
                 .as("Robert batch execution timed out after 60 seconds")
                 .isTrue();
-        assertThat(process.exitValue())
+        AssertionsForClassTypes.assertThat(process.exitValue())
                 .as("Robert batch process exit code")
                 .isEqualTo(0);
     }
 
     @Then("robert batch logs contains: {string}")
     public void checkDiscardedErrorInBatch(String message) {
-        Assertions.assertThat(processLogs).anyMatch(line -> line.contains(message));
+        assertThat(processLogs).anyMatch(line -> line.contains(message));
     }
 
     private static class StreamGobbler implements Runnable {
@@ -73,8 +73,10 @@ public class RobertBatchSteps {
         public void run() {
             new BufferedReader(new InputStreamReader(inputStream))
                     .lines()
-                    .peek(log::debug)
-                    .forEach(processLogs::add);
+                    .forEach(line -> {
+                        processLogs.add(line);
+                        log.debug(line);
+                    });
         }
     }
 }
