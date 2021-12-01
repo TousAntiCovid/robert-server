@@ -9,7 +9,7 @@ Feature: Covid-19 positive declaration
     Given Paul installs the application TAC
 
   Scenario: One people unregisters his application
-    Given tomorrow at 12:00, the users Paul and Sarah will be near during 60 minutes
+    Given just now, the users Paul and Sarah will be near during 60 minutes
     When Paul report himself sick
     When Sarah unregisters her application
     And robert batch has been triggered

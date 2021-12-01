@@ -63,7 +63,7 @@ public class RobertClientSteps {
         getMobileMap().put(userName, mobileApp);
     }
 
-    @Given("{naturalFutureTime}, the users {wordList} will be near during {duration}")
+    @Given("{naturalTime}, the users {wordList} will be near during {duration}")
     public void generateContactsBetweenTwoUsersWithDuration(final Instant startDate,
             final List<String> userList,
             final Duration durationOfExchange) {

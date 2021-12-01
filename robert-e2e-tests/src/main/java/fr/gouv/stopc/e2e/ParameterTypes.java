@@ -31,20 +31,6 @@ public class ParameterTypes {
                 .toInstant();
     }
 
-    @ParameterType(".*")
-    public Instant naturalFutureTime(final String timeExpression) {
-        var date = naturalTime(timeExpression);
-        if (date.isBefore(Instant.now())) {
-            throw new IllegalArgumentException(
-                    format(
-                            "The expected date must be in the future but the date found is %s",
-                            date
-                    )
-            );
-        }
-        return date;
-    }
-
     @ParameterType("(\\d+) (days|hours|minutes)")
     public Duration duration(final String amountExpression, final String unitExpression) {
         final var amount = Integer.parseInt(amountExpression);
