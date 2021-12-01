@@ -13,7 +13,6 @@ import fr.gouv.stopc.robert.client.model.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.hamcrest.MatcherAssert;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -23,6 +22,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @Slf4j
@@ -81,8 +81,8 @@ public class AppMobile {
         // The mobile application ask for an image captcha with the received captcha id
         // challenge
         final var response = captchaApi.captchaChallengeImageWithHttpInfo(captchaChallenge.getId());
-        MatcherAssert.assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
-        MatcherAssert.assertThat("image content", response.getData(), notNullValue());
+        assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
+        assertThat("image content", response.getData(), notNullValue());
 
         // The user reads the image content
         return new CaptchaSolution(captchaId, "ABCD");
@@ -157,8 +157,8 @@ public class AppMobile {
                         .contacts(new ArrayList<>(receivedHelloMessages.values()))
                         .build()
         );
-        MatcherAssert.assertThat("response attribute 'success'", reportResponse.getSuccess(), equalTo(true));
-        MatcherAssert.assertThat(
+        assertThat("response attribute 'success'", reportResponse.getSuccess(), equalTo(true));
+        assertThat(
                 "response attribute 'message'", reportResponse.getMessage(), equalTo("Successful operation")
         );
     }
@@ -194,7 +194,7 @@ public class AppMobile {
                         .deleteExposureHistory(currentEpochTuple.getEbid(), now)
                         .build()
         );
-        MatcherAssert.assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
+        assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
     }
 
     public void unregister() {
@@ -205,7 +205,7 @@ public class AppMobile {
                         .unregisterRequest(currentEpochTuple.getEbid(), now)
                         .build()
         );
-        MatcherAssert.assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
+        assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
     }
 
 }
