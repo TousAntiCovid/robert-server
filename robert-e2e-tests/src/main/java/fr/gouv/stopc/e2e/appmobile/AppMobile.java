@@ -10,20 +10,19 @@ import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hamcrest.MatcherAssert;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Stream;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @Slf4j
@@ -44,6 +43,9 @@ public class AppMobile {
     private final CaptchaApi captchaApi;
 
     private final DefaultApi robertApi;
+
+    @Getter
+    private ExposureStatusResponse lastExposureStatusResponse;
 
     public AppMobile(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
             DefaultApi robertApi) {
@@ -79,8 +81,8 @@ public class AppMobile {
         // The mobile application ask for an image captcha with the received captcha id
         // challenge
         final var response = captchaApi.captchaChallengeImageWithHttpInfo(captchaChallenge.getId());
-        assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
-        assertThat("image content", response.getData(), notNullValue());
+        MatcherAssert.assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
+        MatcherAssert.assertThat("image content", response.getData(), notNullValue());
 
         // The user reads the image content
         return new CaptchaSolution(captchaId, "ABCD");
@@ -128,20 +130,7 @@ public class AppMobile {
         }
     }
 
-    public void exchangeHelloMessagesWith(final AppMobile otherMobileApp, final Instant startInstant,
-            final Duration exchangeDuration) {
-        final var endDate = startInstant.plus(exchangeDuration);
-
-        Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .map(this::produceHelloMessage)
-                .forEach(otherMobileApp::receiveHelloMessage);
-
-        Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .map(otherMobileApp::produceHelloMessage)
-                .forEach(this::receiveHelloMessage);
-    }
-
-    private void receiveHelloMessage(final HelloMessage helloMessage) {
+    public void receiveHelloMessage(final HelloMessage helloMessage) {
         final var randomRssiCalibrated = ThreadLocalRandom.current().nextInt(-10, 3);
         final var time = clock.at(helloMessage.getTime());
         final var contact = receivedHelloMessages.computeIfAbsent(
@@ -168,11 +157,13 @@ public class AppMobile {
                         .contacts(new ArrayList<>(receivedHelloMessages.values()))
                         .build()
         );
-        assertThat("response attribute 'success'", reportResponse.getSuccess(), equalTo(true));
-        assertThat("response attribute 'message'", reportResponse.getMessage(), equalTo("Successful operation"));
+        MatcherAssert.assertThat("response attribute 'success'", reportResponse.getSuccess(), equalTo(true));
+        MatcherAssert.assertThat(
+                "response attribute 'message'", reportResponse.getMessage(), equalTo("Successful operation")
+        );
     }
 
-    private HelloMessage produceHelloMessage(final Instant helloMessageTime) {
+    public HelloMessage produceHelloMessage(final Instant helloMessageTime) {
         final var epochId = clock.at(helloMessageTime).getEpochId();
         final var tuple = contactTupleByEpochId.get(epochId);
         return HelloMessage.builder(HELLO, clientKeys.getKeyForMac())
@@ -182,20 +173,17 @@ public class AppMobile {
                 .build();
     }
 
-    public int requestStatus() {
+    public ExposureStatusResponse requestStatus() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
-        final var lastExposureStatusResponse = robertApi.eSR(
+        final var exposureStatusResponse = robertApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .exposureStatusRequest(currentEpochTuple.getEbid(), now)
                         .build()
         );
-        updateTuples(lastExposureStatusResponse.getTuples());
-        if (lastExposureStatusResponse.getRiskLevel() == null) {
-            return 0;
-        } else {
-            return lastExposureStatusResponse.getRiskLevel();
-        }
+        updateTuples(exposureStatusResponse.getTuples());
+        lastExposureStatusResponse = exposureStatusResponse;
+        return exposureStatusResponse;
     }
 
     public void deleteExposureHistory() {
@@ -206,7 +194,7 @@ public class AppMobile {
                         .deleteExposureHistory(currentEpochTuple.getEbid(), now)
                         .build()
         );
-        assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
+        MatcherAssert.assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
     }
 
     public void unregister() {
@@ -217,7 +205,7 @@ public class AppMobile {
                         .unregisterRequest(currentEpochTuple.getEbid(), now)
                         .build()
         );
-        assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
+        MatcherAssert.assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
     }
 
 }

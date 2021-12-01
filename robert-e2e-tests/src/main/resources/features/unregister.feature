@@ -9,8 +9,13 @@ Feature: Covid-19 positive declaration
     Given Paul installs the application TAC
 
   Scenario: One people unregisters his application
-    Given tomorrow at 12:00, Paul will be near Sarah during 60 minutes
+    Given tomorrow at 12:00, the users Paul and Sarah will be near during 60 minutes
     When Paul report himself sick
     When Sarah unregisters her application
     And robert batch has been triggered
     Then robert batch logs contains: "Could not find keys for id, discarding the hello message"
+
+  Scenario: One people unregisters his application without having any contact
+    When Sarah unregisters her application
+    And robert batch has been triggered
+    Then robert batch logs does not contains: "Could not find keys for id, discarding the hello message"
