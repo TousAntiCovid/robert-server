@@ -10,7 +10,6 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -90,14 +89,13 @@ public class RobertClientSteps {
         // in other way we'll not be able to call status endpoint during 2 min
         final AppMobile mobileApp = getMobileMap().get(userName);
         var lastExposureStatusResponse = mobileApp.requestStatus();
-        Assertions
-                .assertThat(
-                        ofEpochMilli(
-                                convertNTPSecondsToUnixMillis(
-                                        parseLong(lastExposureStatusResponse.getLastContactDate())
-                                )
+        assertThat(
+                ofEpochMilli(
+                        convertNTPSecondsToUnixMillis(
+                                parseLong(lastExposureStatusResponse.getLastContactDate())
                         )
                 )
+        )
                 .isCloseTo(Instant.now(), within(2, ChronoUnit.DAYS));
         assertThat(lastExposureStatusResponse.getRiskLevel())
                 .as("User risk level")

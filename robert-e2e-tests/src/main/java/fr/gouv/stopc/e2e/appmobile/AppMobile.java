@@ -10,7 +10,6 @@ import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -43,9 +42,6 @@ public class AppMobile {
     private final CaptchaApi captchaApi;
 
     private final DefaultApi robertApi;
-
-    @Getter
-    private ExposureStatusResponse lastExposureStatusResponse;
 
     public AppMobile(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
             DefaultApi robertApi) {
@@ -182,7 +178,6 @@ public class AppMobile {
                         .build()
         );
         updateTuples(exposureStatusResponse.getTuples());
-        lastExposureStatusResponse = exposureStatusResponse;
         return exposureStatusResponse;
     }
 
