@@ -1,4 +1,4 @@
-package fr.gouv.stopc.e2e.mobileApplication;
+package fr.gouv.stopc.e2e.mobileapplication;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -24,22 +23,15 @@ public class MobilePhonesEmulator {
 
     private final CaptchaApi captchaApi;
 
-    final Map<String, MobileApplication> applicationMobileMap = new HashMap<>();
+    final Map<String, MobileApplication> mobileApplications = new HashMap<>();
 
     public MobileApplication getMobileApplication(final String userName) {
-        return applicationMobileMap.get(userName);
-    }
-
-    private List<MobileApplication> getMobileApplicationList(final List<String> users) {
-        return users.stream()
-                .filter(applicationMobileMap::containsKey)
-                .map(applicationMobileMap::get)
-                .collect(Collectors.toList());
+        return mobileApplications.get(userName);
     }
 
     public void createMobileApplication(final String userName) {
         final var mobileApplication = new MobileApplication(userName, applicationProperties, captchaApi, robertApi);
-        applicationMobileMap.put(userName, mobileApplication);
+        mobileApplications.put(userName, mobileApplication);
     }
 
     public void exchangeHelloMessagesBetween(final List<String> users,
@@ -47,18 +39,17 @@ public class MobilePhonesEmulator {
             final Duration exchangeDuration) {
         final var endDate = startInstant.plus(exchangeDuration);
 
-        final var mobileApplications = getMobileApplicationList(users);
-
-        for (MobileApplication mobileApplication : mobileApplications) {
-
-            // For each app, we generate helloMessages
+        for (final String user : users) {
+            final var mobileApplication = mobileApplications.get(user);
             Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
                     .map(mobileApplication::produceHelloMessage)
                     .forEach(
-                            hello -> mobileApplications.stream()
-                                    .filter(app -> app != mobileApplication)
+                            hello -> users.stream()
+                                    .filter(otherUser -> !otherUser.equals(user))
+                                    .map(mobileApplications::get)
                                     .forEach(mobileApp -> mobileApp.receiveHelloMessage(hello))
                     );
         }
+
     }
 }

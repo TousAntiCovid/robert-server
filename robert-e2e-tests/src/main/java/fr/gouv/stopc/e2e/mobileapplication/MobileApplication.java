@@ -1,4 +1,4 @@
-package fr.gouv.stopc.e2e.mobileApplication;
+package fr.gouv.stopc.e2e.mobileapplication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
@@ -6,7 +6,7 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
-import fr.gouv.stopc.e2e.mobileApplication.model.*;
+import fr.gouv.stopc.e2e.mobileapplication.model.*;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;

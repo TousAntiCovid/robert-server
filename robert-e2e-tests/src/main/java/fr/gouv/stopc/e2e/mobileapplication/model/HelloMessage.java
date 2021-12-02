@@ -1,4 +1,4 @@
-package fr.gouv.stopc.e2e.mobileApplication.model;
+package fr.gouv.stopc.e2e.mobileapplication.model;
 
 import fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum;
 import fr.gouv.stopc.e2e.external.common.utils.TimeUtils;

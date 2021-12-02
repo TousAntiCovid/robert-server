@@ -1,8 +1,8 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.e2e.mobileApplication.MobileApplication;
-import fr.gouv.stopc.e2e.mobileApplication.MobilePhonesEmulator;
+import fr.gouv.stopc.e2e.mobileapplication.MobileApplication;
+import fr.gouv.stopc.e2e.mobileapplication.MobilePhonesEmulator;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -73,7 +73,7 @@ public class RobertClientSteps {
         assertThat(
                 exposureStatus.getLastContactDate()
         )
-                .isCloseTo(Instant.now(), within(2, ChronoUnit.DAYS));
+                .isCloseTo(Instant.now(), within(1, ChronoUnit.DAYS));
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(4);
