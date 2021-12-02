@@ -87,8 +87,9 @@ public class RobertClientSteps {
     public void isNotifiedAtRisk(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
-        final AppMobile mobileApp = getMobileMap().get(userName);
-        var lastExposureStatusResponse = mobileApp.requestStatus();
+        final var lastExposureStatusResponse = getMobileMap()
+            .get(userName);
+            .requestStatus();
         assertThat(
                 ofEpochMilli(
                         convertNTPSecondsToUnixMillis(

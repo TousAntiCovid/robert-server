@@ -126,7 +126,7 @@ public class AppMobile {
         }
     }
 
-    public void receiveHelloMessage(final HelloMessage helloMessage) {
+    void receiveHelloMessage(final HelloMessage helloMessage) {
         final var randomRssiCalibrated = ThreadLocalRandom.current().nextInt(-10, 3);
         final var time = clock.at(helloMessage.getTime());
         final var contact = receivedHelloMessages.computeIfAbsent(
@@ -159,7 +159,7 @@ public class AppMobile {
         );
     }
 
-    public HelloMessage produceHelloMessage(final Instant helloMessageTime) {
+    HelloMessage produceHelloMessage(final Instant helloMessageTime) {
         final var epochId = clock.at(helloMessageTime).getEpochId();
         final var tuple = contactTupleByEpochId.get(epochId);
         return HelloMessage.builder(HELLO, clientKeys.getKeyForMac())
