@@ -1,4 +1,4 @@
-package fr.gouv.stopc.e2e.appmobile;
+package fr.gouv.stopc.e2e.mobileApplication;
 
 import fr.gouv.stopc.e2e.external.common.utils.TimeUtils;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package fr.gouv.stopc.e2e.appmobile.model;
+package fr.gouv.stopc.e2e.mobileApplication.model;
 
 import lombok.Value;
 

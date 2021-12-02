@@ -1,12 +1,12 @@
-package fr.gouv.stopc.e2e.appmobile;
+package fr.gouv.stopc.e2e.mobileApplication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.stopc.e2e.appmobile.model.*;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
+import fr.gouv.stopc.e2e.mobileApplication.model.*;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;
@@ -25,7 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @Slf4j
-public class AppMobile {
+public class MobileApplication {
 
     private final String username;
 
@@ -43,7 +43,7 @@ public class AppMobile {
 
     private final DefaultApi robertApi;
 
-    public AppMobile(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
+    public MobileApplication(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
             DefaultApi robertApi) {
         this.username = username;
         this.applicationProperties = applicationProperties;
@@ -169,7 +169,7 @@ public class AppMobile {
                 .build();
     }
 
-    public ExposureStatusResponse requestStatus() {
+    public ExposureStatus requestStatus() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
         final var exposureStatusResponse = robertApi.eSR(
@@ -178,7 +178,8 @@ public class AppMobile {
                         .build()
         );
         updateTuples(exposureStatusResponse.getTuples());
-        return exposureStatusResponse;
+
+        return new ExposureStatus(exposureStatusResponse);
     }
 
     public void deleteExposureHistory() {

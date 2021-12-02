@@ -1,10 +1,10 @@
-package fr.gouv.stopc.e2e.appmobile.model;
+package fr.gouv.stopc.e2e.mobileApplication.model;
 
-import fr.gouv.stopc.e2e.appmobile.EpochClock.RobertInstant;
 import fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum;
 import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoHMACSHA256;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
+import fr.gouv.stopc.e2e.mobileApplication.EpochClock.RobertInstant;
 import fr.gouv.stopc.robert.client.model.AuthentifiedRequest;
 import fr.gouv.stopc.robert.client.model.AuthentifiedRequest.AuthentifiedRequestBuilder;
 import fr.gouv.stopc.robert.client.model.ExposureStatusRequest;
