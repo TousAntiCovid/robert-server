@@ -1,9 +1,8 @@
 package fr.gouv.stopc.e2e.steps;
 
-import fr.gouv.stopc.e2e.appmobile.AppMobile;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.robert.client.api.CaptchaApi;
-import fr.gouv.stopc.robert.client.api.DefaultApi;
+import fr.gouv.stopc.e2e.mobileapplication.MobileApplication;
+import fr.gouv.stopc.e2e.mobileapplication.MobilePhonesEmulator;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -12,11 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -26,11 +26,7 @@ public class RobertClientSteps {
 
     private final ApplicationProperties applicationProperties;
 
-    private final DefaultApi robertApi;
-
-    private final CaptchaApi captchaApi;
-
-    private final Map<String, AppMobile> applicationMobileMap = new HashMap<>();
+    private final MobilePhonesEmulator mobilePhonesEmulator;
 
     @Given("application robert ws rest is ready")
     public void applicationRobertIsReady() {
@@ -46,19 +42,17 @@ public class RobertClientSteps {
     }
 
     @Given("{word} install(s) the application TAC")
-    public void createAppMobile(final String userName) {
-        final var mobileApp = new AppMobile(userName, applicationProperties, captchaApi, robertApi);
-        applicationMobileMap.put(userName, mobileApp);
+    public void createMobileApplication(final String userName) {
+        mobilePhonesEmulator.createMobileApplication(userName);
     }
 
-    @Given("{naturalFutureTime}, {word} will be near {word} during {duration}")
+    @Given("{naturalTime}, the users {wordList} will be near during {duration}")
     public void generateContactsBetweenTwoUsersWithDuration(final Instant startDate,
-            final String firstUserName,
-            final String secondUserName,
+            final List<String> users,
             final Duration durationOfExchange) {
-        final AppMobile mobileApp = applicationMobileMap.get(firstUserName);
-        mobileApp.exchangeHelloMessagesWith(
-                applicationMobileMap.get(secondUserName),
+
+        mobilePhonesEmulator.exchangeHelloMessagesBetween(
+                users,
                 startDate,
                 durationOfExchange
         );
@@ -66,16 +60,21 @@ public class RobertClientSteps {
 
     @When("{word} report himself/herself/myself sick")
     public void reportContacts(final String userName) {
-        final AppMobile mobileApp = applicationMobileMap.get(userName);
-        mobileApp.reportContacts();
+        mobilePhonesEmulator.getMobileApplication(userName).reportContacts();
     }
 
     @Then("{word} is notified at risk")
     public void isNotifiedAtRisk(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
-        final AppMobile mobileApp = applicationMobileMap.get(userName);
-        assertThat(mobileApp.requestStatus())
+        final var exposureStatus = mobilePhonesEmulator
+                .getMobileApplication(userName)
+                .requestStatus();
+        assertThat(
+                exposureStatus.getLastContactDate()
+        )
+                .isCloseTo(Instant.now(), within(1, ChronoUnit.DAYS));
+        assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(4);
     }
@@ -84,15 +83,16 @@ public class RobertClientSteps {
     public void isNotNotifiedAtRisk(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
-        final AppMobile mobileApp = applicationMobileMap.get(userName);
-        assertThat(mobileApp.requestStatus())
+        final MobileApplication mobileApp = mobilePhonesEmulator.getMobileApplication(userName);
+        var exposureStatus = mobileApp.requestStatus();
+        assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(0);
     }
 
     @When("{word} delete his/her/my risk exposure history")
     public void deleteExposureHistory(final String userName) {
-        applicationMobileMap.get(userName).deleteExposureHistory();
+        mobilePhonesEmulator.getMobileApplication(userName).deleteExposureHistory();
     }
 
     @When("{word} does not delete his/her risk exposure history")
@@ -102,6 +102,6 @@ public class RobertClientSteps {
 
     @When("{word} unregister(s) his/her/my application")
     public void unregister(final String userName) {
-        applicationMobileMap.get(userName).unregister();
+        mobilePhonesEmulator.getMobileApplication(userName).unregister();
     }
 }

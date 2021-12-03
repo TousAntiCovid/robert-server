@@ -1,12 +1,12 @@
-package fr.gouv.stopc.e2e.appmobile;
+package fr.gouv.stopc.e2e.mobileapplication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.stopc.e2e.appmobile.model.*;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
+import fr.gouv.stopc.e2e.mobileapplication.model.*;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;
@@ -14,11 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Stream;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
 import static java.util.stream.Collectors.toMap;
@@ -27,7 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @Slf4j
-public class AppMobile {
+public class MobileApplication {
 
     private final String username;
 
@@ -45,7 +43,7 @@ public class AppMobile {
 
     private final DefaultApi robertApi;
 
-    public AppMobile(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
+    public MobileApplication(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
             DefaultApi robertApi) {
         this.username = username;
         this.applicationProperties = applicationProperties;
@@ -128,20 +126,7 @@ public class AppMobile {
         }
     }
 
-    public void exchangeHelloMessagesWith(final AppMobile otherMobileApp, final Instant startInstant,
-            final Duration exchangeDuration) {
-        final var endDate = startInstant.plus(exchangeDuration);
-
-        Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .map(this::produceHelloMessage)
-                .forEach(otherMobileApp::receiveHelloMessage);
-
-        Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
-                .map(otherMobileApp::produceHelloMessage)
-                .forEach(this::receiveHelloMessage);
-    }
-
-    private void receiveHelloMessage(final HelloMessage helloMessage) {
+    void receiveHelloMessage(final HelloMessage helloMessage) {
         final var randomRssiCalibrated = ThreadLocalRandom.current().nextInt(-10, 3);
         final var time = clock.at(helloMessage.getTime());
         final var contact = receivedHelloMessages.computeIfAbsent(
@@ -169,10 +154,12 @@ public class AppMobile {
                         .build()
         );
         assertThat("response attribute 'success'", reportResponse.getSuccess(), equalTo(true));
-        assertThat("response attribute 'message'", reportResponse.getMessage(), equalTo("Successful operation"));
+        assertThat(
+                "response attribute 'message'", reportResponse.getMessage(), equalTo("Successful operation")
+        );
     }
 
-    private HelloMessage produceHelloMessage(final Instant helloMessageTime) {
+    HelloMessage produceHelloMessage(final Instant helloMessageTime) {
         final var epochId = clock.at(helloMessageTime).getEpochId();
         final var tuple = contactTupleByEpochId.get(epochId);
         return HelloMessage.builder(HELLO, clientKeys.getKeyForMac())
@@ -182,20 +169,17 @@ public class AppMobile {
                 .build();
     }
 
-    public int requestStatus() {
+    public ExposureStatus requestStatus() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
-        final var lastExposureStatusResponse = robertApi.eSR(
+        final var exposureStatusResponse = robertApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .exposureStatusRequest(currentEpochTuple.getEbid(), now)
                         .build()
         );
-        updateTuples(lastExposureStatusResponse.getTuples());
-        if (lastExposureStatusResponse.getRiskLevel() == null) {
-            return 0;
-        } else {
-            return lastExposureStatusResponse.getRiskLevel();
-        }
+        updateTuples(exposureStatusResponse.getTuples());
+
+        return new ExposureStatus(exposureStatusResponse);
     }
 
     public void deleteExposureHistory() {
