@@ -1,4 +1,4 @@
-package fr.gouv.stopc.e2e.appmobile.model;
+package fr.gouv.stopc.e2e.mobileapplication.model;
 
 import fr.gouv.stopc.e2e.external.crypto.CryptoHMACSHA256;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
