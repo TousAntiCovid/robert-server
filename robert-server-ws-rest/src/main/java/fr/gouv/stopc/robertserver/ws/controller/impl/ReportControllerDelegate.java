@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,14 +22,16 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class ReportControllerDelegate {
+
     private IRestApiService restApiService;
+
     private PropertyLoader propertyLoader;
 
     @Inject
     public ReportControllerDelegate(final IRestApiService restApiService,
-		                    final PropertyLoader propertyLoader) {
+            final PropertyLoader propertyLoader) {
         this.restApiService = restApiService;
-	this.propertyLoader = propertyLoader;
+        this.propertyLoader = propertyLoader;
     }
 
     public boolean isReportRequestValid(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
@@ -44,8 +46,8 @@ public class ReportControllerDelegate {
             return false;
         }
 
-        if (!this.propertyLoader.getDisableCheckToken()) {
-            this.checkValidityToken(reportBatchRequestVo.getToken());
+        if (Boolean.FALSE.equals(this.propertyLoader.getDisableCheckToken())) {
+            this.isReportTokenValid(reportBatchRequestVo.getToken());
         }
 
         return true;
@@ -61,7 +63,7 @@ public class ReportControllerDelegate {
                 && StringUtils.isEmpty(reportBatchRequestVo.getContactsAsBinary());
     }
 
-    private void checkValidityToken(String token) throws RobertServerException {
+    private void isReportTokenValid(String token) throws RobertServerException {
         if (StringUtils.isEmpty(token)) {
             log.warn("No token provided");
             throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
@@ -75,8 +77,13 @@ public class ReportControllerDelegate {
 
         Optional<VerifyResponseDto> response = this.restApiService.verifyReportToken(token);
 
-        if (!response.isPresent() ||  !response.get().isValid()) {
-            log.warn("Verifying the token failed");
+        if (response.isEmpty() || !response.get().isValid()) {
+
+            if (List.of(6, 12).contains(token.length())) {
+                log.info("Verifying the token failed for short or test report code");
+            } else if (token.length() == 36) {
+                log.warn("Verifying the token failed for long report code");
+            }
             throw new RobertServerUnauthorizedException(MessageConstants.INVALID_AUTHENTICATION.getValue());
         }
 

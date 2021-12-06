@@ -1,20 +1,10 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Date;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IReportControllerV4;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseV4Dto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
+import fr.gouv.stopc.robertserver.ws.exception.RobertServerUnauthorizedException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
@@ -23,6 +13,17 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Date;
 
 @Service
 @Slf4j
@@ -30,7 +31,7 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
 
     public static final SignatureAlgorithm signatureAlgo = SignatureAlgorithm.RS256;
 
-    private final  WsServerConfiguration wsServerConfiguration;
+    private final WsServerConfiguration wsServerConfiguration;
 
     private final ReportControllerDelegate delegate;
 
@@ -48,9 +49,23 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
     }
 
     @Override
-    public ResponseEntity<ReportBatchResponseV4Dto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
-        if ( ! delegate.isReportRequestValid(reportBatchRequestVo) ) 
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<ReportBatchResponseV4Dto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo)
+            throws RobertServerException {
+
+        try {
+            if (!delegate.isReportRequestValid(reportBatchRequestVo)) {
+                return ResponseEntity.badRequest().build();
+            }
+        } catch (RobertServerUnauthorizedException unauthorizedException) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(
+                            ReportBatchResponseV4Dto.builder()
+                                    .message(unauthorizedException.getMessage())
+                                    .success(Boolean.FALSE)
+                                    .build()
+                    );
+        }
 
         contactDtoService.saveContacts(reportBatchRequestVo.getContacts());
 
@@ -80,8 +95,9 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
             return token;
         } catch (Exception e) {
             log.error("JWT token generation failed!", e);
-            // Avoid to send an HTTP Error code to the client if only the report validation token generation fails
-            return ""; 
+            // Avoid to send an HTTP Error code to the client if only the report validation
+            // token generation fails
+            return "";
         }
     }
 
