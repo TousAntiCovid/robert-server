@@ -47,7 +47,7 @@ public class ReportControllerDelegate {
         }
 
         if (Boolean.FALSE.equals(this.propertyLoader.getDisableCheckToken())) {
-            this.isReportTokenValid(reportBatchRequestVo.getToken());
+            this.checkReportTokenValidity(reportBatchRequestVo.getToken());
         }
 
         return true;
@@ -63,7 +63,7 @@ public class ReportControllerDelegate {
                 && StringUtils.isEmpty(reportBatchRequestVo.getContactsAsBinary());
     }
 
-    private void isReportTokenValid(String token) throws RobertServerException {
+    private void checkReportTokenValidity(String token) throws RobertServerException {
         if (StringUtils.isEmpty(token)) {
             log.warn("No token provided");
             throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
