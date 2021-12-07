@@ -8,6 +8,7 @@ Feature: Covid-19 risk evolution
     Given Sarah installs the application TAC
 
   Scenario: Fourteen days after contact user is still at risk
+    Given Sarah was at risk fourteen days ago
     Given just now, the users John and Sarah will be near during 60 minutes
     And John report himself sick
     And robert batch has been triggered

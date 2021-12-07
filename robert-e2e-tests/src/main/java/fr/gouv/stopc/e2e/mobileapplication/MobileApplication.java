@@ -6,13 +6,11 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
-import fr.gouv.stopc.e2e.external.database.postgresql.model.ClientIdentifier;
 import fr.gouv.stopc.e2e.external.database.postgresql.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.model.*;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -24,6 +22,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -46,9 +45,7 @@ public class MobileApplication {
 
     private final DefaultApi robertApi;
 
-    private String applicationId;
-
-    private ClientIdentifierRepository clientIdentifierRepository;
+    private final String applicationId;
 
     public String getApplicationId() {
         return applicationId;
@@ -60,22 +57,14 @@ public class MobileApplication {
         this.applicationProperties = applicationProperties;
         this.captchaApi = captchaApi;
         this.robertApi = robertApi;
-        this.clientIdentifierRepository = clientIdentifierRepository;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
         final var captchaSolution = resolveMockedCaptchaChallenge();
         final var registerResponse = register(captchaSolution.getId(), captchaSolution.getAnswer());
-        getIdFromPostgresql();
+        this.applicationId = clientIdentifierRepository.findTopByOrderByIdDesc()
+                .orElseThrow()
+                .getIdA();
         this.clock = new EpochClock(registerResponse.getTimeStart());
-    }
-
-    @SneakyThrows
-    private void getIdFromPostgresql() {
-        Thread.sleep(6000);
-        Optional<ClientIdentifier> clientIdentifier = this.clientIdentifierRepository.findTopByOrderByIdDesc();
-        if (clientIdentifier.isPresent()) {
-            applicationId = clientIdentifier.get().getIdA();
-        }
     }
 
     private CaptchaSolution resolveMockedCaptchaChallenge() {
@@ -181,7 +170,7 @@ public class MobileApplication {
     }
 
     HelloMessage produceHelloMessage(final Instant helloMessageTime) {
-        final var epochId = clock.at(helloMessageTime).getEpochId();
+        final var epochId = clock.at(helloMessageTime).asEpochId();
         final var tuple = contactTupleByEpochId.get(epochId);
         return HelloMessage.builder(HELLO, clientKeys.getKeyForMac())
                 .ebid(tuple.getEbid())
@@ -192,7 +181,7 @@ public class MobileApplication {
 
     public ExposureStatus requestStatus() {
         final var now = clock.now();
-        final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
+        final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
         final var exposureStatusResponse = robertApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .exposureStatusRequest(currentEpochTuple.getEbid(), now)
@@ -205,7 +194,7 @@ public class MobileApplication {
 
     public void deleteExposureHistory() {
         final var now = clock.now();
-        final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
+        final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
         final var deleteResponse = robertApi.deleteExposureHistory(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .deleteExposureHistory(currentEpochTuple.getEbid(), now)
@@ -216,7 +205,7 @@ public class MobileApplication {
 
     public void unregister() {
         final var now = clock.now();
-        final var currentEpochTuple = contactTupleByEpochId.get(now.getEpochId());
+        final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
         final var deleteResponse = robertApi.unregister(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .unregisterRequest(currentEpochTuple.getEbid(), now)

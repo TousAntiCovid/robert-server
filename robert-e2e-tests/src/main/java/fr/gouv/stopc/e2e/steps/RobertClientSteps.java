@@ -111,10 +111,10 @@ public class RobertClientSteps {
             var registration = optRegistration.get();
             var clock = new EpochClock(3799958400L);// 01/06/2020
             var epochDate = clock.at(startDate);
-            registration.setLatestRiskEpoch(epochDate.getEpochId());
+            registration.setLatestRiskEpoch(epochDate.asEpochId());
             int index = 0;
             for (EpochExposition epochExposition : registration.getExposedEpochs()) {
-                epochExposition.setEpochId(epochDate.plusEpochs(index++));
+                epochExposition.setEpochId(epochDate.plusEpochs(index++).asEpochId());
             }
             this.registrationRepository.save(registration);
         }
