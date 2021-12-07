@@ -1,4 +1,4 @@
-Feature: Covid-19 positive declaration
+Feature: Covid-19 risk evolution
   As a user
   I want to know when I'm no longer at risk
   in order to get out personal confinement.
@@ -23,7 +23,7 @@ Feature: Covid-19 positive declaration
     And robert batch has been triggered
     Then Sarah has no notification
 
-  Scenario: User data is deleted after 15 days
+  Scenario: User data was deleted after 15 days
     Given just now, the users John and Sarah will be near during 60 minutes
     When John report himself sick
     And robert batch has been triggered
