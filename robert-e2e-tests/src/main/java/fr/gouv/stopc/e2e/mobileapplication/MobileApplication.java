@@ -6,6 +6,9 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
+import fr.gouv.stopc.e2e.external.database.mongodb.model.EpochExposition;
+import fr.gouv.stopc.e2e.external.database.mongodb.model.Registration;
+import fr.gouv.stopc.e2e.external.database.mongodb.repository.RegistrationRepository;
 import fr.gouv.stopc.e2e.external.database.postgresql.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.model.*;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
@@ -22,7 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.bson.internal.Base64.decode;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -47,14 +50,18 @@ public class MobileApplication {
 
     private final String applicationId;
 
+    private final RegistrationRepository registrationRepository;
+
     public String getApplicationId() {
         return applicationId;
     }
 
     public MobileApplication(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
-            DefaultApi robertApi, ClientIdentifierRepository clientIdentifierRepository) {
+            DefaultApi robertApi, ClientIdentifierRepository clientIdentifierRepository,
+            RegistrationRepository registrationRepository) {
         this.username = username;
         this.applicationProperties = applicationProperties;
+        this.registrationRepository = registrationRepository;
         this.captchaApi = captchaApi;
         this.robertApi = robertApi;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
@@ -212,6 +219,23 @@ public class MobileApplication {
                         .build()
         );
         assertThat("response attribute 'success'", deleteResponse.getSuccess(), equalTo(true));
+    }
+
+    public Registration getRegistration() {
+        return this.registrationRepository.findById(decode(getApplicationId()))
+                .orElseThrow();
+    }
+
+    public void changeExposedEpochsDatesStartingAt(Instant startDate) {
+        var registration = getRegistration();
+        final var epochDate = clock.at(startDate);
+        registration.setLatestRiskEpoch(epochDate.asEpochId());
+        registration.setLastContactTimestamp(epochDate.asNtpTimestamp());
+        int index = 0;
+        for (EpochExposition epochExposition : registration.getExposedEpochs()) {
+            epochExposition.setEpochId(epochDate.plusEpochs(index++).asEpochId());
+        }
+        this.registrationRepository.save(registration);
     }
 
 }

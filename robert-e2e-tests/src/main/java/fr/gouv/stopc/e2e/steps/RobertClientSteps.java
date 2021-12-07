@@ -1,9 +1,6 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.e2e.external.database.mongodb.model.EpochExposition;
-import fr.gouv.stopc.e2e.external.database.mongodb.repository.RegistrationRepository;
-import fr.gouv.stopc.e2e.mobileapplication.EpochClock;
 import fr.gouv.stopc.e2e.mobileapplication.MobileApplication;
 import fr.gouv.stopc.e2e.mobileapplication.MobilePhonesEmulator;
 import io.cucumber.java.en.Given;
@@ -12,7 +9,6 @@ import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.internal.Base64;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -21,7 +17,6 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -33,7 +28,7 @@ public class RobertClientSteps {
 
     private final MobilePhonesEmulator mobilePhonesEmulator;
 
-    private RegistrationRepository registrationRepository;
+    private final RobertBatchSteps robertBatchSteps;
 
     @Given("application robert ws rest is ready")
     public void applicationRobertIsReady() {
@@ -77,13 +72,20 @@ public class RobertClientSteps {
         final var exposureStatus = mobilePhonesEmulator
                 .getMobileApplication(userName)
                 .requestStatus();
-        assertThat(
-                exposureStatus.getLastContactDate()
-        )
-                .isCloseTo(Instant.now(), within(1, ChronoUnit.DAYS));
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(4);
+    }
+
+    @Then("{word} has no notification")
+    public void isNotNotifiedAtRisk(final String userName) {
+        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
+        // in other way we'll not be able to call status endpoint during 2 min
+        final MobileApplication mobileApp = mobilePhonesEmulator.getMobileApplication(userName);
+        var exposureStatus = mobileApp.requestStatus();
+        assertThat(exposureStatus.getRiskLevel())
+                .as("User risk level")
+                .isEqualTo(0);
     }
 
     @Then("{word} data was deleted")
@@ -96,39 +98,34 @@ public class RobertClientSteps {
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(0);
-        var optRegistration = this.registrationRepository.findById(Base64.decode(mobile.getApplicationId()));
-        if (optRegistration.isPresent()) {
-            assertThat(optRegistration.get().getExposedEpochs().isEmpty()).isTrue();
-        }
+        assertThat(mobile.getRegistration().getExposedEpochs().isEmpty()).isTrue();
+    }
+
+    @Then("{word} data was not deleted")
+    public void dataWasNotDeleted(final String userName) {
+        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
+        // in other way we'll not be able to call status endpoint during 2 min
+        var mobile = mobilePhonesEmulator.getMobileApplication(userName);
+        final var exposureStatus = mobile.requestStatus();
+        assertThat(exposureStatus.getLastContactDate()).isNotNull();
+        assertThat(mobile.getRegistration().getExposedEpochs().isEmpty()).isFalse();
     }
 
     @SneakyThrows
-    @Then("changes last contact date to {naturalTime} for user {word}")
-    public void falsifyExposedEpochs(final Instant startDate, final String userName) {
-        var mobile = mobilePhonesEmulator.getMobileApplication(userName);
-        var optRegistration = this.registrationRepository.findById(Base64.decode(mobile.getApplicationId()));
-        if (optRegistration.isPresent()) {
-            var registration = optRegistration.get();
-            var clock = new EpochClock(3799958400L);// 01/06/2020
-            var epochDate = clock.at(startDate);
-            registration.setLatestRiskEpoch(epochDate.asEpochId());
-            int index = 0;
-            for (EpochExposition epochExposition : registration.getExposedEpochs()) {
-                epochExposition.setEpochId(epochDate.plusEpochs(index++).asEpochId());
-            }
-            this.registrationRepository.save(registration);
-        }
-    }
-
-    @Then("{word} has no notification")
-    public void isNotNotifiedAtRisk(final String userName) {
-        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
-        // in other way we'll not be able to call status endpoint during 2 min
-        final MobileApplication mobileApp = mobilePhonesEmulator.getMobileApplication(userName);
-        var exposureStatus = mobileApp.requestStatus();
-        assertThat(exposureStatus.getRiskLevel())
-                .as("User risk level")
-                .isEqualTo(0);
+    @Then("{naturalTime}, {wordList} met and {word} was/were at risk following {word} report")
+    public void falsifyExposedEpochs(final Instant startDate,
+            List<String> users,
+            final String userNameAtRisk,
+            final String userNameReporter) {
+        mobilePhonesEmulator.exchangeHelloMessagesBetween(
+                users,
+                Instant.now(),
+                Duration.of(60, ChronoUnit.MINUTES)
+        );
+        mobilePhonesEmulator.getMobileApplication(userNameReporter).reportContacts();
+        robertBatchSteps.launchBatch();
+        mobilePhonesEmulator.getMobileApplication(userNameAtRisk).changeExposedEpochsDatesStartingAt(startDate);
+        robertBatchSteps.launchBatch();
     }
 
     @When("{word} delete his/her/my risk exposure history")

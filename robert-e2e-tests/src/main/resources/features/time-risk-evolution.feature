@@ -8,26 +8,17 @@ Feature: Covid-19 risk evolution
     Given Sarah installs the application TAC
 
   Scenario: Fourteen days after contact user is still at risk
-    Given Sarah was at risk fourteen days ago
-    Given just now, the users John and Sarah will be near during 60 minutes
-    And John report himself sick
-    And robert batch has been triggered
-    When changes last contact date to fourteen days ago for user Sarah
-    And robert batch has been triggered
+    Given fourteen days ago, Sarah and John met and Sarah was at risk following John report
     Then Sarah is notified at risk
 
   Scenario: Fifteen days after contact nobody is at risk
-    Given just now, the users John and Sarah will be near during 60 minutes
-    And John report himself sick
-    And robert batch has been triggered
-    When changes last contact date to fifteen days ago for user Sarah
-    And robert batch has been triggered
+    Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
     Then Sarah has no notification
 
-  Scenario: User data was deleted after 15 days
-    Given just now, the users John and Sarah will be near during 60 minutes
-    And John report himself sick
-    And robert batch has been triggered
-    When changes last contact date to fifteen days ago for user Sarah
-    And robert batch has been triggered
+  Scenario: User data is not deleted before 15 days
+    Given fourteen days ago, Sarah and John met and Sarah was at risk following John report
+    Then Sarah data was not deleted
+
+  Scenario: User data is deleted after 15 days
+    Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
     Then Sarah data was deleted

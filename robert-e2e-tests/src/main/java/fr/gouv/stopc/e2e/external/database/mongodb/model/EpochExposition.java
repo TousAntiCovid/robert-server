@@ -1,5 +1,6 @@
 package fr.gouv.stopc.e2e.external.database.mongodb.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.List;
  * information).
  */
 @NoArgsConstructor
+@AllArgsConstructor
 @Data
 @Builder
 public class EpochExposition {

@@ -1,17 +1,16 @@
 package fr.gouv.stopc.e2e.external.database.postgresql.model;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import javax.persistence.*;
+
 import java.util.Date;
 
 @Entity
-@Table(name = "IDENTITY", indexes = {@Index(name = "IDX_IDA", columnList = "idA")})
+@Table(name = "IDENTITY", indexes = { @Index(name = "IDX_IDA", columnList = "idA") })
 @Data
 @Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class ClientIdentifier {
 
