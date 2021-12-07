@@ -1,13 +1,18 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
+import fr.gouv.stopc.e2e.external.database.mongodb.model.EpochExposition;
+import fr.gouv.stopc.e2e.external.database.mongodb.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.mobileapplication.EpochClock;
 import fr.gouv.stopc.e2e.mobileapplication.MobileApplication;
 import fr.gouv.stopc.e2e.mobileapplication.MobilePhonesEmulator;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.internal.Base64;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -27,6 +32,8 @@ public class RobertClientSteps {
     private final ApplicationProperties applicationProperties;
 
     private final MobilePhonesEmulator mobilePhonesEmulator;
+
+    private RegistrationRepository registrationRepository;
 
     @Given("application robert ws rest is ready")
     public void applicationRobertIsReady() {
@@ -77,6 +84,40 @@ public class RobertClientSteps {
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(4);
+    }
+
+    @Then("{word} data was deleted")
+    public void dataWasDeleted(final String userName) {
+        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
+        // in other way we'll not be able to call status endpoint during 2 min
+        var mobile = mobilePhonesEmulator.getMobileApplication(userName);
+        final var exposureStatus = mobile.requestStatus();
+        assertThat(exposureStatus.getLastContactDate()).isNull();
+        assertThat(exposureStatus.getRiskLevel())
+                .as("User risk level")
+                .isEqualTo(0);
+        var optRegistration = this.registrationRepository.findById(Base64.decode(mobile.getApplicationId()));
+        if (optRegistration.isPresent()) {
+            assertThat(optRegistration.get().getExposedEpochs().isEmpty()).isTrue();
+        }
+    }
+
+    @SneakyThrows
+    @Then("changes last contact date to {naturalTime} for user {word}")
+    public void falsifyExposedEpochs(final Instant startDate, final String userName) {
+        var mobile = mobilePhonesEmulator.getMobileApplication(userName);
+        var optRegistration = this.registrationRepository.findById(Base64.decode(mobile.getApplicationId()));
+        if (optRegistration.isPresent()) {
+            var registration = optRegistration.get();
+            var clock = new EpochClock(3799958400L);// 01/06/2020
+            var epochDate = clock.at(startDate);
+            registration.setLatestRiskEpoch(epochDate.getEpochId());
+            int index = 0;
+            for (EpochExposition epochExposition : registration.getExposedEpochs()) {
+                epochExposition.setEpochId(epochDate.plusEpochs(index++));
+            }
+            this.registrationRepository.save(registration);
+        }
     }
 
     @Then("{word} has no notification")

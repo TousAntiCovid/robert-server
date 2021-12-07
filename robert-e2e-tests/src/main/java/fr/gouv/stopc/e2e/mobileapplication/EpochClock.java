@@ -41,5 +41,12 @@ public class EpochClock {
             final var numberEpochs = (asNtpTimestamp() - startNtpTimestamp) / TimeUtils.EPOCH_DURATION_SECS;
             return (int) numberEpochs;
         }
+
+        public int plusEpochs(int numberOfEpochs) {
+            var newTime = time.plusSeconds(numberOfEpochs * TimeUtils.EPOCH_DURATION_SECS);
+            var ntpTimeStamp = newTime.getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970;
+            var numberEpoch = (ntpTimeStamp - startNtpTimestamp) / TimeUtils.EPOCH_DURATION_SECS;
+            return (int) numberEpoch;
+        }
     }
 }

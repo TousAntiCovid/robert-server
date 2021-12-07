@@ -6,10 +6,13 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
+import fr.gouv.stopc.e2e.external.database.postgresql.model.ClientIdentifier;
+import fr.gouv.stopc.e2e.external.database.postgresql.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.model.*;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -43,18 +46,36 @@ public class MobileApplication {
 
     private final DefaultApi robertApi;
 
+    private String applicationId;
+
+    private ClientIdentifierRepository clientIdentifierRepository;
+
+    public String getApplicationId() {
+        return applicationId;
+    }
+
     public MobileApplication(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
-            DefaultApi robertApi) {
+            DefaultApi robertApi, ClientIdentifierRepository clientIdentifierRepository) {
         this.username = username;
         this.applicationProperties = applicationProperties;
         this.captchaApi = captchaApi;
         this.robertApi = robertApi;
+        this.clientIdentifierRepository = clientIdentifierRepository;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
-
         final var captchaSolution = resolveMockedCaptchaChallenge();
         final var registerResponse = register(captchaSolution.getId(), captchaSolution.getAnswer());
+        getIdFromPostgresql();
         this.clock = new EpochClock(registerResponse.getTimeStart());
+    }
+
+    @SneakyThrows
+    private void getIdFromPostgresql() {
+        Thread.sleep(6000);
+        Optional<ClientIdentifier> clientIdentifier = this.clientIdentifierRepository.findTopByOrderByIdDesc();
+        if (clientIdentifier.isPresent()) {
+            applicationId = clientIdentifier.get().getIdA();
+        }
     }
 
     private CaptchaSolution resolveMockedCaptchaChallenge() {

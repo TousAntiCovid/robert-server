@@ -1,6 +1,7 @@
 package fr.gouv.stopc.e2e.mobileapplication;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
+import fr.gouv.stopc.e2e.external.database.postgresql.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,8 @@ public class MobilePhonesEmulator {
 
     private final CaptchaApi captchaApi;
 
+    private ClientIdentifierRepository clientIdentifierRepository;
+
     final Map<String, MobileApplication> mobileApplications = new HashMap<>();
 
     public MobileApplication getMobileApplication(final String userName) {
@@ -30,7 +33,9 @@ public class MobilePhonesEmulator {
     }
 
     public void createMobileApplication(final String userName) {
-        final var mobileApplication = new MobileApplication(userName, applicationProperties, captchaApi, robertApi);
+        final var mobileApplication = new MobileApplication(
+                userName, applicationProperties, captchaApi, robertApi, clientIdentifierRepository
+        );
         mobileApplications.put(userName, mobileApplication);
     }
 
