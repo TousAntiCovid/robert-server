@@ -1,4 +1,4 @@
-package fr.gouv.stopc.e2e.external.database.postgresql.model;
+package fr.gouv.stopc.e2e.mobileapplication.timemachine.model;
 
 import lombok.*;
 

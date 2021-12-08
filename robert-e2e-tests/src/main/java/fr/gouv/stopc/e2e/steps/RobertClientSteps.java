@@ -99,17 +99,9 @@ public class RobertClientSteps {
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(0);
-        assertThat(mobile.getRegistration().getExposedEpochs().isEmpty()).isTrue();
-    }
-
-    @Then("{word} data was not deleted")
-    public void dataWasNotDeleted(final String userName) {
-        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
-        // in other way we'll not be able to call status endpoint during 2 min
-        var mobile = mobilePhonesEmulator.getMobileApplication(userName);
-        final var exposureStatus = mobile.requestStatus();
-        assertThat(exposureStatus.getLastContactDate()).isNotNull();
-        assertThat(mobile.getRegistration().getExposedEpochs().isEmpty()).isFalse();
+        assertThat(mobile.getRegistration().getExposedEpochs().size())
+                .as("Exposed epochs list")
+                .isEqualTo(0);
     }
 
     @SneakyThrows
@@ -118,6 +110,8 @@ public class RobertClientSteps {
             List<String> users,
             final String userNameAtRisk,
             final String userNameReporter) {
+        // We create an exchange between two users and launch the batch in order to
+        // compute exposed epochs and latestRiskEpoch
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
                 users,
                 Instant.now(),
@@ -125,6 +119,8 @@ public class RobertClientSteps {
         );
         mobilePhonesEmulator.getMobileApplication(userNameReporter).reportContacts();
         robertBatchSteps.launchBatch();
+        // We modify exposed epochs and we re-launch batch in order to re-compute
+        // latestRiskEpoch
         mobilePhonesEmulator.getMobileApplication(userNameAtRisk).changeExposedEpochsDatesStartingAt(startDate);
         robertBatchSteps.launchBatch();
     }

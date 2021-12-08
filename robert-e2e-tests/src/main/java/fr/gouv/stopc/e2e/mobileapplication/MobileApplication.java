@@ -6,11 +6,11 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
-import fr.gouv.stopc.e2e.external.database.mongodb.model.EpochExposition;
-import fr.gouv.stopc.e2e.external.database.mongodb.model.Registration;
-import fr.gouv.stopc.e2e.external.database.mongodb.repository.RegistrationRepository;
-import fr.gouv.stopc.e2e.external.database.postgresql.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.model.*;
+import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.EpochExposition;
+import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
+import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
+import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;
@@ -23,9 +23,9 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
+import static java.util.Base64.*;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.bson.internal.Base64.decode;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -51,10 +51,6 @@ public class MobileApplication {
     private final String applicationId;
 
     private final RegistrationRepository registrationRepository;
-
-    public String getApplicationId() {
-        return applicationId;
-    }
 
     public MobileApplication(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
             DefaultApi robertApi, ClientIdentifierRepository clientIdentifierRepository,
@@ -102,7 +98,7 @@ public class MobileApplication {
     }
 
     private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {
-        final var publicKey = Base64.getEncoder()
+        final var publicKey = getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
 
         final var registerResponse = robertApi.register(
@@ -222,7 +218,7 @@ public class MobileApplication {
     }
 
     public Registration getRegistration() {
-        return this.registrationRepository.findById(decode(getApplicationId()))
+        return this.registrationRepository.findById(Base64.getDecoder().decode(applicationId))
                 .orElseThrow();
     }
 

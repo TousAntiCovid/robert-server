@@ -16,10 +16,6 @@ Feature: Covid-19 risk evolution
     Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
     Then Sarah has no notification
 
-  Scenario: User data is not deleted before 15 days
-    Given fourteen days ago, Sarah and John met and Sarah was at risk following John report
-    Then Sarah data was not deleted
-
   Scenario: User data is deleted after 15 days
     Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
     Then Sarah data was deleted

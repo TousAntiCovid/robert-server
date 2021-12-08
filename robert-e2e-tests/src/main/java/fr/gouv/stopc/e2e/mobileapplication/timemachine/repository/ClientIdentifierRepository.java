@@ -1,6 +1,6 @@
-package fr.gouv.stopc.e2e.external.database.postgresql.repository;
+package fr.gouv.stopc.e2e.mobileapplication.timemachine.repository;
 
-import fr.gouv.stopc.e2e.external.database.postgresql.model.ClientIdentifier;
+import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.ClientIdentifier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

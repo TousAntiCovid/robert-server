@@ -1,4 +1,4 @@
-package fr.gouv.stopc.e2e.external.database.mongodb.model;
+package fr.gouv.stopc.e2e.mobileapplication.timemachine.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
