@@ -4,7 +4,6 @@ import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IReportControllerV4;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseV4Dto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
-import fr.gouv.stopc.robertserver.ws.exception.RobertServerUnauthorizedException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
@@ -13,7 +12,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -52,19 +50,8 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
     public ResponseEntity<ReportBatchResponseV4Dto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo)
             throws RobertServerException {
 
-        try {
-            if (!delegate.isReportRequestValid(reportBatchRequestVo)) {
-                return ResponseEntity.badRequest().build();
-            }
-        } catch (RobertServerUnauthorizedException unauthorizedException) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(
-                            ReportBatchResponseV4Dto.builder()
-                                    .message(unauthorizedException.getMessage())
-                                    .success(Boolean.FALSE)
-                                    .build()
-                    );
+        if (!delegate.isReportRequestValid(reportBatchRequestVo)) {
+            return ResponseEntity.badRequest().build();
         }
 
         contactDtoService.saveContacts(reportBatchRequestVo.getContacts());
