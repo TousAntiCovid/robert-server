@@ -64,10 +64,6 @@ public class ReportControllerDelegate {
     }
 
     private void checkReportTokenValidity(String token) throws RobertServerException {
-        if (StringUtils.isEmpty(token)) {
-            log.warn("No token provided");
-            throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
-        }
 
         final var acceptedLengths = List.of(6, 12, 36);
         if (!acceptedLengths.contains(token.length())) {
@@ -79,11 +75,18 @@ public class ReportControllerDelegate {
 
         if (response.isEmpty() || !response.get().isValid()) {
 
-            if (List.of(6, 12).contains(token.length())) {
-                log.info("Verifying the token failed for short or test report code");
-            } else if (token.length() == 36) {
-                log.warn("Verifying the token failed for long report code");
+            switch (token.length()) {
+                case 6:
+                    log.info("Verifying the token failed for short report code");
+                    break;
+                case 12:
+                    log.info("Verifying the token failed for test report code");
+                    break;
+                case 36:
+                    log.warn("Verifying the token failed for long report code");
+                    break;
             }
+
             throw new RobertServerUnauthorizedException(MessageConstants.INVALID_AUTHENTICATION.getValue());
         }
 
