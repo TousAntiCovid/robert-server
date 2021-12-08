@@ -17,6 +17,7 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -126,6 +127,21 @@ public class RobertClientSteps {
         robertBatchSteps.launchBatch();
         mobilePhonesEmulator.getMobileApplication(userNameAtRisk).changeExposedEpochsDatesStartingAt(startDate);
         robertBatchSteps.launchBatch();
+    }
+
+    @Then("{word} last contact is now near {naturalTime}")
+    public void verifyLastContactValid(final String userName,
+            final Instant startDate) {
+        var mobile = mobilePhonesEmulator.getMobileApplication(userName);
+        final var exposureStatus = mobile.requestStatus();
+        assertThat(
+                exposureStatus.getLastContactDate()
+        )
+                .isCloseTo(startDate, within(1, ChronoUnit.DAYS));
+        assertThat(
+                exposureStatus.getCnamLastContactDate()
+        )
+                .isCloseTo(startDate, within(1, ChronoUnit.DAYS));
     }
 
     @When("{word} delete his/her/my risk exposure history")
