@@ -103,7 +103,7 @@ public class RobertRequestBuilder {
         private RequestAuth(final DigestSaltEnum fixedPrefix, final byte[] ebid, final RobertInstant time) {
             final var fixedPrefixBytes = new byte[] { fixedPrefix.getValue() };
 
-            final var epochIdBytes = ByteUtils.intToBytes(time.getEpochId());
+            final var epochIdBytes = ByteUtils.intToBytes(time.asEpochId());
 
             final var timeAs64BitsNtpTimestamp = ByteUtils.longToBytes(time.asNtpTimestamp());
             final var time32MostSignificantBits = new byte[4];
@@ -123,7 +123,7 @@ public class RobertRequestBuilder {
             try {
                 final byte[] mac = macCipher.encrypt(macSource);
                 this.ebid = ebid;
-                this.epochId = time.getEpochId();
+                this.epochId = time.asEpochId();
                 this.time = time32MostSignificantBits;
                 this.mac = mac;
             } catch (RobertServerCryptoException e) {
