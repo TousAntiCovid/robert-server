@@ -89,7 +89,7 @@ public class RobertClientSteps {
                 .isEqualTo(0);
     }
 
-    @Then("{word} data was deleted")
+    @Then("all {word}'s contact and risk data older than 15 days were deleted")
     public void dataWasDeleted(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
@@ -104,14 +104,17 @@ public class RobertClientSteps {
                 .isEqualTo(0);
     }
 
+    /**
+     * Note : Dont use that function twice in the same scenario because the second
+     * pass will override the firsts exposedEpochsDates (we cannot differentiate
+     * them from each other)
+     */
     @SneakyThrows
     @Then("{naturalTime}, {wordList} met and {word} was/were at risk following {word} report")
     public void falsifyExposedEpochs(final Instant startDate,
             List<String> users,
             final String userNameAtRisk,
             final String userNameReporter) {
-        // We create an exchange between two users and launch the batch in order to
-        // compute exposed epochs and latestRiskEpoch
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
                 users,
                 Instant.now(),

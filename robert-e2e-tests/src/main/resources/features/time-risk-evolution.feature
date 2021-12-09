@@ -18,7 +18,7 @@ Feature: Covid-19 risk evolution
 
   Scenario: User data is deleted after 15 days
     Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
-    Then Sarah data was deleted
+    Then all Sarah's contact and risk data older than 15 days were deleted
 
   Scenario: If a user meet an other ill person, CNAME will be updated
     Given fourteen days ago, Sarah and John met and Sarah was at risk following John report
