@@ -26,7 +26,7 @@ public class EpochClock {
     }
 
     @RequiredArgsConstructor
-    public static class RobertInstant {
+    public class RobertInstant {
 
         private final long startNtpTimestamp;
 
@@ -37,9 +37,13 @@ public class EpochClock {
             return time.getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970;
         }
 
-        public int getEpochId() {
+        public int asEpochId() {
             final var numberEpochs = (asNtpTimestamp() - startNtpTimestamp) / TimeUtils.EPOCH_DURATION_SECS;
             return (int) numberEpochs;
+        }
+
+        public RobertInstant plusEpochs(int numberOfEpochs) {
+            return EpochClock.this.at(time.plusSeconds((long) numberOfEpochs * TimeUtils.EPOCH_DURATION_SECS));
         }
     }
 }

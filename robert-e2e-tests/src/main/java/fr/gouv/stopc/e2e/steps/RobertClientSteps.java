@@ -7,6 +7,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -27,6 +28,8 @@ public class RobertClientSteps {
     private final ApplicationProperties applicationProperties;
 
     private final MobilePhonesEmulator mobilePhonesEmulator;
+
+    private final RobertBatchSteps robertBatchSteps;
 
     @Given("application robert ws rest is ready")
     public void applicationRobertIsReady() {
@@ -70,10 +73,6 @@ public class RobertClientSteps {
         final var exposureStatus = mobilePhonesEmulator
                 .getMobileApplication(userName)
                 .requestStatus();
-        assertThat(
-                exposureStatus.getLastContactDate()
-        )
-                .isCloseTo(Instant.now(), within(1, ChronoUnit.DAYS));
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(4);
@@ -88,6 +87,60 @@ public class RobertClientSteps {
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(0);
+    }
+
+    @Then("all {word}'s contact and risk data older than 15 days were deleted")
+    public void dataWasDeleted(final String userName) {
+        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
+        // in other way we'll not be able to call status endpoint during 2 min
+        var mobile = mobilePhonesEmulator.getMobileApplication(userName);
+        final var exposureStatus = mobile.requestStatus();
+        assertThat(exposureStatus.getLastContactDate()).isNull();
+        assertThat(exposureStatus.getRiskLevel())
+                .as("User risk level")
+                .isEqualTo(0);
+        assertThat(mobile.getRegistration().getExposedEpochs().size())
+                .as("Exposed epochs list")
+                .isEqualTo(0);
+    }
+
+    /**
+     * Note : Dont use that function twice in the same scenario because the second
+     * pass will override the firsts exposedEpochsDates (we cannot differentiate
+     * them from each other)
+     */
+    @SneakyThrows
+    @Then("{naturalTime}, {wordList} met and {word} was/were at risk following {word} report")
+    public void falsifyExposedEpochs(final Instant startDate,
+            List<String> users,
+            final String userNameAtRisk,
+            final String userNameReporter) {
+        mobilePhonesEmulator.exchangeHelloMessagesBetween(
+                users,
+                Instant.now(),
+                Duration.of(60, ChronoUnit.MINUTES)
+        );
+        mobilePhonesEmulator.getMobileApplication(userNameReporter).reportContacts();
+        robertBatchSteps.launchBatch();
+        // We modify exposed epochs and we re-launch batch in order to re-compute
+        // latestRiskEpoch
+        mobilePhonesEmulator.getMobileApplication(userNameAtRisk).changeExposedEpochsDatesStartingAt(startDate);
+        robertBatchSteps.launchBatch();
+    }
+
+    @Then("{word} last contact is now near {naturalTime}")
+    public void verifyLastContactValid(final String userName,
+            final Instant startDate) {
+        var mobile = mobilePhonesEmulator.getMobileApplication(userName);
+        final var exposureStatus = mobile.requestStatus();
+        assertThat(
+                exposureStatus.getLastContactDate()
+        )
+                .isCloseTo(startDate, within(1, ChronoUnit.DAYS));
+        assertThat(
+                exposureStatus.getCnamLastContactDate()
+        )
+                .isCloseTo(startDate, within(1, ChronoUnit.DAYS));
     }
 
     @When("{word} delete his/her/my risk exposure history")
