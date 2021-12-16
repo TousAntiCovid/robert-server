@@ -1,32 +1,5 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
@@ -43,11 +16,45 @@ import fr.gouv.stopc.robertserver.ws.vo.ContactVo;
 import fr.gouv.stopc.robertserver.ws.vo.HelloMessageDetailVo;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
 
-@SpringBootTest(classes = { RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@SpringBootTest(classes = {
+        RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application.properties")
+@ExtendWith(OutputCaptureExtension.class)
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public class ReportControllerWsRestTest {
 
     @Autowired
@@ -81,10 +88,9 @@ public class ReportControllerWsRestTest {
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
-	@Value("${robert.server.disable-check-token}")
-	private Boolean disableCheckToken;
+    @Value("${robert.server.disable-check-token}")
+    private Boolean disableCheckToken;
 
-    
     @MockBean
     private RobertServerWsConfiguration config;
 
@@ -100,13 +106,20 @@ public class ReportControllerWsRestTest {
 
     private static final String EXCEPTION_FAIL_MESSAGE = "Should not fail with exception";
 
+    private static final String SHORT_CODE = "AHN6P6"; // 6
+
+    private static final String TEST_CODE = "AHN6P6-AHN6P"; // 12
+
+    private static final String LONG_CODE = "23DC4B32-7552-44C1-B98A-DDE5F75B1729"; // 36
+
     @BeforeEach
     public void setup() {
 
         this.headers = new HttpHeaders();
         this.headers.setContentType(MediaType.APPLICATION_JSON);
 
-        this.targetUrl = UriComponentsBuilder.fromUriString(this.pathPrefix).path(UriConstants.REPORT).build().encode().toUri();
+        this.targetUrl = UriComponentsBuilder.fromUriString(this.pathPrefix).path(UriConstants.REPORT).build().encode()
+                .toUri();
 
         HelloMessageDetailVo info = HelloMessageDetailVo.builder() //
                 .timeCollectedOnDevice(1L) //
@@ -132,8 +145,9 @@ public class ReportControllerWsRestTest {
 
             // When
             when(this.propertyLoader.getDisableCheckToken()).thenReturn(this.disableCheckToken);
-            ResponseEntity<ApiError> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
-            
+            ResponseEntity<ApiError> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+
             // Then
             assertNotNull(response);
             assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -154,7 +168,8 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ApiError> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+            ResponseEntity<ApiError> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
 
             // Then
             assertNotNull(response);
@@ -176,13 +191,89 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ApiError> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+            ResponseEntity<ApiError> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
 
             // Then
             assertNotNull(response);
             assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
             assertNotNull(response.getBody());
             assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_DATA.getValue()));
+
+            verify(this.contactDtoService, never()).saveContacts(any());
+        } catch (RobertServerException e) {
+            fail(EXCEPTION_FAIL_MESSAGE);
+        }
+    }
+
+    @Test
+    public void should_produce_log_for_short_token_at_info_level(CapturedOutput logOutput) {
+        this.reportBatchRequestVo.setToken(SHORT_CODE);
+        try {
+            // Given
+            this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
+
+            // When
+            ResponseEntity<ApiError> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+
+            // Then
+            assertNotNull(response);
+            assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+            assertNotNull(response.getBody());
+            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_AUTHENTICATION.getValue()));
+            assertThat(logOutput).contains("Verifying the token failed for short report code");
+            assertThat(logOutput.toString()).contains("INFO");
+
+            verify(this.contactDtoService, never()).saveContacts(any());
+        } catch (RobertServerException e) {
+            fail(EXCEPTION_FAIL_MESSAGE);
+        }
+    }
+
+    @Test
+    public void should_produce_log_for_test_token_at_info_level(CapturedOutput logOutput) {
+        this.reportBatchRequestVo.setToken(TEST_CODE);
+        try {
+            // Given
+            this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
+
+            // When
+            ResponseEntity<ApiError> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+
+            // Then
+            assertNotNull(response);
+            assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+            assertNotNull(response.getBody());
+            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_AUTHENTICATION.getValue()));
+            assertThat(logOutput).contains("Verifying the token failed for test report code");
+            assertThat(logOutput.toString()).contains("INFO");
+
+            verify(this.contactDtoService, never()).saveContacts(any());
+        } catch (RobertServerException e) {
+            fail(EXCEPTION_FAIL_MESSAGE);
+        }
+    }
+
+    @Test
+    public void should_produce_log_for_long_token_at_warn_level(CapturedOutput logOutput) {
+        this.reportBatchRequestVo.setToken(LONG_CODE);
+        try {
+            // Given
+            this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
+
+            // When
+            ResponseEntity<ApiError> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+
+            // Then
+            assertNotNull(response);
+            assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+            assertNotNull(response.getBody());
+            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_AUTHENTICATION.getValue()));
+            assertThat(logOutput).contains("Verifying the token failed for long report code");
+            assertThat(logOutput.toString()).contains("WARN");
 
             verify(this.contactDtoService, never()).saveContacts(any());
         } catch (RobertServerException e) {
@@ -198,7 +289,8 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ApiError> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+            ResponseEntity<ApiError> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
 
             // Then
             assertNotNull(response);
@@ -223,17 +315,18 @@ public class ReportControllerWsRestTest {
 
             ContactVo contact = ContactVo.builder().ecc("2g==").ebid("GTr1XTqVS5g=").ids(Arrays.asList(info)).build();
 
-
             this.contacts = Arrays.asList(contact);
 
             this.reportBatchRequestVo = ReportBatchRequestVo.builder().token(token).contacts(this.contacts).build();
 
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
-            when(this.restApiService.verifyReportToken(token)).thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
+            when(this.restApiService.verifyReportToken(token))
+                    .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
 
             // When
-            ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseV4Dto.class);
+            ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseV4Dto.class);
 
             // Then
             assertNotNull(response);
@@ -251,31 +344,42 @@ public class ReportControllerWsRestTest {
     /** Test the access for API V2, should not be used since API V3 */
     @Test
     public void testAccessV2() {
-        reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REPORT).build().encode().toUri());
+        reportContactHistoryV2OrV3Succeeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REPORT).build().encode().toUri()
+        );
     }
 
     /** Test the access for API V3, should not be used since API V4 */
     @Test
     public void testAccessV3() {
-        reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REPORT).build().encode().toUri());
+        reportContactHistoryV2OrV3Succeeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REPORT).build().encode().toUri()
+        );
     }
 
     /** Test the access for API V4 with old DTO, should not be used since API V5. */
     @Test
     public void testAccessV4WithV3Dto() {
-        reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REPORT).build().encode().toUri());
+        reportContactHistoryV2OrV3Succeeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REPORT).build().encode().toUri()
+        );
     }
 
     /** Test the access for API V5 with old DTO, should not be used since API V6. */
     @Test
     public void testAccessV5WithV3Dto() {
-        reportContactHistoryV2OrV3Succeeds(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REPORT).build().encode().toUri());
+        reportContactHistoryV2OrV3Succeeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REPORT).build().encode().toUri()
+        );
     }
 
-    /** {@link #reportContactHistoryV2OrV3Succeeds(URI)} Test the access for API V5 with old DTO */
+    /**
+     * {@link #reportContactHistoryV2OrV3Succeeds(URI)} Test the access for API V5
+     * with old DTO
+     */
     @Test
     public void testReportContactHistorySucceedsWithV3Dto() {
-    	reportContactHistoryV2OrV3Succeeds(this.targetUrl);
+        reportContactHistoryV2OrV3Succeeds(this.targetUrl);
     }
 
     private void reportContactHistoryV2OrV3Succeeds(URI targetUrl) {
@@ -283,10 +387,12 @@ public class ReportControllerWsRestTest {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
-            when(this.restApiService.verifyReportToken(token)).thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
+            when(this.restApiService.verifyReportToken(token))
+                    .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
 
             // When
-            ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
+            ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
 
             // Then
             assertNotNull(response);
@@ -306,13 +412,17 @@ public class ReportControllerWsRestTest {
     /** Test the access for API V4 with old DTO, should not be used since API V5. */
     @Test
     public void testAccessV4() {
-        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REPORT).build().encode().toUri());
+        reportContactHistorySucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REPORT).build().encode().toUri()
+        );
     }
 
     /** Test the access for API V5 with old DTO, should not be used since API V6. */
     @Test
     public void testAccessV5() {
-        reportContactHistorySucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REPORT).build().encode().toUri());
+        reportContactHistorySucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REPORT).build().encode().toUri()
+        );
     }
 
     /** {@link #reportContactHistorySucceeds(URI)} Test the access for API V6 */
@@ -326,10 +436,12 @@ public class ReportControllerWsRestTest {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
-            when(this.restApiService.verifyReportToken(token)).thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
+            when(this.restApiService.verifyReportToken(token))
+                    .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
 
             // When
-            ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseV4Dto.class);
+            ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseV4Dto.class);
 
             // Then
             assertNotNull(response);
@@ -354,10 +466,12 @@ public class ReportControllerWsRestTest {
             this.reportBatchRequestVo.setContacts(Collections.emptyList());
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
-            when(this.restApiService.verifyReportToken(token)).thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
+            when(this.restApiService.verifyReportToken(token))
+                    .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
 
             // When
-            ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseV4Dto.class);
+            ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseV4Dto.class);
 
             // Then
             assertNotNull(response);
@@ -379,12 +493,14 @@ public class ReportControllerWsRestTest {
 
         try {
             // Given
-            this.reportBatchRequestVo = ReportBatchRequestVo.builder().token(this.token).contacts(this.contacts).contactsAsBinary(this.contactsAsBinary).build();
+            this.reportBatchRequestVo = ReportBatchRequestVo.builder().token(this.token).contacts(this.contacts)
+                    .contactsAsBinary(this.contactsAsBinary).build();
 
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
+            ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
 
             // Then
             assertNotNull(response);
@@ -407,7 +523,8 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
+            ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
 
             // Then
             assertNotNull(response);
@@ -429,7 +546,8 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
+            ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate
+                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
 
             // Then
             assertNotNull(response);
@@ -449,7 +567,8 @@ public class ReportControllerWsRestTest {
         this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
         // When
-        ResponseEntity<String> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.GET, this.requestEntity, String.class);
+        ResponseEntity<String> response = this.testRestTemplate
+                .exchange(targetUrl, HttpMethod.GET, this.requestEntity, String.class);
 
         // Then
         assertNotNull(response);
@@ -465,12 +584,15 @@ public class ReportControllerWsRestTest {
         // Given
         this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
-        when(this.restApiService.verifyReportToken(token)).thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
+        when(this.restApiService.verifyReportToken(token))
+                .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
 
-        doThrow(new RobertServerException(MessageConstants.ERROR_OCCURED)).when(this.contactDtoService).saveContacts(any());
+        doThrow(new RobertServerException(MessageConstants.ERROR_OCCURED)).when(this.contactDtoService)
+                .saveContacts(any());
 
         // When
-        ResponseEntity<ApiError> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+        ResponseEntity<ApiError> response = this.testRestTemplate
+                .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
 
         // Then
         assertNotNull(response);
@@ -491,7 +613,8 @@ public class ReportControllerWsRestTest {
         when(this.restApiService.verifyReportToken(token)).thenReturn(Optional.empty());
 
         // When
-        ResponseEntity<ApiError> response = this.testRestTemplate.exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
+        ResponseEntity<ApiError> response = this.testRestTemplate
+                .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
 
         // Then
         assertNotNull(response);

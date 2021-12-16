@@ -67,7 +67,7 @@ public class ReportControllerDelegate {
 
         final var acceptedLengths = List.of(6, 12, 36);
         if (!acceptedLengths.contains(token.length())) {
-            log.warn("Token size is incorrect");
+            log.info("Unrecognized token of length: " + token.length());
             throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
         }
 
@@ -85,6 +85,8 @@ public class ReportControllerDelegate {
                 case 36:
                     log.warn("Verifying the token failed for long report code");
                     break;
+                default:
+                    log.info("Unrecognized token of length: " + token.length());
             }
 
             throw new RobertServerUnauthorizedException(MessageConstants.INVALID_AUTHENTICATION.getValue());
