@@ -58,7 +58,7 @@
 		<logcaptor.version>2.6.1</logcaptor.version>
 		<mockito.version>3.7.0</mockito.version>
 		<prometheus-pushgateway.version>0.10.0</prometheus-pushgateway.version>
-		<log4j2.version>2.15.0</log4j2.version>
+		<log4j2.version>2.16.0</log4j2.version>
 	</properties>
 
 	<dependencies>
