@@ -67,8 +67,10 @@ public class ReportControllerDelegate {
 
         final var acceptedLengths = List.of(6, 12, 36);
         if (!acceptedLengths.contains(token.length())) {
-            log.info("Unrecognized token of length: " + token.length());
-            throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
+            throw new RobertServerBadRequestException(
+                    MessageConstants.INVALID_DATA.getValue() +
+                            " Unrecognized token length: " + token.length()
+            );
         }
 
         Optional<VerifyResponseDto> response = this.restApiService.verifyReportToken(token);

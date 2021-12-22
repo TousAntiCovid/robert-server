@@ -198,7 +198,14 @@ public class ReportControllerWsRestTest {
             assertNotNull(response);
             assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
             assertNotNull(response.getBody());
-            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_DATA.getValue()));
+            assertEquals(
+                    buildApiError(
+                            MessageConstants.INVALID_DATA.getValue() +
+                                    " Unrecognized token length: " +
+                                    this.reportBatchRequestVo.getToken().length()
+                    ),
+                    response.getBody()
+            );
 
             verify(this.contactDtoService, never()).saveContacts(any());
         } catch (RobertServerException e) {
@@ -214,7 +221,7 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ApiError> response = this.testRestTemplate
+            final var response = this.testRestTemplate
                     .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
 
             // Then
@@ -239,7 +246,7 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ApiError> response = this.testRestTemplate
+            final var response = this.testRestTemplate
                     .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
 
             // Then
@@ -264,7 +271,7 @@ public class ReportControllerWsRestTest {
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
             // When
-            ResponseEntity<ApiError> response = this.testRestTemplate
+            final var response = this.testRestTemplate
                     .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
 
             // Then
