@@ -228,7 +228,10 @@ public class ReportControllerWsRestTest {
             assertNotNull(response);
             assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
             assertNotNull(response.getBody());
-            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_AUTHENTICATION.getValue()));
+            assertEquals(
+                    response.getBody(),
+                    buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
+            );
             assertThat(logOutput).contains("Verifying the token failed for short report code");
             assertThat(logOutput.toString()).contains("INFO");
 
@@ -253,7 +256,10 @@ public class ReportControllerWsRestTest {
             assertNotNull(response);
             assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
             assertNotNull(response.getBody());
-            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_AUTHENTICATION.getValue()));
+            assertEquals(
+                    response.getBody(),
+                    buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
+            );
             assertThat(logOutput).contains("Verifying the token failed for test report code");
             assertThat(logOutput.toString()).contains("INFO");
 
@@ -278,7 +284,10 @@ public class ReportControllerWsRestTest {
             assertNotNull(response);
             assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
             assertNotNull(response.getBody());
-            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_AUTHENTICATION.getValue()));
+            assertEquals(
+                    response.getBody(),
+                    buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
+            );
             assertThat(logOutput).contains("Verifying the token failed for long report code");
             assertThat(logOutput.toString()).contains("WARN");
 
@@ -629,7 +638,10 @@ public class ReportControllerWsRestTest {
         assertNotNull(response.getHeaders());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaders().getContentType());
         assertNotNull(response.getBody());
-        assertThat(response.getBody(), equalTo(buildApiError(MessageConstants.INVALID_AUTHENTICATION.getValue())));
+        assertThat(
+                response.getBody(),
+                equalTo(buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length()))
+        );
         verify(this.restApiService).verifyReportToken(token);
         verify(this.contactDtoService, never()).saveContacts(any());
 

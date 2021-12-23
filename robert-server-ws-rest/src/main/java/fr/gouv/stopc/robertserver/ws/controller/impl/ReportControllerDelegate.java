@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static java.lang.Boolean.FALSE;
+
 @Slf4j
 @Service
 public class ReportControllerDelegate {
@@ -46,7 +48,7 @@ public class ReportControllerDelegate {
             return false;
         }
 
-        if (Boolean.FALSE.equals(this.propertyLoader.getDisableCheckToken())) {
+        if (FALSE.equals(this.propertyLoader.getDisableCheckToken())) {
             this.checkReportTokenValidity(reportBatchRequestVo.getToken());
         }
 
@@ -91,7 +93,7 @@ public class ReportControllerDelegate {
                     log.info("Unrecognized token of length: " + token.length());
             }
 
-            throw new RobertServerUnauthorizedException(MessageConstants.INVALID_AUTHENTICATION.getValue());
+            throw new RobertServerUnauthorizedException("Unrecognized token of length: " + token.length());
         }
 
         log.info("Verifying the token succeeded");
