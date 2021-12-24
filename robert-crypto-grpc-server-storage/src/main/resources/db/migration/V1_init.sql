@@ -1,4 +1,4 @@
-create table if not exists identity
+create table identity
 (
     id             bigserial    not null
     constraint identity_pkey
@@ -12,5 +12,5 @@ create table if not exists identity
     key_for_tuples varchar(255) not null
     );
 
-create index if not exists idx_ida
+create index idx_ida
     on identity (ida);
