@@ -1,18 +1,5 @@
 package test.fr.gouv.stopc.robertserver.dataset.injector.service.impl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
@@ -25,13 +12,26 @@ import org.bson.internal.Base64;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robertserver.dataset.injector.utils.GenerateIdUtils;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {RobertServerInjectorDatasetApplication.class })
+@ContextConfiguration(classes = { RobertServerInjectorDatasetApplication.class })
 @TestPropertySource("classpath:application.properties")
+@Disabled("FIXME: require a running postgresql database")
 public class InjectorDataSetServiceImplTest {
 
     @MockBean
@@ -78,36 +78,51 @@ public class InjectorDataSetServiceImplTest {
                 .thenReturn(GenerateIdUtils.generateRandomKey())
                 .thenReturn(GenerateIdUtils.generateRandomKey());
         when(clientIdentifierRepository.findByIdA(any()))
-                .thenReturn(Optional.of(
-                        ClientIdentifier.builder()
-                                .idA(Base64.encode(idA1))
-                                .keyForMac(Base64.encode(keyMac1))
-                                .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
-                                .build()))
-                .thenReturn(Optional.of(
-                        ClientIdentifier.builder()
-                                .idA(Base64.encode(idA2))
-                                .keyForMac(Base64.encode(keyMac2))
-                                .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
-                                .build()))
-                .thenReturn(Optional.of(
-                        ClientIdentifier.builder()
-                                .idA(Base64.encode(idA3))
-                                .keyForMac(Base64.encode(keyMac3))
-                                .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
-                                .build()))
-                .thenReturn(Optional.of(
-                        ClientIdentifier.builder()
-                                .idA(Base64.encode(idA4))
-                                .keyForMac(Base64.encode(keyMac4))
-                                .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
-                                .build()))
-                .thenReturn(Optional.of(
-                        ClientIdentifier.builder()
-                                .idA(Base64.encode(idA5))
-                                .keyForMac(Base64.encode(keyMac5))
-                                .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
-                                .build()));
+                .thenReturn(
+                        Optional.of(
+                                ClientIdentifier.builder()
+                                        .idA(Base64.encode(idA1))
+                                        .keyForMac(Base64.encode(keyMac1))
+                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .build()
+                        )
+                )
+                .thenReturn(
+                        Optional.of(
+                                ClientIdentifier.builder()
+                                        .idA(Base64.encode(idA2))
+                                        .keyForMac(Base64.encode(keyMac2))
+                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .build()
+                        )
+                )
+                .thenReturn(
+                        Optional.of(
+                                ClientIdentifier.builder()
+                                        .idA(Base64.encode(idA3))
+                                        .keyForMac(Base64.encode(keyMac3))
+                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .build()
+                        )
+                )
+                .thenReturn(
+                        Optional.of(
+                                ClientIdentifier.builder()
+                                        .idA(Base64.encode(idA4))
+                                        .keyForMac(Base64.encode(keyMac4))
+                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .build()
+                        )
+                )
+                .thenReturn(
+                        Optional.of(
+                                ClientIdentifier.builder()
+                                        .idA(Base64.encode(idA5))
+                                        .keyForMac(Base64.encode(keyMac5))
+                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .build()
+                        )
+                );
 
         // inject contacts
         injectorDataSetService.injectContacts(5);
