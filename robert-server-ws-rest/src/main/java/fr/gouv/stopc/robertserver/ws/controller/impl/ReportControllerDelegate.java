@@ -14,22 +14,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static java.lang.Boolean.FALSE;
+
 @Slf4j
 @Service
 public class ReportControllerDelegate {
+
     private IRestApiService restApiService;
+
     private PropertyLoader propertyLoader;
 
     @Inject
     public ReportControllerDelegate(final IRestApiService restApiService,
-		                    final PropertyLoader propertyLoader) {
+            final PropertyLoader propertyLoader) {
         this.restApiService = restApiService;
-	this.propertyLoader = propertyLoader;
+        this.propertyLoader = propertyLoader;
     }
 
     public boolean isReportRequestValid(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
@@ -44,8 +48,8 @@ public class ReportControllerDelegate {
             return false;
         }
 
-        if (!this.propertyLoader.getDisableCheckToken()) {
-            this.checkValidityToken(reportBatchRequestVo.getToken());
+        if (FALSE.equals(this.propertyLoader.getDisableCheckToken())) {
+            this.checkReportTokenValidity(reportBatchRequestVo.getToken());
         }
 
         return true;
@@ -61,23 +65,35 @@ public class ReportControllerDelegate {
                 && StringUtils.isEmpty(reportBatchRequestVo.getContactsAsBinary());
     }
 
-    private void checkValidityToken(String token) throws RobertServerException {
-        if (StringUtils.isEmpty(token)) {
-            log.warn("No token provided");
-            throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
-        }
+    private void checkReportTokenValidity(String token) throws RobertServerException {
 
         final var acceptedLengths = List.of(6, 12, 36);
         if (!acceptedLengths.contains(token.length())) {
-            log.warn("Token size is incorrect");
-            throw new RobertServerBadRequestException(MessageConstants.INVALID_DATA.getValue());
+            throw new RobertServerBadRequestException(
+                    MessageConstants.INVALID_DATA.getValue() +
+                            " Unrecognized token length: " + token.length()
+            );
         }
 
         Optional<VerifyResponseDto> response = this.restApiService.verifyReportToken(token);
 
-        if (!response.isPresent() ||  !response.get().isValid()) {
-            log.warn("Verifying the token failed");
-            throw new RobertServerUnauthorizedException(MessageConstants.INVALID_AUTHENTICATION.getValue());
+        if (response.isEmpty() || !response.get().isValid()) {
+
+            switch (token.length()) {
+                case 6:
+                    log.info("Verifying the token failed for short report code");
+                    break;
+                case 12:
+                    log.info("Verifying the token failed for test report code");
+                    break;
+                case 36:
+                    log.warn("Verifying the token failed for long report code");
+                    break;
+                default:
+                    log.info("Unrecognized token of length: " + token.length());
+            }
+
+            throw new RobertServerUnauthorizedException("Unrecognized token of length: " + token.length());
         }
 
         log.info("Verifying the token succeeded");
