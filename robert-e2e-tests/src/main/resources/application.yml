@@ -12,3 +12,7 @@ spring:
     url: jdbc:postgresql://postgres:5432/robert
     username: robert
     password: robert
+
+logging.level:
+  root: warn
+  fr.gouv: info
