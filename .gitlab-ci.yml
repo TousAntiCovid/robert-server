@@ -1,6 +1,6 @@
 include:
   - project: stopcovid19/accueil
-    ref: master
+    ref: feature/quiet-docker-compose-pull
     file: gitlab/gitlab-ci-java-template.yml
 
 e2e-tests-docker:
