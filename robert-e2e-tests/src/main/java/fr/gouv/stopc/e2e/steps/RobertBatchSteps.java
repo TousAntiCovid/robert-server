@@ -6,7 +6,6 @@ import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.AssertionsForClassTypes;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -35,39 +34,49 @@ public class RobertBatchSteps {
     @When("robert batch has been triggered")
     @SneakyThrows
     public void launchBatch() {
+        processLogs.clear();
+
         final var builder = new ProcessBuilder(applicationProperties.getBatchCommand().split(" "));
         builder.directory(Path.of(".").toFile());
         final var process = builder.start();
-        final var background = Executors.newFixedThreadPool(2);
 
+        final var background = Executors.newFixedThreadPool(2);
         background.submit(new StreamGobbler(process.getInputStream(), processLogs));
         background.submit(new StreamGobbler(process.getErrorStream(), processLogs));
 
-        boolean hasExited = process.waitFor(60, SECONDS);
+        final var hasExited = process.waitFor(60, SECONDS);
         background.shutdownNow();
-        AssertionsForClassTypes.assertThat(hasExited)
-                .as("Robert batch execution timed out after 60 seconds")
+        assertThat(hasExited)
+                .as(
+                        "Robert batch execution took more than 60 seconds. Container log output:\n    %s",
+                        String.join("\n    ", processLogs)
+                )
                 .isTrue();
-        AssertionsForClassTypes.assertThat(process.exitValue())
-                .as("Robert batch process exit code")
+        assertThat(process.exitValue())
+                .as("Robert batch process exit code. Container log output:\n    %s", String.join("\n    ", processLogs))
                 .isEqualTo(0);
     }
 
     @Then("robert batch logs contains: {string}")
     public void checkDiscardedErrorInBatch(String message) {
-        assertThat(processLogs).anyMatch(line -> line.contains(message));
+        assertThat(processLogs)
+                .filteredOn(event -> event.contains(" ERROR "))
+                .extracting(event -> event.replaceFirst(".* : ", ""))
+                .contains(message);
     }
 
     @Then("robert batch logs does not contains: {string}")
     public void checkNoDiscardedErrorInBatch(String message) {
-        assertThat(processLogs).noneMatch(line -> line.contains(message));
+        assertThat(processLogs)
+                .extracting(event -> event.replaceFirst(".* : ", ""))
+                .doesNotContain(message);
     }
 
     private static class StreamGobbler implements Runnable {
 
         private final InputStream inputStream;
 
-        List<String> processLogs;
+        private final List<String> processLogs;
 
         public StreamGobbler(final InputStream inputStream, List<String> processLogs) {
             this.inputStream = inputStream;
