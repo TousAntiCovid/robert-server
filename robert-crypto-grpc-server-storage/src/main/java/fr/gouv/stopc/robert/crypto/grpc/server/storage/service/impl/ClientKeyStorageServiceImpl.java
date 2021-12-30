@@ -1,14 +1,15 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.storage.service.impl;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.AlgorithmParameterSpec;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.repository.ClientIdentifierRepository;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.exception.RobertServerStorageException;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.IClientKeyStorageService;
+import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.bson.internal.Base64;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -18,17 +19,15 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.inject.Inject;
 
-import org.bson.internal.Base64;
-import org.springframework.stereotype.Service;
-
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.repository.ClientIdentifierRepository;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.exception.RobertServerStorageException;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.IClientKeyStorageService;
-import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -47,7 +46,8 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
         this.cryptographicStorageService = cryptographicStorageService;
         this.clientIdentifierRepository = clientIdentifierRepository;
 
-        // TODO: Find out a way not to do this. Required because otherwise lock when saving is done
+        // TODO: Find out a way not to do this. Required because otherwise lock when
+        // saving is done
         ClientIdentifier c = ClientIdentifier.builder()
                 .idA(Base64.encode(generateKey(5)))
                 .keyForMac(Base64.encode(generateRandomKey()))
@@ -63,29 +63,31 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
         do {
             id = generateKey(5);
             i++;
-        } while (this.clientIdentifierRepository.findByIdA(Base64.encode(id)).isPresent() && i < MAX_ID_CREATION_ATTEMPTS);
+        } while (this.clientIdentifierRepository.findByIdA(Base64.encode(id)).isPresent()
+                && i < MAX_ID_CREATION_ATTEMPTS);
 
         if (MAX_ID_CREATION_ATTEMPTS == i) {
             throw new RobertServerStorageException(
-                    String.format("Could not generate an id within max attempts %s", MAX_ID_CREATION_ATTEMPTS));
+                    String.format("Could not generate an id within max attempts %s", MAX_ID_CREATION_ATTEMPTS)
+            );
         }
 
         return id;
     }
 
-    public byte [] generateRandomKey() {
-        byte [] ka = null;
+    public byte[] generateRandomKey() {
+        byte[] ka = null;
 
         try {
             KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
 
-            //Creating a SecureRandom object
+            // Creating a SecureRandom object
             SecureRandom secRandom = new SecureRandom();
 
-            //Initializing the KeyGenerator
+            // Initializing the KeyGenerator
             keyGen.init(secRandom);
 
-            //Creating/Generating a key
+            // Creating/Generating a key
             Key key = keyGen.generateKey();
             ka = key.getEncoded();
         } catch (NoSuchAlgorithmException e) {
@@ -103,7 +105,7 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
 
     @Override
     public Optional<ClientIdentifierBundle> createClientIdUsingKeys(byte[] keyForMac, byte[] keyForTuples) {
-        
+
         int failureCounter = 0;
         Optional<ClientIdentifierBundle> clientIdentifierBundle = Optional.empty();
         byte[] id = null;
@@ -119,63 +121,71 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
 
         if (MAX_ID_CREATION_ATTEMPTS == failureCounter) {
             log.error(
-                    String.format("Could not generate an client identifier within max attempts %s", MAX_ID_CREATION_ATTEMPTS));
+                    String.format(
+                            "Could not generate an client identifier within max attempts %s", MAX_ID_CREATION_ATTEMPTS
+                    )
+            );
         } else {
             clientIdentifierBundle = createClientKeysForIdentifier(id, keyForMac, keyForTuples);
         }
-        
+
         return clientIdentifierBundle;
-        
+
     }
 
-    private Optional<ClientIdentifierBundle> createClientKeysForIdentifier(byte[] id, byte[] keyForMac, byte[] keyForTuples) {
+    private Optional<ClientIdentifierBundle> createClientKeysForIdentifier(byte[] id, byte[] keyForMac,
+            byte[] keyForTuples) {
         try {
 
-          if (Objects.isNull(keyForMac)) {
-              log.error("Provided key for mac is null");
-              return Optional.empty();
-          }
+            if (Objects.isNull(keyForMac)) {
+                log.error("Provided key for mac is null");
+                return Optional.empty();
+            }
 
-          if (Objects.isNull(keyForTuples)) {
-              log.error("Provided key for tuples is null");
-              return Optional.empty();
-          }
+            if (Objects.isNull(keyForTuples)) {
+                log.error("Provided key for tuples is null");
+                return Optional.empty();
+            }
 
-          byte[] encryptedKeyForMac = this.encryptKeyWithAES256GCMAndKek(
-                  keyForMac,
-                  this.cryptographicStorageService.getKeyForEncryptingClientKeys());
+            byte[] encryptedKeyForMac = this.encryptKeyWithAES256GCMAndKek(
+                    keyForMac,
+                    this.cryptographicStorageService.getKeyForEncryptingClientKeys()
+            );
 
-          if (Objects.isNull(encryptedKeyForMac)) {
-              log.error("The encrypted key for mac is null");
-              return Optional.empty();
-          }
+            if (Objects.isNull(encryptedKeyForMac)) {
+                log.error("The encrypted key for mac is null");
+                return Optional.empty();
+            }
 
-          byte[] encryptedKeyForTuples = this.encryptKeyWithAES256GCMAndKek(
-                  keyForTuples,
-                  this.cryptographicStorageService.getKeyForEncryptingClientKeys());
+            byte[] encryptedKeyForTuples = this.encryptKeyWithAES256GCMAndKek(
+                    keyForTuples,
+                    this.cryptographicStorageService.getKeyForEncryptingClientKeys()
+            );
 
-          if (Objects.isNull(encryptedKeyForTuples)) {
-              log.error("The encrypted key for tuples is null");
-              return Optional.empty();
-          }
+            if (Objects.isNull(encryptedKeyForTuples)) {
+                log.error("The encrypted key for tuples is null");
+                return Optional.empty();
+            }
 
-          ClientIdentifier c = ClientIdentifier.builder()
-                  .idA(Base64.encode(id))
-                  .keyForMac(Base64.encode(encryptedKeyForMac))
-                  .keyForTuples(Base64.encode(encryptedKeyForTuples))
-                  .build();
+            ClientIdentifier c = ClientIdentifier.builder()
+                    .idA(Base64.encode(id))
+                    .keyForMac(Base64.encode(encryptedKeyForMac))
+                    .keyForTuples(Base64.encode(encryptedKeyForTuples))
+                    .build();
 
-          this.clientIdentifierRepository.save(c);
+            this.clientIdentifierRepository.save(c);
 
-          return Optional.of(ClientIdentifierBundle.builder()
-                  .id(Arrays.copyOf(id, id.length))
-                  .keyForMac(keyForMac)
-                  .keyForTuples(keyForTuples)
-                  .build());
-      } catch (Exception e) {
-          log.error("Storage error when creating registration");
-      }
-      return Optional.empty();
+            return Optional.of(
+                    ClientIdentifierBundle.builder()
+                            .id(Arrays.copyOf(id, id.length))
+                            .keyForMac(keyForMac)
+                            .keyForTuples(keyForTuples)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Storage error when creating registration", e);
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -184,25 +194,27 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
                 .map(client -> {
 
                     Key clientKek = this.cryptographicStorageService.getKeyForEncryptingClientKeys();
-                    if(Objects.isNull(clientKek)) {
+                    if (Objects.isNull(clientKek)) {
                         log.error("The clientKek to decrypt the client keys is null.");
                         return null;
                     }
 
                     byte[] decryptedKeyForMac = this.decryptStoredKeyWithAES256GCMAndKek(
                             Base64.decode(client.getKeyForMac()),
-                            clientKek);
+                            clientKek
+                    );
 
-                    if(Objects.isNull(decryptedKeyForMac)) {
+                    if (Objects.isNull(decryptedKeyForMac)) {
                         log.error("The decrypted client key is null.");
                         return null;
                     }
 
                     byte[] decryptedKeyForTuples = this.decryptStoredKeyWithAES256GCMAndKek(
                             Base64.decode(client.getKeyForTuples()),
-                            clientKek);
+                            clientKek
+                    );
 
-                    if(Objects.isNull(decryptedKeyForTuples)) {
+                    if (Objects.isNull(decryptedKeyForTuples)) {
                         log.error("The decrypted client key for tuples is null.");
                         return null;
                     }
@@ -222,6 +234,7 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
     }
 
     private static final String AES_ENCRYPTION_CIPHER_SCHEME = "AES/GCM/NoPadding";
+
     private static final int IV_LENGTH = 12;
 
     public byte[] decryptStoredKeyWithAES256GCMAndKek(byte[] storedKey, Key kek) {
@@ -258,6 +271,5 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
         }
         return cipherText;
     }
-
 
 }
