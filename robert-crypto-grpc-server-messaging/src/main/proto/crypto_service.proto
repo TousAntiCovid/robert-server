@@ -21,6 +21,7 @@ option objc_class_prefix = "";
 package robert.server.crypto;
 
 service CryptoGrpcServiceImpl {
+    rpc validateContactHelloMessageMac(ValidateContactRequest) returns (ValidateContactResponse){}
 	rpc createRegistration(CreateRegistrationRequest) returns (CreateRegistrationResponse){}
 	rpc getIdFromAuth(GetIdFromAuthRequest) returns (GetIdFromAuthResponse){}
 	rpc getIdFromStatus(GetIdFromStatusRequest) returns (GetIdFromStatusResponse){}
@@ -28,6 +29,27 @@ service CryptoGrpcServiceImpl {
 	rpc deleteId(DeleteIdRequest) returns (DeleteIdResponse){}
 	rpc reloadHSM(ReloadHSMRequest) returns (ReloadHSMResponse){}
 	rpc getHSMCacheStatus(HSMCacheStatusRequest) returns (HSMCacheStatusResponse){}
+}
+
+message ValidateContactRequest {
+	bytes ecc = 1;
+	bytes ebid = 2;
+	bytes serverCountryCode = 3;
+    repeated HelloMessageDetail helloMessageDetails = 4;
+}
+
+message HelloMessageDetail {
+    bytes mac = 3;
+    int32 timeSent = 4; // time hello message was sent from emitting device (unsigned 16 bits)
+    int64 timeReceived = 5; // time hello message was received on device (unsigned 32 bits, stored in long)
+}
+
+message ValidateContactResponse {
+    bytes countryCode = 1;
+    bytes idA = 2;
+    int32 epochId = 3;
+    repeated HelloMessageDetail invalidHelloMessageDetails = 4;
+    ErrorMessage error = 5;
 }
 
 message ReloadHSMRequest {
