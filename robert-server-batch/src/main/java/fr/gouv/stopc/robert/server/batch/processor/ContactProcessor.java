@@ -12,8 +12,7 @@ import org.springframework.util.CollectionUtils;
 import com.google.protobuf.ByteString;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactRequest;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
@@ -28,6 +27,8 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.function.Predicate.*;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Process contacts to compute the score and evaluate the risk.
@@ -51,7 +52,6 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
 
     private int nbToBeDiscarded;
 
-
     public ContactProcessor(
             final IServerConfigurationService serverConfigurationService,
             final IRegistrationService registrationService,
@@ -65,7 +65,6 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
         this.scoringStrategy = scoringStrategy;
         this.propertyLoader = propertyLoader;
     }
-
 
     /**
      * NOTE:
@@ -86,82 +85,115 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
 
         byte[] serverCountryCode = new byte[1];
         serverCountryCode[0] = this.serverConfigurationService.getServerCountryCode();
+
+        final var helloMessageDetails = contact.getMessageDetails().stream()
+                .map(
+                        helloMessageDetail -> fr.gouv.stopc.robert.crypto.grpc.server.messaging.HelloMessageDetail
+                                .newBuilder()
+                                .setTimeSent(helloMessageDetail.getTimeFromHelloMessage())
+                                .setTimeReceived(helloMessageDetail.getTimeCollectedOnDevice())
+                                .setMac(ByteString.copyFrom(helloMessageDetail.getMac()))
+                                .build()
+                )
+                .collect(toList());
+
+        final var response = cryptoServerClient.validateContactHelloMessageMac(
+                ValidateContactRequest.newBuilder()
+                        .setEbid(ByteString.copyFrom(contact.getEbid()))
+                        .setEcc(ByteString.copyFrom(contact.getEcc()))
+                        .setServerCountryCode(
+                                ByteString
+                                        .copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() })
+                        )
+                        .addAllHelloMessageDetails(helloMessageDetails)
+                        .build()
+        );
+
+        if (null == response) {
+            log.warn("The contact could not be validated. Discarding all its hello messages");
+            return contact;
+        }
+
+        // remove invalid HelloMessageDetails
+        if (!response.getInvalidHelloMessageDetailsList().isEmpty()) {
+            log.info(
+                    "Removing HelloMessageDetails having invalid Mac: {}", response.getInvalidHelloMessageDetailsCount()
+            );
+            contact.getMessageDetails()
+                    .removeIf(
+                            helloMessageDetail -> response.getInvalidHelloMessageDetailsList().stream()
+                                    .anyMatch(
+                                            invalid -> Arrays
+                                                    .equals(helloMessageDetail.getMac(), invalid.getMac().toByteArray())
+                                                    && helloMessageDetail.getTimeCollectedOnDevice() == invalid
+                                                            .getTimeReceived()
+                                                    && helloMessageDetail.getTimeFromHelloMessage() == invalid
+                                                            .getTimeSent()
+                                    )
+                    );
+        }
+
+        if (contact.getMessageDetails().isEmpty()) {
+            log.info("All hello messages have been rejected.");
+            return contact;
+        }
+
+        // Call db to get registration
+        final var idA = response.getIdA().toByteArray();
+        final Optional<Registration> registrationRecord = registrationService.findById(idA);
+
+        if (!registrationRecord.isPresent()) {
+            log.info("Recovered id_A is unknown (fake or now unregistered?): {}; discarding contact", idA);
+            return contact;
+        }
+        final var registration = registrationRecord.get();
+
         List<HelloMessageDetail> toBeDiscarded = new ArrayList<>();
 
-        Registration registration = null;
         Integer epoch = null;
         this.nbToBeProcessed = contact.getMessageDetails().size();
 
         log.debug("{} HELLO message(s) to process", this.nbToBeProcessed);
         for (HelloMessageDetail helloMessageDetail : contact.getMessageDetails()) {
-            GetInfoFromHelloMessageRequest request = GetInfoFromHelloMessageRequest.newBuilder()
-                    .setEcc(ByteString.copyFrom(contact.getEcc()))
-                    .setEbid(ByteString.copyFrom(contact.getEbid()))
-                    .setTimeSent(helloMessageDetail.getTimeFromHelloMessage())
-                    .setMac(ByteString.copyFrom(helloMessageDetail.getMac()))
-                    .setTimeReceived(helloMessageDetail.getTimeCollectedOnDevice())
-                    .setServerCountryCode(ByteString.copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() }))
-                    .build();
 
-            // Step #8: Validate message
-            Optional<GetInfoFromHelloMessageResponse> response = this.cryptoServerClient.getInfoFromHelloMessage(request);
+            // Check step #2: is contact managed by this server?
+            if (!Arrays.equals(response.getCountryCode().toByteArray(), serverCountryCode)) {
+                log.info(
+                        "Country code {} is not managed by this server ({}); rerouting contact to federation network",
+                        response.getCountryCode().toByteArray(),
+                        serverCountryCode
+                );
 
-            if (response.isPresent()) {
-                GetInfoFromHelloMessageResponse helloMessageResponse = response.get();
+                // TODO: send the message to the dedicated country server
+                // remove the message from the database
+                return contact;
+            } else {
+                epoch = response.getEpochId();
 
-                if(helloMessageResponse.hasError() && Objects.nonNull(helloMessageResponse.getError()) &&
-                        helloMessageResponse.getError().getCode() > 0) {
-                    log.error("{}, discarding the hello message", helloMessageResponse.getError().getDescription());
+                // Check steps #5, #6
+                if (!step5CheckDeltaTaAndTimeABelowThreshold(helloMessageDetail)
+                        || !step6CheckTimeACorrespondsToEpochiA(
+                                response.getEpochId(),
+                                helloMessageDetail.getTimeCollectedOnDevice()
+                        )) {
                     toBeDiscarded.add(helloMessageDetail);
                 }
-                // Check step #2: is contact managed by this server?
-                if (!Arrays.equals(helloMessageResponse.getCountryCode().toByteArray(), serverCountryCode)) {
-                    log.info(
-                            "Country code {} is not managed by this server ({}); rerouting contact to federation network",
-                            helloMessageResponse.getCountryCode().toByteArray(),
-                            serverCountryCode);
-
-                    // TODO: send the message to the dedicated country server
-                    // remove the message from the database
-                    return contact;
-                } else {
-                    byte[] idA = helloMessageResponse.getIdA().toByteArray();
-                    epoch = helloMessageResponse.getEpochId();
-
-                    // Check step #4: check once if registration exists
-                    if (Objects.isNull(registration)) {
-                        Optional<Registration> registrationRecord = registrationService.findById(idA);
-
-                        if (!registrationRecord.isPresent()) {
-                            log.info("Recovered id_A is unknown (fake or now unregistered?): {}; discarding contact", idA);
-                            return contact;
-                        } else {
-                            registration = registrationRecord.get();
-                        }
-                    }
-
-                    // Check steps #5, #6
-                    if (!step5CheckDeltaTaAndTimeABelowThreshold(helloMessageDetail)
-                        || !step6CheckTimeACorrespondsToEpochiA(
-                                helloMessageResponse.getEpochId(),
-                                helloMessageDetail.getTimeCollectedOnDevice())) {
-                        toBeDiscarded.add(helloMessageDetail);
-                    }
-                }
-            } else {
-                log.warn("The HELLO message could not be validated; discarding it");
-                toBeDiscarded.add(helloMessageDetail);
             }
         }
 
-        this.removeInvalidHelloMessages(contact, toBeDiscarded);
+        contact.setMessageDetails(
+                contact.getMessageDetails().stream()
+                        .filter(not(toBeDiscarded::contains))
+                        .collect(toList())
+        );
+
         if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
             log.warn("Contact did not contain any valid messages; discarding contact");
             this.displayStatus();
             return contact;
         }
 
-       step9ScoreAndAddContactInListOfExposedEpochs(contact, epoch, registration);
+        step9ScoreAndAddContactInListOfExposedEpochs(contact, epoch, registration);
 
         this.registrationService.saveRegistration(registration);
 
@@ -237,21 +269,6 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
         }
         registrationRecord.setExposedEpochs(exposedEpochs);
 
-    }
-
-    private void removeInvalidHelloMessages(final Contact contact,final List<HelloMessageDetail> toBeDiscarded) {
-        Optional.ofNullable(contact)
-        .filter(processedContact -> !CollectionUtils.isEmpty(processedContact.getMessageDetails()))
-        .filter(processedContact -> !CollectionUtils.isEmpty(toBeDiscarded))
-        .ifPresent(processingContact -> {
-            List<HelloMessageDetail> receivedHelloMessage =  new ArrayList<>(processingContact.getMessageDetails());
-            this.nbToBeDiscarded = toBeDiscarded.size();
-            toBeDiscarded.stream().forEach(helloMessage -> {
-                int index = receivedHelloMessage.indexOf(helloMessage);
-                receivedHelloMessage.remove(index);
-            });
-            contact.setMessageDetails(receivedHelloMessage);
-        });
     }
 
     private void displayStatus() {

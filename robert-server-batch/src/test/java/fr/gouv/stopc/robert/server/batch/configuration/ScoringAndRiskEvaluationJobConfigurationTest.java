@@ -17,6 +17,7 @@ import java.util.Random;
 import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
 import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
 import nl.altindag.log.LogCaptor;
 import org.springframework.batch.core.Job;
@@ -132,6 +133,16 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         this.contactService.saveContacts(Arrays.asList(contact));
 
+        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+                .thenReturn(
+                        ValidateContactResponse
+                                .newBuilder()
+                                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
+                                .setCountryCode(ByteString.copyFrom(encryptedCountryCode))
+                                .setEpochId(currentEpochId)
+                                .build()
+                );
+
         assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertEquals(1, this.contactService.findAll().size());
 
@@ -183,13 +194,25 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        when(this.cryptoServerClient.getInfoFromHelloMessage(any())).thenReturn(Optional.empty());
-
         Contact contact = Contact.builder()
                 .ebid(ebid)
                 .ecc(encryptedCountryCode)
                 .messageDetails(this.generateHelloMessagesFor(ebid, encryptedCountryCode, currentEpochId))
                 .build();
+
+        var helloMessageDetail = contact.getMessageDetails().get(0);
+        var validateContactResponse = ValidateContactResponse
+                .newBuilder()
+                .addInvalidHelloMessageDetails(
+                        ValidateContactResponse
+                                .newBuilder()
+                                .addInvalidHelloMessageDetailsBuilder()
+                                .setMac(ByteString.copyFrom(helloMessageDetail.getMac()))
+                                .setTimeSent(helloMessageDetail.getTimeFromHelloMessage())
+                                .setTimeReceived(helloMessageDetail.getTimeCollectedOnDevice())
+                )
+                .build();
+        when(this.cryptoServerClient.validateContactHelloMessageMac(any())).thenReturn(validateContactResponse);
 
         this.contactService.saveContacts(Arrays.asList(contact));
 
@@ -201,8 +224,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         // Then
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
-        verify(this.cryptoServerClient, atLeast(1)).getInfoFromHelloMessage(any());
-
+        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
     }
 
 
@@ -264,8 +286,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertTrue(expectedRegistration.isPresent());
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertEquals(expectedRegistration.get().getExposedEpochs().size(), nbOfExposedEpochs);
-        verify(this.cryptoServerClient, atLeast(1)).getInfoFromHelloMessage(any());
-
+        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
 
     }
 
@@ -305,6 +326,20 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertEquals(1, this.contactService.findAll().size());
 
+        when(this.cryptoServerClient.validateContactHelloMessageMac(any()))
+                .thenReturn(
+                        ValidateContactResponse
+                                .newBuilder()
+                                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
+                                .setCountryCode(
+                                        ByteString.copyFrom(
+                                                new byte[] { this.serverConfigurationService.getServerCountryCode() }
+                                        )
+                                )
+                                .setEpochId(currentEpochId)
+                                .build()
+                );
+
         // When
         this.jobLauncherTestUtils.launchJob();
 
@@ -321,7 +356,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertNotEquals(currentExposedEpoch.getEpochId(), oldEpochExposition.getEpochId());
         assertFalse(expectedRegistration.get().isAtRisk());
 
-        verify(this.cryptoServerClient, times(contact.getMessageDetails().size())).getInfoFromHelloMessage(any());
+        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
 
     }
 
@@ -626,14 +661,21 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        doReturn(Optional.of(
-                GetInfoFromHelloMessageResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
-                .setCountryCode(ByteString.copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() }))
-                .setEpochId(epochOfMessage)
-                .build()))
-        .when(this.cryptoServerClient)
-        .getInfoFromHelloMessage(any());
+        doReturn(
+                Optional.of(
+                        GetInfoFromHelloMessageResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
+                                .setCountryCode(
+                                        ByteString.copyFrom(
+                                                new byte[] { this.serverConfigurationService.getServerCountryCode() }
+                                        )
+                                )
+                                .setEpochId(epochOfMessage)
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient)
+                .getInfoFromHelloMessage(any());
 
         byte[] mac = this.cryptoService
                 .generateMACHello(new CryptoHMACSHA256(getKeyMacFor(this.registration.get().getPermanentIdentifier())), helloMessage);

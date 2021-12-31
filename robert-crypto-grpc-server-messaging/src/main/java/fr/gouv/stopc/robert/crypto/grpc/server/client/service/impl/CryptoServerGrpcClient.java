@@ -94,6 +94,11 @@ public class CryptoServerGrpcClient implements ICryptoServerGrpcClient {
     }
 
     @Override
+    public ValidateContactResponse validateContactHelloMessageMac(ValidateContactRequest request) {
+        return this.blockingStub.validateContactHelloMessageMac(request);
+    }
+
+    @Override
     public Optional<GetInfoFromHelloMessageResponse> getInfoFromHelloMessage(GetInfoFromHelloMessageRequest request) {
         try {
             GetInfoFromHelloMessageResponse response = this.blockingStub.getInfoFromHelloMessage(request);

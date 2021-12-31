@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -399,6 +400,53 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                         .build()
         );
         responseObserver.onCompleted();
+    }
+
+    @Override
+    public void validateContactHelloMessageMac(ValidateContactRequest request,
+            StreamObserver<ValidateContactResponse> responseObserver) {
+        final var validateContactResponseBuilder = ValidateContactResponse.newBuilder();
+        final var responseCounter = new AtomicInteger(request.getHelloMessageDetailsCount());
+        for (final var helloMessageDetail : request.getHelloMessageDetailsList()) {
+
+            var requestInfo = GetInfoFromHelloMessageRequest.newBuilder()
+                    .setMac(helloMessageDetail.getMac())
+                    .setEbid(request.getEbid())
+                    .setEcc(request.getEcc())
+                    .setServerCountryCode(request.getServerCountryCode())
+                    .setTimeReceived(helloMessageDetail.getTimeReceived())
+                    .setTimeSent(helloMessageDetail.getTimeSent())
+                    .build();
+
+            getInfoFromHelloMessage(requestInfo, new StreamObserver<>() {
+
+                @Override
+                public void onNext(GetInfoFromHelloMessageResponse infoFromHelloMessage) {
+                    validateContactResponseBuilder.setIdA(infoFromHelloMessage.getIdA());
+                    validateContactResponseBuilder.setCountryCode(infoFromHelloMessage.getCountryCode());
+                    validateContactResponseBuilder.setEpochId(infoFromHelloMessage.getEpochId());
+                    responseCounter.decrementAndGet();
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    validateContactResponseBuilder.addInvalidHelloMessageDetailsBuilder()
+                            .setMac(helloMessageDetail.getMac())
+                            .setTimeSent(helloMessageDetail.getTimeSent())
+                            .setTimeReceived(helloMessageDetail.getTimeReceived())
+                            .build();
+                    responseCounter.decrementAndGet();
+                }
+
+                @Override
+                public void onCompleted() {
+                    if (0 == responseCounter.get()) {
+                        responseObserver.onNext(validateContactResponseBuilder.build());
+                        responseObserver.onCompleted();
+                    }
+                }
+            });
+        }
     }
 
     @Override
