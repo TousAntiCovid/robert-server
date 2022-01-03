@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.batch.processor;
 
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageRequest;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactRequest;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
@@ -139,24 +138,12 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
 
         log.debug("{} HELLO message(s) to process", this.nbToBeProcessed);
         for (HelloMessageDetail helloMessageDetail : contact.getMessageDetails()) {
-            GetInfoFromHelloMessageRequest request = GetInfoFromHelloMessageRequest.newBuilder()
-                    .setEcc(ByteString.copyFrom(contact.getEcc()))
-                    .setEbid(ByteString.copyFrom(contact.getEbid()))
-                    .setTimeSent(helloMessageDetail.getTimeFromHelloMessage())
-                    .setMac(ByteString.copyFrom(helloMessageDetail.getMac()))
-                    .setTimeReceived(helloMessageDetail.getTimeCollectedOnDevice())
-                    .setServerCountryCode(
-                            ByteString.copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() })
-                    )
-                    .build();
-
-            // Step #8: Validate message
 
             // Check step #2: is contact managed by this server?
-            if (!Arrays.equals(helloMessageResponse.getCountryCode().toByteArray(), serverCountryCode)) {
+            if (!Arrays.equals(response.getCountryCode().toByteArray(), serverCountryCode)) {
                 log.info(
                         "Country code {} is not managed by this server ({}); rerouting contact to federation network",
-                        helloMessageResponse.getCountryCode().toByteArray(),
+                        response.getCountryCode().toByteArray(),
                         serverCountryCode
                 );
 
@@ -164,13 +151,12 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                 // remove the message from the database
                 return contact;
             } else {
-                byte[] idA = helloMessageResponse.getIdA().toByteArray();
-                epoch = helloMessageResponse.getEpochId();
+                epoch = response.getEpochId();
 
                 // Check steps #5, #6
                 if (!step5CheckDeltaTaAndTimeABelowThreshold(helloMessageDetail)
                         || !step6CheckTimeACorrespondsToEpochiA(
-                                helloMessageResponse.getEpochId(),
+                                response.getEpochId(),
                                 helloMessageDetail.getTimeCollectedOnDevice()
                         )) {
                     toBeDiscarded.add(helloMessageDetail);
@@ -178,7 +164,8 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
             }
         }
 
-        this.removeInvalidHelloMessages(contact, toBeDiscarded);
+        contact.getMessageDetails().removeAll(toBeDiscarded);
+
         if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
             log.warn("Contact did not contain any valid messages; discarding contact");
             this.displayStatus();
