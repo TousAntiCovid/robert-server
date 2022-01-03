@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static java.util.function.Predicate.*;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -107,19 +108,34 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                         .build()
         );
 
+        if (null == response) {
+            log.warn("The contact could not be validated. Discarding all its hello messages");
+            return contact;
+        }
+
         // remove invalid HelloMessageDetails
-        log.info("Removing HelloMessageDetails having invalid Mac: {}", response.getInvalidHelloMessageDetailsCount());
-        contact.getMessageDetails()
-                .removeIf(
-                        helloMessageDetail -> response.getInvalidHelloMessageDetailsList().stream()
-                                .anyMatch(
-                                        invalid -> Arrays
-                                                .equals(helloMessageDetail.getMac(), invalid.getMac().toByteArray())
-                                                && helloMessageDetail.getTimeCollectedOnDevice() == invalid
-                                                        .getTimeReceived()
-                                                && helloMessageDetail.getTimeFromHelloMessage() == invalid.getTimeSent()
-                                )
-                );
+        if (!response.getInvalidHelloMessageDetailsList().isEmpty()) {
+            log.info(
+                    "Removing HelloMessageDetails having invalid Mac: {}", response.getInvalidHelloMessageDetailsCount()
+            );
+            contact.getMessageDetails()
+                    .removeIf(
+                            helloMessageDetail -> response.getInvalidHelloMessageDetailsList().stream()
+                                    .anyMatch(
+                                            invalid -> Arrays
+                                                    .equals(helloMessageDetail.getMac(), invalid.getMac().toByteArray())
+                                                    && helloMessageDetail.getTimeCollectedOnDevice() == invalid
+                                                            .getTimeReceived()
+                                                    && helloMessageDetail.getTimeFromHelloMessage() == invalid
+                                                            .getTimeSent()
+                                    )
+                    );
+        }
+
+        if (contact.getMessageDetails().isEmpty()) {
+            log.info("All hello messages have been rejected.");
+            return contact;
+        }
 
         // Call db to get registration
         final var idA = response.getIdA().toByteArray();
@@ -164,7 +180,11 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
             }
         }
 
-        contact.getMessageDetails().removeAll(toBeDiscarded);
+        contact.setMessageDetails(
+                contact.getMessageDetails().stream()
+                        .filter(not(toBeDiscarded::contains))
+                        .collect(toList())
+        );
 
         if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
             log.warn("Contact did not contain any valid messages; discarding contact");
@@ -254,23 +274,6 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
         }
         registrationRecord.setExposedEpochs(exposedEpochs);
 
-    }
-
-    private void removeInvalidHelloMessages(final Contact contact, final List<HelloMessageDetail> toBeDiscarded) {
-        Optional.ofNullable(contact)
-                .filter(processedContact -> !CollectionUtils.isEmpty(processedContact.getMessageDetails()))
-                .filter(processedContact -> !CollectionUtils.isEmpty(toBeDiscarded))
-                .ifPresent(processingContact -> {
-                    List<HelloMessageDetail> receivedHelloMessage = new ArrayList<>(
-                            processingContact.getMessageDetails()
-                    );
-                    this.nbToBeDiscarded = toBeDiscarded.size();
-                    toBeDiscarded.stream().forEach(helloMessage -> {
-                        int index = receivedHelloMessage.indexOf(helloMessage);
-                        receivedHelloMessage.remove(index);
-                    });
-                    contact.setMessageDetails(receivedHelloMessage);
-                });
     }
 
     private void displayStatus() {

@@ -1,42 +1,11 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.security.Key;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-
-import javax.crypto.spec.SecretKeySpec;
-import javax.inject.Inject;
-
-import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
-import nl.altindag.log.LogCaptor;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.test.JobLauncherTestUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.util.CollectionUtils;
-
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -55,17 +24,49 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.test.JobLauncherTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.CollectionUtils;
+
+import javax.crypto.spec.SecretKeySpec;
+import javax.inject.Inject;
+
+import java.security.Key;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @Slf4j
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {  ScoringAndRiskEvaluationJobConfigurationTest.BatchTestConfig.class, RobertServerBatchApplication.class })
-@TestPropertySource(locations="classpath:application.properties", properties = {"robert.scoring.algo-version=2",
-"robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK"})
+@ContextConfiguration(classes = { ScoringAndRiskEvaluationJobConfigurationTest.BatchTestConfig.class,
+        RobertServerBatchApplication.class })
+@TestPropertySource(locations = "classpath:application.properties", properties = { "robert.scoring.algo-version=2",
+        "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK" })
 public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     @Inject
@@ -92,14 +93,16 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     @MockBean
     private RobertServerBatchConfiguration config;
 
-
     private Optional<Registration> registration;
 
     private byte[] serverKey;
+
     private byte countryCode;
+
     private Key federationKey;
 
     private long epochDuration;
+
     private long serviceTimeStart;
 
     @BeforeEach
@@ -113,14 +116,15 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     @Test
     public void testScoreAndProcessRisksWithABadEncryptedCountryCodeShouldNotUpdateRegistration() throws Exception {
 
-        //  Given
+        // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
         final int currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);
-        byte[] ebid = this.cryptoService.generateEBID(new CryptoSkinny64(serverKey), currentEpochId, ProcessorTestUtils.generateIdA());
+        byte[] ebid = this.cryptoService
+                .generateEBID(new CryptoSkinny64(serverKey), currentEpochId, ProcessorTestUtils.generateIdA());
 
         // Create a fake Encrypted Country Code (ECC)
         byte[] encryptedCountryCode = new byte[] { (byte) 0xff };
@@ -131,6 +135,16 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 .build();
 
         this.contactService.saveContacts(Arrays.asList(contact));
+
+        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+                .thenReturn(
+                        ValidateContactResponse
+                                .newBuilder()
+                                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
+                                .setCountryCode(ByteString.copyFrom(encryptedCountryCode))
+                                .setEpochId(currentEpochId)
+                                .build()
+                );
 
         assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertEquals(1, this.contactService.findAll().size());
@@ -151,7 +165,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     }
 
-
     @Test
     public void testScoreAndProcessRisksWhenRegistrationDoesNotExist() throws Exception {
 
@@ -166,9 +179,11 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         final int currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);
 
         byte[] ebid;
-        ebid = this.cryptoService.generateEBID(new CryptoSkinny64(serverKey), currentEpochId, ProcessorTestUtils.generateIdA());
+        ebid = this.cryptoService
+                .generateEBID(new CryptoSkinny64(serverKey), currentEpochId, ProcessorTestUtils.generateIdA());
 
-        byte[] encryptedCountryCode = this.cryptoService.encryptCountryCode(new CryptoAESECB(federationKey), ebid, countryCode);
+        byte[] encryptedCountryCode = this.cryptoService
+                .encryptCountryCode(new CryptoAESECB(federationKey), ebid, countryCode);
 
         byte[] time = new byte[2];
 
@@ -183,13 +198,25 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        when(this.cryptoServerClient.getInfoFromHelloMessage(any())).thenReturn(Optional.empty());
-
         Contact contact = Contact.builder()
                 .ebid(ebid)
                 .ecc(encryptedCountryCode)
                 .messageDetails(this.generateHelloMessagesFor(ebid, encryptedCountryCode, currentEpochId))
                 .build();
+
+        var helloMessageDetail = contact.getMessageDetails().get(0);
+        var validateContactResponse = ValidateContactResponse
+                .newBuilder()
+                .addInvalidHelloMessageDetails(
+                        ValidateContactResponse
+                                .newBuilder()
+                                .addInvalidHelloMessageDetailsBuilder()
+                                .setMac(ByteString.copyFrom(helloMessageDetail.getMac()))
+                                .setTimeSent(helloMessageDetail.getTimeFromHelloMessage())
+                                .setTimeReceived(helloMessageDetail.getTimeCollectedOnDevice())
+                )
+                .build();
+        when(this.cryptoServerClient.validateContactHelloMessageMac(any())).thenReturn(validateContactResponse);
 
         this.contactService.saveContacts(Arrays.asList(contact));
 
@@ -201,10 +228,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         // Then
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
-        verify(this.cryptoServerClient, atLeast(1)).getInfoFromHelloMessage(any());
-
+        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
     }
-
 
     @Test
     public void testScoreAndProcessRisksWhenContactIsValid() throws Exception {
@@ -220,17 +245,22 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         final int previousEpoch = TimeUtils.getNumberOfEpochsBetween(
                 tpstStart,
-                currentTime - this.serverConfigurationService.getEpochDurationSecs());
+                currentTime - this.serverConfigurationService.getEpochDurationSecs()
+        );
 
         Registration registrationWithEE = this.registration.get();
-        registrationWithEE.setExposedEpochs(Arrays.asList(EpochExposition.builder()
-                .epochId(previousEpoch)
-                .expositionScores(Arrays.asList(0.0))
-                .build(),
-                EpochExposition.builder()
-                .epochId(currentEpochId)
-                .expositionScores(Arrays.asList(0.0))
-                .build()));
+        registrationWithEE.setExposedEpochs(
+                Arrays.asList(
+                        EpochExposition.builder()
+                                .epochId(previousEpoch)
+                                .expositionScores(Arrays.asList(0.0))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(currentEpochId)
+                                .expositionScores(Arrays.asList(0.0))
+                                .build()
+                )
+        );
 
         int nbOfExposedEpochs = registrationWithEE.getExposedEpochs().size();
 
@@ -238,17 +268,21 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         Contact contact = this.generateContact(currentEpochId, currentTime);
 
-
         this.contactService.saveContacts(Arrays.asList(contact));
 
-        doReturn(Optional.of(
-                GetInfoFromHelloMessageResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
-                .setCountryCode(ByteString.copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() }))
-                .setEpochId(currentEpochId)
-                .build()))
-        .when(this.cryptoServerClient)
-        .getInfoFromHelloMessage(any());
+        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+                .thenReturn(
+                        ValidateContactResponse
+                                .newBuilder()
+                                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
+                                .setCountryCode(
+                                        ByteString.copyFrom(
+                                                new byte[] { this.serverConfigurationService.getServerCountryCode() }
+                                        )
+                                )
+                                .setEpochId(currentEpochId)
+                                .build()
+                );
 
         assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertEquals(1, this.contactService.findAll().size());
@@ -264,13 +298,13 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertTrue(expectedRegistration.isPresent());
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertEquals(expectedRegistration.get().getExposedEpochs().size(), nbOfExposedEpochs);
-        verify(this.cryptoServerClient, atLeast(1)).getInfoFromHelloMessage(any());
-
+        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
 
     }
 
     @Test
-    public void testScoreAndProcessRisksWhenTheRegistrationHasTooOldExposedEpochsShouldRemoveTooOldExposedEpochs() throws Exception {
+    public void testScoreAndProcessRisksWhenTheRegistrationHasTooOldExposedEpochsShouldRemoveTooOldExposedEpochs()
+            throws Exception {
 
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -305,6 +339,20 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertEquals(1, this.contactService.findAll().size());
 
+        when(this.cryptoServerClient.validateContactHelloMessageMac(any()))
+                .thenReturn(
+                        ValidateContactResponse
+                                .newBuilder()
+                                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
+                                .setCountryCode(
+                                        ByteString.copyFrom(
+                                                new byte[] { this.serverConfigurationService.getServerCountryCode() }
+                                        )
+                                )
+                                .setEpochId(currentEpochId)
+                                .build()
+                );
+
         // When
         this.jobLauncherTestUtils.launchJob();
 
@@ -317,11 +365,12 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertEquals(expectedRegistration.get().getExposedEpochs().size(), nbOfExposedEpochsBefore);
 
-        EpochExposition currentExposedEpoch = expectedRegistration.get().getExposedEpochs().get(nbOfExposedEpochsBefore - 1);
+        EpochExposition currentExposedEpoch = expectedRegistration.get().getExposedEpochs()
+                .get(nbOfExposedEpochsBefore - 1);
         assertNotEquals(currentExposedEpoch.getEpochId(), oldEpochExposition.getEpochId());
         assertFalse(expectedRegistration.get().isAtRisk());
 
-        verify(this.cryptoServerClient, times(contact.getMessageDetails().size())).getInfoFromHelloMessage(any());
+        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
 
     }
 
@@ -332,7 +381,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
-
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
 
@@ -341,14 +389,18 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         // Setup id with an existing score below threshold
         Registration registrationWithEE = this.registration.get();
-        registrationWithEE.setExposedEpochs(Arrays.asList(EpochExposition.builder()
-                .epochId(previousEpoch)
-                .expositionScores(Arrays.asList(10.0))
-                .build(),
-                EpochExposition.builder()
-                .epochId(currentEpochId)
-                .expositionScores(Arrays.asList(1.0))
-                .build()));
+        registrationWithEE.setExposedEpochs(
+                Arrays.asList(
+                        EpochExposition.builder()
+                                .epochId(previousEpoch)
+                                .expositionScores(Arrays.asList(10.0))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(currentEpochId)
+                                .expositionScores(Arrays.asList(1.0))
+                                .build()
+                )
+        );
 
         this.registrationService.saveRegistration(registrationWithEE);
 
@@ -366,12 +418,12 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testScoreAndProcessRisksWhenRecentExposedEpochScoreGreaterThanRiskThresholdShouldBeAtRisk() throws Exception {
+    public void testScoreAndProcessRisksWhenRecentExposedEpochScoreGreaterThanRiskThresholdShouldBeAtRisk()
+            throws Exception {
 
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
-
 
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
@@ -381,14 +433,18 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         // Setup id with an existing score below threshold
         Registration registrationWithEE = this.registration.get();
-        registrationWithEE.setExposedEpochs(Arrays.asList(EpochExposition.builder()
-                .epochId(previousEpoch)
-                .expositionScores(Arrays.asList(14.0))
-                .build(),
-                EpochExposition.builder()
-                .epochId(currentEpochId)
-                .expositionScores(Arrays.asList(2.0))
-                .build()));
+        registrationWithEE.setExposedEpochs(
+                Arrays.asList(
+                        EpochExposition.builder()
+                                .epochId(previousEpoch)
+                                .expositionScores(Arrays.asList(14.0))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(currentEpochId)
+                                .expositionScores(Arrays.asList(2.0))
+                                .build()
+                )
+        );
 
         this.registrationService.saveRegistration(registrationWithEE);
 
@@ -412,7 +468,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
-
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
 
@@ -421,14 +476,18 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         // Setup id with an existing score below threshold
         Registration registrationWithEE = this.registration.get();
-        registrationWithEE.setExposedEpochs(Arrays.asList(EpochExposition.builder()
-                .epochId(previousEpoch)
-                .expositionScores(Arrays.asList(0.0))
-                .build(),
-                EpochExposition.builder()
-                .epochId(currentEpochId)
-                .expositionScores(Arrays.asList(0.0))
-                .build()));
+        registrationWithEE.setExposedEpochs(
+                Arrays.asList(
+                        EpochExposition.builder()
+                                .epochId(previousEpoch)
+                                .expositionScores(Arrays.asList(0.0))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(currentEpochId)
+                                .expositionScores(Arrays.asList(0.0))
+                                .build()
+                )
+        );
 
         this.registrationService.saveRegistration(registrationWithEE);
 
@@ -453,17 +512,23 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
 
-        Registration registrationHavingRiskLevelThatMustBeReset = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA()).get();
+        Registration registrationHavingRiskLevelThatMustBeReset = this.registrationService
+                .createRegistration(ProcessorTestUtils.generateIdA()).get();
 
         registrationHavingRiskLevelThatMustBeReset.setAtRisk(true);
-        registrationHavingRiskLevelThatMustBeReset.setLatestRiskEpoch(currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) - 1);
+        registrationHavingRiskLevelThatMustBeReset.setLatestRiskEpoch(
+                currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) - 1
+        );
 
         this.registrationService.saveRegistration(registrationHavingRiskLevelThatMustBeReset);
 
-        Registration registrationHavingRiskLevelThatMustNotBeReset = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA()).get();
+        Registration registrationHavingRiskLevelThatMustNotBeReset = this.registrationService
+                .createRegistration(ProcessorTestUtils.generateIdA()).get();
 
         registrationHavingRiskLevelThatMustNotBeReset.setAtRisk(true);
-        registrationHavingRiskLevelThatMustNotBeReset.setLatestRiskEpoch(currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) + 1);
+        registrationHavingRiskLevelThatMustNotBeReset.setLatestRiskEpoch(
+                currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) + 1
+        );
 
         this.registrationService.saveRegistration(registrationHavingRiskLevelThatMustNotBeReset);
 
@@ -498,10 +563,12 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         final var contact1 = this.generateContact(currentEpochId, currentTime);
         final var contact2 = this.generateContact(currentEpochId, currentTime);
         final var contact3 = this.generateContact(currentEpochId, currentTime);
-        contact3.setMessageDetails(List.of(
-                contact3.getMessageDetails().get(0),
-                contact3.getMessageDetails().get(0)
-        ));
+        contact3.setMessageDetails(
+                List.of(
+                        contact3.getMessageDetails().get(0),
+                        contact3.getMessageDetails().get(0)
+                )
+        );
         this.contactService.saveContacts(Arrays.asList(contact1, contact2, contact3));
 
         try (final var logCaptor = LogCaptor.forClass(LogHelloMessageCountToProcessJobExecutionListener.class)) {
@@ -538,7 +605,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         this.registrationService.deleteAll();
     }
 
-    private HelloMessageDetail generateHelloMessageFor(byte[] ebid, byte[] encryptedCountryCode, long t, int rssi) throws Exception {
+    private HelloMessageDetail generateHelloMessageFor(byte[] ebid, byte[] encryptedCountryCode, long t, int rssi)
+            throws Exception {
         byte[] time = new byte[2];
 
         // Get timestamp on sixteen bits
@@ -563,7 +631,10 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
         byte[] mac = this.cryptoService
-                .generateMACHello(new CryptoHMACSHA256(getKeyMacFor(this.registration.get().getPermanentIdentifier())), helloMessage);
+                .generateMACHello(
+                        new CryptoHMACSHA256(getKeyMacFor(this.registration.get().getPermanentIdentifier())),
+                        helloMessage
+                );
 
         return HelloMessageDetail.builder()
                 .timeFromHelloMessage(timeHello)
@@ -583,7 +654,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         return ProcessorTestUtils.generateRandomByteArrayOfSize(32);
     }
 
-    private List<HelloMessageDetail> generateHelloMessagesFor(byte[] ebid, byte[] encryptedCountryCode, int currentEpoch) throws Exception {
+    private List<HelloMessageDetail> generateHelloMessagesFor(byte[] ebid, byte[] encryptedCountryCode,
+            int currentEpoch) throws Exception {
         List<HelloMessageDetail> messages = new ArrayList<>();
 
         Random random = new Random();
@@ -601,9 +673,12 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     private Contact generateContact(int epochOfMessage, long timeOfMessage) throws RobertServerCryptoException {
 
-        byte[] ebid = this.cryptoService.generateEBID(new CryptoSkinny64(this.serverKey), epochOfMessage,
-                this.registration.get().getPermanentIdentifier());
-        byte[] encryptedCountryCode = this.cryptoService.encryptCountryCode(new CryptoAESECB(this.federationKey), ebid, this.countryCode);
+        byte[] ebid = this.cryptoService.generateEBID(
+                new CryptoSkinny64(this.serverKey), epochOfMessage,
+                this.registration.get().getPermanentIdentifier()
+        );
+        byte[] encryptedCountryCode = this.cryptoService
+                .encryptCountryCode(new CryptoAESECB(this.federationKey), ebid, this.countryCode);
         byte[] time = new byte[2];
 
         // Get timestamp on 16 bits
@@ -626,17 +701,27 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        doReturn(Optional.of(
-                GetInfoFromHelloMessageResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
-                .setCountryCode(ByteString.copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() }))
-                .setEpochId(epochOfMessage)
-                .build()))
-        .when(this.cryptoServerClient)
-        .getInfoFromHelloMessage(any());
+        doReturn(
+                Optional.of(
+                        GetInfoFromHelloMessageResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(this.registration.get().getPermanentIdentifier()))
+                                .setCountryCode(
+                                        ByteString.copyFrom(
+                                                new byte[] { this.serverConfigurationService.getServerCountryCode() }
+                                        )
+                                )
+                                .setEpochId(epochOfMessage)
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient)
+                .getInfoFromHelloMessage(any());
 
         byte[] mac = this.cryptoService
-                .generateMACHello(new CryptoHMACSHA256(getKeyMacFor(this.registration.get().getPermanentIdentifier())), helloMessage);
+                .generateMACHello(
+                        new CryptoHMACSHA256(getKeyMacFor(this.registration.get().getPermanentIdentifier())),
+                        helloMessage
+                );
 
         HelloMessageDetail helloMessageDetail = HelloMessageDetail.builder()
                 .mac(mac)
