@@ -1,7 +1,7 @@
 robert:
-  ws-rest-base-url: http://robert-server-ws-rest:8086
+  ws-rest-base-url: http://ws-rest:8086
   crypto-public-key: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7fAxfrLtG5tXyjomCOg9r1wNnr9len4m9sTflJUHDdkwubKyidTtFkVfNLrM91yuffdrpJZe9XOkof8P+zPGDg=="
-  batch-command: "docker-compose up robert-server-batch"
+  batch-command: "docker-compose up batch"
 
 spring:
   data:
@@ -9,6 +9,6 @@ spring:
       uri: mongodb://mongo:27017/protectedRobertDB
   datasource:
     platform: postgres
-    url: jdbc:postgresql://postgresql-robert:5432/robert
+    url: jdbc:postgresql://postgres:5432/robert
     username: robert
     password: robert
