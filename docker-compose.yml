@@ -5,9 +5,7 @@ services:
     ports:
       - "27017:27017"
   postgres:
-    build:
-      context: ./docker-compose/postgresql
-      dockerfile: ./Dockerfile
+    build: docker-compose/postgresql
     ports:
       - "5432:5432"
     environment:
@@ -15,9 +13,7 @@ services:
       - POSTGRES_DB=robert
       - POSTGRES_USER=robert
   crypto-server:
-    build:
-      context: robert-crypto-grpc-server
-      dockerfile: ./src/main/docker/Dockerfile
+    build: robert-crypto-grpc-server
     ports:
       - "9090:9090"
       - "19090:19090"
@@ -30,9 +26,7 @@ services:
     depends_on:
       - postgres
   ws-rest:
-    build:
-      context: robert-server-ws-rest
-      dockerfile: ./src/main/docker/Dockerfile
+    build: robert-server-ws-rest
     environment:
       - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY}
       - ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}
@@ -51,9 +45,7 @@ services:
       - mongo
       - crypto-server
   batch:
-    build:
-      context: robert-server-batch
-      dockerfile: ./src/main/docker/Dockerfile
+    build: robert-server-batch
     environment:
       - ROBERT_CRYPTO_SERVER_HOST=crypto-server
       - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
