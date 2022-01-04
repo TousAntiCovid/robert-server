@@ -403,7 +403,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     @Override
-    public void validateContactHelloMessageMac(ValidateContactRequest request,
+    public void validateContact(ValidateContactRequest request,
             StreamObserver<ValidateContactResponse> responseObserver) {
         final var validateContactResponseBuilder = ValidateContactResponse.newBuilder();
         final var responseCounter = new AtomicInteger(request.getHelloMessageDetailsCount());

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -39,7 +38,6 @@ import org.springframework.util.CollectionUtils;
 import com.google.protobuf.ByteString;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
@@ -155,7 +153,7 @@ public class ContactProcessorTest {
         assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertEquals(1, this.contactService.findAll().size());
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -176,7 +174,7 @@ public class ContactProcessorTest {
         assertNotNull(processedContact);
         contactItemWriter.write(Arrays.asList(processedContact));
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
     @Test
@@ -206,7 +204,7 @@ public class ContactProcessorTest {
         assertNotNull(processedContact);
         contactItemWriter.write(Arrays.asList(processedContact));
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
-        verify(this.cryptoServerClient, never()).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, never()).validateContact(any());
     }
 
     @Test
@@ -245,7 +243,7 @@ public class ContactProcessorTest {
                 .build();
 
         var helloMessageDetail = contact.getMessageDetails().get(0);
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -274,7 +272,7 @@ public class ContactProcessorTest {
         assertNotNull(processedContact);
         contactItemWriter.write(Arrays.asList(processedContact));
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
     @Test
@@ -309,7 +307,7 @@ public class ContactProcessorTest {
 
         byte[] encryptedCountryCode = this.cryptoService.encryptCountryCode(new CryptoAESECB(federationKey), ebid, countryCode);
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -353,7 +351,7 @@ public class ContactProcessorTest {
         assertTrue(expectedRegistration.isPresent());
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertTrue(expectedRegistration.get().getExposedEpochs().size() == 2);
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
     @Test
@@ -386,7 +384,7 @@ public class ContactProcessorTest {
                 this.registration.get().getPermanentIdentifier());
         byte[] encryptedCountryCode = this.cryptoService.encryptCountryCode(new CryptoAESECB(federationKey), ebid, countryCode);
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -430,7 +428,7 @@ public class ContactProcessorTest {
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertTrue(expectedRegistration.get().getExposedEpochs().size() == 2);
 
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
     @Test
@@ -467,7 +465,7 @@ public class ContactProcessorTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -511,7 +509,7 @@ public class ContactProcessorTest {
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertTrue(CollectionUtils.isEmpty(contact.getMessageDetails()));
 
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
 
         assertFalse(helloMessageDetail.toString().contains(Arrays.toString(mac)));
         assertFalse(helloMessageDetail.toString().contains(Integer.toString(timeHello)));
@@ -561,7 +559,7 @@ public class ContactProcessorTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -604,7 +602,7 @@ public class ContactProcessorTest {
         contactItemWriter.write(Arrays.asList(processedContact));
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
 
-        verify(this.cryptoServerClient).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient).validateContact(any());
     }
 
     @Test
@@ -655,7 +653,7 @@ public class ContactProcessorTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -713,7 +711,7 @@ public class ContactProcessorTest {
         assertThat(expectedRegistration.get().getExposedEpochs()).isNotEmpty();
         assertThat(expectedRegistration.get().getExposedEpochs().size()).isEqualTo(1);
 
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
     @Test
@@ -757,7 +755,7 @@ public class ContactProcessorTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -800,7 +798,7 @@ public class ContactProcessorTest {
         contactItemWriter.write(Arrays.asList(processedContact));
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
 
-        verify(this.cryptoServerClient).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient).validateContact(any());
     }
 
     @Test
@@ -888,7 +886,7 @@ public class ContactProcessorTest {
                 )
                 .setEpochId(currentEpochId)
                 .build();
-        when(cryptoServerClient.validateContactHelloMessageMac(any())).thenReturn(mockedResponse);
+        when(cryptoServerClient.validateContact(any())).thenReturn(mockedResponse);
 
         assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertEquals(1, this.contactService.findAll().size());
@@ -907,7 +905,7 @@ public class ContactProcessorTest {
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertEquals(nbOfExposedEpochs, expectedRegistration.get().getExposedEpochs().size());
 
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
     @Test
@@ -962,7 +960,7 @@ public class ContactProcessorTest {
                 )
                 .setEpochId(currentEpochId)
                 .build();
-        when(cryptoServerClient.validateContactHelloMessageMac(any())).thenReturn(mockedResponse);
+        when(cryptoServerClient.validateContact(any())).thenReturn(mockedResponse);
 
         byte[] mac = this.cryptoService
                 .generateMACHello(new CryptoHMACSHA256(getKeyMacFor(this.registration.get().getPermanentIdentifier())), helloMessage);
@@ -1012,7 +1010,7 @@ public class ContactProcessorTest {
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertEquals(expectedRegistration.get().getExposedEpochs().size(), 1);
 
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
     @Test
@@ -1063,7 +1061,7 @@ public class ContactProcessorTest {
         System.arraycopy(ebid, 0, helloMessage, encryptedCountryCode.length, ebid.length);
         System.arraycopy(time, 0, helloMessage, encryptedCountryCode.length + ebid.length, time.length);
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -1111,7 +1109,7 @@ public class ContactProcessorTest {
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertThat(expectedRegistration.get().getExposedEpochs().size()).isEqualTo(2);
 
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
     @AfterEach

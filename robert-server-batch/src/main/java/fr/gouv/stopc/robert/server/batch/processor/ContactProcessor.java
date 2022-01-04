@@ -97,7 +97,7 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                 )
                 .collect(toList());
 
-        final var response = cryptoServerClient.validateContactHelloMessageMac(
+        final var response = cryptoServerClient.validateContact(
                 ValidateContactRequest.newBuilder()
                         .setEbid(ByteString.copyFrom(contact.getEbid()))
                         .setEcc(ByteString.copyFrom(contact.getEcc()))

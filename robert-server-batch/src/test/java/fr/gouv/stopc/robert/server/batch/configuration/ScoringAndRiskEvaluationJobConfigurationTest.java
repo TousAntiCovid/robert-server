@@ -133,7 +133,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         this.contactService.saveContacts(Arrays.asList(contact));
 
-        when(cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -200,8 +200,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 .messageDetails(this.generateHelloMessagesFor(ebid, encryptedCountryCode, currentEpochId))
                 .build();
 
-        var helloMessageDetail = contact.getMessageDetails().get(0);
-        var validateContactResponse = ValidateContactResponse
+        final var helloMessageDetail = contact.getMessageDetails().get(0);
+        final var validateContactResponse = ValidateContactResponse
                 .newBuilder()
                 .addInvalidHelloMessageDetails(
                         ValidateContactResponse
@@ -212,7 +212,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                                 .setTimeReceived(helloMessageDetail.getTimeCollectedOnDevice())
                 )
                 .build();
-        when(this.cryptoServerClient.validateContactHelloMessageMac(any())).thenReturn(validateContactResponse);
+        when(this.cryptoServerClient.validateContact(any())).thenReturn(validateContactResponse);
 
         this.contactService.saveContacts(Arrays.asList(contact));
 
@@ -224,7 +224,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         // Then
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
     }
 
 
@@ -286,7 +286,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertTrue(expectedRegistration.isPresent());
         assertFalse(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
         assertEquals(expectedRegistration.get().getExposedEpochs().size(), nbOfExposedEpochs);
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
 
     }
 
@@ -326,7 +326,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertFalse(CollectionUtils.isEmpty(this.contactService.findAll()));
         assertEquals(1, this.contactService.findAll().size());
 
-        when(this.cryptoServerClient.validateContactHelloMessageMac(any()))
+        when(this.cryptoServerClient.validateContact(any()))
                 .thenReturn(
                         ValidateContactResponse
                                 .newBuilder()
@@ -356,7 +356,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertNotEquals(currentExposedEpoch.getEpochId(), oldEpochExposition.getEpochId());
         assertFalse(expectedRegistration.get().isAtRisk());
 
-        verify(this.cryptoServerClient, times(1)).validateContactHelloMessageMac(any());
+        verify(this.cryptoServerClient, times(1)).validateContact(any());
 
     }
 

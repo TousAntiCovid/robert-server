@@ -21,7 +21,7 @@ option objc_class_prefix = "";
 package robert.server.crypto;
 
 service CryptoGrpcServiceImpl {
-	rpc validateContactHelloMessageMac(ValidateContactRequest) returns (ValidateContactResponse){}
+	rpc validateContact(ValidateContactRequest) returns (ValidateContactResponse){}
 	rpc createRegistration(CreateRegistrationRequest) returns (CreateRegistrationResponse){}
 	rpc getIdFromAuth(GetIdFromAuthRequest) returns (GetIdFromAuthResponse){}
 	rpc getIdFromStatus(GetIdFromStatusRequest) returns (GetIdFromStatusResponse){}

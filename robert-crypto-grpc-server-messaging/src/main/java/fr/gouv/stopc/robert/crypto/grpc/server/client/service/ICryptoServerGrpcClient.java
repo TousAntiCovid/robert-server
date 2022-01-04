@@ -15,7 +15,7 @@ public interface ICryptoServerGrpcClient {
 
 	Optional<CreateRegistrationResponse> createRegistration(CreateRegistrationRequest request);
 
-	ValidateContactResponse validateContactHelloMessageMac(ValidateContactRequest request);
+	ValidateContactResponse validateContact(ValidateContactRequest request);
 
 	Optional<GetInfoFromHelloMessageResponse> getInfoFromHelloMessage(GetInfoFromHelloMessageRequest request);
 

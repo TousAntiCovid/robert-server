@@ -94,7 +94,7 @@ public class CryptoServerGrpcClient implements ICryptoServerGrpcClient {
     }
 
     @Override
-    public ValidateContactResponse validateContactHelloMessageMac(ValidateContactRequest request) {
+    public ValidateContactResponse validateContact(ValidateContactRequest request) {
         return this.blockingStub.validateContactHelloMessageMac(request);
     }
 
