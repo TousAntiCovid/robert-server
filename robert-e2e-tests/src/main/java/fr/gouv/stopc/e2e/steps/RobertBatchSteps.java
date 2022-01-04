@@ -55,12 +55,12 @@ public class RobertBatchSteps {
 
     @Then("robert batch logs contains: {string}")
     public void checkDiscardedErrorInBatch(String message) {
-        assertThat(processLogs).anyMatch(line -> line.contains(message));
+        assertThat(processLogs).anyMatch(line -> line.matches(message.replace("{}", ".*")));
     }
 
     @Then("robert batch logs does not contains: {string}")
     public void checkNoDiscardedErrorInBatch(String message) {
-        assertThat(processLogs).noneMatch(line -> line.contains(message));
+        assertThat(processLogs).noneMatch(line -> line.matches(message.replace("{}", ".*")));
     }
 
     private static class StreamGobbler implements Runnable {

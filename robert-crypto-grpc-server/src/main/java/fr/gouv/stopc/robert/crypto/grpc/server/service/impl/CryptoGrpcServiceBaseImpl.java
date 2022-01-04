@@ -409,7 +409,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         final var responseCounter = new AtomicInteger(request.getHelloMessageDetailsCount());
         for (final var helloMessageDetail : request.getHelloMessageDetailsList()) {
 
-            var requestInfo = GetInfoFromHelloMessageRequest.newBuilder()
+            final var requestInfo = GetInfoFromHelloMessageRequest.newBuilder()
                     .setMac(helloMessageDetail.getMac())
                     .setEbid(request.getEbid())
                     .setEcc(request.getEcc())
