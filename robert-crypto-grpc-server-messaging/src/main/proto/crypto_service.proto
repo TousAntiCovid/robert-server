@@ -39,9 +39,9 @@ message ValidateContactRequest {
 }
 
 message HelloMessageDetail {
-	bytes mac = 3;
-	int32 timeSent = 4; // time hello message was sent from emitting device (unsigned 16 bits)
-	int64 timeReceived = 5; // time hello message was received on device (unsigned 32 bits, stored in long)
+	bytes mac = 1;
+	int32 timeSent = 2; // time hello message was sent from emitting device (unsigned 16 bits)
+	int64 timeReceived = 3; // time hello message was received on device (unsigned 32 bits, stored in long)
 }
 
 message ValidateContactResponse {
