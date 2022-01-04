@@ -1,5 +1,9 @@
 version: "3.5"
 services:
+  mongo:
+    image: "mongo:4.2.5"
+    ports:
+      - "27017:27017"
   postgres:
     build:
       context: ./docker-compose/postgresql
@@ -12,7 +16,7 @@ services:
       - POSTGRES_USER=robert
   crypto-server:
     build:
-      context: ./robert-crypto-grpc-server
+      context: robert-crypto-grpc-server
       dockerfile: ./src/main/docker/Dockerfile
     ports:
       - "9090:9090"
@@ -25,13 +29,9 @@ services:
       - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
     depends_on:
       - postgres
-  mongo:
-    image: "mongo:4.2.5"
-    ports:
-      - "27017:27017"
   ws-rest:
     build:
-      context: ./robert-server-ws-rest
+      context: robert-server-ws-rest
       dockerfile: ./src/main/docker/Dockerfile
     environment:
       - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY}
@@ -52,7 +52,7 @@ services:
       - crypto-server
   batch:
     build:
-      context: ./robert-server-batch
+      context: robert-server-batch
       dockerfile: ./src/main/docker/Dockerfile
     environment:
       - ROBERT_CRYPTO_SERVER_HOST=crypto-server
