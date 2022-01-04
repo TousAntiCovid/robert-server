@@ -36,7 +36,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -405,48 +404,133 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     @Override
     public void validateContact(ValidateContactRequest request,
             StreamObserver<ValidateContactResponse> responseObserver) {
-        final var validateContactResponseBuilder = ValidateContactResponse.newBuilder();
-        final var responseCounter = new AtomicInteger(request.getHelloMessageDetailsCount());
+
+        byte[] idA;
+        int epochId;
+        byte[] cc;
+
+        try {
+            // Decrypt ECC
+            cc = decryptECC(request.getEbid().toByteArray(), request.getEcc().byteAt(0));
+
+            // If country code was decrypted successfully but does not match current server,
+            // return directly and forward to appropriate federation server
+            if (!Arrays.equals(cc, request.getServerCountryCode().toByteArray())) {
+                responseObserver.onNext(
+                        ValidateContactResponse.newBuilder()
+                                .setCountryCode(ByteString.copyFrom(cc))
+                                .build()
+                );
+                responseObserver.onCompleted();
+                return;
+            }
+        } catch (RobertServerCryptoException e) {
+            String errorMessage = "Could not decrypt ECC";
+            log.warn(errorMessage);
+            responseObserver.onError(new RobertServerCryptoException(errorMessage, e));
+            return;
+        }
+
+        List<HelloMessageDetail> invalidMessageDetails = new ArrayList<>();
+        Optional<EbidContent> ebidContent = Optional.empty();
+
         for (final var helloMessageDetail : request.getHelloMessageDetailsList()) {
 
-            final var requestInfo = GetInfoFromHelloMessageRequest.newBuilder()
-                    .setMac(helloMessageDetail.getMac())
-                    .setEbid(request.getEbid())
-                    .setEcc(request.getEcc())
-                    .setServerCountryCode(request.getServerCountryCode())
-                    .setTimeReceived(helloMessageDetail.getTimeReceived())
-                    .setTimeSent(helloMessageDetail.getTimeSent())
-                    .build();
+            try {
+                // Decrypt EBID
+                EbidContent currentEbidContent = decryptEBIDWithTimeReceived(
+                        request.getEbid().toByteArray(), helloMessageDetail.getTimeReceived()
+                );
 
-            getInfoFromHelloMessage(requestInfo, new StreamObserver<>() {
-
-                @Override
-                public void onNext(GetInfoFromHelloMessageResponse infoFromHelloMessage) {
-                    validateContactResponseBuilder.setIdA(infoFromHelloMessage.getIdA());
-                    validateContactResponseBuilder.setCountryCode(infoFromHelloMessage.getCountryCode());
-                    validateContactResponseBuilder.setEpochId(infoFromHelloMessage.getEpochId());
-                    responseCounter.decrementAndGet();
+                if (Objects.isNull(currentEbidContent)) {
+                    invalidMessageDetails.add(helloMessageDetail);
+                    break;
                 }
 
-                @Override
-                public void onError(Throwable t) {
-                    validateContactResponseBuilder.addInvalidHelloMessageDetailsBuilder()
-                            .setMac(helloMessageDetail.getMac())
-                            .setTimeSent(helloMessageDetail.getTimeSent())
-                            .setTimeReceived(helloMessageDetail.getTimeReceived())
-                            .build();
-                    responseCounter.decrementAndGet();
-                }
-
-                @Override
-                public void onCompleted() {
-                    if (0 == responseCounter.get()) {
-                        responseObserver.onNext(validateContactResponseBuilder.build());
-                        responseObserver.onCompleted();
+                if (ebidContent.isPresent()) {
+                    if (!Arrays.equals(currentEbidContent.getIdA(), ebidContent.get().getIdA())) {
+                        String errorMessage = "Inconsistent ids across hello message of a contact";
+                        log.warn(errorMessage);
+                        responseObserver.onError(new RobertServerCryptoException(errorMessage));
+                        return;
                     }
+                    if (currentEbidContent.getEpochId() != ebidContent.get().getEpochId()) {
+                        String errorMessage = "Inconsistent epochs across hello message of a contact";
+                        log.warn(errorMessage);
+                        responseObserver.onError(new RobertServerCryptoException(errorMessage));
+                        return;
+                    }
+                } else {
+                    ebidContent = Optional.of(currentEbidContent);
                 }
-            });
+            } catch (RobertServerCryptoException e) {
+                String errorMessage = "Could not decrypt EBID due to internal error";
+                log.error(errorMessage);
+                invalidMessageDetails.add(helloMessageDetail);
+                break;
+            } catch (NoServerKeyFoundException e) {
+                log.warn(e.getMessage());
+                invalidMessageDetails.add(helloMessageDetail);
+                break;
+            }
+
         }
+
+        if (ebidContent.isEmpty()) {
+            String errorMessage = "Could not decrypt EBID";
+            responseObserver.onError(new RobertServerCryptoException(errorMessage));
+            responseObserver.onCompleted();
+            return;
+        }
+
+        Optional<ClientIdentifierBundle> clientIdentifierBundle = this.clientStorageService
+                .findKeyById(ebidContent.get().getIdA());
+        if (!clientIdentifierBundle.isPresent()) {
+            String errorMessage = "Could not find keys for id";
+            log.warn(errorMessage);
+            responseObserver.onError(new RobertServerCryptoException(errorMessage));
+            return;
+        }
+
+        List<HelloMessageDetail> remainingMessages = new ArrayList(request.getHelloMessageDetailsList());
+        remainingMessages.removeAll(invalidMessageDetails);
+
+        for (final var helloMessageDetail : remainingMessages) {
+            // Check MAC
+            try {
+
+                boolean macValid = this.cryptoService.macHelloValidation(
+                        new CryptoHMACSHA256(clientIdentifierBundle.get().getKeyForMac()),
+                        generateHelloFromHelloMessageDetail(
+                                request.getEbid().toByteArray(), request.getEcc().toByteArray(), helloMessageDetail
+                        )
+                );
+
+                if (!macValid) {
+                    String errorMessage = "MAC is invalid";
+                    log.warn(errorMessage);
+                    invalidMessageDetails.add(helloMessageDetail);
+                    break;
+                }
+            } catch (RobertServerCryptoException e) {
+                String errorMessage = "Could not validate MAC";
+                log.warn(errorMessage, e);
+                invalidMessageDetails.add(helloMessageDetail);
+                break;
+            }
+
+        }
+
+        responseObserver.onNext(
+            ValidateContactResponse.newBuilder()
+                .setIdA(ByteString.copyFrom(ebidContent.get().getIdA()))
+                .setCountryCode(ByteString.copyFrom(cc))
+                .setEpochId(ebidContent.get().getEpochId())
+                .addAllInvalidHelloMessageDetails(invalidMessageDetails)
+                .build()
+            );
+        responseObserver.onCompleted();
+
     }
 
     @Override
@@ -977,6 +1061,16 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         System.arraycopy(ecc, 0, hello, 0, ecc.length);
         System.arraycopy(ebid, 0, hello, ecc.length, ebid.length);
         System.arraycopy(ByteUtils.intToBytes(request.getTimeSent()), 2, hello, ecc.length + ebid.length, 2);
+        System.arraycopy(mac, 0, hello, ecc.length + ebid.length + 2, mac.length);
+        return hello;
+    }
+
+    private byte[] generateHelloFromHelloMessageDetail(byte[] ebid, byte[] ecc, HelloMessageDetail message) {
+        byte[] hello = new byte[16];
+        byte[] mac = message.getMac().toByteArray();
+        System.arraycopy(ecc, 0, hello, 0, ecc.length);
+        System.arraycopy(ebid, 0, hello, ecc.length, ebid.length);
+        System.arraycopy(ByteUtils.intToBytes(message.getTimeSent()), 2, hello, ecc.length + ebid.length, 2);
         System.arraycopy(mac, 0, hello, ecc.length + ebid.length + 2, mac.length);
         return hello;
     }
