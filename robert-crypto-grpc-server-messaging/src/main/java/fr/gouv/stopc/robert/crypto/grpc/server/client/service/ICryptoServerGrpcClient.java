@@ -15,6 +15,8 @@ public interface ICryptoServerGrpcClient {
 
 	Optional<CreateRegistrationResponse> createRegistration(CreateRegistrationRequest request);
 
+	ValidateContactResponse validateContact(ValidateContactRequest request);
+
 	Optional<GetInfoFromHelloMessageResponse> getInfoFromHelloMessage(GetInfoFromHelloMessageRequest request);
 
 	Optional<DeleteIdResponse> deleteId(DeleteIdRequest request);
