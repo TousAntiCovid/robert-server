@@ -236,25 +236,50 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
         byte[] serverKey = null;
         try {
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-
             String alias = String.format("%s%s", ALIAS_SERVER_KEY_PREFIX, dateFromEpoch.format(dateFormatter));
+
+            var dates_from_15_days_ago_to_today = LocalDate.now().datesUntil(LocalDate.now().minusDays(15));
+            var dates_from_today_to_15_days = LocalDate.now().datesUntil(LocalDate.now().plusDays(15));
+
+            var aliases_from_15_days_ago_to_today = new ArrayList<>();
+            dates_from_15_days_ago_to_today.forEach(
+                    (date -> aliases_from_15_days_ago_to_today
+                            .add(String.format("%s%s", ALIAS_SERVER_KEY_PREFIX, date.format(dateFormatter))))
+            );
+
+            var aliases_from_today_to_15_days = new ArrayList<>();
+            dates_from_today_to_15_days.forEach(
+                    (date -> aliases_from_today_to_15_days
+                            .add(String.format("%s%s", ALIAS_SERVER_KEY_PREFIX, date.format(dateFormatter))))
+            );
+
             if (this.serverKeyCache.containsKey(alias)) {
+                log.info("Found server key in for alias : {}", alias);
                 serverKey = this.serverKeyCache.get(alias);
             } else {
                 synchronized (protectHsmReload) {
                     if (!this.serverKeyCache.containsKey(alias)) {
                         if (!this.keyStore.containsAlias(alias)) {
-                            log.error("Key store does not contain key for alias {}", alias);
+                            if (aliases_from_15_days_ago_to_today.stream()
+                                    .noneMatch(oneAliasInPast -> oneAliasInPast.equals(alias)) &&
+                                    aliases_from_today_to_15_days.stream()
+                                            .noneMatch(oneAliasInFuture -> oneAliasInFuture.equals(alias))) {
+
+                                log.error("Key store does not contain key for alias {}", alias);
+                            }
                         } else {
                             Key key = this.keyStore.getKey(alias, this.keyPassword);
                             serverKey = key.getEncoded();
+                            log.info("Charging server key in cache for alias : {}", alias);
                             this.serverKeyCache.put(alias, serverKey);
                         }
                     } else {
+                        log.info("Found server key in for alias : {}", alias);
                         serverKey = this.serverKeyCache.get(alias);
                     }
                 }
             }
+
         } catch (Exception e) {
             log.error(
                     "An expected error occurred when trying to get the alias {} due to {}", dateFromEpoch,
@@ -350,22 +375,23 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
         log.info("Caching server key pair");
         this.getServerKeyPair();
 
-        // Cache current and future keys
-        LocalDate dateForCachedServerKey = LocalDate.now(ZoneId.of("UTC"));
+        // Cache previous keys
+        LocalDate dateForCachedServerKey = LocalDate.now(ZoneId.of("UTC")).minusDays(1);
         byte[] res;
+        do {
+            log.info("Caching past server key for {}", dateForCachedServerKey);
+            res = this.getServerKey(dateForCachedServerKey);
+            dateForCachedServerKey = dateForCachedServerKey.minusDays(1);
+        } while (res != null);
+
+        // Cache current and future keys
+        dateForCachedServerKey = LocalDate.now(ZoneId.of("UTC"));
         do {
             log.info("Caching future server key for {}", dateForCachedServerKey);
             res = this.getServerKey(dateForCachedServerKey);
             dateForCachedServerKey = dateForCachedServerKey.plusDays(1);
         } while (res != null);
 
-        // Cache previous keys
-        dateForCachedServerKey = LocalDate.now(ZoneId.of("UTC")).minusDays(1);
-        do {
-            log.info("Caching past server key for {}", dateForCachedServerKey);
-            res = this.getServerKey(dateForCachedServerKey);
-            dateForCachedServerKey = dateForCachedServerKey.minusDays(1);
-        } while (res != null);
     }
 
     @Override
