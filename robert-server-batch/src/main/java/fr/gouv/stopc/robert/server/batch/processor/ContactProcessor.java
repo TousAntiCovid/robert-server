@@ -24,8 +24,8 @@ import java.util.*;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Process contacts to compute the score and evaluate the risk.
- * It includes many checks according to Robert Specification (see section 6.2, page 9): 
+ * Process contacts to compute the score and evaluate the risk. It includes many
+ * checks according to Robert Specification (see section 6.2, page 9):
  * https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf
  */
 @Slf4j
@@ -44,20 +44,21 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
     public ContactProcessor(
             final IServerConfigurationService serverConfigurationService,
             final IRegistrationService registrationService,
-             final ICryptoServerGrpcClient cryptoServerClient,
+            final ICryptoServerGrpcClient cryptoServerClient,
             final ScoringStrategyService scoringStrategy,
             final PropertyLoader propertyLoader) {
 
         this.serverConfigurationService = serverConfigurationService;
         this.registrationService = registrationService;
-         this.cryptoServerClient = cryptoServerClient;
+        this.cryptoServerClient = cryptoServerClient;
         this.scoringStrategy = scoringStrategy;
         this.propertyLoader = propertyLoader;
     }
 
     /**
-     * NOTE:
-     * validation step order has evolved from spec because of delegation of validation of messages to crypto back-end
+     * NOTE: validation step order has evolved from spec because of delegation of
+     * validation of messages to crypto back-end
+     * 
      * @param contact
      * @return
      * @throws RobertServerCryptoException
@@ -80,7 +81,7 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                         .addAllHelloMessageDetails(
                                 contact.getMessageDetails().stream()
                                         .map(this::toGrpcHelloMessageDetail)
-                                    .collect(toList())
+                                        .collect(toList())
                         )
                         .build()
         );
@@ -94,7 +95,11 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
         if (!response.getInvalidHelloMessageDetailsList().isEmpty()) {
             log.info("Removing {} invalid HelloMessageDetails", response.getInvalidHelloMessageDetailsCount());
             contact.getMessageDetails()
-                    .removeIf(helloMessageDetail -> matchesInvalidHelloMessageDetails(response.getInvalidHelloMessageDetailsList(), helloMessageDetail));
+                    .removeIf(
+                            helloMessageDetail -> matchesInvalidHelloMessageDetails(
+                                    response.getInvalidHelloMessageDetailsList(), helloMessageDetail
+                            )
+                    );
         }
 
         if (contact.getMessageDetails().isEmpty()) {
@@ -104,7 +109,10 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
 
         // Check step #2: is contact managed by this server?
         if (!Arrays.equals(response.getCountryCode().toByteArray(), serverCountryCode)) {
-            log.info("Country code {} is not managed by this server ({})", response.getCountryCode().toByteArray(), serverCountryCode);
+            log.info(
+                    "Country code {} is not managed by this server ({})", response.getCountryCode().toByteArray(),
+                    serverCountryCode
+            );
             // TODO: send the message to the dedicated country server
             return contact;
         }
@@ -124,7 +132,11 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                         // check step 5
                         .filter(this::step5CheckDeltaTaAndTimeABelowThreshold)
                         // check step 6
-                        .filter(helloMessage -> step6CheckTimeACorrespondsToEpochiA(response.getEpochId(), helloMessage.getTimeCollectedOnDevice()))
+                        .filter(
+                                helloMessage -> step6CheckTimeACorrespondsToEpochiA(
+                                        response.getEpochId(), helloMessage.getTimeCollectedOnDevice()
+                                )
+                        )
                         .collect(toList())
         );
 
@@ -140,7 +152,8 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
         return contact;
     }
 
-    private fr.gouv.stopc.robert.crypto.grpc.server.messaging.HelloMessageDetail toGrpcHelloMessageDetail(HelloMessageDetail helloMessageDetail) {
+    private fr.gouv.stopc.robert.crypto.grpc.server.messaging.HelloMessageDetail toGrpcHelloMessageDetail(
+            HelloMessageDetail helloMessageDetail) {
         return fr.gouv.stopc.robert.crypto.grpc.server.messaging.HelloMessageDetail
                 .newBuilder()
                 .setTimeSent(helloMessageDetail.getTimeFromHelloMessage())
@@ -149,7 +162,9 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                 .build();
     }
 
-    private boolean matchesInvalidHelloMessageDetails(List<fr.gouv.stopc.robert.crypto.grpc.server.messaging.HelloMessageDetail> invalidHelloMessageDetails, HelloMessageDetail helloMessageDetail) {
+    private boolean matchesInvalidHelloMessageDetails(
+            List<fr.gouv.stopc.robert.crypto.grpc.server.messaging.HelloMessageDetail> invalidHelloMessageDetails,
+            HelloMessageDetail helloMessageDetail) {
         return invalidHelloMessageDetails.stream()
                 .anyMatch(
                         invalid -> Arrays.equals(helloMessageDetail.getMac(), invalid.getMac().toByteArray())
@@ -159,7 +174,8 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
     }
 
     /**
-     *  Robert Spec Step #5: check that the delta between tA (16 bits) & timeA (32 bits) [truncated to 16bits] is below threshold.
+     * Robert Spec Step #5: check that the delta between tA (16 bits) & timeA (32
+     * bits) [truncated to 16bits] is below threshold.
      */
     private boolean step5CheckDeltaTaAndTimeABelowThreshold(HelloMessageDetail helloMessageDetail) {
         // Process 16-bit values for sanity check
@@ -171,17 +187,17 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
             return true;
         }
 
-        log.warn("Time tolerance was exceeded: |{} (HELLO) vs {} (receiving device)| > {}; discarding HELLO message",
+        log.warn(
+                "Time tolerance was exceeded: |{} (HELLO) vs {} (receiving device)| > {}; discarding HELLO message",
                 timeFromHelloNTPsecAs16bits,
                 timeFromDeviceAs16bits,
-                timeDiffTolerance);
+                timeDiffTolerance
+        );
         return false;
     }
 
-
-
     /**
-     *  Robert Spec Step #6
+     * Robert Spec Step #6
      */
     private boolean step6CheckTimeACorrespondsToEpochiA(int epochId, long timeFromDevice) {
         final long tpstStartNTPsec = this.serverConfigurationService.getServiceTimeStart();
@@ -189,9 +205,11 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
 
         // Check if epochs match with a limited tolerance
         if (Math.abs(epochIdFromMessage - epochId) > 1) {
-            log.warn("Epochid from message {}  vs epochid from ebid  {} > 1 (tolerance); discarding HELLO message",
+            log.warn(
+                    "Epochid from message {}  vs epochid from ebid  {} > 1 (tolerance); discarding HELLO message",
                     epochIdFromMessage,
-                    epochId);
+                    epochId
+            );
             return false;
         }
         return true;
@@ -200,7 +218,8 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
     /**
      * Robert spec Step #9: add i_A in LEE_A
      */
-    private void step9ScoreAndAddContactInListOfExposedEpochs(Contact contact, int epochIdFromEBID, Registration registrationRecord) throws RobertScoringException {
+    private void step9ScoreAndAddContactInListOfExposedEpochs(Contact contact, int epochIdFromEBID,
+            Registration registrationRecord) throws RobertScoringException {
         List<EpochExposition> exposedEpochs = registrationRecord.getExposedEpochs();
 
         // Exposed epochs should be empty, never null
@@ -213,15 +232,17 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                 .filter(item -> item.getEpochId() == epochIdFromEBID)
                 .findFirst();
 
-        ScoringResult scoredRisk =  this.scoringStrategy.execute(contact);
+        ScoringResult scoredRisk = this.scoringStrategy.execute(contact);
         if (epochToAddTo.isPresent()) {
             List<Double> epochScores = epochToAddTo.get().getExpositionScores();
             epochScores.add(scoredRisk.getRssiScore());
         } else {
-            exposedEpochs.add(EpochExposition.builder()
-                    .expositionScores(Arrays.asList(scoredRisk.getRssiScore()))
-                    .epochId(epochIdFromEBID)
-                    .build());
+            exposedEpochs.add(
+                    EpochExposition.builder()
+                            .expositionScores(Arrays.asList(scoredRisk.getRssiScore()))
+                            .epochId(epochIdFromEBID)
+                            .build()
+            );
         }
         registrationRecord.setExposedEpochs(exposedEpochs);
 

@@ -522,13 +522,13 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         }
 
         responseObserver.onNext(
-            ValidateContactResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(ebidContent.get().getIdA()))
-                .setCountryCode(ByteString.copyFrom(cc))
-                .setEpochId(ebidContent.get().getEpochId())
-                .addAllInvalidHelloMessageDetails(invalidMessageDetails)
-                .build()
-            );
+                ValidateContactResponse.newBuilder()
+                        .setIdA(ByteString.copyFrom(ebidContent.get().getIdA()))
+                        .setCountryCode(ByteString.copyFrom(cc))
+                        .setEpochId(ebidContent.get().getEpochId())
+                        .addAllInvalidHelloMessageDetails(invalidMessageDetails)
+                        .build()
+        );
         responseObserver.onCompleted();
 
     }
