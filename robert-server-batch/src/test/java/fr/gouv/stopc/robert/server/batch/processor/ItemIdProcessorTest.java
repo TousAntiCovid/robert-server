@@ -50,8 +50,6 @@ public class ItemIdProcessorTest {
         Long sequentialId2 = process2.getId();
 
         // Then
-        assertNotNull(process1);
-        assertNotNull(process2);
         assertNotNull(sequentialId1);
         assertNotNull(sequentialId2);
         assertNotNull(process1.getItemId());

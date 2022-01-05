@@ -44,10 +44,7 @@ public class ReportController {
             return ResponseEntity.badRequest().build();
         }
 
-        final var helloMessagesCount = reportBatchRequestVo.getContacts().stream()
-                .mapToInt(contact -> contact.getIds().size())
-                .sum();
-        metricsService.getRobertWsReportHellomessageCounter().increment(helloMessagesCount);
+        metricsService.countHelloMessages(reportBatchRequestVo);
 
         contactDtoService.saveContacts(reportBatchRequestVo.getContacts());
 

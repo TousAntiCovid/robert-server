@@ -19,9 +19,7 @@ public class ContactIdMappingProcessor implements ItemProcessor<Contact, ItemIdM
     public ItemIdMapping process(Contact contact) {
         Long id = ItemProcessingCounterUtils.getInstance().incrementCurrentIdOfItemIdMapping();
 
-        if (contact.getMessageDetails() != null && !contact.getMessageDetails().isEmpty()) {
-            metricsService.getRobertBatchHelloMessageTotal().increment(contact.getMessageDetails().size());
-        }
+        metricsService.countHelloMessages(contact);
 
         return ItemIdMapping.builder()
                 .id(id)

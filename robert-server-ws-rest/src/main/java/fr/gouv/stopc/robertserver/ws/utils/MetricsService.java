@@ -1,12 +1,12 @@
 package fr.gouv.stopc.robertserver.ws.utils;
 
+import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
 
 @Service
-@Getter
 public class MetricsService {
 
     private MeterRegistry meterRegistry;
@@ -20,6 +20,15 @@ public class MetricsService {
                 .description("Number of HelloMessages that will be processed by the batch")
                 .baseUnit("HelloMessage")
                 .register(meterRegistry);
+    }
+
+    public void countHelloMessages(ReportBatchRequestVo reportBatchRequestVo) {
+
+        final var helloMessagesCount = reportBatchRequestVo.getContacts().stream()
+                .mapToInt(contact -> contact.getIds().size())
+                .sum();
+        this.robertWsReportHellomessageCounter.increment(helloMessagesCount);
+
     }
 
 }
