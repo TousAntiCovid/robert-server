@@ -5,7 +5,9 @@ services:
     ports:
       - "27017:27017"
   postgres:
-    build: docker-compose/postgresql
+    image: postgres:9.6
+    volumes:
+      - ./robert-crypto-grpc-server-storage/src/main/resources/db/migration/V1_init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
     ports:
       - "5432:5432"
     environment:
