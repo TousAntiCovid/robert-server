@@ -1,26 +1,29 @@
 package fr.gouv.stopc.robert.server.batch.utils;
 
 import fr.gouv.stopc.robertserver.database.model.Contact;
-import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MetricsService {
 
-    private final Counter robertBatchHelloMessageTotal;
+    private final DistributionSummary robertBatchHelloMessageTotal;
 
     public MetricsService(final MeterRegistry meterRegistry) {
 
-        robertBatchHelloMessageTotal = Counter.builder("robert.batch.hellomessage.total")
+        robertBatchHelloMessageTotal = DistributionSummary.builder("robert.batch.hellomessage.total")
                 .description("Number of HelloMessages of a Contact")
                 .baseUnit("HelloMessage")
+                .publishPercentiles(0.3, 0.5, 0.95)
+                .publishPercentileHistogram(false)
+                .sla(10, 100, 1000, 5000)
                 .register(meterRegistry);
     }
 
     public void countHelloMessages(final Contact contact) {
         if (null != contact.getMessageDetails() && !contact.getMessageDetails().isEmpty()) {
-            robertBatchHelloMessageTotal.increment(contact.getMessageDetails().size());
+            robertBatchHelloMessageTotal.record(contact.getMessageDetails().size());
         }
     }
 }
