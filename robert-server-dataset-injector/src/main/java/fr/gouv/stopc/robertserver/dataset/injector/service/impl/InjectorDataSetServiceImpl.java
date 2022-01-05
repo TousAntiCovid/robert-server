@@ -30,13 +30,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 
 import java.security.Key;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -217,9 +211,11 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
             // Create HELLO message that will make total score exceed threshold
             long t = currentEpochId * this.epochDuration + this.serviceTimeStart + 15L;
             List<HelloMessageDetail> messages = new ArrayList<>();
-            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t, -78));
-            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + 165L, -50));
-            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + 300L, -35));
+            Random r = new Random();
+            for (int j = 0; j <= 65; j++) {
+                int rssi = -r.nextInt(80);
+                messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + j, rssi));
+            }
 
             contacts.add(
                     Contact.builder()
