@@ -44,9 +44,20 @@ services:
       - CAPTCHA_INTERNAL_HOSTNAME=http://mock-captcha:8055
       - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8055/private/api/v1/captcha/{captchaId}/checkAnswer
       - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
+      - ESR_LIMIT=0
     ports:
       - "8086:8086"
     depends_on:
+      - robert-crypto-grpc-server
+  robert-server-batch:
+    build:
+      context: ./robert-server-batch
+      dockerfile: ./src/main/docker/Dockerfile
+    environment:
+      - ROBERT_CRYPTO_SERVER_HOST=robert-crypto-grpc-server
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
+    depends_on:
+      - mongo
       - robert-crypto-grpc-server
   mock-captcha:
     image: mockserver/mockserver:mockserver-5.11.2

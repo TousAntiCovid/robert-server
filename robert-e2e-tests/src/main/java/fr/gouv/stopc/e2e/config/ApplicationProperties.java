@@ -5,13 +5,17 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 import org.springframework.validation.annotation.Validated;
 
+import java.net.URL;
+
 @Validated
 @ConstructorBinding
 @ConfigurationProperties("robert")
 @Data
 public class ApplicationProperties {
 
-    private final String wsRestBaseUrl;
+    private final URL wsRestBaseUrl;
 
     private final String cryptoPublicKey;
+
+    private final String batchCommand;
 }

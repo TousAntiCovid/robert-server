@@ -1,2 +1,9 @@
 robert:
   ws-rest-base-url: http://localhost:8086
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/protectedRobertDB
+  datasource:
+    url: jdbc:postgresql://localhost:5432/robert
