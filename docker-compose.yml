@@ -14,8 +14,8 @@ services:
     image: "mongo:4.2.5"
     ports:
       - "27017:27017"
-  depends_on:
-    - postgres
+    depends_on:
+      - postgres
   crypto-server:
     build: robert-crypto-grpc-server
     ports:
