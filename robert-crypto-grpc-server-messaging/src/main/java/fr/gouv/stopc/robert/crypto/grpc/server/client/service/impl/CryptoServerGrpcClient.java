@@ -1,32 +1,33 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.client.service.impl;
 
-import java.util.Objects;
-import java.util.Optional;
-
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
-import org.springframework.stereotype.Service;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.Message;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplBlockingStub;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
 public class CryptoServerGrpcClient implements ICryptoServerGrpcClient {
 
     private ManagedChannel channel;
+
     private CryptoGrpcServiceImplBlockingStub blockingStub;
+
     private TestHelper testHelper;
 
     private final static String ERROR_MESSAGE = "RPC failed: {}";
 
-    public CryptoServerGrpcClient(){}
+    public CryptoServerGrpcClient() {
+    }
 
     public CryptoServerGrpcClient(String host, int port) {
         this(ManagedChannelBuilder.forAddress(host, port).usePlaintext());
@@ -38,7 +39,7 @@ public class CryptoServerGrpcClient implements ICryptoServerGrpcClient {
     }
 
     public CryptoServerGrpcClient(ManagedChannel channel) {
-        this.channel =  channel;
+        this.channel = channel;
         this.blockingStub = CryptoGrpcServiceImplGrpc.newBlockingStub(channel);
     }
 
@@ -135,6 +136,7 @@ public class CryptoServerGrpcClient implements ICryptoServerGrpcClient {
 
     @VisibleForTesting
     public interface TestHelper {
+
         /**
          * Used for verify/inspect message received from server.
          */
@@ -147,8 +149,7 @@ public class CryptoServerGrpcClient implements ICryptoServerGrpcClient {
     }
 
     @VisibleForTesting
-    public
-    void setTestHelper(TestHelper testHelper) {
+    public void setTestHelper(TestHelper testHelper) {
         this.testHelper = testHelper;
     }
 }

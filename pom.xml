@@ -252,7 +252,6 @@
 				<artifactId>spotless-maven-plugin</artifactId>
 				<version>2.11.1</version>
 				<configuration>
-					<skip>true</skip>
 					<ratchetFrom>7ce5d21af5410159743da75c1429497518ab735d</ratchetFrom>
 					<java>
 						<importOrder>
