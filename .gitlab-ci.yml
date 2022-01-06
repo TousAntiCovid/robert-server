@@ -3,6 +3,12 @@ include:
     ref: master
     file: gitlab/gitlab-ci-java-template.yml
 
+docker-version:
+  image: registry.gitlab.inria.fr/stemcovid19/tac-server/docker-image/tac-system-tests:latest
+  stage: build
+  script:
+    - docker version
+
 e2e-tests-docker:
   script:
     - until curl -s http://robert-server-ws-rest:8086/actuator/health | grep -q UP; do sleep 0.5; done;
