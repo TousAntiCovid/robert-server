@@ -5,7 +5,6 @@ import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcC
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.service.CryptoService;
@@ -97,7 +96,7 @@ public class UnregisterControllerWsRestTest {
     private PropertyLoader propertyLoader;
 
     @Autowired
-    private IServerConfigurationService serverConfigurationService;
+    private ServerConfigurationService serverConfigurationService;
 
     private int currentEpoch;
 

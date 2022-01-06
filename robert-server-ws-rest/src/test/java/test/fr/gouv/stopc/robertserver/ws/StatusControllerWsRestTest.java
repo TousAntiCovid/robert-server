@@ -5,7 +5,6 @@ import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcC
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.service.CryptoService;
@@ -108,7 +107,7 @@ public class StatusControllerWsRestTest {
     private ICryptoServerGrpcClient cryptoServerClient;
 
     @Autowired
-    private IServerConfigurationService serverConfigurationService;
+    private ServerConfigurationService serverConfigurationService;
 
     @MockBean
     private PropertyLoader propertyLoader;

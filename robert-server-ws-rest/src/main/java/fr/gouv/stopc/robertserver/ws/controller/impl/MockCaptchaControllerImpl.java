@@ -1,32 +1,24 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import java.awt.Point;
-import java.awt.Transparency;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.inject.Inject;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import fr.gouv.stopc.robertserver.ws.controller.ICaptchaController;
+import fr.gouv.stopc.robertserver.ws.controller.CaptchaController;
 import fr.gouv.stopc.robertserver.ws.dto.CaptchaCreationDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.vo.CaptchaCreationVo;
@@ -34,16 +26,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 @ConditionalOnProperty(name = "captcha.gateway.enabled", havingValue = "false")
-public class MockCaptchaControllerImpl implements ICaptchaController {
-
-	@Inject
-	public MockCaptchaControllerImpl() {
-	}
+public class MockCaptchaControllerImpl implements CaptchaController {
 
 	@Override
-	public ResponseEntity<CaptchaCreationDto> createCaptcha(@Valid CaptchaCreationVo captchaCreationVo)
-			throws RobertServerException {
+	public ResponseEntity<CaptchaCreationDto> createCaptcha(@Valid CaptchaCreationVo captchaCreationVo) {
 
 		CaptchaCreationDto dto = new CaptchaCreationDto();
 		dto.setCaptchaId("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");

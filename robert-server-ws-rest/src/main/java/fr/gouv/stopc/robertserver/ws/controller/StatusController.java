@@ -1,15 +1,18 @@
-package fr.gouv.stopc.robertserver.ws.controller.impl;
+package fr.gouv.stopc.robertserver.ws.controller;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusResponse;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.service.ServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.ApplicationConfigurationModel;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
-import fr.gouv.stopc.robertserver.ws.controller.IStatusController;
-import fr.gouv.stopc.robertserver.ws.dto.*;
+import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
+import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
+import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV5;
 import fr.gouv.stopc.robertserver.ws.dto.declaration.GenerateDeclarationTokenRequest;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
@@ -17,27 +20,33 @@ import fr.gouv.stopc.robertserver.ws.service.DeclarationService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.inject.Inject;
 import javax.validation.Valid;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Slf4j
-@Service
-public class StatusControllerImpl implements IStatusController {
+import static fr.gouv.stopc.robertserver.ws.utils.UriConstants.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-    private final IServerConfigurationService serverConfigurationService;
+@Slf4j
+@RestController
+@RequiredArgsConstructor
+@RequestMapping(path = "${controller.path.prefix}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+public class StatusController {
+
+    private final ServerConfigurationService serverConfigurationService;
 
     private final IRegistrationService registrationService;
 
@@ -53,29 +62,9 @@ public class StatusControllerImpl implements IStatusController {
 
     private final DeclarationService declarationService;
 
-    @Inject
-    public StatusControllerImpl(
-            final IServerConfigurationService serverConfigurationService,
-            final IRegistrationService registrationService,
-            final IApplicationConfigService applicationConfigService,
-            final AuthRequestValidationService authRequestValidationService,
-            final PropertyLoader propertyLoader,
-            final IRestApiService restApiService,
-            final WsServerConfiguration wsServerConfiguration,
-            final DeclarationService declarationService) {
-        this.serverConfigurationService = serverConfigurationService;
-        this.registrationService = registrationService;
-        this.applicationConfigService = applicationConfigService;
-        this.authRequestValidationService = authRequestValidationService;
-        this.propertyLoader = propertyLoader;
-        this.restApiService = restApiService;
-        this.wsServerConfiguration = wsServerConfiguration;
-        this.declarationService = declarationService;
-    }
-
-    @Override
-    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo)
-            throws RobertServerException {
+    @PostMapping(path = { API_V1 + STATUS, API_V2 + STATUS,
+            API_V3 + STATUS, API_V4 + STATUS })
+    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo) {
 
         ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
 
@@ -103,8 +92,8 @@ public class StatusControllerImpl implements IStatusController {
         );
     }
 
-    @Override
-    public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) throws RobertServerException {
+    @PostMapping(path = API_V5 + STATUS)
+    public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) {
 
         ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
 
@@ -136,7 +125,7 @@ public class StatusControllerImpl implements IStatusController {
         );
     }
 
-    @Override
+    @PostMapping(path = API_V6 + STATUS)
     public ResponseEntity<StatusResponseDto> getStatus(StatusVo statusVo) {
         AuthRequestValidationService.ValidationResult<GetIdFromStatusResponse> validationResult = this.authRequestValidationService
                 .validateStatusRequest(statusVo);

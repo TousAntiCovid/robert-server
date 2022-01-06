@@ -24,7 +24,7 @@ import fr.gouv.stopc.robertserver.ws.vo.CaptchaCreationVo;
 		"${controller.path.prefix}" + UriConstants.API_V4,
         "${controller.path.prefix}" + UriConstants.API_V5,
         "${controller.path.prefix}" + UriConstants.API_V6})
-public interface ICaptchaController {
+public interface CaptchaController {
 
     @PostMapping(value = UriConstants.CAPTCHA)
     @Consumes(MediaType.APPLICATION_JSON_VALUE)

@@ -1,7 +1,7 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
-import fr.gouv.stopc.robertserver.ws.controller.impl.StatusControllerImpl;
+import fr.gouv.stopc.robertserver.ws.controller.StatusController;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
@@ -47,7 +47,7 @@ public class StatusControllerWsRestV1ToV4ErrorsTest {
     private IRestApiService restApiService;
 
     @SpyBean
-    private StatusControllerImpl statusController;
+    private StatusController statusController;
 
     @BeforeEach
     public void setUp() {

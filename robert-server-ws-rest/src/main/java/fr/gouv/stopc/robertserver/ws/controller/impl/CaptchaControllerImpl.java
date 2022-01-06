@@ -15,7 +15,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import fr.gouv.stopc.robertserver.ws.controller.ICaptchaController;
+import fr.gouv.stopc.robertserver.ws.controller.CaptchaController;
 import fr.gouv.stopc.robertserver.ws.dto.CaptchaCreationDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @ConditionalOnProperty("captcha.gateway.enabled")
-public class CaptchaControllerImpl implements ICaptchaController {
+public class CaptchaControllerImpl implements CaptchaController {
 
     private final RestTemplate restTemplate;
     private final PropertyLoader propertyLoader;
@@ -39,7 +39,7 @@ public class CaptchaControllerImpl implements ICaptchaController {
 
     @Override
     public ResponseEntity<CaptchaCreationDto> createCaptcha(
-            @Valid CaptchaCreationVo captchaCreationVo) throws RobertServerException {
+            @Valid CaptchaCreationVo captchaCreationVo) {
 
         ResponseEntity<CaptchaCreationDto> response = null;
         try {

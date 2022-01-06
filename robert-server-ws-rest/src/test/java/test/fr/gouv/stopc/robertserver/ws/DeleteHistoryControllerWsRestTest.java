@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthResponse;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.service.ServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.service.CryptoService;
@@ -92,7 +92,7 @@ public class DeleteHistoryControllerWsRestTest {
     private PropertyLoader propertyLoader;
 
     @Autowired
-    private IServerConfigurationService serverConfigurationService;
+    private ServerConfigurationService serverConfigurationService;
 
     private int currentEpoch;
 

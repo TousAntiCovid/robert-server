@@ -1,34 +1,40 @@
-package fr.gouv.stopc.robertserver.ws.controller.impl;
+package fr.gouv.stopc.robertserver.ws.controller;
 
-import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.Produces;
 
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
+import fr.gouv.stopc.robert.server.common.service.ServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.ApplicationConfigurationModel;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
+import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
-import fr.gouv.stopc.robertserver.ws.controller.IRegisterController;
 import fr.gouv.stopc.robertserver.ws.dto.RegisterResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,39 +43,26 @@ import java.util.stream.Collectors;
 
 
 @Slf4j
-@Service
-public class RegisterControllerImpl implements IRegisterController {
+@RestController
+@RequiredArgsConstructor
+@RequestMapping(value = {"${controller.path.prefix}" + UriConstants.API_V2, "${controller.path.prefix}" + UriConstants.API_V3,
+        "${controller.path.prefix}" + UriConstants.API_V4, "${controller.path.prefix}" + UriConstants.API_V5, "${controller.path.prefix}" + UriConstants.API_V6 })
+@Consumes(MediaType.APPLICATION_JSON_VALUE)
+@Produces(MediaType.APPLICATION_JSON_VALUE)
+public class RegisterController {
 
-    private IRegistrationService registrationService;
-    private IServerConfigurationService serverConfigurationService;
-    private IApplicationConfigService applicationConfigService;
-    private ICryptoServerGrpcClient cryptoServerClient;
-    private IRestApiService restApiService;
+    private final IRegistrationService registrationService;
+    private final ServerConfigurationService serverConfigurationService;
+    private final IApplicationConfigService applicationConfigService;
+    private final ICryptoServerGrpcClient cryptoServerClient;
+    private final IRestApiService restApiService;
 
-    private WsServerConfiguration wsServerConfiguration;
+    private final WsServerConfiguration wsServerConfiguration;
 
     private final CaptchaService captchaService;
 
-    @Inject
-    public RegisterControllerImpl(final IRegistrationService registrationService,
-                                  final IServerConfigurationService serverConfigurationService,
-                                  final IApplicationConfigService applicationConfigService,
-                                  final CaptchaService captchaService,
-                                  final ICryptoServerGrpcClient cryptoServerClient,
-                                  final IRestApiService restApiService,
-                                  final WsServerConfiguration wsServerConfiguration) {
-
-        this.registrationService = registrationService;
-        this.serverConfigurationService = serverConfigurationService;
-        this.applicationConfigService = applicationConfigService;
-        this.captchaService = captchaService;
-        this.cryptoServerClient = cryptoServerClient;
-        this.restApiService = restApiService;
-        this.wsServerConfiguration = wsServerConfiguration;
-    }
-
-	@Override
-	public ResponseEntity<RegisterResponseDto> register(@Valid RegisterVo registerVo)
+    @PostMapping(value = UriConstants.REGISTER)
+	public ResponseEntity<RegisterResponseDto> register(@Valid @RequestBody RegisterVo registerVo)
 			throws RobertServerException {
 
         if (!this.captchaService.verifyCaptcha(registerVo)) {

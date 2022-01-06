@@ -26,7 +26,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
@@ -86,7 +85,7 @@ public class RegisterControllerWsRestTest {
     private ICryptoServerGrpcClient cryptoServerClient;
 
     @Autowired
-    private IServerConfigurationService serverConfigurationService;
+    private ServerConfigurationService serverConfigurationService;
 
     @MockBean
     private IRestApiService restApiService;

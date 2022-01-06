@@ -1,19 +1,23 @@
-package fr.gouv.stopc.robertserver.ws.controller.impl;
+package fr.gouv.stopc.robertserver.ws.controller;
 
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
-import fr.gouv.stopc.robertserver.ws.controller.IReportControllerV4;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseV4Dto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
+import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -23,9 +27,12 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Date;
 
-@Service
 @Slf4j
-public class ReportControllerV4Impl implements IReportControllerV4 {
+@RestController
+@RequiredArgsConstructor
+@RequestMapping(value = {"${controller.path.prefix}" + UriConstants.API_V4, "${controller.path.prefix}" + UriConstants.API_V5, "${controller.path.prefix}" + UriConstants.API_V6 },
+        consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+public class ReportControllerV4 {
 
     public static final SignatureAlgorithm signatureAlgo = SignatureAlgorithm.RS256;
 
@@ -37,16 +44,7 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
 
     private PrivateKey jwtPrivateKey;
 
-    public ReportControllerV4Impl(final ContactDtoService contactDtoService,
-            final WsServerConfiguration wsServerConfiguration,
-            final ReportControllerDelegate delegate) {
-
-        this.contactDtoService = contactDtoService;
-        this.wsServerConfiguration = wsServerConfiguration;
-        this.delegate = delegate;
-    }
-
-    @Override
+    @PostMapping(value = UriConstants.REPORT)
     public ResponseEntity<ReportBatchResponseV4Dto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo)
             throws RobertServerException {
 
