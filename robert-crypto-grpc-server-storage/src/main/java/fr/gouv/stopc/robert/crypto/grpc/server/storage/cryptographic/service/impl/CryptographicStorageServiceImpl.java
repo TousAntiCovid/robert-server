@@ -357,49 +357,57 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-        var dates_from_15_days_ago_to_today = LocalDate.now(ZoneId.of("UTC")).datesUntil(LocalDate.now().minusDays(15));
-        var dates_from_today_to_15_days = LocalDate.now(ZoneId.of("UTC")).datesUntil(LocalDate.now().plusDays(15));
+        var datesFrom15DaysAgoToToday = LocalDate.now(ZoneId.of("UTC")).datesUntil(LocalDate.now().minusDays(15));
+        var datesFromTodayTo15Days = LocalDate.now(ZoneId.of("UTC")).datesUntil(LocalDate.now().plusDays(15));
 
-        var foundServerKeys = new HashMap<LocalDate, String>();
+        var foundServerKeysAliasesByDates = new HashMap<LocalDate, String>();
 
-        byte[] res;
+        byte[] foundServerKey;
         // Cache current and future keys
         LocalDate dateForCachedServerKey = LocalDate.now(ZoneId.of("UTC"));
         do {
             log.info("Caching future server key for {}", dateForCachedServerKey);
-            res = this.getServerKey(dateForCachedServerKey);
-            LocalDate finalDateForCachedServerKey1 = dateForCachedServerKey;
-            String alias = String
-                    .format("%s%s", ALIAS_SERVER_KEY_PREFIX, finalDateForCachedServerKey1.format(dateFormatter));
-            log.info("Caching key for alias : {}", alias);
-            foundServerKeys.put(finalDateForCachedServerKey1, alias);
+            foundServerKey = this.getServerKey(dateForCachedServerKey);
+            LocalDate currentOrFutureDateForCachedServerKey = dateForCachedServerKey;
+            String serverKeyAlias = String
+                    .format(
+                            "%s%s", ALIAS_SERVER_KEY_PREFIX, currentOrFutureDateForCachedServerKey.format(dateFormatter)
+                    );
+            log.info("Caching key for alias : {}", serverKeyAlias);
+            foundServerKeysAliasesByDates.put(currentOrFutureDateForCachedServerKey, serverKeyAlias);
             dateForCachedServerKey = dateForCachedServerKey.plusDays(1);
-        } while (res != null);
+        } while (foundServerKey != null);
 
         // Cache previous keys
         dateForCachedServerKey = LocalDate.now(ZoneId.of("UTC")).minusDays(1);
         do {
             log.info("Caching past server key for {}", dateForCachedServerKey);
-            res = this.getServerKey(dateForCachedServerKey);
-            LocalDate finalDateForCachedServerKey = dateForCachedServerKey;
-            String alias = String
-                    .format("%s%s", ALIAS_SERVER_KEY_PREFIX, finalDateForCachedServerKey.format(dateFormatter));
-            log.info("Caching key for alias : {}", alias);
-            foundServerKeys.put(finalDateForCachedServerKey, alias);
+            foundServerKey = this.getServerKey(dateForCachedServerKey);
+            LocalDate pastDateForCachedServerKey = dateForCachedServerKey;
+            String serverKeyAlias = String
+                    .format("%s%s", ALIAS_SERVER_KEY_PREFIX, pastDateForCachedServerKey.format(dateFormatter));
+            log.info("Caching key for alias : {}", serverKeyAlias);
+            foundServerKeysAliasesByDates.put(pastDateForCachedServerKey, serverKeyAlias);
             dateForCachedServerKey = dateForCachedServerKey.minusDays(1);
-        } while (res != null);
+        } while (foundServerKey != null);
 
-        var missingKeys = foundServerKeys.entrySet()
+        var missingKeysAliases = foundServerKeysAliasesByDates.entrySet()
                 .stream()
-                .filter(entry -> Objects.equals(entry.getValue(), null))
-                .filter(entry -> dates_from_15_days_ago_to_today.anyMatch(date -> date.equals(entry.getKey())))
-                .filter(entry -> dates_from_today_to_15_days.anyMatch(date -> date.equals(entry.getKey())))
+                .filter(keyAliasForDate -> Objects.equals(keyAliasForDate.getValue(), null))
+                .filter(
+                        keyAliasForDate -> datesFrom15DaysAgoToToday
+                                .anyMatch(date -> date.equals(keyAliasForDate.getKey()))
+                )
+                .filter(
+                        keyAliasForDate -> datesFromTodayTo15Days
+                                .anyMatch(date -> date.equals(keyAliasForDate.getKey()))
+                )
                 .collect(Collectors.toList());
 
-        if (!missingKeys.isEmpty()) {
-            missingKeys.forEach(
-                    missingKey -> log
-                            .error("Caching failed : key store does not contain key for alias : {}", missingKey)
+        if (!missingKeysAliases.isEmpty()) {
+            missingKeysAliases.forEach(
+                    missingKeyAlias -> log
+                            .error("Caching failed : key store does not contain key for alias : {}", missingKeyAlias)
             );
 
         }
