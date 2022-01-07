@@ -3,7 +3,6 @@ package fr.gouv.stopc.robert.server.batch.processor;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.utils.MetricsService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,19 +38,19 @@ public class ItemIdProcessorTest {
     @Test
     public void testBuilContactEntryForIdMapping() {
         // Given
-        Contact contact1 = Contact.builder().id("a971").build();
-        Contact contact2 = Contact.builder().id("a972").build();
+        final var contact1 = Contact.builder().id("a971").build();
+        final var contact2 = Contact.builder().id("a972").build();
 
         // When
-        ItemIdMapping process1 = contactIdMappingProcessor.process(contact1);
-        ItemIdMapping process2 = contactIdMappingProcessor.process(contact2);
+        final var process1 = contactIdMappingProcessor.process(contact1);
+        final var process2 = contactIdMappingProcessor.process(contact2);
 
-        Long sequentialId1 = process1.getId();
-        Long sequentialId2 = process2.getId();
+        final var sequentialId1 = process1.getId();
+        final var sequentialId2 = process2.getId();
 
         // Then
-        assertNotNull(sequentialId1);
-        assertNotNull(sequentialId2);
+        assertNotNull(process1.getId());
+        assertNotNull(process2.getId());
         assertNotNull(process1.getItemId());
         assertNotNull(process2.getItemId());
 
@@ -61,26 +60,24 @@ public class ItemIdProcessorTest {
     @Test
     public void testBuilRegistrationEntryForIdMapping() {
         // Given
-        SecureRandom sr = new SecureRandom();
+        final var sr = new SecureRandom();
         byte[] rndBytes1 = new byte[5];
         sr.nextBytes(rndBytes1);
 
         byte[] rndBytes2 = new byte[5];
         sr.nextBytes(rndBytes2);
 
-        Registration registration1 = Registration.builder().permanentIdentifier(rndBytes1).build();
-        Registration registration2 = Registration.builder().permanentIdentifier(rndBytes2).build();
+        final var registration1 = Registration.builder().permanentIdentifier(rndBytes1).build();
+        final var registration2 = Registration.builder().permanentIdentifier(rndBytes2).build();
 
         // When
-        ItemIdMapping process1 = registrationIdMappingProcessor.process(registration1);
-        ItemIdMapping process2 = registrationIdMappingProcessor.process(registration2);
+        final var process1 = registrationIdMappingProcessor.process(registration1);
+        final var process2 = registrationIdMappingProcessor.process(registration2);
 
-        Long sequentialId1 = process1.getId();
-        Long sequentialId2 = process2.getId();
+        final var sequentialId1 = process1.getId();
+        final var sequentialId2 = process2.getId();
 
         // Then
-        assertNotNull(process1);
-        assertNotNull(process2);
         assertNotNull(sequentialId1);
         assertNotNull(sequentialId2);
         assertNotNull(process1.getItemId());

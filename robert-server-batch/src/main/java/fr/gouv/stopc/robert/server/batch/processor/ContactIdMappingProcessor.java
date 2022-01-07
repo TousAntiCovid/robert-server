@@ -17,7 +17,7 @@ public class ContactIdMappingProcessor implements ItemProcessor<Contact, ItemIdM
 
     @Override
     public ItemIdMapping process(Contact contact) {
-        Long id = ItemProcessingCounterUtils.getInstance().incrementCurrentIdOfItemIdMapping();
+        final var id = ItemProcessingCounterUtils.getInstance().incrementCurrentIdOfItemIdMapping();
 
         metricsService.countHelloMessages(contact);
 
