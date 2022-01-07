@@ -1,5 +1,6 @@
 package fr.gouv.stopc.e2e.steps;
 
+import ch.qos.logback.classic.Level;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -57,17 +58,18 @@ public class RobertBatchSteps {
                 .isEqualTo(0);
     }
 
-    @Then("robert batch logs contains: {string}")
-    public void checkDiscardedErrorInBatch(String message) {
+    @Then("robert batch logs contains {logLevel} {string}")
+    public void checkDiscardedErrorInBatch(Level logLevel, String message) {
         assertThat(processLogs)
-                .filteredOn(event -> event.contains(" ERROR "))
+                .filteredOn(event -> event.contains(" " + logLevel.toString() + " "))
                 .extracting(event -> event.replaceFirst(".* : ", ""))
                 .contains(message);
     }
 
-    @Then("robert batch logs does not contains: {string}")
-    public void checkNoDiscardedErrorInBatch(String message) {
+    @Then("robert batch logs does not contains {logLevel} {string}")
+    public void checkNoDiscardedErrorInBatch(Level logLevel, String message) {
         assertThat(processLogs)
+                .filteredOn(event -> event.contains(" " + logLevel.toString() + " "))
                 .extracting(event -> event.replaceFirst(".* : ", ""))
                 .doesNotContain(message);
     }
