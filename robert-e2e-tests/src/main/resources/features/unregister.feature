@@ -13,9 +13,9 @@ Feature: Covid-19 positive declaration
     When Paul report himself sick
     When Sarah unregisters her application
     And robert batch has been triggered
-    Then robert batch logs contains: "The contact could not be validated. Discarding all its hello messages"
+    Then robert batch logs contains INFO "The contact could not be validated. Discarding all its hello messages"
 
   Scenario: One people unregisters his application without having any contact
     When Sarah unregisters her application
     And robert batch has been triggered
-    Then robert batch logs does not contains: "The contact could not be validated. Discarding all its hello messages"
+    Then robert batch logs does not contains INFO "The contact could not be validated. Discarding all its hello messages"

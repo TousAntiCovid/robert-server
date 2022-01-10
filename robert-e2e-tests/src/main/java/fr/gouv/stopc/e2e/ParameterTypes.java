@@ -1,5 +1,6 @@
 package fr.gouv.stopc.e2e;
 
+import ch.qos.logback.classic.Level;
 import io.cucumber.java.ParameterType;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 
@@ -29,6 +30,11 @@ public class ParameterTypes {
                 .findFirst()
                 .orElseThrow()
                 .toInstant();
+    }
+
+    @ParameterType("(DEBUG|INFO|WARN|ERROR)")
+    public Level logLevel(final String logLevel) {
+        return Level.valueOf(logLevel);
     }
 
     @ParameterType("(\\d+) (days|hours|minutes)")

@@ -39,6 +39,7 @@
 		<module>robert-crypto-grpc-server-storage</module>
 		<module>robert-server-mobile-app-emulator</module>
 		<module>robert-e2e-tests</module>
+		<module>robert-server-dataset-injector</module>
 	</modules>
 
 	<properties>

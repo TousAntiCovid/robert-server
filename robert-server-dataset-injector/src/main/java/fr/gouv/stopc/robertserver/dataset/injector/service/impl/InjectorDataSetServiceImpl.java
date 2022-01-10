@@ -1,25 +1,10 @@
 package fr.gouv.stopc.robertserver.dataset.injector.service.impl;
 
-import java.security.Key;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.IntStream;
-
-import javax.inject.Inject;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.repository.ClientIdentifierRepository;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.utils.KeystoreTypeEnum;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -38,6 +23,15 @@ import fr.gouv.stopc.robertserver.dataset.injector.service.InjectorDataSetServic
 import fr.gouv.stopc.robertserver.dataset.injector.utils.PropertyLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import javax.inject.Inject;
+
+import java.security.Key;
+import java.util.*;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -71,10 +65,13 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
     private GeneratorIdService generatorIdService;
 
     private byte[] serverKey;
+
     private Key federationKey;
+
     private byte countryCode;
 
     private long epochDuration;
+
     private long serviceTimeStart;
 
     private final PropertyLoader propertyLoader;
@@ -88,15 +85,19 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
     public void injectContacts(int contactCount) {
         long time = getCurrentTimeNTPSeconds();
         int epochId = TimeUtils.getNumberOfEpochsBetween(this.serverConfigurationService.getServiceTimeStart(), time);
-        cryptographicStorageService.init(propertyLoader.getKeyStorePassword(), propertyLoader.getKeyStoreConfigFile());
-        serverKey = cryptographicStorageService.getServerKey(epochId,serverConfigurationService.getServiceTimeStart(), false);
+        cryptographicStorageService.init(
+                propertyLoader.getKeyStorePassword(), propertyLoader.getKeyStoreConfigFile(), KeystoreTypeEnum.PKCS11,
+                null
+        );
+        serverKey = cryptographicStorageService
+                .getServerKey(epochId, serverConfigurationService.getServiceTimeStart(), false);
         federationKey = cryptographicStorageService.getFederationKey();
 
         countryCode = this.serverConfigurationService.getServerCountryCode();
         epochDuration = this.serverConfigurationService.getEpochDurationSecs();
         serviceTimeStart = this.serverConfigurationService.getServiceTimeStart();
 
-        IntStream.range(0, contactCount/contactPerRegistration).parallel().forEach(
+        IntStream.range(0, contactCount / contactPerRegistration).parallel().forEach(
                 nbr -> {
                     try {
 
@@ -120,38 +121,40 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
 
     }
 
-    private Registration buildRegistration(){
+    private Registration buildRegistration() {
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
 
         final int currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);
 
-        final int previousEpoch = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime - 3600*24*15);
+        final int previousEpoch = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime - 3600 * 24 * 15);
 
         // Setup id with an existing score below threshold
         Optional<Registration> registration = registrationService.createRegistration(generatorIdService.generateIdA());
-        if(!registration.isPresent()) {
+        if (!registration.isPresent()) {
             log.error("Unable to create a registration");
         }
 
         Registration registrationWithEE = registration.get();
-        registrationWithEE.setExposedEpochs(Arrays.asList(
-                EpochExposition.builder()
-                        .epochId(previousEpoch)
-                        .expositionScores(Collections.singletonList(800.0))
-                        .build(),
-                EpochExposition.builder()
-                        .epochId(currentEpochId)
-                        .expositionScores(Collections.singletonList(800.0))
-                        .build()));
+        registrationWithEE.setExposedEpochs(
+                Arrays.asList(
+                        EpochExposition.builder()
+                                .epochId(previousEpoch)
+                                .expositionScores(Collections.singletonList(800.0))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(currentEpochId)
+                                .expositionScores(Collections.singletonList(800.0))
+                                .build()
+                )
+        );
 
         return registrationWithEE;
     }
 
-    private List<Contact> buildContacts() throws Exception{
+    private List<Contact> buildContacts() throws Exception {
 
         List<Contact> contacts = new ArrayList<>();
-
 
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
@@ -165,62 +168,69 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
         Registration registration = Registration.builder()
                 .permanentIdentifier(permanentIdentifier)
                 .build();
-        registration.setExposedEpochs(Arrays.asList(
-                EpochExposition.builder()
-                        .epochId(previousEpoch)
-                        .expositionScores(Collections.singletonList(800.0))
-                        .build(),
-                EpochExposition.builder()
-                        .epochId(currentEpochId)
-                        .expositionScores(Collections.singletonList(800.0))
-                        .build()));
+        registration.setExposedEpochs(
+                Arrays.asList(
+                        EpochExposition.builder()
+                                .epochId(previousEpoch)
+                                .expositionScores(Collections.singletonList(800.0))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(currentEpochId)
+                                .expositionScores(Collections.singletonList(800.0))
+                                .build()
+                )
+        );
 
         registrationService.saveRegistration(registration);
-
 
         // retrieve the key_for_mac from crypto server
         Optional<ClientIdentifier> clientId = clientIdentifierRepository.findByIdA(Base64.encode(permanentIdentifier));
 
         Key clientKek = this.cryptographicStorageService.getKeyForEncryptingClientKeys();
-        if(Objects.isNull(clientKek)) {
+        if (Objects.isNull(clientKek)) {
             log.error("The clientKek to decrypt the client keys is null.");
             return contacts;
         }
 
-
-        if(!clientId.isPresent()) {
+        if (!clientId.isPresent()) {
             log.error("Could not find id in clientIdentifier DB table.");
             return contacts;
         }
 
-
-        for (int i=0; i<contactPerRegistration; i++) {
+        for (int i = 0; i < contactPerRegistration; i++) {
             ClientIdentifier clientIdentifier = clientId.get();
-            byte[] decryptedKeyForMac = generatorIdService.decryptStoredKeyWithAES256GCMAndKek(Base64.decode(clientIdentifier.getKeyForMac()), clientKek);
+            byte[] decryptedKeyForMac = generatorIdService
+                    .decryptStoredKeyWithAES256GCMAndKek(Base64.decode(clientIdentifier.getKeyForMac()), clientKek);
 
-            byte[] ebid = this.cryptoService.generateEBID(new CryptoSkinny64(serverKey), currentEpochId, permanentIdentifier);
+            byte[] ebid = this.cryptoService
+                    .generateEBID(new CryptoSkinny64(serverKey), currentEpochId, permanentIdentifier);
 
-            byte[] encryptedCountryCode = this.cryptoService.encryptCountryCode(new CryptoAESECB(federationKey), ebid, countryCode);
+            byte[] encryptedCountryCode = this.cryptoService
+                    .encryptCountryCode(new CryptoAESECB(federationKey), ebid, countryCode);
 
             // Create HELLO message that will make total score exceed threshold
             long t = currentEpochId * this.epochDuration + this.serviceTimeStart + 15L;
             List<HelloMessageDetail> messages = new ArrayList<>();
-            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t, -78));
-            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + 165L, -50));
-            messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + 300L, -35));
+            Random r = new Random();
+            for (int j = 0; j <= 65; j++) {
+                int rssi = -r.nextInt(80);
+                messages.add(generateHelloMessageFor(decryptedKeyForMac, ebid, encryptedCountryCode, t + j, rssi));
+            }
 
-            contacts.add(Contact.builder()
-                    .ebid(ebid)
-                    .ecc(encryptedCountryCode)
-                    .messageDetails(messages)
-                    .build());
+            contacts.add(
+                    Contact.builder()
+                            .ebid(ebid)
+                            .ecc(encryptedCountryCode)
+                            .messageDetails(messages)
+                            .build()
+            );
         }
-
 
         return contacts;
     }
 
-    private HelloMessageDetail generateHelloMessageFor(byte[] decryptedKeyForMac, byte[] ebid, byte[] encryptedCountryCode, long t, int rssi) throws Exception {
+    private HelloMessageDetail generateHelloMessageFor(byte[] decryptedKeyForMac, byte[] ebid,
+            byte[] encryptedCountryCode, long t, int rssi) throws Exception {
         byte[] time = new byte[2];
 
         // Get timestamp on sixteen bits
