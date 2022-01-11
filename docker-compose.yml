@@ -27,7 +27,7 @@ services:
       - "9090:9090"
       - "19090:19090"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/robert
+#      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/robert
       - ROBERT_CRYPTO_SERVER_KEYSTORE_CONFIG_FILE=/conf/softhsm2.cfg
       - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
       - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
@@ -38,6 +38,13 @@ services:
     image: "mongo:4.2.5"
     ports:
       - "27017:27017"
+
+#  mongo-exporter:
+#    image: percona/mongodb_exporter:0.30.0
+#    ports:
+#      - "9216:9216"
+#    environment:
+#      - MONGODB_URI=mongodb://mongo:27017
 
   mock-captcha:
     image: mockserver/mockserver:mockserver-5.11.2

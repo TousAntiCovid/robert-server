@@ -7,6 +7,7 @@ import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.utils.MetricsService;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.ContactItemWriter;
@@ -81,6 +82,9 @@ public class ContactProcessorTest {
     @MockBean
     private RobertServerBatchConfiguration config;
 
+    @Autowired
+    private MetricsService metricsService;
+
     private ContactProcessor contactProcessor;
 
     private ContactItemWriter contactItemWriter;
@@ -120,7 +124,8 @@ public class ContactProcessorTest {
                 registrationService,
                 cryptoServerClient,
                 scoringStrategyService,
-                propertyLoader
+                propertyLoader,
+                metricsService
         );
 
         this.contactItemWriter = new ContactItemWriter(this.contactService);

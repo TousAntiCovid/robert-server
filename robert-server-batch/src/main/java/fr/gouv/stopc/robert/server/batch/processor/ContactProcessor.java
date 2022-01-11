@@ -6,6 +6,7 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactRequest;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.utils.MetricsService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -15,6 +16,7 @@ import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.util.CollectionUtils;
@@ -29,31 +31,20 @@ import static java.util.stream.Collectors.toList;
  * https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf
  */
 @Slf4j
+@RequiredArgsConstructor
 public class ContactProcessor implements ItemProcessor<Contact, Contact> {
 
-    private IServerConfigurationService serverConfigurationService;
+    private final IServerConfigurationService serverConfigurationService;
 
-    private IRegistrationService registrationService;
+    private final IRegistrationService registrationService;
 
-    private ICryptoServerGrpcClient cryptoServerClient;
+    private final ICryptoServerGrpcClient cryptoServerClient;
 
-    private ScoringStrategyService scoringStrategy;
+    private final ScoringStrategyService scoringStrategy;
 
-    private PropertyLoader propertyLoader;
+    private final PropertyLoader propertyLoader;
 
-    public ContactProcessor(
-            final IServerConfigurationService serverConfigurationService,
-            final IRegistrationService registrationService,
-            final ICryptoServerGrpcClient cryptoServerClient,
-            final ScoringStrategyService scoringStrategy,
-            final PropertyLoader propertyLoader) {
-
-        this.serverConfigurationService = serverConfigurationService;
-        this.registrationService = registrationService;
-        this.cryptoServerClient = cryptoServerClient;
-        this.scoringStrategy = scoringStrategy;
-        this.propertyLoader = propertyLoader;
-    }
+    private final MetricsService metricsService;
 
     /**
      * NOTE: validation step order has evolved from spec because of delegation of
@@ -73,6 +64,8 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
 
         final var serverCountryCode = new byte[] { this.serverConfigurationService.getServerCountryCode() };
 
+        final var robertBatchCryptoRPCRequestTimerId = metricsService.startRobertBatchCryptoRPCRequestTimer();
+
         final var response = cryptoServerClient.validateContact(
                 ValidateContactRequest.newBuilder()
                         .setEbid(ByteString.copyFrom(contact.getEbid()))
@@ -85,6 +78,8 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                         )
                         .build()
         );
+
+        robertBatchCryptoRPCRequestTimerId.stop();
 
         if (null == response) {
             log.info("The contact could not be validated. Discarding all its hello messages");

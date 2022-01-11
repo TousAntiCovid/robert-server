@@ -159,6 +159,12 @@
 			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.github.gquintana.metrics</groupId>
+			<artifactId>metrics-sql</artifactId>
+			<version>3.2.1</version>
+		</dependency>
+
     </dependencies>
 
 	<build>
