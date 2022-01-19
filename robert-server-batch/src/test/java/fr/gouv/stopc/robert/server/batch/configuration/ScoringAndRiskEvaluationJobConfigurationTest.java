@@ -48,12 +48,9 @@ import javax.inject.Inject;
 
 import java.security.Key;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -513,11 +510,16 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         // Given
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
+        final long nowMinus8DaysEpoch = Instant.now().minus(8, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
+                .toInstant().toEpochMilli();
+        final long nowMinus6DaysEpoch = Instant.now().minus(6, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
+                .toInstant().toEpochMilli();
 
         Registration registrationHavingRiskLevelThatMustBeReset = this.registrationService
                 .createRegistration(ProcessorTestUtils.generateIdA()).get();
 
         registrationHavingRiskLevelThatMustBeReset.setAtRisk(true);
+        registrationHavingRiskLevelThatMustBeReset.setLastContactTimestamp(nowMinus8DaysEpoch);
         registrationHavingRiskLevelThatMustBeReset.setLatestRiskEpoch(
                 currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) - 1
         );
@@ -528,6 +530,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 .createRegistration(ProcessorTestUtils.generateIdA()).get();
 
         registrationHavingRiskLevelThatMustNotBeReset.setAtRisk(true);
+        registrationHavingRiskLevelThatMustNotBeReset.setLastContactTimestamp(nowMinus6DaysEpoch);
         registrationHavingRiskLevelThatMustNotBeReset.setLatestRiskEpoch(
                 currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) + 1
         );
@@ -738,5 +741,4 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 .messageDetails(Arrays.asList(helloMessageDetail))
                 .build();
     }
-
 }

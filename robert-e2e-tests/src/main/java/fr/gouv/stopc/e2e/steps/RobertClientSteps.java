@@ -1,7 +1,6 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.e2e.mobileapplication.MobileApplication;
 import fr.gouv.stopc.e2e.mobileapplication.MobilePhonesEmulator;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -61,6 +60,12 @@ public class RobertClientSteps {
         );
     }
 
+    @Given("{word} is at risk since {naturalTime}")
+    public void userIsAtRiskSince(final List<String> users,
+            final Instant riskDuration) {
+
+    }
+
     @When("{word} report himself/herself/myself sick")
     public void reportContacts(final String userName) {
         mobilePhonesEmulator.getMobileApplication(userName).reportContacts();
@@ -78,12 +83,13 @@ public class RobertClientSteps {
                 .isEqualTo(4);
     }
 
-    @Then("{word} has no notification")
+    @Then("{word} is not notified at risk")
     public void isNotNotifiedAtRisk(final String userName) {
         // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
         // in other way we'll not be able to call status endpoint during 2 min
-        final MobileApplication mobileApp = mobilePhonesEmulator.getMobileApplication(userName);
-        var exposureStatus = mobileApp.requestStatus();
+        final var exposureStatus = mobilePhonesEmulator
+                .getMobileApplication(userName)
+                .requestStatus();
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(0);
@@ -126,6 +132,16 @@ public class RobertClientSteps {
         // latestRiskEpoch
         mobilePhonesEmulator.getMobileApplication(userNameAtRisk).changeExposedEpochsDatesStartingAt(startDate);
         robertBatchSteps.launchBatch();
+    }
+
+    @Given("{wordList} met {naturalTime}")
+    public void usersMetAt(List<String> users,
+            final Instant startDate) {
+        mobilePhonesEmulator.exchangeHelloMessagesBetween(
+                users,
+                startDate,
+                Duration.of(60, ChronoUnit.MINUTES)
+        );
     }
 
     @Then("{word} last contact is now near {naturalTime}")
