@@ -60,12 +60,6 @@ public class RobertClientSteps {
         );
     }
 
-    @Given("{word} is at risk since {naturalTime}")
-    public void userIsAtRiskSince(final List<String> users,
-            final Instant riskDuration) {
-
-    }
-
     @When("{word} report himself/herself/myself sick")
     public void reportContacts(final String userName) {
         mobilePhonesEmulator.getMobileApplication(userName).reportContacts();
@@ -132,16 +126,6 @@ public class RobertClientSteps {
         // latestRiskEpoch
         mobilePhonesEmulator.getMobileApplication(userNameAtRisk).changeExposedEpochsDatesStartingAt(startDate);
         robertBatchSteps.launchBatch();
-    }
-
-    @Given("{wordList} met {naturalTime}")
-    public void usersMetAt(List<String> users,
-            final Instant startDate) {
-        mobilePhonesEmulator.exchangeHelloMessagesBetween(
-                users,
-                startDate,
-                Duration.of(60, ChronoUnit.MINUTES)
-        );
     }
 
     @Then("{word} last contact is now near {naturalTime}")

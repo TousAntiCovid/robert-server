@@ -9,14 +9,12 @@ Feature: Covid-19 risk evolution
     Given Yoko installs the application TAC
 
   Scenario: Ten days after contact user is not at risk
-    Given Sarah and John met ten days ago
-    And John report himself sick
+    Given 10 days ago, Sarah and John met and Sarah was at risk following John report
     When robert batch has been triggered
     Then Sarah is not notified at risk
 
   Scenario: Six days after contact user is at risk
-    Given Sarah and John met six days ago
-    And John report himself sick
+    Given 6 days ago, Sarah and John met and Sarah was at risk following John report
     When robert batch has been triggered
     Then Sarah is notified at risk
 
