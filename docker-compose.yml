@@ -1,5 +1,47 @@
 version: "3.5"
 services:
+  crypto-server:
+    build: robert-crypto-grpc-server
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/robert
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_CONFIG_FILE=/conf/softhsm2.cfg
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
+    depends_on:
+      - postgres
+
+  ws-rest:
+    build: robert-server-ws-rest
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
+      - ROBERT_CRYPTO_SERVER_HOST=crypto-server
+      - SUBMISSION_CODE_SERVER_HOST=mock-submission-code-server
+      - CAPTCHA_INTERNAL_HOSTNAME=http://mock-captcha:8080
+      - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8080/private/api/v1/captcha/{captchaId}/checkAnswer
+      - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
+      - ESR_LIMIT=0
+    ports:
+      - "8086:8086"
+    depends_on:
+      - mongo
+      - crypto-server
+      - mock-submission-code-server
+      - mock-captcha
+
+  batch:
+    build: robert-server-batch
+    environment:
+      - ROBERT_CRYPTO_SERVER_HOST=crypto-server
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_ENABLED=true
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_BASEURL=http://pushgateway:9091
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_GROUPINGKEY_INSTANCE=robert-batch
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_SHUTDOWNOPERATION=DELETE
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_PUSHRATE=5s
+    depends_on:
+      - mongo
+      - crypto-server
+
   postgres:
     image: postgres:9.6
     ports:
@@ -21,19 +63,6 @@ services:
     depends_on:
       - postgres
 
-  crypto-server:
-    build: robert-crypto-grpc-server
-    ports:
-      - "9090:9090"
-      - "19090:19090"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/robert
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_CONFIG_FILE=/conf/softhsm2.cfg
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
-    depends_on:
-      - postgres
-
   mongo:
     image: "mongo:4.2.5"
     ports:
@@ -41,49 +70,43 @@ services:
 
   mock-captcha:
     image: mockserver/mockserver:mockserver-5.11.2
-    command: -logLevel DEBUG -serverPort 8055
-    ports:
-      - "8055:8055"
+    command: -logLevel INFO -serverPort 8080
     volumes:
-      - ./docker-compose/mock-captcha-orange-server-config:/mock-expectation
+      - ./docker-compose/mock-captcha-orange-server-config:/mock-expectation:ro
     environment:
       - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
 
   mock-submission-code-server:
     image: mockserver/mockserver:mockserver-5.11.2
-    command: -logLevel DEBUG -serverPort 8087
-    ports:
-      - "8087:8087"
+    command: -logLevel INFO -serverPort 8080
     volumes:
-      - ./docker-compose/mock-submission-code-server-ws-rest-config:/mock-expectation
+      - ./docker-compose/mock-submission-code-server-ws-rest-config:/mock-expectation:ro
     environment:
       - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
 
-  ws-rest:
-    build: robert-server-ws-rest
-    environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
-      - ROBERT_CRYPTO_SERVER_HOST=crypto-server
-      - SUBMISSION_CODE_SERVER_HOST=mock-submission-code-server
-      - CAPTCHA_INTERNAL_HOSTNAME=http://mock-captcha:8055
-      - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8055/private/api/v1/captcha/{captchaId}/checkAnswer
-      - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
-      - ESR_LIMIT=0
+  prometheus:
+    profiles:
+      - monitoring
+    image: prom/prometheus:v2.32.1
+    command:
+      - --config.file=/etc/prometheus/config.yml
     ports:
-      - "8086:8086"
-    depends_on:
-      - mongo
-      - crypto-server
-      - mock-submission-code-server
-      - mock-captcha
+      - "9090:9090"
+    volumes:
+      - ./docker-compose/prometheus/config.yml:/etc/prometheus/config.yml:ro
 
-  batch:
-    build: robert-server-batch
+  pushgateway:
+    profiles:
+      - monitoring
+    image: prom/pushgateway:v1.4.2
+
+  grafana:
+    profiles:
+      - monitoring
+    image: grafana/grafana:6.7.2
+    volumes:
+      - ./docker-compose/grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
-      - ROBERT_CRYPTO_SERVER_HOST=crypto-server
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
-    depends_on:
-      - mongo
-      - crypto-server
-      - mock-submission-code-server
-      - mock-captcha
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+    ports:
+      - "3000:3000"
