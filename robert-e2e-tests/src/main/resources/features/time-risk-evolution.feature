@@ -8,22 +8,22 @@ Feature: Covid-19 risk evolution
     Given Sarah installs the application TAC
     Given Yoko installs the application TAC
 
-  Scenario: Ten days after contact user is not at risk
+  Scenario: 10 days after contact, user is no longer at risk
     Given 10 days ago, Sarah and John met and Sarah was at risk following John report
     When robert batch has been triggered
     Then Sarah is not notified at risk
 
-  Scenario: Six days after contact user is at risk
+  Scenario: 6 days after contact, user is still at risk
     Given 6 days ago, Sarah and John met and Sarah was at risk following John report
     When robert batch has been triggered
     Then Sarah is notified at risk
 
-  Scenario: User is no longer at risk after 7 days
-    Given 7 days and 1 second ago, Sarah and John met and Sarah was at risk following John report
+  Scenario: 7 days after contact, user is no longer at risk
+    Given 7 days 1 second ago, Sarah and John met and Sarah was at risk following John report
     When robert batch has been triggered
     Then Sarah is not notified at risk
 
-  Scenario: If a user meet an other ill person, declaration token (CNAM) will be updated
+  Scenario: If a user meet an other ill person, declaration token (CNAM) will be updated (last contact date changed)
     Given 7 days ago, Sarah and John met and Sarah was at risk following John report
     And Sarah is notified at risk
     And Sarah last contact is now near 7 days ago
@@ -32,10 +32,10 @@ Feature: Covid-19 risk evolution
     And robert batch has been triggered
     Then Sarah last contact is now near now
 
-  Scenario: If a user meet an other ill person, CNAME will be updated (last contact date changed)
+  Scenario: If a user meet an other ill person, declaration token (CNAM) will not be updated
     Given 5 days ago, Sarah and John met and Sarah was at risk following John report
     And Sarah is notified at risk
     And Sarah last contact is now near 5 days ago
     And 12 days ago, Sarah and Yoko met and Sarah was at risk following Yoko report
-    And robert batch has been triggered
+    When robert batch has been triggered
     Then Sarah last contact is now near 5 days ago
