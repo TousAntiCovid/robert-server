@@ -510,10 +510,14 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         // Given
         final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
-        final long nowMinus8DaysEpoch = Instant.now().minus(8, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
-                .toInstant().toEpochMilli();
-        final long nowMinus6DaysEpoch = Instant.now().minus(6, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
-                .toInstant().toEpochMilli();
+        final long nowMinus8DaysEpoch = TimeUtils.convertUnixMillistoNtpSeconds(
+                Instant.now().minus(8, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
+                        .toInstant().toEpochMilli()
+        );
+        final long nowMinus6DaysEpoch = TimeUtils.convertUnixMillistoNtpSeconds(
+                Instant.now().minus(6, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
+                        .toInstant().toEpochMilli()
+        );
 
         Registration registrationHavingRiskLevelThatMustBeReset = this.registrationService
                 .createRegistration(ProcessorTestUtils.generateIdA()).get();

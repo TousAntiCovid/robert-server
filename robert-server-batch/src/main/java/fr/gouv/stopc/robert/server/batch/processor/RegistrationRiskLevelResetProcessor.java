@@ -35,18 +35,8 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
     public Registration process(Registration registration) throws Exception {
         if (registration.isAtRisk()) {
 
-            LocalDateTime lastContactDateTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(registration.getLastContactTimestamp()),
-                    TimeZone.getDefault().toZoneId()
-            );
+            if (lastContactDateIsAboveRiskRetentionThreshold(registration)) {
 
-            ZonedDateTime lastContactDateTimeWithTimeZone = lastContactDateTime
-                    .atZone(TimeZone.getDefault().toZoneId());
-            ZonedDateTime nowWithTimeZone = Instant.now().atZone(TimeZone.getDefault().toZoneId());
-
-            if (Math.abs(
-                    ChronoUnit.DAYS.between(lastContactDateTimeWithTimeZone, nowWithTimeZone)
-            ) >= this.propertyLoader.getRiskLevelRetentionPeriodInDays()) {
                 if (!registration.isNotified()) {
                     log.info(USER_AT_RISK_NOT_NOTIFIED_MESSAGE);
                 }
@@ -58,6 +48,22 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
             }
         }
         return null;
+    }
+
+    private boolean lastContactDateIsAboveRiskRetentionThreshold(Registration registration) {
+
+        final var lastContactDateTime = LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(TimeUtils.convertNTPSecondsToUnixMillis(registration.getLastContactTimestamp())),
+                TimeZone.getDefault().toZoneId()
+        );
+
+        final var lastContactDateTimeWithTimeZone = lastContactDateTime
+                .atZone(TimeZone.getDefault().toZoneId());
+        final var nowWithTimeZone = Instant.now().atZone(TimeZone.getDefault().toZoneId());
+
+        return Math.abs(
+                ChronoUnit.DAYS.between(lastContactDateTimeWithTimeZone, nowWithTimeZone)
+        ) >= this.propertyLoader.getRiskLevelRetentionPeriodInDays();
     }
 
 }

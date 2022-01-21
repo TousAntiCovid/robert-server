@@ -77,8 +77,10 @@ public class RegistrationRiskLevelResetProcessorTest {
             throws Exception {
 
         // Given
-        final long nowMinus6DaysEpoch = Instant.now().minus(6, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
-                .toInstant().toEpochMilli();
+        final long nowMinus6DaysEpoch = TimeUtils.convertUnixMillistoNtpSeconds(
+                Instant.now().minus(6, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
+                        .toInstant().toEpochMilli()
+        );
 
         Registration registration = Registration.builder()
                 .atRisk(true)
@@ -98,8 +100,10 @@ public class RegistrationRiskLevelResetProcessorTest {
             throws Exception {
 
         // Given
-        final long nowMinus8DaysEpoch = Instant.now().minus(8, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
-                .toInstant().toEpochMilli();
+        final long nowMinus8DaysEpoch = TimeUtils.convertUnixMillistoNtpSeconds(
+                Instant.now().minus(8, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
+                        .toInstant().toEpochMilli()
+        );
 
         Registration registration = Registration.builder()
                 .atRisk(true)
