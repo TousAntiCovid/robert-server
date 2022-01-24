@@ -2,6 +2,9 @@ package fr.gouv.stopc.robert.crypto.grpc.server;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.utils.PropertyLoader;
+import io.micrometer.core.aop.TimedAspect;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.inject.Inject;
@@ -29,4 +32,8 @@ public class CryptoServiceConfiguration {
 
     }
 
+    @Bean
+    public TimedAspect timedAspect(final MeterRegistry registry) {
+        return new TimedAspect(registry);
+    }
 }

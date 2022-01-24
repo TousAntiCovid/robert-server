@@ -13,9 +13,9 @@ public class MetricsService {
     public MetricsService(final MeterRegistry meterRegistry) {
 
         robertWsReportHellomessageDistribution = DistributionSummary.builder("robert.ws.report.hellomessage")
-                .description(" Number of reported hello messages")
+                .description("Hello message count per report")
                 .baseUnit("HelloMessage")
-                .publishPercentiles(0.3, 0.5, 0.95)
+                .publishPercentiles(0.05, 0.3, 0.5, 0.8, 0.95)
                 .publishPercentileHistogram(false)
                 .sla(10, 100, 1000, 5000)
                 .register(meterRegistry);

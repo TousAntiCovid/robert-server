@@ -12,10 +12,10 @@ public class MetricsService {
 
     public MetricsService(final MeterRegistry meterRegistry) {
 
-        robertBatchHelloMessageTotal = DistributionSummary.builder("robert.batch.hellomessage.total")
-                .description("Number of HelloMessages of a Contact")
+        robertBatchHelloMessageTotal = DistributionSummary.builder("robert.batch.contact.hellomessage")
+                .description("Hello message count per contact")
                 .baseUnit("HelloMessage")
-                .publishPercentiles(0.3, 0.5, 0.95)
+                .publishPercentiles(0.05, 0.3, 0.5, 0.8, 0.95)
                 .publishPercentileHistogram(false)
                 .sla(10, 100, 1000, 5000)
                 .register(meterRegistry);
