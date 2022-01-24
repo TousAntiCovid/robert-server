@@ -9,9 +9,6 @@ import org.springframework.batch.item.ItemProcessor;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.Period;
-
-import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
 public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Registration, Registration> {
@@ -55,10 +52,12 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
     private boolean lastContactDateIsAboveRiskRetentionThreshold(Registration registration) {
 
         final var lastContactDateAsNtpTimestamp = registration.getLastContactTimestamp();
-        final var lastContactDateAsUnixTimestamp = TimeUtils.convertNTPSecondsToUnixMillis(lastContactDateAsNtpTimestamp);
+        final var lastContactDateAsUnixTimestamp = TimeUtils
+                .convertNTPSecondsToUnixMillis(lastContactDateAsNtpTimestamp);
         final var lastContactInstant = Instant.ofEpochMilli(lastContactDateAsUnixTimestamp);
 
-        return Duration.between(lastContactInstant, Instant.now()).abs().toDays() >= propertyLoader.getRiskLevelRetentionPeriodInDays();
+        return Duration.between(lastContactInstant, Instant.now()).abs().toDays() >= propertyLoader
+                .getRiskLevelRetentionPeriodInDays();
     }
 
 }

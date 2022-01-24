@@ -21,7 +21,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.TimeZone;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -99,16 +98,15 @@ public class RegistrationRiskLevelResetProcessorTest {
             throws Exception {
 
         // Given
-        final long nowMinus8DaysEpoch = TimeUtils.convertUnixMillistoNtpSeconds(
-                Instant.now().minus(8, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
-                        .toInstant().toEpochMilli()
+        final long nowMinus8DaysNtpTimestamp = TimeUtils.convertUnixMillistoNtpSeconds(
+                Instant.now().minus(8, ChronoUnit.DAYS).toEpochMilli()
         );
 
         Registration registration = Registration.builder()
                 .atRisk(true)
                 .isNotified(true)
                 .latestRiskEpoch(4808)
-                .lastContactTimestamp(nowMinus8DaysEpoch)
+                .lastContactTimestamp(nowMinus8DaysNtpTimestamp)
                 .build();
 
         // When
