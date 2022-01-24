@@ -77,16 +77,15 @@ public class RegistrationRiskLevelResetProcessorTest {
             throws Exception {
 
         // Given
-        final long nowMinus6DaysEpoch = TimeUtils.convertUnixMillistoNtpSeconds(
-                Instant.now().minus(6, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
-                        .toInstant().toEpochMilli()
+        final long nowMinus6DaysNtpTimestamp = TimeUtils.convertUnixMillistoNtpSeconds(
+                Instant.now().minus(6, ChronoUnit.DAYS).toEpochMilli()
         );
 
         Registration registration = Registration.builder()
                 .atRisk(true)
                 .isNotified(true)
                 .latestRiskEpoch(4912)
-                .lastContactTimestamp(nowMinus6DaysEpoch)
+                .lastContactTimestamp(nowMinus6DaysNtpTimestamp)
                 .build();
 
         // When

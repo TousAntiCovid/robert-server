@@ -7,9 +7,11 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
-import java.time.*;
-import java.time.temporal.ChronoUnit;
-import java.util.TimeZone;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.Period;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
 public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Registration, Registration> {
@@ -52,18 +54,11 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
 
     private boolean lastContactDateIsAboveRiskRetentionThreshold(Registration registration) {
 
-        final var lastContactDateTime = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(TimeUtils.convertNTPSecondsToUnixMillis(registration.getLastContactTimestamp())),
-                TimeZone.getDefault().toZoneId()
-        );
+        final var lastContactDateAsNtpTimestamp = registration.getLastContactTimestamp();
+        final var lastContactDateAsUnixTimestamp = TimeUtils.convertNTPSecondsToUnixMillis(lastContactDateAsNtpTimestamp);
+        final var lastContactInstant = Instant.ofEpochMilli(lastContactDateAsUnixTimestamp);
 
-        final var lastContactDateTimeWithTimeZone = lastContactDateTime
-                .atZone(TimeZone.getDefault().toZoneId());
-        final var nowWithTimeZone = Instant.now().atZone(TimeZone.getDefault().toZoneId());
-
-        return Math.abs(
-                ChronoUnit.DAYS.between(lastContactDateTimeWithTimeZone, nowWithTimeZone)
-        ) >= this.propertyLoader.getRiskLevelRetentionPeriodInDays();
+        return Duration.between(lastContactInstant, Instant.now()).abs().toDays() >= propertyLoader.getRiskLevelRetentionPeriodInDays();
     }
 
 }
