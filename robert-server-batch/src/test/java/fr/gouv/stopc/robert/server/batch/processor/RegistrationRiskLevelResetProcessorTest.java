@@ -33,7 +33,6 @@ public class RegistrationRiskLevelResetProcessorTest {
     @Mock
     private PropertyLoader propertyLoader;
 
-    @Mock
     private IServerConfigurationService serverConfigurationService;
 
     @InjectMocks
@@ -45,9 +44,6 @@ public class RegistrationRiskLevelResetProcessorTest {
     public void beforeEach() {
 
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
-        long serviceTimeStart = Instant.now().getEpochSecond() + TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970
-                - 5000L * TimeUtils.EPOCH_DURATION_SECS;
-        when(this.serverConfigurationService.getServiceTimeStart()).thenReturn(serviceTimeStart);
         this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, this.serverConfigurationService);
     }
 
