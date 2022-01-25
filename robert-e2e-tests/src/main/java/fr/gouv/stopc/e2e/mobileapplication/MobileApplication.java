@@ -222,8 +222,8 @@ public class MobileApplication {
                 .orElseThrow();
     }
 
-    public void changeExposedEpochsDatesStartingAt(Instant startDate) {
-        var registration = getRegistration();
+    public void changeExposedEpochsDatesStartingAt(final Instant startDate) {
+        final var registration = getRegistration();
         final var epochDate = clock.at(startDate);
         registration.setLatestRiskEpoch(epochDate.asEpochId());
         registration.setLastContactTimestamp(epochDate.asNtpTimestamp());

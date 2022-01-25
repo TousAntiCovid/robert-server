@@ -429,6 +429,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
         final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
         final int previousEpoch = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime - 900);
+        final var lastContactTimestamp = TimeUtils.getNtpSeconds(currentEpochId - 2, tpstStart);
 
         // Setup id with an existing score below threshold
         Registration registrationWithEE = this.registration.get();
@@ -444,6 +445,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                                 .build()
                 )
         );
+        registrationWithEE.setLastContactTimestamp(lastContactTimestamp);
 
         this.registrationService.saveRegistration(registrationWithEE);
 

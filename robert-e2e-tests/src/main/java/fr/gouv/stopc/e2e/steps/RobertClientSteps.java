@@ -60,6 +60,33 @@ public class RobertClientSteps {
         );
     }
 
+    @Given("{naturalTime}, the users {wordList} has met during {duration} then {word} report himself/herself sick")
+    public void generateContactsBetweenTwoUsersWithDurationInThePast(final Instant startDate,
+            final List<String> users,
+            final Duration durationOfExchange,
+            final String userNameReporter) {
+
+        mobilePhonesEmulator.exchangeHelloMessagesBetween(
+                users,
+                Instant.now(),
+                durationOfExchange
+        );
+
+        mobilePhonesEmulator.getMobileApplication(userNameReporter).reportContacts();
+        robertBatchSteps.launchBatch();
+        // We modify exposed epochs and we re-launch batch in order to re-compute
+        // latestRiskEpoch
+        users.stream()
+                .filter(
+                        otherUser -> !otherUser.equals(userNameReporter)
+                )
+                .forEach(
+                        user -> mobilePhonesEmulator.getMobileApplication(user)
+                                .changeExposedEpochsDatesStartingAt(startDate)
+                );
+        robertBatchSteps.launchBatch();
+    }
+
     @When("{word} report himself/herself/myself sick")
     public void reportContacts(final String userName) {
         mobilePhonesEmulator.getMobileApplication(userName).reportContacts();
