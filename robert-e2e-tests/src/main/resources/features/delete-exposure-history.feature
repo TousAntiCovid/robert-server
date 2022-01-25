@@ -19,7 +19,7 @@ Feature: Covid-19 risk exposure deletion
     Given in two days at 00:00, the users John and Sarah will be near during 15 minutes
     When John report himself sick
     And robert batch has been triggered
-    Then Sarah has no notification
+    Then Sarah is not notified at risk
 
   Scenario: One People does not delete its exposure history
     Given tomorrow at 23:45, the users Paul and Sarah will be near during 15 minutes
