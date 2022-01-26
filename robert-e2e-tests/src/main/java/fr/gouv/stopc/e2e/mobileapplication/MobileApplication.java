@@ -234,4 +234,19 @@ public class MobileApplication {
         this.registrationRepository.save(registration);
     }
 
+    public void changeMultipleExposedEpochsDatesStartingAt(final Instant startDate) {
+        final var registration = getRegistration();
+        final var epochDate = clock.at(startDate);
+        final var currentEpoch = clock.at(Instant.now()).asEpochId();
+        registration.setLatestRiskEpoch(epochDate.asEpochId());
+        registration.setLastContactTimestamp(epochDate.asNtpTimestamp());
+        int index = 0;
+        for (EpochExposition epochExposition : registration.getExposedEpochs()) {
+            if (epochExposition.getEpochId() >= currentEpoch) {
+                epochExposition.setEpochId(epochDate.plusEpochs(index++).asEpochId());
+            }
+        }
+        this.registrationRepository.save(registration);
+    }
+
 }

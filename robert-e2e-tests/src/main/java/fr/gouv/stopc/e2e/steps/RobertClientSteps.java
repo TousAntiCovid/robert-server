@@ -60,7 +60,7 @@ public class RobertClientSteps {
         );
     }
 
-    @Given("{naturalTime}, the users {wordList} has met during {duration} then {word} report himself/herself sick")
+    @Given("{naturalTime}, the users {wordList} has met during {duration} and {word} will report himself/herself sick")
     public void generateContactsBetweenTwoUsersWithDurationInThePast(final Instant startDate,
             final List<String> users,
             final Duration durationOfExchange,
@@ -82,7 +82,7 @@ public class RobertClientSteps {
                 )
                 .forEach(
                         user -> mobilePhonesEmulator.getMobileApplication(user)
-                                .changeExposedEpochsDatesStartingAt(startDate)
+                                .changeMultipleExposedEpochsDatesStartingAt(startDate)
                 );
         robertBatchSteps.launchBatch();
     }
