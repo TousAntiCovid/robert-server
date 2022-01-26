@@ -6,7 +6,6 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -109,8 +108,7 @@ public class RobertClientSteps {
      * pass will override the firsts exposedEpochsDates (we cannot differentiate
      * them from each other)
      */
-    @SneakyThrows
-    @Then("{naturalTime}, {wordList} met and {word} was/were at risk following {word} report")
+    @Given("{naturalTime}, {wordList} met and {word} was/were at risk following {word} report")
     public void falsifyExposedEpochs(final Instant startDate,
             List<String> users,
             final String userNameAtRisk,
@@ -118,14 +116,12 @@ public class RobertClientSteps {
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
                 users,
                 Instant.now(),
-                Duration.of(60, ChronoUnit.MINUTES)
+                Duration.ofMinutes(60)
         );
         mobilePhonesEmulator.getMobileApplication(userNameReporter).reportContacts();
         robertBatchSteps.launchBatch();
-        // We modify exposed epochs and we re-launch batch in order to re-compute
-        // latestRiskEpoch
-        mobilePhonesEmulator.getMobileApplication(userNameAtRisk).changeExposedEpochsDatesStartingAt(startDate);
-        robertBatchSteps.launchBatch();
+        final var daysBackInTime = Duration.between(startDate, Instant.now()).toDays();
+        mobilePhonesEmulator.getMobileApplication(userNameAtRisk).fakeExposedEpochs(daysBackInTime);
     }
 
     @Then("{word} last contact is now near {naturalTime}")

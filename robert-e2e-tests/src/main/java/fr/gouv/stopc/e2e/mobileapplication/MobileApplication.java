@@ -7,7 +7,6 @@ import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.e2e.mobileapplication.model.*;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.EpochExposition;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
@@ -23,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
+import static java.time.temporal.ChronoUnit.DAYS;
 import static java.util.Base64.*;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
@@ -222,14 +222,22 @@ public class MobileApplication {
                 .orElseThrow();
     }
 
-    public void changeExposedEpochsDatesStartingAt(Instant startDate) {
-        var registration = getRegistration();
-        final var epochDate = clock.at(startDate);
-        registration.setLatestRiskEpoch(epochDate.asEpochId());
-        registration.setLastContactTimestamp(epochDate.asNtpTimestamp());
-        int index = 0;
-        for (EpochExposition epochExposition : registration.getExposedEpochs()) {
-            epochExposition.setEpochId(epochDate.plusEpochs(index++).asEpochId());
+    public void fakeExposedEpochs(final long daysBackInTime) {
+        final var registration = getRegistration();
+
+        final var lastContactTime = clock.now()
+                .minus(daysBackInTime, DAYS)
+                .truncatedTo(DAYS);
+        registration.setLastContactTimestamp(lastContactTime.asNtpTimestamp());
+
+        final var latestRiskTime = clock.atEpoch(registration.getLatestRiskEpoch())
+                .minus(daysBackInTime, DAYS);
+        registration.setLatestRiskEpoch(latestRiskTime.asEpochId());
+
+        for (final var epochExposition : registration.getExposedEpochs()) {
+            final var expositionTime = clock.atEpoch(epochExposition.getEpochId())
+                    .minus(daysBackInTime, DAYS);
+            epochExposition.setEpochId(expositionTime.asEpochId());
         }
         this.registrationRepository.save(registration);
     }

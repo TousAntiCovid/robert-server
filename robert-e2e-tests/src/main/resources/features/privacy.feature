@@ -5,4 +5,5 @@ Feature: Covid-19 privacy settings
 
   Scenario: User data is deleted after 15 days
     Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
+    When robert batch has been triggered
     Then all Sarah's contact and risk data older than 15 days were deleted
