@@ -16,7 +16,7 @@ Feature: Covid-19 risk evolution
   Scenario: 6 days after contact, user is still at risk
     Given 6 days ago, Sarah and John met and Sarah was at risk following John report
     When robert batch has been triggered
-    Then Sarah has no notification
+    Then Sarah is notified at risk
 
   Scenario: 7 days after contact, user is no longer at risk
     Given 7 days ago, Sarah and John met and Sarah was at risk following John report

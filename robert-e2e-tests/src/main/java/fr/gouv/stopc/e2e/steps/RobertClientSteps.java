@@ -82,7 +82,7 @@ public class RobertClientSteps {
                 )
                 .forEach(
                         user -> mobilePhonesEmulator.getMobileApplication(user)
-                                .changeMultipleExposedEpochsDatesStartingAt(startDate)
+                                .changeExposedEpochsDatesStartingAt(startDate)
                 );
         robertBatchSteps.launchBatch();
     }

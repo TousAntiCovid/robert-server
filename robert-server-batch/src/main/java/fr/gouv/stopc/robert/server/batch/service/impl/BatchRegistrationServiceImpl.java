@@ -120,10 +120,14 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
 
     private boolean lastContactDateIsBeforePivotDate(Registration registration) {
 
-        final var lastContactDateTimeZone = Instant.ofEpochMilli(
-                TimeUtils.convertNTPSecondsToUnixMillis(registration.getLastContactTimestamp())
-        );
+        if (0 == registration.getLastContactTimestamp()) {
+            return true;
+        } else {
+            final var lastContactDateTimeZone = Instant.ofEpochMilli(
+                    TimeUtils.convertNTPSecondsToUnixMillis(registration.getLastContactTimestamp())
+            );
 
-        return Duration.between(lastContactDateTimeZone, Instant.now()).abs().toDays() <= 7;
+            return Duration.between(lastContactDateTimeZone, Instant.now()).abs().toDays() <= 7;
+        }
     }
 }
