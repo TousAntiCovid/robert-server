@@ -9,10 +9,12 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Duration;
-import java.time.Instant;
+import java.io.IOException;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
@@ -157,4 +159,33 @@ public class RobertClientSteps {
     public void unregister(final String userName) {
         mobilePhonesEmulator.getMobileApplication(userName).unregister();
     }
+
+    @Given("we are {naturalTime} in the past")
+    public void setDateInThePast(final Instant daysInPast) throws IOException {
+        // final var mongoDBContainerDate =
+        // mobilePhonesEmulator.getMongoDBContainerDate();
+
+        final var postgresqlContainerDate = mobilePhonesEmulator.getPostgresqlServiceDate();
+        final var postgresqlContainerInstant = LocalDateTime.parse(postgresqlContainerDate.replace(" ", "T"))
+                .atZone(ZoneId.of("Europe/Paris")).withZoneSameInstant(ZoneId.of("UTC")).toInstant()
+                .truncatedTo(ChronoUnit.MINUTES);
+        assertThat(postgresqlContainerInstant.compareTo(daysInPast.truncatedTo(ChronoUnit.MINUTES))).isEqualTo(0);
+
+        final var batchDate = mobilePhonesEmulator.getBatchServiceDate();
+        final var batchInstant = ZonedDateTime.parse(batchDate).toInstant().truncatedTo(ChronoUnit.MINUTES);
+        assertThat(batchInstant.compareTo(daysInPast.truncatedTo(ChronoUnit.MINUTES))).isEqualTo(0);
+
+        final var wsRestDate = mobilePhonesEmulator.getWSRestServiceDate();
+        final var wsRestInstant = OffsetDateTime.parse(wsRestDate, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()
+                .truncatedTo(ChronoUnit.MINUTES);
+        assertThat(wsRestInstant.compareTo(daysInPast.truncatedTo(ChronoUnit.MINUTES))).isEqualTo(0);
+
+        final var cryptoServerDate = mobilePhonesEmulator.getCryptoServerContainerDate();
+        final var cryptoServerInstant = ZonedDateTime
+                .parse(cryptoServerDate, DateTimeFormatter.ofPattern("EEE dd MMM yyyy hh:mm:ss a zzz", Locale.ENGLISH))
+                .toInstant().truncatedTo(ChronoUnit.MINUTES);
+        assertThat(cryptoServerInstant.compareTo(daysInPast.truncatedTo(ChronoUnit.MINUTES))).isEqualTo(0);
+
+    }
+
 }
