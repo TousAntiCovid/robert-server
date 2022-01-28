@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.service;
 
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
@@ -42,7 +43,10 @@ public class BatchRegistrationServiceTest {
     @BeforeEach
     public void setUp() {
         final var robertClock = new RobertClock(timeStart);
-        this.batchRegistrationService = new BatchRegistrationServiceImpl(scoringStrategyService, robertClock);
+        final var propertyLoader = Mockito.mock(PropertyLoader.class);
+        this.batchRegistrationService = new BatchRegistrationServiceImpl(
+                scoringStrategyService, propertyLoader, robertClock
+        );
     }
 
     @Test
