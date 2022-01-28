@@ -1,5 +1,15 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.service.impl;
 
+import fr.gouv.stopc.robert.crypto.grpc.server.service.IECDHKeyService;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
+import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
+import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import javax.crypto.KeyAgreement;
+
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -12,22 +22,12 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.crypto.KeyAgreement;
-
-import org.springframework.stereotype.Service;
-
-import fr.gouv.stopc.robert.crypto.grpc.server.service.IECDHKeyService;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
-import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
-import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @Service
 public class ECDHKeyServiceImpl implements IECDHKeyService {
 
     private final static String HASH_MAC = "mac";
+
     private final static String HASH_TUPLES = "tuples";
 
     private ICryptographicStorageService cryptographicStorageService;
@@ -45,7 +45,6 @@ public class ECDHKeyServiceImpl implements IECDHKeyService {
         CryptoHMACSHA256 sha256Mac = new CryptoHMACSHA256(sharedSecret);
         return sha256Mac.encrypt(HASH_TUPLES.getBytes());
     }
-
 
     private byte[] generateSharedSecret(byte[] clientPublicKey) {
         Optional<KeyPair> serverKeyPair = this.cryptographicStorageService.getServerKeyPair();
@@ -94,10 +93,12 @@ public class ECDHKeyServiceImpl implements IECDHKeyService {
             return Optional.empty();
         }
 
-        return Optional.of(ClientIdentifierBundle.builder()
-                .keyForMac(kaMac)
-                .keyForTuples(kaTuples)
-                .build());
+        return Optional.of(
+                ClientIdentifierBundle.builder()
+                        .keyForMac(kaMac)
+                        .keyForTuples(kaTuples)
+                        .build()
+        );
     }
 
 }

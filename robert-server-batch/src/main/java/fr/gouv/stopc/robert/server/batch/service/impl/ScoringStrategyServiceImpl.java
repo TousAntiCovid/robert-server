@@ -1,24 +1,23 @@
 package fr.gouv.stopc.robert.server.batch.service.impl;
 
-import java.util.List;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
-
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
+import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
- * Scoring strategy that implements the WP4 formula
- * risk = - SUM_i=1_to_I((5*delta_t(i, i - 1))/min((RSSI(i) + RSSI(i - 1)) / 2 + alpha, -5) * 60
- * where alpha = - RSSI_1m - 5
- * For contacts with a single message, cap estimated delta to 120 seconds
+ * Scoring strategy that implements the WP4 formula risk = -
+ * SUM_i=1_to_I((5*delta_t(i, i - 1))/min((RSSI(i) + RSSI(i - 1)) / 2 + alpha,
+ * -5) * 60 where alpha = - RSSI_1m - 5 For contacts with a single message, cap
+ * estimated delta to 120 seconds
  */
 @Service
 @Slf4j
@@ -29,7 +28,8 @@ public class ScoringStrategyServiceImpl implements ScoringStrategyService {
 
     private final PropertyLoader propertyLoader;
 
-    public ScoringStrategyServiceImpl(IServerConfigurationService serverConfigurationService, PropertyLoader propertyLoader) {
+    public ScoringStrategyServiceImpl(IServerConfigurationService serverConfigurationService,
+            PropertyLoader propertyLoader) {
 
         this.serverConfigurationService = serverConfigurationService;
         this.propertyLoader = propertyLoader;
@@ -70,7 +70,8 @@ public class ScoringStrategyServiceImpl implements ScoringStrategyService {
         } else if (vectorSize == 1) {
             HelloMessageDetail message = messageDetails.get(0);
             long epochDuration = this.serverConfigurationService.getEpochDurationSecs();
-            long remainder = (message.getTimeCollectedOnDevice() - this.serverConfigurationService.getServiceTimeStart()) % epochDuration;
+            long remainder = (message.getTimeCollectedOnDevice()
+                    - this.serverConfigurationService.getServiceTimeStart()) % epochDuration;
             long delta = remainder > epochDuration / 2 ? epochDuration - remainder : remainder;
 
             // Cap delta to 120 seconds max

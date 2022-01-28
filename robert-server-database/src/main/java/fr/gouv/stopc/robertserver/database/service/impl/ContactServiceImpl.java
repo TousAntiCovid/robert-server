@@ -1,59 +1,57 @@
 package fr.gouv.stopc.robertserver.database.service.impl;
 
-import java.util.List;
-import java.util.Optional;
-
+import fr.gouv.stopc.robertserver.database.model.Contact;
+import fr.gouv.stopc.robertserver.database.repository.ContactRepository;
+import fr.gouv.stopc.robertserver.database.service.ContactService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.database.repository.ContactRepository;
-import fr.gouv.stopc.robertserver.database.service.ContactService;
-
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
 public class ContactServiceImpl implements ContactService {
 
-	private final ContactRepository contactRepository;
+    private final ContactRepository contactRepository;
 
-	public ContactServiceImpl(ContactRepository contactRepository) {
-		this.contactRepository = contactRepository;
-	}
+    public ContactServiceImpl(ContactRepository contactRepository) {
+        this.contactRepository = contactRepository;
+    }
 
-	@Override
-	public void saveContacts(List<Contact> contacts) {
+    @Override
+    public void saveContacts(List<Contact> contacts) {
 
-		contactRepository.insert(contacts);
-	}
+        contactRepository.insert(contacts);
+    }
 
-	@Override
-	public void delete(Contact contact) {
+    @Override
+    public void delete(Contact contact) {
 
-		Optional.ofNullable(contact).ifPresent(this.contactRepository::delete);
-	}
+        Optional.ofNullable(contact).ifPresent(this.contactRepository::delete);
+    }
 
-	@Override
-	public void deleteAll(List<Contact> contacts) {
-		if (!CollectionUtils.isEmpty(contacts)) {
-			this.contactRepository.deleteAll(contacts);
-		}
-	}
+    @Override
+    public void deleteAll(List<Contact> contacts) {
+        if (!CollectionUtils.isEmpty(contacts)) {
+            this.contactRepository.deleteAll(contacts);
+        }
+    }
 
-	@Override
-	public void deleteAll() {
-		this.contactRepository.deleteAll();
-	}
+    @Override
+    public void deleteAll() {
+        this.contactRepository.deleteAll();
+    }
 
-	@Override
-	public List<Contact> findAll() {
+    @Override
+    public List<Contact> findAll() {
 
-		return this.contactRepository.findAll();
-	}
+        return this.contactRepository.findAll();
+    }
 
-	@Override
-	public Long count() {
-		return this.contactRepository.count();
-	}
+    @Override
+    public Long count() {
+        return this.contactRepository.count();
+    }
 }
