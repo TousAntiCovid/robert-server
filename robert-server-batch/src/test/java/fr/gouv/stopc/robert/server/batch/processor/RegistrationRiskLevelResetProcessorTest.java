@@ -5,7 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,38 +13,35 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
 import org.slf4j.LoggerFactory;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.mockito.quality.Strictness.LENIENT;
 
-@ExtendWith(SpringExtension.class)
-@TestPropertySource("classpath:application.properties")
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = LENIENT)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public class RegistrationRiskLevelResetProcessorTest {
 
     @Mock
     private PropertyLoader propertyLoader;
 
-    private IServerConfigurationService serverConfigurationService;
-
-    @InjectMocks
     private RegistrationRiskLevelResetProcessor processor;
 
     private ListAppender<ILoggingEvent> processorLoggerAppender;
 
     @BeforeEach
     public void beforeEach() {
-
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
-        this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, this.serverConfigurationService);
+        final var robertClock = new RobertClock(Instant.parse("2020-06-01T00:00:00Z"));
+        this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock);
     }
 
     @Test
@@ -131,7 +128,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     protected void assertUserAtRiskButNotNotifiedIsLogged() {
         assertThat(this.processorLoggerAppender.list.size()).isEqualTo(1);
         ILoggingEvent log = this.processorLoggerAppender.list.get(0);
-        assertThat(log.getMessage()).contains(RegistrationRiskLevelResetProcessor.USER_AT_RISK_NOT_NOTIFIED_MESSAGE);
+        assertThat(log.getMessage()).contains("Resetting risk level of a user never notified!");
         assertThat(log.getLevel()).isEqualTo(Level.INFO);
     }
 

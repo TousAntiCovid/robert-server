@@ -1,5 +1,15 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
+import fr.gouv.stopc.robert.server.batch.processor.RegistrationRiskLevelResetProcessor;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.utils.StepNameUtils;
+import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
@@ -11,27 +21,17 @@ import org.springframework.batch.item.data.MongoItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import fr.gouv.stopc.robert.server.batch.processor.RegistrationRiskLevelResetProcessor;
-import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.utils.StepNameUtils;
-import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @Configuration
 public class RegistrationRiskResetStepConfiguration extends StepConfigurationBase {
+
     public static final String TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY = "totalRegistrationForRiskLevelResetCount";
-    
+
     private final IRegistrationService registrationService;
-    
+
     public RegistrationRiskResetStepConfiguration(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
             IServerConfigurationService serverConfigurationService, IRegistrationService registrationService,
-            BatchRegistrationServiceImpl batchRegistrationService, ItemIdMappingService itemIdMappingService) {
+            ItemIdMappingService itemIdMappingService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
     }
@@ -58,23 +58,28 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
     }
 
     @Bean
-    public ItemProcessor<Registration, Registration> registrationRiskResetProcessor() {
-        return new RegistrationRiskLevelResetProcessor( this.propertyLoader, this.serverConfigurationService);
+    public ItemProcessor<Registration, Registration> registrationRiskResetProcessor(final RobertClock robertClock) {
+        return new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock);
     }
-    
+
     @Bean
     public ItemWriter<Registration> registrationItemWriterForRiskReset() {
         return new RegistrationItemWriter(this.registrationService, TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY);
     }
-    
+
     public StepExecutionListener registrationRiskResetStepListener() {
         return new StepExecutionListener() {
+
             @Override
             public void beforeStep(StepExecution stepExecution) {
-                log.info("START : Reset risk level of registrations when retention time > {}.", propertyLoader.getRiskLevelRetentionPeriodInDays());
+                log.info(
+                        "START : Reset risk level of registrations when retention time > {}.",
+                        propertyLoader.getRiskLevelRetentionPeriodInDays()
+                );
 
                 long totalItemCount = registrationService.countNbUsersAtRisk().longValue();
-                stepExecution.getJobExecution().getExecutionContext().putLong(TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY, totalItemCount);
+                stepExecution.getJobExecution().getExecutionContext()
+                        .putLong(TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY, totalItemCount);
             }
 
             @Override
