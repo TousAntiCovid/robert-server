@@ -84,7 +84,6 @@ public class RobertClientSteps {
                         user -> mobilePhonesEmulator.getMobileApplication(user)
                                 .changeExposedEpochsDatesStartingAt(startDate)
                 );
-        robertBatchSteps.launchBatch();
     }
 
     @When("{word} report himself/herself/myself sick")
