@@ -3,8 +3,7 @@ package fr.gouv.stopc.robertserver.database.service.impl;
 import java.util.List;
 import java.util.Optional;
 
-import javax.inject.Inject;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.stopc.robertserver.database.model.Registration;
@@ -13,14 +12,10 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import org.springframework.util.CollectionUtils;
 
 @Service
+@RequiredArgsConstructor
 public class RegistrationService implements IRegistrationService {
 
-    private RegistrationRepository registrationRepository;
-
-    @Inject
-    public RegistrationService(RegistrationRepository registrationRepository) {
-        this.registrationRepository = registrationRepository;
-    }
+    private final RegistrationRepository registrationRepository;
 
     @Override
     public Optional<Registration> createRegistration(byte[] id) {

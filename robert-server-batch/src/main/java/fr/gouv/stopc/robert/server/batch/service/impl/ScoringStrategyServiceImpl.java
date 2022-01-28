@@ -2,8 +2,6 @@ package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +29,6 @@ public class ScoringStrategyServiceImpl implements ScoringStrategyService {
 
     private final PropertyLoader propertyLoader;
 
-    @Inject
     public ScoringStrategyServiceImpl(IServerConfigurationService serverConfigurationService, PropertyLoader propertyLoader) {
 
         this.serverConfigurationService = serverConfigurationService;

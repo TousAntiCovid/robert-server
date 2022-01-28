@@ -2,8 +2,7 @@ package fr.gouv.stopc.robertserver.ws.service.impl;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.stopc.robertserver.database.model.Contact;
@@ -16,18 +15,12 @@ import fr.gouv.stopc.robertserver.ws.vo.mapper.ContactMapper;
 
 
 @Service
+@RequiredArgsConstructor
 public class ContactDtoServiceImpl implements ContactDtoService {
 
-	private ContactService contactService;
+	private final ContactService contactService;
 
-	private ContactMapper contactMapper;
-
-	@Inject
-	public ContactDtoServiceImpl(ContactService contactService, ContactMapper contactMapper) {
-
-		this.contactService = contactService;
-		this.contactMapper = contactMapper;
-	}
+	private final ContactMapper contactMapper;
 
 	@Override
 	public void saveContacts(List<ContactVo> contactVoList) throws RobertServerException {

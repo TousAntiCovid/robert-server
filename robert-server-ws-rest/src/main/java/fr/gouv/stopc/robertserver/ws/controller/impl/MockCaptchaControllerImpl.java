@@ -1,21 +1,12 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import java.awt.Point;
-import java.awt.Transparency;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.inject.Inject;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -37,13 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(name = "captcha.gateway.enabled", havingValue = "false")
 public class MockCaptchaControllerImpl implements ICaptchaController {
 
-	@Inject
-	public MockCaptchaControllerImpl() {
-	}
-
 	@Override
-	public ResponseEntity<CaptchaCreationDto> createCaptcha(@Valid CaptchaCreationVo captchaCreationVo)
-			throws RobertServerException {
+	public ResponseEntity<CaptchaCreationDto> createCaptcha(@Valid CaptchaCreationVo captchaCreationVo) {
 
 		CaptchaCreationDto dto = new CaptchaCreationDto();
 		dto.setCaptchaId("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
@@ -53,16 +39,14 @@ public class MockCaptchaControllerImpl implements ICaptchaController {
 	}
 
 	@Override
-	public ResponseEntity<byte[]> getCaptchaImage(String captchaId) throws RobertServerException {
+	public ResponseEntity<byte[]> getCaptchaImage(String captchaId) {
 		return this.getCaptchaCommon(captchaId, "image");
 	}
 
 	@Override
-	public ResponseEntity<byte[]> getCaptchaAudio(String captchaId) throws RobertServerException {
+	public ResponseEntity<byte[]> getCaptchaAudio(String captchaId) {
 		return this.getCaptchaCommon(captchaId, "audio");
 	}
-
-	protected static final int SAMPLE_RATE = 16 * 1024;
 
 	private ResponseEntity<byte[]> getCaptchaCommon(String captchaId, String mediaType) {
 		log.info("Getting captcha {} as {}", captchaId, mediaType);

@@ -7,8 +7,6 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.util.Optional;
 
-import javax.inject.Inject;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -65,7 +63,7 @@ public class RegisterControllerWsRestTest {
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
-    @Inject
+    @Autowired
     private TestRestTemplate restTemplate;
 
     HttpEntity<RegisterVo> requestEntity;

@@ -9,17 +9,17 @@ import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.vo.UnregisterRequestVo;
 import io.micrometer.core.instrument.util.StringUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import javax.inject.Inject;
 
 import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UnregisterControllerImpl implements IUnregisterController {
 
     private final IRegistrationService registrationService;
@@ -27,17 +27,6 @@ public class UnregisterControllerImpl implements IUnregisterController {
     private final AuthRequestValidationService authRequestValidationService;
 
     private final IRestApiService restApiService;
-
-    @Inject
-    public UnregisterControllerImpl(final IRegistrationService registrationService,
-            final AuthRequestValidationService authRequestValidationService,
-            final IRestApiService restApiService) {
-
-        this.registrationService = registrationService;
-        this.authRequestValidationService = authRequestValidationService;
-        this.restApiService = restApiService;
-        ;
-    }
 
     @Override
     public ResponseEntity<UnregisterResponseDto> unregister(UnregisterRequestVo unregisterRequestVo) {

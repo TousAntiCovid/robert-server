@@ -46,7 +46,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.KeyGenerator;
-import javax.inject.Inject;
 
 import java.net.URI;
 import java.security.Key;
@@ -87,7 +86,7 @@ public class StatusControllerWsRestTest {
     @Value("${robert.server.status-request-minimum-epoch-gap}")
     private Integer statusRequestMinimumEpochGap;
 
-    @Inject
+    @Autowired
     private TestRestTemplate restTemplate;
 
     HttpEntity<StatusVo> requestEntity;

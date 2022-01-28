@@ -13,7 +13,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import javax.crypto.KeyAgreement;
-import javax.inject.Inject;
 
 import org.springframework.stereotype.Service;
 
@@ -33,7 +32,6 @@ public class ECDHKeyServiceImpl implements IECDHKeyService {
 
     private ICryptographicStorageService cryptographicStorageService;
 
-    @Inject
     public ECDHKeyServiceImpl(ICryptographicStorageService cryptographicStorageService) {
         this.cryptographicStorageService = cryptographicStorageService;
     }

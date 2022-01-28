@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 
 import org.springframework.stereotype.Service;
 
@@ -25,7 +24,6 @@ public class CryptoServerConfigurationServiceImpl implements ICryptoServerConfig
 
     private final PropertyLoader propertyLoader;
 
-    @Inject
     public CryptoServerConfigurationServiceImpl(final PropertyLoader propertyLoader) {
         this.propertyLoader = propertyLoader;
     }

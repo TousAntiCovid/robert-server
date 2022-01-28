@@ -17,6 +17,7 @@ import fr.gouv.stopc.robertserver.ws.service.DeclarationService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import javax.inject.Inject;
 import javax.validation.Valid;
 
 import java.util.Collections;
@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class StatusControllerImpl implements IStatusController {
 
     private final IServerConfigurationService serverConfigurationService;
@@ -52,26 +53,6 @@ public class StatusControllerImpl implements IStatusController {
     private final IRestApiService restApiService;
 
     private final DeclarationService declarationService;
-
-    @Inject
-    public StatusControllerImpl(
-            final IServerConfigurationService serverConfigurationService,
-            final IRegistrationService registrationService,
-            final IApplicationConfigService applicationConfigService,
-            final AuthRequestValidationService authRequestValidationService,
-            final PropertyLoader propertyLoader,
-            final IRestApiService restApiService,
-            final WsServerConfiguration wsServerConfiguration,
-            final DeclarationService declarationService) {
-        this.serverConfigurationService = serverConfigurationService;
-        this.registrationService = registrationService;
-        this.applicationConfigService = applicationConfigService;
-        this.authRequestValidationService = authRequestValidationService;
-        this.propertyLoader = propertyLoader;
-        this.restApiService = restApiService;
-        this.wsServerConfiguration = wsServerConfiguration;
-        this.declarationService = declarationService;
-    }
 
     @Override
     public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo)

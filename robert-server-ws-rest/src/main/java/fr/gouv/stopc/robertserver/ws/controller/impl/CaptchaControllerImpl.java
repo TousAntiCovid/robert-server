@@ -3,9 +3,9 @@ package fr.gouv.stopc.robertserver.ws.controller.impl;
 import java.net.URI;
 import java.util.HashMap;
 
-import javax.inject.Inject;
 import javax.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -24,18 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 @ConditionalOnProperty("captcha.gateway.enabled")
 public class CaptchaControllerImpl implements ICaptchaController {
 
     private final RestTemplate restTemplate;
     private final PropertyLoader propertyLoader;
-
-    @Inject
-    public CaptchaControllerImpl(RestTemplate restTemplate,
-                                 PropertyLoader propertyLoader) {
-        this.restTemplate = restTemplate;
-        this.propertyLoader = propertyLoader;
-    }
 
     @Override
     public ResponseEntity<CaptchaCreationDto> createCaptcha(

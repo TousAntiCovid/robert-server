@@ -3,9 +3,8 @@ package fr.gouv.stopc.robert.crypto.grpc.server;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
 import fr.gouv.stopc.robert.crypto.grpc.server.exception.RobertServerCryptoExceptionHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase;
@@ -23,7 +22,7 @@ public class CryptoServiceGrpcServer {
 
 	private CryptoGrpcServiceImplImplBase cryptoService;
 
-	@Inject
+	@Autowired
 	public CryptoServiceGrpcServer(final CryptoGrpcServiceImplImplBase cryptoService) {
 		this.cryptoService = cryptoService;
 	}

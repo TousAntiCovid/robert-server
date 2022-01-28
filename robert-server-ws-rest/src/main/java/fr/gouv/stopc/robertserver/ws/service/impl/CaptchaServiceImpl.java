@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
@@ -35,11 +34,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CaptchaServiceImpl implements CaptchaService {
 
-	private RestTemplate restTemplate;
+	private final RestTemplate restTemplate;
 
-	private PropertyLoader propertyLoader;
+	private final PropertyLoader propertyLoader;
 
-	@Inject
 	public CaptchaServiceImpl(RestTemplateBuilder restTemplateBuilder,
 							  PropertyLoader propertyLoader) {
 		this.restTemplate = restTemplateBuilder
