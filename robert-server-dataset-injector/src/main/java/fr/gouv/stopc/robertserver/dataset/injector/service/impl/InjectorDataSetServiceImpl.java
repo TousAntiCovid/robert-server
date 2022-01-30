@@ -4,7 +4,6 @@ import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcC
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.repository.ClientIdentifierRepository;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.utils.KeystoreTypeEnum;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -86,8 +85,10 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
         long time = getCurrentTimeNTPSeconds();
         int epochId = TimeUtils.getNumberOfEpochsBetween(this.serverConfigurationService.getServiceTimeStart(), time);
         cryptographicStorageService.init(
-                propertyLoader.getKeyStorePassword(), propertyLoader.getKeyStoreConfigFile(), KeystoreTypeEnum.PKCS11,
-                null
+                propertyLoader.getKeyStorePassword(),
+                propertyLoader.getKeyStoreConfigFile(),
+                propertyLoader.getKeystoreType(),
+                propertyLoader.getKeystoreFile()
         );
         serverKey = cryptographicStorageService
                 .getServerKey(epochId, serverConfigurationService.getServiceTimeStart(), false);
