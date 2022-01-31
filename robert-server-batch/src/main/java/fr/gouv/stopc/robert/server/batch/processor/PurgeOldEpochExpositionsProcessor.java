@@ -42,6 +42,11 @@ public class PurgeOldEpochExpositionsProcessor implements ItemProcessor<Registra
 
         registration.setExposedEpochs(epochsToKeep);
 
+        // If some epochs were removed, the risk should be recomputed for this registration
+        if (epochsToKeep.size() < exposedEpochs.size()) {
+            registration.setOutdatedRisk(true);
+        }
+
         return registration;
     }
 }

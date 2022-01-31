@@ -254,6 +254,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 .expositionScores(Arrays.asList(0.0))
                 .build()));
 
+
+
         int nbOfExposedEpochs = registrationWithEE.getExposedEpochs().size();
 
         this.registrationService.saveRegistration(registrationWithEE);
@@ -385,6 +387,9 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 .expositionScores(Arrays.asList(1.0))
                 .build()));
 
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
         this.registrationService.saveRegistration(registrationWithEE);
 
         // When
@@ -425,6 +430,9 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 .expositionScores(Arrays.asList(2.0))
                 .build()));
 
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
         this.registrationService.saveRegistration(registrationWithEE);
 
         // When
@@ -464,6 +472,9 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 .epochId(currentEpochId)
                 .expositionScores(Arrays.asList(0.0))
                 .build()));
+
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
 
         this.registrationService.saveRegistration(registrationWithEE);
 
