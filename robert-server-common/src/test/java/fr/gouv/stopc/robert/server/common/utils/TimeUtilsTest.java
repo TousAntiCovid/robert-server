@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.common.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
-import org.assertj.core.data.TemporalUnitLessThanOffset;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -10,12 +9,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoField;
-import java.time.temporal.ChronoUnit;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -110,50 +103,6 @@ public class TimeUtilsTest {
         Instant roundedInstant = this.instantFromTimestamp(TimeUtils.dayTruncatedTimestamp(ntpInstant));
 
         assertThat(roundedInstant).isEqualTo(Instant.parse("2021-01-17T00:00:00.00Z"));
-    }
-
-    @Test
-    public void testRandomizedDateIsBetweenJMinus1AndJPlus1() {
-        Instant instant = Instant.parse("2021-02-11T13:00:00.00Z");
-        long ntpInstant = this.ntpTimestampFromInstant(instant);
-
-        Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
-                .mapToObj(i -> this.instantFromTimestamp(TimeUtils.randomizedDate(ntpInstant)))
-                .collect(Collectors.toSet());
-
-        assertThat(randomizedInstants).containsExactlyInAnyOrder(
-                instant.minus(1, ChronoUnit.DAYS), instant, instant.plus(1, ChronoUnit.DAYS)
-        );
-    }
-
-    @Test
-    public void shouldGetRandomizedDateNotInFutureReturnTheCurrentNtpTimestampInCaseProvidedNtpInstantIsInFuture() {
-
-        Instant instantInFuture = Instant.now().plus(5, ChronoUnit.DAYS);
-        long ntpInstant = this.ntpTimestampFromInstant(instantInFuture);
-
-        Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
-                .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant)))
-                .collect(Collectors.toSet());
-
-        assertThat(randomizedInstants.size()).isEqualTo(1);
-        Iterator<Instant> iterator = randomizedInstants.iterator();
-        assertThat(iterator.next()).isCloseTo(Instant.now(), new TemporalUnitLessThanOffset(10, ChronoUnit.SECONDS));
-    }
-
-    @Test
-    public void shouldGetRandomizedDateNotInFutureReturnNtpInstantBetweenJMinus1AndJPlus1FromProvidedNtpInstantIsInPast() {
-
-        Instant instantInPast = Instant.now().minus(10, ChronoUnit.DAYS).with(ChronoField.MILLI_OF_SECOND, 0);
-        long ntpInstant = this.ntpTimestampFromInstant(instantInPast);
-
-        Set<Instant> randomizedInstants = IntStream.rangeClosed(1, 5000)
-                .mapToObj(i -> this.instantFromTimestamp(TimeUtils.getRandomizedDateNotInFuture(ntpInstant)))
-                .collect(Collectors.toSet());
-
-        assertThat(randomizedInstants).containsExactlyInAnyOrder(
-                instantInPast.minus(1, ChronoUnit.DAYS), instantInPast, instantInPast.plus(1, ChronoUnit.DAYS)
-        );
     }
 
     private long ntpTimestampFromInstant(Instant instant) {

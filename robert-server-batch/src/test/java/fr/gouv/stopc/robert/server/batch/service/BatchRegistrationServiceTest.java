@@ -183,10 +183,7 @@ public class BatchRegistrationServiceTest {
         // GIVEN
         int currentEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
         int lastContactDateFromExposedEpoch = currentEpoch;
-        long realLastContactDateFromExposedEpoch = TimeUtils.getNtpSeconds(lastContactDateFromExposedEpoch, timeStart);
         long lastContactDateFromRegistration = TimeUtils.getNtpSeconds(currentEpoch - 2, timeStart);
-        long randomizedLastContactDate = TimeUtils.getNtpSeconds(currentEpoch - EPOCHS_PER_DAY, timeStart);
-        long truncateTimestamp = TimeUtils.dayTruncatedTimestamp(randomizedLastContactDate);
         int latestRiskEpoch = currentEpoch - 5;
 
         List<EpochExposition> exposedEpochs = new ArrayList<>();
@@ -206,18 +203,7 @@ public class BatchRegistrationServiceTest {
 
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
-        try (MockedStatic<TimeUtils> mockedTimeUtils = Mockito.mockStatic(TimeUtils.class)) {
-            // mock the static methods
-            mockedTimeUtils.when(() -> TimeUtils.getNtpSeconds(lastContactDateFromExposedEpoch, timeStart))
-                    .thenReturn(realLastContactDateFromExposedEpoch);
-            mockedTimeUtils.when(() -> TimeUtils.getRandomizedDateNotInFuture(realLastContactDateFromExposedEpoch))
-                    .thenReturn(randomizedLastContactDate);
-            mockedTimeUtils.when(() -> TimeUtils.dayTruncatedTimestamp(randomizedLastContactDate))
-                    .thenReturn(truncateTimestamp);
-
-            // WHEN
-            batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
-        } // the static mock is not visible outside the try resource block
+        batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
 
         // THEN
         assertThat(registration.getLastContactTimestamp()).isEqualTo(lastContactDateFromRegistration);
