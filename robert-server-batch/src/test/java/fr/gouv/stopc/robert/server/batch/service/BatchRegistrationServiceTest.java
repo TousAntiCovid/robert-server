@@ -121,10 +121,10 @@ public class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         //WHEN
-        boolean isAtRisk = batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
+        batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
 
         //THEN
-        assertThat(isAtRisk).isTrue();
+        assertThat(registration.isAtRisk()).isTrue();
         assertThat(registration.getLatestRiskEpoch()).isEqualTo(currentEpoch);
 
     }
@@ -153,10 +153,10 @@ public class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(0.2);
 
         //WHEN
-        boolean isAtRisk = batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
+        batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
 
         //THEN
-        assertThat(isAtRisk).isFalse();
+        assertThat(registration.isAtRisk()).isFalse();
         assertThat(registration.getLatestRiskEpoch()).isEqualTo(latestRiskEpoch);
 
         verify(scoringStrategyService).aggregate(acAggregateScores.capture());

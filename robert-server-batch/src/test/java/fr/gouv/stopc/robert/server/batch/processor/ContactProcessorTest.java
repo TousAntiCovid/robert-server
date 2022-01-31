@@ -300,6 +300,9 @@ public class ContactProcessorTest {
                 .expositionScores(Arrays.asList(4.3))
                 .build()));
 
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
         this.registrationService.saveRegistration(registrationWithEE);
 
         byte[] ebid = this.cryptoService.generateEBID(new CryptoSkinny64(serverKey), currentEpochId,
@@ -377,6 +380,9 @@ public class ContactProcessorTest {
                 .epochId(currentEpochId)
                 .expositionScores(Arrays.asList(2.3))
                 .build()));
+
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
 
         this.registrationService.saveRegistration(registrationWithEE);
 
@@ -826,6 +832,9 @@ public class ContactProcessorTest {
                 .expositionScores(Arrays.asList(0.0))
                 .build()));
 
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
         int nbOfExposedEpochs = registrationWithEE.getExposedEpochs().size();
 
         this.registrationService.saveRegistration(registrationWithEE);
@@ -1033,6 +1042,9 @@ public class ContactProcessorTest {
                 .epochId(tooOldEpochId)
                 .expositionScores(Arrays.asList(0.0))
                 .build()));
+
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
 
         this.registrationService.saveRegistration(registrationWithEE);
 
