@@ -19,8 +19,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
+import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.quality.Strictness.LENIENT;
@@ -70,7 +70,10 @@ public class RegistrationRiskLevelResetProcessorTest {
 
         // Given
         final long nowMinus6DaysNtpTimestamp = TimeUtils.convertUnixMillistoNtpSeconds(
-                Instant.now().minus(6, ChronoUnit.DAYS).toEpochMilli()
+                Instant.now()
+                        .truncatedTo(DAYS)
+                        .minus(7, DAYS)
+                        .toEpochMilli()
         );
 
         Registration registration = Registration.builder()
@@ -92,7 +95,10 @@ public class RegistrationRiskLevelResetProcessorTest {
 
         // Given
         final long nowMinus8DaysNtpTimestamp = TimeUtils.convertUnixMillistoNtpSeconds(
-                Instant.now().minus(8, ChronoUnit.DAYS).toEpochMilli()
+                Instant.now()
+                        .truncatedTo(DAYS)
+                        .minus(8, DAYS)
+                        .toEpochMilli()
         );
 
         Registration registration = Registration.builder()

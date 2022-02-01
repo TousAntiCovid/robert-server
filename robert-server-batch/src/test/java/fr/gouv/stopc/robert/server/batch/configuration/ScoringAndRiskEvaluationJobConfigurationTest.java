@@ -9,6 +9,7 @@ import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJ
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
@@ -48,10 +49,9 @@ import javax.inject.Inject;
 
 import java.security.Key;
 import java.security.SecureRandom;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -508,55 +508,42 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     public void testResetAtRisk() throws Exception {
 
         // Given
-        final long tpstStart = this.serverConfigurationService.getServiceTimeStart();
-        final int currentEpochId = TimeUtils.getCurrentEpochFrom(tpstStart);
-        final long nowMinus8DaysEpoch = TimeUtils.convertUnixMillistoNtpSeconds(
-                Instant.now().minus(8, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
-                        .toInstant().toEpochMilli()
-        );
-        final long nowMinus6DaysEpoch = TimeUtils.convertUnixMillistoNtpSeconds(
-                Instant.now().minus(6, ChronoUnit.DAYS).atZone(TimeZone.getDefault().toZoneId())
-                        .toInstant().toEpochMilli()
-        );
+        final var robertClock = new RobertClock(serverConfigurationService.getServiceTimeStart());
+        final var nowMinus7Days = robertClock.now().minus(7, DAYS);
+        final var nowMinus8Days = robertClock.now().minus(8, DAYS);
 
-        Registration registrationHavingRiskLevelThatMustBeReset = this.registrationService
-                .createRegistration(ProcessorTestUtils.generateIdA()).get();
+        final var registrationAtRiskThatMustBeReset = this.registrationService
+                .createRegistration(ProcessorTestUtils.generateIdA())
+                .orElseThrow();
+        registrationAtRiskThatMustBeReset.setAtRisk(true);
+        registrationAtRiskThatMustBeReset.setLastContactTimestamp(nowMinus8Days.truncatedTo(DAYS).asNtpTimestamp());
+        registrationService.saveRegistration(registrationAtRiskThatMustBeReset);
 
-        registrationHavingRiskLevelThatMustBeReset.setAtRisk(true);
-        registrationHavingRiskLevelThatMustBeReset.setLastContactTimestamp(nowMinus8DaysEpoch);
-        registrationHavingRiskLevelThatMustBeReset.setLatestRiskEpoch(
-                currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) - 1
-        );
-
-        this.registrationService.saveRegistration(registrationHavingRiskLevelThatMustBeReset);
-
-        Registration registrationHavingRiskLevelThatMustNotBeReset = this.registrationService
-                .createRegistration(ProcessorTestUtils.generateIdA()).get();
-
-        registrationHavingRiskLevelThatMustNotBeReset.setAtRisk(true);
-        registrationHavingRiskLevelThatMustNotBeReset.setLastContactTimestamp(nowMinus6DaysEpoch);
-        registrationHavingRiskLevelThatMustNotBeReset.setLatestRiskEpoch(
-                currentEpochId - (propertyLoader.getRiskLevelRetentionPeriodInDays() * TimeUtils.EPOCHS_PER_DAY) + 1
-        );
-
-        this.registrationService.saveRegistration(registrationHavingRiskLevelThatMustNotBeReset);
+        final var registrationAtRiskThatMustNotBeReset = this.registrationService
+                .createRegistration(ProcessorTestUtils.generateIdA())
+                .orElseThrow();
+        registrationAtRiskThatMustNotBeReset.setAtRisk(true);
+        registrationAtRiskThatMustNotBeReset.setLastContactTimestamp(nowMinus7Days.truncatedTo(DAYS).asNtpTimestamp());
+        registrationService.saveRegistration(registrationAtRiskThatMustNotBeReset);
 
         // When
         this.jobLauncherTestUtils.launchJob();
 
         // Then
-        Optional<Registration> expectedRegistrationHavingRiskLevelThatMustBeReset = this.registrationService
-                .findById(registrationHavingRiskLevelThatMustBeReset.getPermanentIdentifier());
+        final var actualRegistrationThatMustBeReset = this.registrationService
+                .findById(registrationAtRiskThatMustBeReset.getPermanentIdentifier())
+                .orElseThrow();
+        assertThat(actualRegistrationThatMustBeReset.isAtRisk())
+                .as("risk level of registration that must be reset")
+                .isFalse();
 
-        assertTrue(expectedRegistrationHavingRiskLevelThatMustBeReset.isPresent());
-        assertFalse(expectedRegistrationHavingRiskLevelThatMustBeReset.get().isAtRisk());
+        final var actualRegistrationThatMustNotBeReset = this.registrationService
+                .findById(registrationAtRiskThatMustNotBeReset.getPermanentIdentifier())
+                .orElseThrow();
 
-        Optional<Registration> expectedRegistrationHavingRiskLevelThatMustNotBeReset = this.registrationService
-                .findById(registrationHavingRiskLevelThatMustNotBeReset.getPermanentIdentifier());
-
-        assertTrue(expectedRegistrationHavingRiskLevelThatMustNotBeReset.isPresent());
-        assertTrue(expectedRegistrationHavingRiskLevelThatMustNotBeReset.get().isAtRisk());
-
+        assertThat(actualRegistrationThatMustNotBeReset.isAtRisk())
+                .as("risk level of registration that must not be reset")
+                .isTrue();
     }
 
     @Test

@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+
 @Slf4j
 @RequiredArgsConstructor
 public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Registration, Registration> {
@@ -17,7 +19,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
 
     @Override
     public Registration process(Registration registration) throws Exception {
-        if (registration.isAtRisk() && lastContactDateIsAboveRiskRetentionThreshold(registration)) {
+        if (registration.isAtRisk() && riskRetentionThresholdHasExpired(registration)) {
 
             if (!registration.isNotified()) {
                 log.info("Resetting risk level of a user never notified!");
@@ -31,9 +33,10 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
         return null;
     }
 
-    private boolean lastContactDateIsAboveRiskRetentionThreshold(final Registration registration) {
+    private boolean riskRetentionThresholdHasExpired(final Registration registration) {
+        final var today = robertClock.now().truncatedTo(DAYS);
         final var lastContactTime = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
-        return lastContactTime.until(robertClock.now()).toDays() >= propertyLoader.getRiskLevelRetentionPeriodInDays();
+        return lastContactTime.until(today).toDays() > propertyLoader.getRiskLevelRetentionPeriodInDays();
     }
 
 }
