@@ -8,26 +8,32 @@ Feature: Covid-19 risk evolution
     Given Sarah installs the application TAC
     Given Yoko installs the application TAC
 
-  Scenario: 10 days after contact, user is no longer at risk
-    Given 10 days ago, Sarah and John met and Sarah was at risk following John report
+  Scenario Outline: <last contact> days after contact, user is no longer at risk
+    Given <last contact> days ago, Sarah and John met and Sarah was at risk following John report
     When robert batch has been triggered
     Then Sarah is not notified at risk
+    Examples:
+      | last contact |
+      | 8            |
+      | 10           |
+      | 15           |
 
-  Scenario: 6 days after contact, user is still at risk
-    Given 6 days ago, Sarah and John met and Sarah was at risk following John report
+  Scenario Outline: <last contact> days after contact, user is no longer at risk
+    Given <last contact> days ago, Sarah and John met and Sarah was at risk following John report
     When robert batch has been triggered
     Then Sarah is notified at risk
-
-  Scenario: 7 days after contact, user is no longer at risk
-    Given 7 days ago, Sarah and John met and Sarah was at risk following John report
-    When robert batch has been triggered
-    Then Sarah is not notified at risk
+    Examples:
+      | last contact |
+      | 1            |
+      | 2            |
+      | 6            |
+      | 7            |
 
   Scenario: If a user meet an other ill person, declaration token (CNAM) will be updated (last contact date changed)
     Given 7 days ago, Sarah and John met and Sarah was at risk following John report
     And Sarah is notified at risk
-    And Sarah last contact is now near 7 days ago
+    And Sarah last contact is near 7 days ago
     When just now, the users Yoko and Sarah will be near during 60 minutes
     And Yoko report herself sick
     And robert batch has been triggered
-    Then Sarah last contact is now near now
+    Then Sarah last contact is near now
