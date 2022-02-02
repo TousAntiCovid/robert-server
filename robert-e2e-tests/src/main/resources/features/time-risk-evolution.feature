@@ -32,8 +32,8 @@ Feature: Covid-19 risk evolution
   Scenario: If a user meet an other ill person, declaration token (CNAM) will be updated (last contact date changed)
     Given 7 days ago, Sarah and John met and Sarah was at risk following John report
     And Sarah is notified at risk
-    And Sarah last contact is now near 7 days ago
+    And Sarah last contact is near 7 days ago
     When just now, the users Yoko and Sarah will be near during 60 minutes
     And Yoko report herself sick
     And robert batch has been triggered
-    Then Sarah last contact is now near now
+    Then Sarah last contact is near now

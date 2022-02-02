@@ -124,7 +124,7 @@ public class RobertClientSteps {
         mobilePhonesEmulator.getMobileApplication(userNameAtRisk).fakeExposedEpochs(daysBackInTime);
     }
 
-    @Then("{word} last contact is now near {naturalTime}")
+    @Then("{word} last contact is near {naturalTime}")
     public void verifyLastContactValid(final String userName,
             final Instant startDate) {
         var mobile = mobilePhonesEmulator.getMobileApplication(userName);
