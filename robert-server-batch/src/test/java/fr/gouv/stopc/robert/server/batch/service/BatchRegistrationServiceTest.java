@@ -31,7 +31,7 @@ public class BatchRegistrationServiceTest {
     BatchRegistrationService batchRegistrationService;
 
     @Captor
-    private ArgumentCaptor<ArrayList<Double>> acAggregateScores;
+    private ArgumentCaptor<List<Double>> acAggregateScores;
 
     @Mock
     ScoringStrategyService scoringStrategyService;
@@ -48,166 +48,183 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void shouldExposedEpochsWithoutEpochsOlderThanContagiousPeriodFilterTooOldExposedEpochs() {
+    public void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_remove_too_old_exposed_epochs() {
 
-        int currentEpoch = 26543;
+        final var currentEpoch = 26543;
 
         // GIVEN
-        int epochId = currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
-        Double[] expositionsForFirstEpoch = new Double[] { 1.0 };
-        Double[] expositionsForSecondEpoch = new Double[] { 12.5 };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(
+        final var epochId = currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
+        final var expositions = List.of(
                 EpochExposition.builder()
                         .epochId(epochId)
-                        .expositionScores(Arrays.asList(expositionsForFirstEpoch))
-                        .build()
-        );
-        expositions.add(
+                        .expositionScores(List.of(1.0))
+                        .build(),
                 EpochExposition.builder()
                         .epochId(epochId - (30 * 96))
-                        .expositionScores(Arrays.asList(expositionsForSecondEpoch))
+                        .expositionScores(List.of(12.5))
                         .build()
         );
 
         // WHEN
-        List<EpochExposition> filteredEpochExpositions = batchRegistrationService
+        final var filteredEpochExpositions = batchRegistrationService
                 .getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(expositions, currentEpoch, 14, 900);
 
         // THEN
-        assertThat(filteredEpochExpositions.size()).isEqualTo(1);
-        assertThat(filteredEpochExpositions.get(0).getEpochId()).isEqualTo(epochId);
+        assertThat(filteredEpochExpositions)
+                .containsExactly(
+                        EpochExposition.builder()
+                                .epochId(epochId)
+                                .expositionScores(List.of(1.0))
+                                .build()
+                );
     }
 
     @Test
-    public void shouldExposedEpochsWithoutEpochsOlderThanContagiousPeriodReturnsEmptyListInCaseEmptyListIsProvided() {
+    public void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_return_empty_list_when_it_receives_an_empty_list() {
 
         // WHEN
-        List<EpochExposition> filteredEpochExpositions = batchRegistrationService
+        final var filteredEpochExpositions = batchRegistrationService
                 .getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(new ArrayList<>(), 26543, 14, 900);
 
         // THEN
-        assertThat(filteredEpochExpositions.size()).isEqualTo(0);
-
+        assertThat(filteredEpochExpositions).isEmpty();
     }
 
     @Test
-    public void shouldExposedEpochsWithoutEpochsOlderThanContagiousPeriodReturnsEmptyListInCaseAllProvidedExposedEpochsAreTooOld() {
+    public void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_return_empty_list_when_it_receives_too_old_epochs() {
 
-        int currentEpoch = 26543;
+        final var currentEpoch = 26543;
 
         // GIVEN
-        int epochId = currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
-        Double[] expositionsForFirstEpoch = new Double[] { 1.0 };
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-        expositions.add(
+        final var epochId = currentEpoch - (14 * 96) + new SecureRandom().nextInt(100) + 1;
+        final var expositions = List.of(
                 EpochExposition.builder()
                         .epochId(epochId - (30 * 96))
-                        .expositionScores(Arrays.asList(expositionsForFirstEpoch))
+                        .expositionScores(List.of(1.0))
                         .build()
         );
 
         // WHEN
-        List<EpochExposition> filteredEpochExpositions = batchRegistrationService
+        final var filteredEpochExpositions = batchRegistrationService
                 .getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(expositions, currentEpoch, 14, 900);
 
         // THEN
-        assertThat(filteredEpochExpositions.size()).isEqualTo(0);
-
+        assertThat(filteredEpochExpositions).isEmpty();
     }
 
     @Test
-    public void shouldUpdateRegistrationIfRiskSetRegistrationAtRisk() {
+    public void updateRegistrationIfRisk_should_set_registration_at_risk() {
 
         // GIVEN
-        int currentEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
-
-        List<EpochExposition> exposedEpochs = new ArrayList<>();
-        exposedEpochs
-                .add(EpochExposition.builder().epochId(currentEpoch).expositionScores(Arrays.asList(0.5, 0.4)).build());
-
-        Registration registration = Registration.builder()
+        final var currentEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
+        final var registration = Registration.builder()
                 .atRisk(false)
-                .exposedEpochs(exposedEpochs)
+                .exposedEpochs(
+                        List.of(
+                                EpochExposition.builder()
+                                        .epochId(currentEpoch)
+                                        .expositionScores(List.of(0.5, 0.4))
+                                        .build()
+                        )
+                )
                 .build();
 
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         // WHEN
-        boolean isAtRisk = batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
+        final var isAtRisk = batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
 
         // THEN
-        assertThat(isAtRisk).isTrue();
-        assertThat(registration.getLatestRiskEpoch()).isEqualTo(currentEpoch);
-
+        assertThat(isAtRisk)
+                .as("risk status return value")
+                .isTrue();
+        assertThat(registration.getLatestRiskEpoch())
+                .as("registration latest risk epoch")
+                .isEqualTo(currentEpoch);
     }
 
     @Test
-    public void shouldUpdateRegistrationIfRiskFilteredOutScoresBeforeLastRiskEpoch() {
+    public void updateRegistrationIfRisk_should_filter_out_scores_before_last_risk_epoch() {
 
         // GIVEN
-        int currentEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
-        int latestRiskEpoch = currentEpoch - 5;
-
-        List<EpochExposition> exposedEpochs = new ArrayList<>();
-        exposedEpochs
-                .add(EpochExposition.builder().epochId(currentEpoch).expositionScores(Arrays.asList(0.5, 0.4)).build());
-        exposedEpochs
-                .add(EpochExposition.builder().epochId(currentEpoch - 60).expositionScores(Arrays.asList(0.1)).build());
-        exposedEpochs
-                .add(EpochExposition.builder().epochId(currentEpoch - 1).expositionScores(Arrays.asList(0.05)).build());
-
-        Registration registration = Registration.builder()
+        final var currentEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
+        final var latestRiskEpoch = currentEpoch - 5;
+        final var registration = Registration.builder()
                 .atRisk(false)
                 .latestRiskEpoch(latestRiskEpoch)
-                .exposedEpochs(exposedEpochs)
+                .exposedEpochs(
+                        List.of(
+                                EpochExposition.builder()
+                                        .epochId(currentEpoch)
+                                        .expositionScores(Arrays.asList(0.5, 0.4))
+                                        .build(),
+                                EpochExposition.builder()
+                                        .epochId(currentEpoch - 60)
+                                        .expositionScores(Arrays.asList(0.1))
+                                        .build(),
+                                EpochExposition.builder()
+                                        .epochId(currentEpoch - 1)
+                                        .expositionScores(Arrays.asList(0.05))
+                                        .build()
+                        )
+                )
                 .build();
 
         when(scoringStrategyService.aggregate(anyList())).thenReturn(0.2);
 
         // WHEN
-        boolean isAtRisk = batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
+        final var isAtRisk = batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
 
         // THEN
-        assertThat(isAtRisk).isFalse();
-        assertThat(registration.getLatestRiskEpoch()).isEqualTo(latestRiskEpoch);
+        assertThat(isAtRisk)
+                .as("risk status return value")
+                .isFalse();
+        assertThat(registration.getLatestRiskEpoch())
+                .as("registration latest risk epoch")
+                .isEqualTo(latestRiskEpoch);
 
         verify(scoringStrategyService).aggregate(acAggregateScores.capture());
-        List<ArrayList<Double>> aggregatedScores = acAggregateScores.getAllValues();
-        assertThat(aggregatedScores.get(0)).containsExactly(0.9, 0.05);
-
+        assertThat(acAggregateScores.getAllValues())
+                .containsExactly(List.of(0.9, 0.05));
     }
 
     @Test
-    public void shouldNotTakeIntoAccountRandomizedLastContactDateIfItIsBeforeRegistrationLastContactDate() {
+    public void updateRegistrationIfRisk_should_ignore_randomized_last_contact_date_if_it_is_before_registration_lastContactDate() {
         // GIVEN
-        int currentEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
-        int lastContactDateFromExposedEpoch = currentEpoch;
-        long lastContactDateFromRegistration = TimeUtils.getNtpSeconds(currentEpoch - 2, timeStart);
-        int latestRiskEpoch = currentEpoch - 5;
+        final var currentEpoch = TimeUtils.getCurrentEpochFrom(timeStart);
+        final var lastContactDateFromExposedEpoch = currentEpoch;
+        final var lastContactDateFromRegistration = TimeUtils.getNtpSeconds(currentEpoch - 2, timeStart);
+        final var latestRiskEpoch = currentEpoch - 5;
 
-        List<EpochExposition> exposedEpochs = new ArrayList<>();
-        exposedEpochs
-                .add(EpochExposition.builder().epochId(currentEpoch - 60).expositionScores(Arrays.asList(0.1)).build());
-        exposedEpochs.add(
-                EpochExposition.builder().epochId(lastContactDateFromExposedEpoch).expositionScores(Arrays.asList(0.05))
-                        .build()
-        );
-
-        Registration registration = Registration.builder()
+        final var registration = Registration.builder()
                 .atRisk(false)
                 .lastContactTimestamp(lastContactDateFromRegistration)
                 .latestRiskEpoch(latestRiskEpoch)
-                .exposedEpochs(exposedEpochs)
+                .exposedEpochs(List.of(
+                        EpochExposition.builder()
+                                .epochId(currentEpoch - 60)
+                                .expositionScores(List.of(0.1))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(lastContactDateFromExposedEpoch)
+                                .expositionScores(List.of(0.05))
+                        .build()
+                ))
                 .build();
 
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
-        batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
+        final var isAtRisk = batchRegistrationService.updateRegistrationIfRisk(registration, timeStart, 1.0);
 
         // THEN
-        assertThat(registration.getLastContactTimestamp()).isEqualTo(lastContactDateFromRegistration);
-        assertThat(registration.isAtRisk()).isTrue();
-
+        assertThat(isAtRisk)
+                .as("risk status return value")
+                .isTrue();
+        assertThat(registration.getLastContactTimestamp())
+                .as("last contact timestamp")
+                .isEqualTo(lastContactDateFromRegistration);
+        assertThat(registration.isAtRisk())
+                .as("registration risk status")
+                .isTrue();
     }
 }
