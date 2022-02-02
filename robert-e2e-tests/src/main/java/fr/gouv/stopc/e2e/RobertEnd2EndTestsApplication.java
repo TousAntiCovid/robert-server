@@ -18,7 +18,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
-public class RobertIntegrationTestsApplication {
+public class RobertEnd2EndTestsApplication {
 
     public static void main(String[] args) {
         var exitCode = 1;

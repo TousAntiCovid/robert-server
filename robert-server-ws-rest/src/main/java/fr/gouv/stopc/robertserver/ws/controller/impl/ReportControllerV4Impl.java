@@ -6,11 +6,13 @@ import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseV4Dto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
+import fr.gouv.stopc.robertserver.ws.utils.MetricsService;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.Date;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ReportControllerV4Impl implements IReportControllerV4 {
 
     public static final SignatureAlgorithm signatureAlgo = SignatureAlgorithm.RS256;
@@ -35,16 +38,9 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
 
     private final ContactDtoService contactDtoService;
 
+    private final MetricsService metricsService;
+
     private PrivateKey jwtPrivateKey;
-
-    public ReportControllerV4Impl(final ContactDtoService contactDtoService,
-            final WsServerConfiguration wsServerConfiguration,
-            final ReportControllerDelegate delegate) {
-
-        this.contactDtoService = contactDtoService;
-        this.wsServerConfiguration = wsServerConfiguration;
-        this.delegate = delegate;
-    }
 
     @Override
     public ResponseEntity<ReportBatchResponseV4Dto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo)
@@ -53,6 +49,8 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
         if (!delegate.isReportRequestValid(reportBatchRequestVo)) {
             return ResponseEntity.badRequest().build();
         }
+
+        metricsService.countHelloMessages(reportBatchRequestVo);
 
         contactDtoService.saveContacts(reportBatchRequestVo.getContacts());
 
