@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robert.server.common.service;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.time.Duration;
@@ -13,10 +14,11 @@ import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01
 @RequiredArgsConstructor
 public class RobertClock {
 
+    @Getter
     private final long startNtpTimestamp;
 
-    public RobertClock(final Instant start) {
-        this(start.getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970);
+    public RobertClock(final String startDate) {
+        this(Instant.parse(startDate + "T00:00:00Z").getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970);
     }
 
     public RobertInstant at(Instant time) {
@@ -63,16 +65,20 @@ public class RobertClock {
             return RobertClock.this.at(time.plusSeconds((long) numberOfEpochs * EPOCH_DURATION_SECS));
         }
 
+        public RobertInstant minusEpochs(int numberOfEpochs) {
+            return plusEpochs(-numberOfEpochs);
+        }
+
         public RobertInstant minus(final long amountToSubtract, final TemporalUnit unit) {
             return RobertClock.this.at(time.minus(amountToSubtract, unit));
         }
 
-        public RobertInstant truncatedTo(final TemporalUnit unit) {
-            return RobertClock.this.at(time.truncatedTo(unit));
-        }
-
         public RobertInstant plus(final long amountToSubtract, final TemporalUnit unit) {
             return RobertClock.this.at(time.plus(amountToSubtract, unit));
+        }
+
+        public RobertInstant truncatedTo(final TemporalUnit unit) {
+            return RobertClock.this.at(time.truncatedTo(unit));
         }
 
         public Duration until(final RobertInstant otherRobertInstant) {

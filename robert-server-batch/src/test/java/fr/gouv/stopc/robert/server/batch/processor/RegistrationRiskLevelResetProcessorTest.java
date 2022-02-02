@@ -40,7 +40,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     @BeforeEach
     public void beforeEach() {
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
-        final var robertClock = new RobertClock(Instant.parse("2020-06-01T00:00:00Z"));
+        final var robertClock = new RobertClock("2020-06-01");
         this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock);
     }
 

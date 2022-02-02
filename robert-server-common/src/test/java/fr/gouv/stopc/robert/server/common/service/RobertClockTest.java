@@ -14,9 +14,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class RobertClockTest {
 
-    final static Instant CLOCK_START = Instant.parse("2022-01-01T00:00:00Z");
-
-    final RobertClock robertClock = new RobertClock(CLOCK_START);
+    final RobertClock robertClock = new RobertClock("2022-01-01");
 
     static List<Arguments> values() {
         return List.of(
@@ -38,7 +36,9 @@ public class RobertClockTest {
         assertThat(timeUtilsNtp)
                 .isEqualTo(ntpTimestamp);
 
-        final var ntpTimeStampClockStart = TimeUtils.convertUnixMillistoNtpSeconds(CLOCK_START.toEpochMilli());
+        final var ntpTimeStampClockStart = TimeUtils.convertUnixMillistoNtpSeconds(
+                Instant.parse("2022-01-01T00:00:00Z").toEpochMilli()
+        );
         assertThat(TimeUtils.getNumberOfEpochsBetween(ntpTimeStampClockStart, timeUtilsNtp))
                 .isEqualTo(epochId);
     }
