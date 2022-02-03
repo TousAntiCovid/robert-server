@@ -231,6 +231,7 @@ public class MobileApplication {
         for (EpochExposition epochExposition : registration.getExposedEpochs()) {
             epochExposition.setEpochId(epochDate.plusEpochs(index++).asEpochId());
         }
+        registration.setOutdatedRisk(true);
         this.registrationRepository.save(registration);
     }
 

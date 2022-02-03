@@ -224,6 +224,7 @@ public class ContactProcessor implements ItemProcessor<Contact, Contact> {
                     .build());
         }
         registrationRecord.setExposedEpochs(exposedEpochs);
+        registrationRecord.setOutdatedRisk(true);
 
     }
 

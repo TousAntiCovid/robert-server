@@ -31,15 +31,13 @@ public class RiskEvaluationProcessor implements ItemProcessor<Registration, Regi
         // Assuming the purge of the oldest epochs must be done before calling this processor
         // see fr.gouv.stopc.robert.server.batch.processor.PurgeOldEpochExpositionsProcessor
 
-        boolean isRegistrationAtRisk = registrationService.updateRegistrationIfRisk(
+        registrationService.updateRegistrationIfRisk(
                 registration,
                 this.serverConfigurationService.getServiceTimeStart(),
                 this.propertyLoader.getRiskThreshold());
 
-        if (isRegistrationAtRisk){
-            return registration;
-        }
+        registration.setOutdatedRisk(false);
+        return registration;
 
-        return null;
     }
 }

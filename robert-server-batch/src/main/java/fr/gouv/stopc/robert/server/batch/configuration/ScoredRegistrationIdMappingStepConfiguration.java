@@ -44,7 +44,7 @@ public class ScoredRegistrationIdMappingStepConfiguration extends StepConfigurat
     @Bean
     public MongoItemReader<Registration> scoredRegistrationReader(MongoTemplate mongoTemplate) {
 
-        String queryAsString = "{exposedEpochs: {$ne: []}}";
+        String queryAsString = "{outdatedRisk: true}";
         return registrationMongoItemReaderFactory.getMongoItemReader(mongoTemplate, queryAsString, this.getSorts(), CHUNK_SIZE);
     }
 
