@@ -52,8 +52,6 @@ COPY ./src/main/docker/keystore.p12 /work/config/keystore.p12
 COPY ./src/main/docker/run.sh /run.sh
 
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1
-ENV FAKETIME_NO_CACHE=1
-ENV FAKETIME_TIMESTAMP_FILE="/etc/faketimerc"
 
 RUN chmod +x /entrypoint.sh
 
