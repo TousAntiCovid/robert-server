@@ -4,7 +4,10 @@
 FROM adoptopenjdk:11-jre-hotspot
 
 WORKDIR /opt/robert-crypto-server/
-RUN apt-get update && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y libfaketime \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY ./target/robert-crypto-grpc-server-*.jar app.jar
 COPY ./src/main/docker/entrypoint.sh /entrypoint.sh
 
@@ -47,6 +50,10 @@ COPY ./src/main/docker/keystore.p12 /work/config/keystore.p12
 
 # this is useful to debug
 COPY ./src/main/docker/run.sh /run.sh
+
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1
+ENV FAKETIME_NO_CACHE=1
+ENV FAKETIME_TIMESTAMP_FILE="/etc/faketimerc"
 
 RUN chmod +x /entrypoint.sh
 
