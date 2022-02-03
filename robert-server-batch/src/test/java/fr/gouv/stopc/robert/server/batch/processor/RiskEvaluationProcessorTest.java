@@ -111,6 +111,7 @@ public class RiskEvaluationProcessorTest {
         assertTrue(this.registration.isPresent());
         ArrayList<EpochExposition> expositions = this.expositions(new Double[] { 1.0 }, new Double[] { 12.5 });
         this.registration.get().setExposedEpochs(expositions);
+        this.registration.get().setOutdatedRisk(true);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
@@ -127,6 +128,7 @@ public class RiskEvaluationProcessorTest {
         assertTrue(this.registration.isPresent());
         ArrayList<EpochExposition> expositions = this.expositions(new Double[] { 1.0 }, new Double[] { 14.5 });
         this.registration.get().setExposedEpochs(expositions);
+        this.registration.get().setOutdatedRisk(true);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
@@ -179,6 +181,7 @@ public class RiskEvaluationProcessorTest {
                         .build()
         );
         this.registration.get().setExposedEpochs(expositions);
+        this.registration.get().setOutdatedRisk(true);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
@@ -202,6 +205,7 @@ public class RiskEvaluationProcessorTest {
 
         ArrayList<EpochExposition> expositions = expositionsAtRisk();
         this.registration.get().setExposedEpochs(expositions);
+        this.registration.get().setOutdatedRisk(true);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
@@ -279,6 +283,7 @@ public class RiskEvaluationProcessorTest {
         this.registration.get().setAtRisk(true);
         this.registration.get().setLastContactTimestamp(this.expectedLastContactDate - (TimeUtils.EPOCHS_PER_DAY * 3));
         this.registration.get().setExposedEpochs(this.expositionsAtRisk());
+        this.registration.get().setOutdatedRisk(true);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
@@ -296,6 +301,7 @@ public class RiskEvaluationProcessorTest {
                 this.expectedLastContactDate + TimeUtils.EPOCHS_PER_DAY * TimeUtils.EPOCH_DURATION_SECS
         );
         this.registration.get().setExposedEpochs(this.expositionsAtRisk());
+        this.registration.get().setOutdatedRisk(true);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
@@ -317,6 +323,7 @@ public class RiskEvaluationProcessorTest {
                         .build()
         );
         this.registration.get().setExposedEpochs(expositions);
+        this.registration.get().setOutdatedRisk(true);
 
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
@@ -360,7 +367,8 @@ public class RiskEvaluationProcessorTest {
     }
 
     protected void assertThatNoRiskDetected(Registration returnedRegistration) {
-        assertThat(returnedRegistration).isNull();
+        assertThat(returnedRegistration).isNotNull();
+        assertThat(returnedRegistration.isAtRisk()).isFalse();
     }
 
     protected void assertThatRegistrationHasExactExpositions(Registration returnedRegistration,
@@ -377,5 +385,6 @@ public class RiskEvaluationProcessorTest {
         assertTrue(this.registration.isPresent());
         this.registration.get().setNotified(isNotified);
         this.registration.get().setExposedEpochs(expositions);
+        this.registration.get().setOutdatedRisk(true);
     }
 }

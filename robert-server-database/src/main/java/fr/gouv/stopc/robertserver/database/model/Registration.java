@@ -1,11 +1,11 @@
 package fr.gouv.stopc.robertserver.database.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,7 +25,7 @@ public class Registration {
     private int lastStatusRequestEpoch;
 
     private int latestRiskEpoch;
-    
+
     private long lastContactTimestamp;
 
     private int lastFailedStatusRequestEpoch;
@@ -33,12 +33,15 @@ public class Registration {
     private String lastFailedStatusRequestMessage;
 
     /**
-     * Record the time difference perceived between the server time and the client time
-     * To be set by any request that can be tied to an ID
+     * Record the time difference perceived between the server time and the client
+     * time To be set by any request that can be tied to an ID
      */
     private long lastTimestampDrift;
 
     @Builder.Default
     private List<EpochExposition> exposedEpochs = new ArrayList<>();
+
+    @Builder.Default
+    private boolean outdatedRisk = false; /* true if atRisk needs to be recomputed from exposedEpochs */
 
 }

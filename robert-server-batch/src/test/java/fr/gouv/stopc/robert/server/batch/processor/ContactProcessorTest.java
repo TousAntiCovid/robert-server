@@ -305,6 +305,9 @@ public class ContactProcessorTest {
                 )
         );
 
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
         this.registrationService.saveRegistration(registrationWithEE);
 
         byte[] ebid = this.cryptoService.generateEBID(
@@ -389,6 +392,9 @@ public class ContactProcessorTest {
                                 .build()
                 )
         );
+
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
 
         this.registrationService.saveRegistration(registrationWithEE);
 
@@ -878,6 +884,9 @@ public class ContactProcessorTest {
                 )
         );
 
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
         int nbOfExposedEpochs = registrationWithEE.getExposedEpochs().size();
 
         this.registrationService.saveRegistration(registrationWithEE);
@@ -1105,6 +1114,9 @@ public class ContactProcessorTest {
                                 .build()
                 )
         );
+
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
 
         this.registrationService.saveRegistration(registrationWithEE);
 

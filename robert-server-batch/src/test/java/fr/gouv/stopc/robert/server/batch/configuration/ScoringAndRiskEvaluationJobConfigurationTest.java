@@ -401,6 +401,9 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 )
         );
 
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
         this.registrationService.saveRegistration(registrationWithEE);
 
         // When
@@ -445,6 +448,9 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 )
         );
 
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
         this.registrationService.saveRegistration(registrationWithEE);
 
         // When
@@ -487,6 +493,9 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                                 .build()
                 )
         );
+
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
 
         this.registrationService.saveRegistration(registrationWithEE);
 

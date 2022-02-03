@@ -135,14 +135,11 @@ public class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         // WHEN
-        final var isAtRisk = batchRegistrationService.updateRegistrationIfRisk(
-                registration,
-                robertClock.getStartNtpTimestamp(), 1.0
-        );
+        batchRegistrationService.updateRegistrationIfRisk(registration, robertClock.getStartNtpTimestamp(), 1.0);
 
         // THEN
-        assertThat(isAtRisk)
-                .as("risk status return value")
+        assertThat(registration.isAtRisk())
+                .as("registration risk status")
                 .isTrue();
         assertThat(registration.getLatestRiskEpoch())
                 .as("registration latest risk epoch")
@@ -179,14 +176,11 @@ public class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(0.2);
 
         // WHEN
-        final var isAtRisk = batchRegistrationService.updateRegistrationIfRisk(
-                registration,
-                robertClock.getStartNtpTimestamp(), 1.0
-        );
+        batchRegistrationService.updateRegistrationIfRisk(registration, robertClock.getStartNtpTimestamp(), 1.0);
 
         // THEN
-        assertThat(isAtRisk)
-                .as("risk status return value")
+        assertThat(registration.isAtRisk())
+                .as("registration risk status")
                 .isFalse();
         assertThat(registration.getLatestRiskEpoch())
                 .as("registration latest risk epoch")
@@ -225,14 +219,12 @@ public class BatchRegistrationServiceTest {
 
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
-        final var isAtRisk = batchRegistrationService.updateRegistrationIfRisk(
-                registration,
-                robertClock.getStartNtpTimestamp(), 1.0
-        );
+        // WHEN
+        batchRegistrationService.updateRegistrationIfRisk(registration, robertClock.getStartNtpTimestamp(), 1.0);
 
         // THEN
-        assertThat(isAtRisk)
-                .as("risk status return value")
+        assertThat(registration.isAtRisk())
+                .as("registration risk status")
                 .isTrue();
         assertThat(registration.getLastContactTimestamp())
                 .as("last contact timestamp")

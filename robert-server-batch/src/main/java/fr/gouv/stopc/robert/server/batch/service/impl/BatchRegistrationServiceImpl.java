@@ -50,10 +50,9 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
     }
 
     @Override
-    public boolean updateRegistrationIfRisk(Registration registration,
+    public void updateRegistrationIfRisk(Registration registration,
             long serviceTimeStart,
             double riskThreshold) {
-        boolean isRegistrationAtRisk = false;
         int latestRiskEpoch = registration.getLatestRiskEpoch();
         List<EpochExposition> epochExpositions = registration.getExposedEpochs();
 
@@ -117,10 +116,7 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
             // notifications
             // It is up to the client to know if it should notify (new risk) or not given
             // the risk change or not.
-            isRegistrationAtRisk = true;
         }
-
-        return isRegistrationAtRisk;
     }
 
     private RobertInstant randomizePlusOrMinusOneDay(final RobertInstant lastContactTime) {
