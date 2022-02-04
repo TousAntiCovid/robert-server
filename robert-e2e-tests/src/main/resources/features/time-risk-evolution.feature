@@ -1,39 +1,33 @@
-Feature: Covid-19 risk evolution
-  As a user
-  I want to know when I'm no longer at risk
-  in order to get out personal confinement.
+# language: fr
+Fonctionnalité: Evolution du risque au fil du temps
 
-  Background:
-    Given John installs the application TAC
-    Given Sarah installs the application TAC
-    Given Yoko installs the application TAC
+  En tant qu'utilisateur de Robert
+  Je veux être prévenu lorsque ma période à risque est terminée
+  Dans le but de sortir d'isolement
 
-  Scenario Outline: <last contact> days after contact, user is no longer at risk
-    Given <last contact> days ago, Sarah and John met and Sarah was at risk following John report
-    When robert batch has been triggered
-    Then Sarah is not notified at risk
-    Examples:
-      | last contact |
-      | 8            |
-      | 10           |
-      | 15           |
+  Contexte:
+    Etant donné que John a l'application TAC
+    Et que Sarah a l'application TAC
+    Et que Paul a l'application TAC
 
-  Scenario Outline: <last contact> days after contact, user is no longer at risk
-    Given <last contact> days ago, Sarah and John met and Sarah was at risk following John report
-    When robert batch has been triggered
-    Then Sarah is notified at risk
-    Examples:
-      | last contact |
-      | 1            |
-      | 2            |
-      | 6            |
-      | 7            |
+  Plan du Scénario: On n'est plus à risque <jours> après le dernier contact
+    Etant donné que Sarah et John étaient à proximité 60 minutes il y a <jours> jours et que John s'est déclaré malade
+    Lorsque le batch robert est exécuté
+    Alors Sarah n'est pas à risque
+    Exemples:
+      | jours |
+      | 8     |
+      | 10    |
+      | 15    |
 
-  Scenario: If a user meet an other ill person, declaration token (CNAM) will be updated (last contact date changed)
-    Given 7 days ago, Sarah and John met and Sarah was at risk following John report
-    And Sarah is notified at risk
-    And Sarah last contact is near 7 days ago
-    When just now, the users Yoko and Sarah will be near during 60 minutes
-    And Yoko report herself sick
-    And robert batch has been triggered
-    Then Sarah last contact is near now
+  Plan du Scénario: On est à risque <jours> après le dernier contact
+    Etant donné que Sarah et John étaient à proximité 60 minutes il y a <jours> jours et que John s'est déclaré malade
+    Lorsque le batch robert est exécuté
+    Alors Sarah est à risque
+    Exemples:
+      | jours |
+      | 1     |
+      | 2     |
+      | 6     |
+      | 7     |
+

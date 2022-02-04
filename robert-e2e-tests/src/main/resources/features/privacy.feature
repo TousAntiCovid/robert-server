@@ -1,9 +1,10 @@
-Feature: Covid-19 privacy settings
-  As a user
-  I want to know that i can manage my privacy settings
-  in order to take care of my privacy
+# language: fr
+Fonctionnalité: Respect des conditions générales sur l'usage des données
 
-  Scenario: User data is deleted after 15 days
-    Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
-    When robert batch has been triggered
-    Then all Sarah's contact and risk data older than 15 days were deleted
+  En tant qu'utilisateur de Robert
+  Je souhaite que mes données soient supprimées
+
+  Scénario: Les données d'exposition sont supprimées au bout de 15 jours
+    Etant donné que Sarah et John étaient à proximité 60 minutes il y a 15 jours et que John s'est déclaré malade
+    Lorsque le batch robert est exécuté
+    Alors les données de Sarah n'existent plus
