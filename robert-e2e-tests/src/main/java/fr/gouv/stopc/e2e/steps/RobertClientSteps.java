@@ -66,8 +66,6 @@ public class RobertClientSteps {
 
     @Then("{word} is notified at risk")
     public void isNotifiedAtRisk(final String userName) {
-        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
-        // in other way we'll not be able to call status endpoint during 2 min
         final var exposureStatus = mobilePhonesEmulator
                 .getMobileApplication(userName)
                 .requestStatus();
@@ -78,8 +76,6 @@ public class RobertClientSteps {
 
     @Then("{word} is not notified at risk")
     public void isNotNotifiedAtRisk(final String userName) {
-        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
-        // in other way we'll not be able to call status endpoint during 2 min
         final var exposureStatus = mobilePhonesEmulator
                 .getMobileApplication(userName)
                 .requestStatus();
@@ -90,8 +86,6 @@ public class RobertClientSteps {
 
     @Then("all {word}'s contact and risk data older than 15 days were deleted")
     public void dataWasDeleted(final String userName) {
-        // In docker-compose robert-server-ws-rest must contains ESR_LIMIT=0
-        // in other way we'll not be able to call status endpoint during 2 min
         var mobile = mobilePhonesEmulator.getMobileApplication(userName);
         final var exposureStatus = mobile.requestStatus();
         assertThat(exposureStatus.getLastContactDate()).isNull();
