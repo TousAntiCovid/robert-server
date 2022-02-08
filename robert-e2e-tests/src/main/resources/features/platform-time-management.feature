@@ -1,11 +1,12 @@
 # language: fr
-Fonctionnalité: : TAC platform time management
-  As a developer
-  I want to manipulate the platform time
-  In order to have better test features
+
+Fonctionnalité: : Gestion du temps dans TAC
+  En tant que développeur
+  Je souhaite pouvoir changer le temps des composants TAC
+  Afin d'avoir des tests fonctionnels plus riches
 
   Contexte:
-    Etant donné que l'on est 10 days ago.
+    Etant donné que l'on est il y a 10 jours.
 
   Scénario: Robert est UP
-    Etant donné que application robert ws rest is ready
+    Etant donné que l' application robert ws rest est démarrée

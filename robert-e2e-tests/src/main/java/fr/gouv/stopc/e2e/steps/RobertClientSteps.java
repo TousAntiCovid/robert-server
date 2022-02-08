@@ -125,10 +125,10 @@ public class RobertClientSteps {
         mobilePhonesEmulator.getMobileApplication(userName).deleteExposureHistory();
     }
 
-    @Etantdonnéque("l'on est {naturalTime}.")
-    public void changeSystemDateTo(final Instant newSystemDate) throws IOException {
+    @Etantdonnéque("l'on est il y a {naturalTime}.")
+    public void changeSystemDateTo(final Instant startDate) throws IOException {
 
-        final var secondsBetweenNowAndDate = Duration.between(Instant.now(), newSystemDate).toSeconds();
+        final var secondsBetweenNowAndDate = Duration.between(startDate, Instant.now()).toSeconds();
 
         // change faketimerc file (volume is shared)
         ProcessBuilder processBuilder = new ProcessBuilder();
@@ -150,11 +150,6 @@ public class RobertClientSteps {
                 "-c",
                 "echo " + relativeFromNowFaketime + " > /faketimeDir/faketime"
         );
-    }
-
-    @When("{word} does not delete his/her risk exposure history")
-    public void notDeleteExposureHistory(final String userName) {
-        // Nothing to do
     }
 
     @When("{word} se désinscrit")
