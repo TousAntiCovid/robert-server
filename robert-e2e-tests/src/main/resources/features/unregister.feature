@@ -6,9 +6,9 @@ Fonctionnalité: Désinscription
   Dans le but de ne plus utiliser l'application
 
   Contexte:
-    Given John installe l'application TAC
-    Given Sarah installe l'application TAC
-    Given Paul installe l'application TAC
+    Etant donné que John a l'application TAC
+    Et que Sarah a l'application TAC
+    Et que Paul a l'application TAC
 
   Scénario: Un signalement contient une personne qui s'est désinscrite
     Etant donné que Paul et Sarah sont à proximité 60 minutes
