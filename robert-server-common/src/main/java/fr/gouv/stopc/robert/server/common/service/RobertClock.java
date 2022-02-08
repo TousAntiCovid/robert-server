@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
@@ -79,6 +80,14 @@ public class RobertClock {
 
         public RobertInstant truncatedTo(final TemporalUnit unit) {
             return RobertClock.this.at(time.truncatedTo(unit));
+        }
+
+        public RobertInstant minus(final TemporalAmount amountToSubtract) {
+            return RobertClock.this.at(time.minus(amountToSubtract));
+        }
+
+        public RobertInstant plus(final TemporalAmount amountToAdd) {
+            return RobertClock.this.at(time.plus(amountToAdd));
         }
 
         public Duration until(final RobertInstant otherRobertInstant) {

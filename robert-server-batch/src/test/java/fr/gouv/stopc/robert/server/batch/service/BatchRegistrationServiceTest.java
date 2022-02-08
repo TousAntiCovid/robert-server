@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.service;
 
+import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
+import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties.RiskThreshold;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
@@ -14,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -43,10 +46,13 @@ public class BatchRegistrationServiceTest {
 
     @BeforeEach
     public void setUp() {
+        final var properties = new RobertServerBatchProperties(
+                new RiskThreshold(Duration.ofDays(10))
+        );
         final var propertyLoader = mock(PropertyLoader.class, withSettings().lenient());
         when(propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
         batchRegistrationService = new BatchRegistrationServiceImpl(
-                scoringStrategyService, propertyLoader, robertClock
+                scoringStrategyService, propertyLoader, properties, robertClock
         );
     }
 
@@ -234,6 +240,35 @@ public class BatchRegistrationServiceTest {
                 .isTrue();
     }
 
+    @Test
+    public void updateRegistrationIfRisk_should_ignore_risk_when_last_contact_occurred_before_riskThresholdLastContactDelay() {
+        // GIVEN
+        final var expositionEpoch = robertClock.now()
+                .minus(11, DAYS)
+                .asEpochId();
+        final var registration = Registration.builder()
+                .atRisk(false)
+                .exposedEpochs(
+                        List.of(
+                                EpochExposition.builder()
+                                        .epochId(expositionEpoch)
+                                        .expositionScores(List.of(0.5, 0.4))
+                                        .build()
+                        )
+                )
+                .build();
+
+        when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
+
+        // WHEN
+        batchRegistrationService.updateRegistrationIfRisk(registration, robertClock.getStartNtpTimestamp(), 1.0);
+
+        // THEN
+        assertThat(registration.isAtRisk())
+                .as("registration risk status")
+                .isFalse();
+    }
+
     // don't see another way to test random results than repeating execution 🤞
     @Nested
     class RandomLastContactDateTest {
@@ -323,7 +358,7 @@ public class BatchRegistrationServiceTest {
         Stream<DynamicContainer> should_be_one_day_around_most_recent_epoch_exposition() {
             final var expositionDays = IntStream.concat(
                     IntStream.rangeClosed(1, 6),
-                    IntStream.rangeClosed(9, 20)
+                    IntStream.rangeClosed(9, 10)
             );
             return expositionDays.mapToObj(expositionDay -> {
                 final var repeatedTests = IntStream.rangeClosed(1, 100)
