@@ -7,8 +7,11 @@ services:
       - ROBERT_CRYPTO_SERVER_KEYSTORE_CONFIG_FILE=/conf/softhsm2.cfg
       - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
       - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
+      - FAKETIME_TIMESTAMP_FILE=/faketimeDir/faketime
     depends_on:
       - postgres
+    volumes:
+      - faketime:/faketimeDir/
 
   ws-rest:
     build: robert-server-ws-rest
@@ -20,6 +23,7 @@ services:
       - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8080/private/api/v1/captcha/{captchaId}/checkAnswer
       - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
       - ESR_LIMIT=0
+      - FAKETIME_TIMESTAMP_FILE=/faketimeDir/faketime
     ports:
       - "8086:8086"
     depends_on:
@@ -27,6 +31,8 @@ services:
       - crypto-server
       - mock-submission-code-server
       - mock-captcha
+    volumes:
+      - faketime:/faketimeDir/
 
   batch:
     build: robert-server-batch
@@ -38,10 +44,13 @@ services:
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_GROUPINGKEY_INSTANCE=robert-batch
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_SHUTDOWNOPERATION=DELETE
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_PUSHRATE=5s
+      - FAKETIME_TIMESTAMP_FILE=/faketimeDir/faketime 
     depends_on:
       - mongo
       - crypto-server
-
+    volumes:
+      - faketime:/faketimeDir/
+       
   postgres:
     image: postgres:9.6
     ports:
@@ -110,3 +119,6 @@ services:
       - GF_AUTH_ANONYMOUS_ENABLED=true
     ports:
       - "3000:3000"
+
+volumes:
+  faketime:
