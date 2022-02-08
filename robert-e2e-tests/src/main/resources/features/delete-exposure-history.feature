@@ -6,8 +6,7 @@ Fonctionnalité: Suppression de l'historique d'exposition
   Dans le but de faire respecter mon droit de modification sur mes données
 
   Contexte:
-    Etant donné que Sarah a l'application TAC
-    Etant donné que Paul a l'application TAC
+    Etant donné que Sarah et Paul ont l'application TAC
 
   Scénario: Une personne supprime son historique d'exposition
     Etant donné que Paul et Sarah sont à proximité 15 minutes

@@ -6,9 +6,7 @@ Fonctionnalité: Covid-19 positive declaration
   Dans le but de limiter la propagation du Covid19
 
   Contexte:
-    Etant donné que John a l'application TAC
-    Et que Sarah a l'application TAC
-    Et que Paul a l'application TAC
+    Etant donné que John, Sarah et Paul ont l'application TAC
 
   Scénario: Une personne est prévenue si un de ses contacts se déclare malade
     Etant donné que John et Sarah sont à proximité 60 minutes

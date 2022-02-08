@@ -43,9 +43,9 @@ public class RobertClientSteps {
                 .body("status", equalTo("UP"));
     }
 
-    @Etantdonnéque("{word} a l'application TAC")
-    public void createMobileApplication(final String userName) {
-        mobilePhonesEmulator.createMobileApplication(userName);
+    @Etantdonnéque("{wordList} a/ont l'application TAC")
+    public void createMobileApplication(final List<String> users) {
+        users.forEach(mobilePhonesEmulator::createMobileApplication);
     }
 
     @Etantdonnéque("{wordList} sont à proximité {duration}")
