@@ -2,33 +2,30 @@ package fr.gouv.stopc.e2e;
 
 import ch.qos.logback.classic.Level;
 import io.cucumber.java.ParameterType;
-import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
-
-import static java.lang.String.format;
+import java.util.regex.Pattern;
 
 public class ParameterTypes {
 
     @ParameterType(".*")
     public Instant naturalTime(final String timeExpression) {
-        final var dates = new PrettyTimeParser()
-                .parse(timeExpression);
-        if (dates.size() != 1) {
-            throw new IllegalArgumentException(
-                    format(
-                            "Expecting date to find exactly 1 date expression but found %d in '%s'",
-                            dates.size(), timeExpression
-                    )
-            );
+        if ("maintenant".equals(timeExpression)) {
+            return Instant.now();
         }
-        return dates.stream()
-                .findFirst()
-                .orElseThrow()
+        final var matcher = Pattern.compile("^(\\d+) jours$")
+                .matcher(timeExpression);
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("time expression can't be parsed: " + timeExpression);
+        }
+        final var days = Integer.parseInt(matcher.group(1));
+        return ZonedDateTime.now()
+                .minusDays(days)
                 .toInstant();
     }
 
@@ -37,7 +34,7 @@ public class ParameterTypes {
         return Level.valueOf(logLevel);
     }
 
-    @ParameterType("(\\d+) (days|hours|minutes)")
+    @ParameterType("(\\d+) (jours?|heures?|minutes?)")
     public Duration duration(final String amountExpression, final String unitExpression) {
         final var amount = Integer.parseInt(amountExpression);
         final var unit = ChronoUnit.valueOf(unitExpression.toUpperCase());
@@ -46,6 +43,6 @@ public class ParameterTypes {
 
     @ParameterType(".*")
     public List<String> wordList(final String words) {
-        return Arrays.asList(words.split("\\s*,\\s*|\\s*and\\s*"));
+        return Arrays.asList(words.split("\\s*,\\s*|\\s*et\\s*"));
     }
 }

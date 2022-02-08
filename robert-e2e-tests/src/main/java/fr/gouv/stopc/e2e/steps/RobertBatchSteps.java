@@ -3,7 +3,7 @@ package fr.gouv.stopc.e2e.steps;
 import ch.qos.logback.classic.Level;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import io.cucumber.java.fr.Etantdonnéque;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +27,7 @@ public class RobertBatchSteps {
 
     private final List<String> processLogs = new ArrayList<>();
 
-    @When("robert batch as not been executed yet")
-    public void batchDoesNotExecute() {
-        // Nothing to do
-    }
-
-    @When("robert batch has been triggered")
+    @Etantdonnéque("le batch robert est exécuté")
     @SneakyThrows
     public void launchBatch() {
         processLogs.clear();
@@ -58,20 +53,12 @@ public class RobertBatchSteps {
                 .isEqualTo(0);
     }
 
-    @Then("robert batch logs contains {logLevel} {string}")
+    @Then("les logs du batch robert contiennent {logLevel} {string}")
     public void checkDiscardedErrorInBatch(Level logLevel, String message) {
         assertThat(processLogs)
                 .filteredOn(event -> event.contains(" " + logLevel.toString() + " "))
                 .extracting(event -> event.replaceFirst(".* : ", ""))
                 .contains(message);
-    }
-
-    @Then("robert batch logs does not contains {logLevel} {string}")
-    public void checkNoDiscardedErrorInBatch(Level logLevel, String message) {
-        assertThat(processLogs)
-                .filteredOn(event -> event.contains(" " + logLevel.toString() + " "))
-                .extracting(event -> event.replaceFirst(".* : ", ""))
-                .doesNotContain(message);
     }
 
     private static class StreamGobbler implements Runnable {

@@ -1,21 +1,18 @@
-Feature: Covid-19 positive declaration
-  As a user
-  I want to unregister my application
-  In order to assert my right to be forgotten
+# language: fr
+Fonctionnalité: Désinscription
 
-  Background:
-    Given John installs the application TAC
-    Given Sarah installs the application TAC
-    Given Paul installs the application TAC
+  En tant qu'utilisateur de Robert
+  Je souhaite me désinscrire
+  Dans le but de ne plus utiliser l'application
 
-  Scenario: One people unregisters his application
-    Given just now, the users Paul and Sarah will be near during 60 minutes
-    When Paul report himself sick
-    When Sarah unregisters her application
-    And robert batch has been triggered
-    Then robert batch logs contains INFO "The contact could not be validated. Discarding all its hello messages"
+  Contexte:
+    Given John installe l'application TAC
+    Given Sarah installe l'application TAC
+    Given Paul installe l'application TAC
 
-  Scenario: One people unregisters his application without having any contact
-    When Sarah unregisters her application
-    And robert batch has been triggered
-    Then robert batch logs does not contains INFO "The contact could not be validated. Discarding all its hello messages"
+  Scénario: Un signalement contient une personne qui s'est désinscrite
+    Etant donné que Paul et Sarah sont à proximité 60 minutes
+    Et que Sarah se désinscrit
+    Lorsque Paul se déclare malade
+    Et que le batch robert est exécuté
+    Alors les logs du batch robert contiennent INFO "The contact could not be validated. Discarding all its hello messages"
