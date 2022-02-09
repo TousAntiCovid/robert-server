@@ -30,7 +30,7 @@ public class RobertClientSteps {
 
     private final RobertBatchSteps robertBatchSteps;
 
-    @Etantdonnéque("l' application robert ws rest est démarrée")
+    @Etantdonnéque("l'application robert ws rest est démarrée")
     public void applicationRobertIsReady() {
         given()
                 .baseUri(applicationProperties.getWsRestBaseUrl().toString())

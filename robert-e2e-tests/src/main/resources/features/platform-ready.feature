@@ -3,7 +3,7 @@
 Fonctionnalité: Health check
 
   Scénario: Robert is up
-    Etant donné que l' application robert ws rest est démarrée
+    Etant donné que l'application robert ws rest est démarrée
 
   Scénario: Postgresql is ready
     Etant donné que John a l'application TAC
