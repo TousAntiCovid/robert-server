@@ -125,10 +125,20 @@ public class RobertClientSteps {
         mobilePhonesEmulator.getMobileApplication(userName).deleteExposureHistory();
     }
 
+    @Etantdonnéque("l'on est aujourd'hui.")
+    public void resetFakeTimeToNow() throws IOException, InterruptedException {
+
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command(resetFakeTime("ws-rest"));
+        processBuilder.directory(Path.of(".").toFile());
+        processBuilder.start();
+
+    }
+
     @Etantdonnéque("l'on est il y a {naturalTime}.")
     public void changeSystemDateTo(final Instant startDate) throws IOException {
 
-        final var secondsBetweenNowAndDate = Duration.between(startDate, Instant.now()).toSeconds();
+        final var secondsBetweenNowAndDate = Duration.between(Instant.now(), startDate).toSeconds();
 
         // change faketimerc file (volume is shared)
         ProcessBuilder processBuilder = new ProcessBuilder();
@@ -152,8 +162,21 @@ public class RobertClientSteps {
         );
     }
 
+    private List<String> resetFakeTime(final String containerName) {
+        return List.of(
+                "docker-compose",
+                "exec",
+                "-T",
+                containerName,
+                "bash",
+                "-c",
+                "rm -f /faketimeDir/faketime"
+        );
+    }
+
     @When("{word} se désinscrit")
     public void unregister(final String userName) {
         mobilePhonesEmulator.getMobileApplication(userName).unregister();
     }
+
 }
