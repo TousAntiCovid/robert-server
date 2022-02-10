@@ -30,7 +30,7 @@ public class RobertClientSteps {
 
     private final RobertBatchSteps robertBatchSteps;
 
-    @Etantdonnéque("l' application robert ws rest est démarrée")
+    @Etantdonnéque("l'application robert ws rest est démarrée")
     public void applicationRobertIsReady() {
         given()
                 .baseUri(applicationProperties.getWsRestBaseUrl().toString())
@@ -43,9 +43,9 @@ public class RobertClientSteps {
                 .body("status", equalTo("UP"));
     }
 
-    @Etantdonnéque("{word} a l'application TAC")
-    public void createMobileApplication(final String userName) {
-        mobilePhonesEmulator.createMobileApplication(userName);
+    @Etantdonnéque("{wordList} a/ont l'application TAC")
+    public void createMobileApplication(final List<String> users) {
+        users.forEach(mobilePhonesEmulator::createMobileApplication);
     }
 
     @Etantdonnéque("{wordList} sont à proximité {duration}")

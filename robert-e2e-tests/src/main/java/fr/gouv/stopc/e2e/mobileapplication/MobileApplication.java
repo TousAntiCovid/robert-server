@@ -239,7 +239,6 @@ public class MobileApplication {
                     .minus(daysBackInTime, DAYS);
             epochExposition.setEpochId(expositionTime.asEpochId());
         }
-        registration.setOutdatedRisk(true);
         this.registrationRepository.save(registration);
     }
 
