@@ -37,7 +37,21 @@ public class ParameterTypes {
     @ParameterType("(\\d+) (jours?|heures?|minutes?)")
     public Duration duration(final String amountExpression, final String unitExpression) {
         final var amount = Integer.parseInt(amountExpression);
-        final var unit = ChronoUnit.valueOf(unitExpression.toUpperCase());
+
+        ChronoUnit unit = null;
+        switch (unitExpression) {
+            case "jour":
+            case "jours":
+                unit = ChronoUnit.DAYS;
+                break;
+            case "heures":
+                unit = ChronoUnit.HOURS;
+                break;
+            case "minutes":
+                unit = ChronoUnit.MINUTES;
+                break;
+        }
+
         return Duration.of(amount, unit);
     }
 
