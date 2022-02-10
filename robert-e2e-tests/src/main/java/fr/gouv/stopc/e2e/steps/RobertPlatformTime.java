@@ -4,7 +4,6 @@ import io.cucumber.java.fr.Etantdonnéque;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
 public class RobertPlatformTime {
@@ -16,13 +15,11 @@ public class RobertPlatformTime {
                 .start();
     }
 
-    @Etantdonnéque("l'on est il y a {naturalTime}")
-    public void changeSystemDateTo(final Instant dateInPast) throws IOException {
-
-        final var secondsBetweenNowAndDate = Duration.between(Instant.now(), dateInPast).toSeconds();
+    @Etantdonnéque("l'on est il y a {duration}")
+    public void changeSystemDateTo(final Duration duration) throws IOException {
 
         new ProcessBuilder()
-                .command(execInContainer("ws-rest", "echo " + secondsBetweenNowAndDate + " > /faketimeDir/faketime"))
+                .command(execInContainer("ws-rest", "echo " + duration.toSeconds() + " > /faketimeDir/faketime"))
                 .start();
 
         // verify date on each container
