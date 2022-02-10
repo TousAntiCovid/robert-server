@@ -9,8 +9,6 @@ import io.cucumber.java.fr.Lorsque;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -123,55 +121,6 @@ public class RobertClientSteps {
     @Lorsque("{word} supprime son historique d'exposition")
     public void deleteExposureHistory(final String userName) {
         mobilePhonesEmulator.getMobileApplication(userName).deleteExposureHistory();
-    }
-
-    @Etantdonnéque("l'on est aujourd'hui.")
-    public void resetFakeTimeToNow() throws IOException {
-
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command(resetFakeTime("ws-rest"));
-        processBuilder.directory(Path.of(".").toFile());
-        processBuilder.start();
-
-    }
-
-    @Etantdonnéque("l'on est il y a {naturalTime}.")
-    public void changeSystemDateTo(final Instant startDate) throws IOException {
-
-        final var secondsBetweenNowAndDate = Duration.between(Instant.now(), startDate).toSeconds();
-
-        // change faketimerc file (volume is shared)
-        ProcessBuilder processBuilder = new ProcessBuilder();
-
-        processBuilder.command(getChangeTimeDockerCommand("ws-rest", secondsBetweenNowAndDate));
-        processBuilder.directory(Path.of(".").toFile());
-        processBuilder.start();
-
-        // verify date on each container
-    }
-
-    private List<String> getChangeTimeDockerCommand(final String containerName, final long relativeFromNowFaketime) {
-        return List.of(
-                "docker-compose",
-                "exec",
-                "-T",
-                containerName,
-                "bash",
-                "-c",
-                "echo " + relativeFromNowFaketime + " > /faketimeDir/faketime"
-        );
-    }
-
-    private List<String> resetFakeTime(final String containerName) {
-        return List.of(
-                "docker-compose",
-                "exec",
-                "-T",
-                containerName,
-                "bash",
-                "-c",
-                "rm -f /faketimeDir/faketime"
-        );
     }
 
     @When("{word} se désinscrit")

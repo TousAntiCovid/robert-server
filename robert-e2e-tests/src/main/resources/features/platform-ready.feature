@@ -3,7 +3,7 @@
 Fonctionnalité: Health check
 
   Contexte:
-    Etant donné que l'on est aujourd'hui.
+    Etant donné que l'on est aujourd'hui
 
   Scénario: Robert is up
     Etant donné que l'application robert ws rest est démarrée

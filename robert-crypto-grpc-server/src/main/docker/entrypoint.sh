@@ -3,8 +3,8 @@ echo "Generate keys..."
 cd /work/config
 keytool -genseckey -alias federation-key -keyalg AES -keysize 256 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v
 keytool -genseckey -alias key-encryption-key -keyalg AES -keysize 256 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v
-for i in {0..29};do keytool -genseckey -alias server-key-$(date --date="$i days" +%Y%m%d) -keyalg AES -keysize 192 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v; done
-for i in {1..30};do keytool -genseckey -alias server-key-$(date --date="$i days ago" +%Y%m%d) -keyalg AES -keysize 192 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v; done
+for i in {0..6};do keytool -genseckey -alias server-key-$(date --date="$i days" +%Y%m%d) -keyalg AES -keysize 192 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v; done
+for i in {1..15};do keytool -genseckey -alias server-key-$(date --date="$i days ago" +%Y%m%d) -keyalg AES -keysize 192 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v; done
 
 echo "Check keys"
 keytool -list -keystore keystore.p12 -storepass 1234
