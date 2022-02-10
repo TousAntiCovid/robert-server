@@ -126,7 +126,7 @@ public class RobertClientSteps {
     }
 
     @Etantdonnéque("l'on est aujourd'hui.")
-    public void resetFakeTimeToNow() throws IOException, InterruptedException {
+    public void resetFakeTimeToNow() throws IOException {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(resetFakeTime("ws-rest"));
