@@ -4,9 +4,9 @@ services:
     build: robert-crypto-grpc-server
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/robert
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_CONFIG_FILE=/conf/softhsm2.cfg
       - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/keystore.p12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_PASSWORD=1234
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
     depends_on:
       - postgres
@@ -50,7 +50,7 @@ services:
       - crypto-server
     volumes:
       - faketime:/etc/faketime.d/
-       
+
   postgres:
     image: postgres:9.6
     ports:
