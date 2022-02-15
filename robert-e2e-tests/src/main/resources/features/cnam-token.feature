@@ -6,7 +6,7 @@ Fonctionnalité: Token CNAM
   Dans le but de me déclarer facilement en arrêt dans AMELI
 
   Contexte:
-    Etant donné que l'on est aujourd'hui.
+    Etant donné que l'on est aujourd'hui
     Et que John, Sarah et Paul ont l'application TAC
 
   Scénario: Le token CNAM est mis à jour à chaque nouveau contact à risque
