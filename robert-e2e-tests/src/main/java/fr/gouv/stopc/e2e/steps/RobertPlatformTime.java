@@ -42,7 +42,7 @@ public class RobertPlatformTime {
         new ProcessBuilder()
                 .command(execInContainer("ws-rest", "rm -f /etc/faketime.d/faketime"))
                 .start()
-                .waitFor(3, TimeUnit.SECONDS);
+                .waitFor(2, TimeUnit.SECONDS);
     }
 
     @Etantdonnéque("l'on est il y a {naturalTime}")
@@ -53,7 +53,7 @@ public class RobertPlatformTime {
         new ProcessBuilder()
                 .command(execInContainer("ws-rest", "echo " + secondsBetweenNowAndDate + " > /etc/faketime.d/faketime"))
                 .start()
-                .waitFor(3, TimeUnit.SECONDS);
+                .waitFor(2, TimeUnit.SECONDS);
 
         // assertThat(getPostgresqlServiceInstant()).isEqualTo(dateInPast.truncatedTo(ChronoUnit.MINUTES));
         // TODO: dockerise if time management is needed
