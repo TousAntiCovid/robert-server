@@ -18,9 +18,16 @@ import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
+import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpHeaders.DATE;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.hamcrest.Matchers.is;
 
 @Slf4j
 @AllArgsConstructor
@@ -53,18 +60,13 @@ public class RobertPlatformTime {
     }
 
     @Alors("l'horloge de robert-ws est à il y a {naturalTime}")
-    public void verifyRobertWSClock(final Instant dateInPast) throws IOException, InterruptedException {
+    public void verifyRobertWSClock(final Instant dateInPast) throws IOException {
         assertThat(containerDateTimeAsInstant("ws-rest")).isCloseTo(dateInPast, within(1, MINUTES));
     }
 
     @Alors("l'horloge de crypto-server est à il y a {naturalTime}")
-    public void verifyRobertCryptoServerClock(final Instant dateInPast) throws IOException, InterruptedException {
+    public void verifyRobertCryptoServerClock(final Instant dateInPast) throws IOException {
         assertThat(containerDateTimeAsInstant("crypto-server")).isCloseTo(dateInPast, within(1, MINUTES));
-    }
-
-    @Alors("l'horloge du batch est à il y a {naturalTime}")
-    public void verifyRobertBatchClock(final Instant dateInPast) throws IOException, InterruptedException {
-        assertThat(containerDateTimeAsInstant("batch")).isCloseTo(dateInPast, within(1, MINUTES));
     }
 
     private List<String> execInContainer(final String containerName, final String command) {
@@ -77,16 +79,7 @@ public class RobertPlatformTime {
                 .truncatedTo(ChronoUnit.MINUTES);
     }
 
-    public Instant containerDateTimeAsInstant(String containerName) throws IOException, InterruptedException {
-
-        if (containerName.equals("batch")) {
-            new ProcessBuilder(
-                    applicationProperties.getBatchCommand()
-                            .split(" ")
-            )
-                    .start()
-                    .waitFor(10, TimeUnit.SECONDS);
-        }
+    public Instant containerDateTimeAsInstant(String containerName) throws IOException {
 
         final var getTimeProcess = new ProcessBuilder()
                 .command(execInContainer(containerName, "date"))
@@ -97,18 +90,35 @@ public class RobertPlatformTime {
         reader.lines().iterator().forEachRemaining(stringJoiner::add);
         final var retrievedString = stringJoiner.toString();
 
-        if (containerName.equals("batch")) {
-            new ProcessBuilder(
-                    applicationProperties.getBatchCommandDown()
-                            .split(" ")
-            )
-                    .start();
-        }
-
-        return ZonedDateTime
+        final var containerInstant = ZonedDateTime
                 .parse(retrievedString, DateTimeFormatter.ofPattern("EEE dd MMM yyyy hh:mm:ss a zzz", Locale.ENGLISH))
                 .toInstant()
                 .truncatedTo(ChronoUnit.MINUTES);
+
+        if (containerName.equals("ws-rest")) {
+            await("Wait for faketime to be set accross java process")
+                    .atMost(1, TimeUnit.MINUTES)
+                    .pollInterval(fibonacci(SECONDS))
+                    .until(this::getWSRestServiceDate, is(containerInstant));
+        }
+
+        return containerInstant;
+    }
+
+    public Instant getWSRestServiceDate() {
+
+        final var redirectResponse = given()
+                .contentType(JSON)
+                .baseUri(applicationProperties.getWsRestBaseUrl().toString())
+                .expect()
+                .statusCode(400)
+
+                .when()
+                .post("/api/v6/status");
+
+        final var headerDateValue = redirectResponse.then().extract().header(DATE);
+        return OffsetDateTime.parse(headerDateValue, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()
+                .truncatedTo(MINUTES);
     }
 
 }

@@ -9,13 +9,11 @@ Fonctionnalité: : Gestion du temps dans TAC
     Etant donné que l'on est aujourd'hui
     Alors l'horloge de robert-ws est à il y a 0 jours
     Alors l'horloge de crypto-server est à il y a 0 jours
-    Alors l'horloge du batch est à il y a 0 jours
 
   Plan du Scénario: On est il y a <jours> jours dans le passé
     Etant donné que l'on est il y a <jours> jours
     Alors l'horloge de robert-ws est à il y a <jours> jours
     Alors l'horloge de crypto-server est à il y a <jours> jours
-    Alors l'horloge du batch est à il y a <jours> jours
     Exemples:
       | jours |
       | 1     |
