@@ -5,7 +5,8 @@ Fonctionnalité: Respect des conditions générales sur l'usage des données
   Je souhaite que mes données soient supprimées
 
   Contexte:
-    Etant donné que John et Sarah ont l'application TAC
+    Etant donné que l'on est aujourd'hui
+    Et que John et Sarah ont l'application TAC
 
   Scénario: Les données d'exposition sont supprimées au bout de 15 jours
     Etant donné que Sarah et John étaient à proximité 60 minutes il y a 15 jours et que John s'est déclaré malade

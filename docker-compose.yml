@@ -4,11 +4,14 @@ services:
     build: robert-crypto-grpc-server
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/robert
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_CONFIG_FILE=/conf/softhsm2.cfg
       - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/keystore.p12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_PASSWORD=1234
+      - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
     depends_on:
       - postgres
+    volumes:
+      - faketime:/etc/faketime.d/
 
   ws-rest:
     build: robert-server-ws-rest
@@ -20,6 +23,7 @@ services:
       - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8080/private/api/v1/captcha/{captchaId}/checkAnswer
       - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
       - ESR_LIMIT=0
+      - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
     ports:
       - "8086:8086"
     depends_on:
@@ -27,6 +31,8 @@ services:
       - crypto-server
       - mock-submission-code-server
       - mock-captcha
+    volumes:
+      - faketime:/etc/faketime.d/
 
   batch:
     build: robert-server-batch
@@ -38,9 +44,12 @@ services:
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_GROUPINGKEY_INSTANCE=robert-batch
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_SHUTDOWNOPERATION=DELETE
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_PUSHRATE=5s
+      - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
     depends_on:
       - mongo
       - crypto-server
+    volumes:
+      - faketime:/etc/faketime.d/
 
   postgres:
     image: postgres:9.6
@@ -110,3 +119,6 @@ services:
       - GF_AUTH_ANONYMOUS_ENABLED=true
     ports:
       - "3000:3000"
+
+volumes:
+  faketime:
