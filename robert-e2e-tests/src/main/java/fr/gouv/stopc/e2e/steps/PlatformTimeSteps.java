@@ -40,10 +40,10 @@ public class PlatformTimeSteps {
 
     }
 
-    @Alors("l'horloge de {word} est à il y a {naturalTime}")
+    @Alors("l'horloge de {word} est à il y a {duration}")
     public void verifyContainerClock(final String containerName,
-            final Instant dateInPast) throws IOException {
-        assertThat(getContainerTime(containerName)).isCloseTo(dateInPast, within(1, MINUTES));
+            final Duration duration) throws IOException {
+        assertThat(getContainerTime(containerName)).isCloseTo(Instant.now().minus(duration), within(1, MINUTES));
     }
 
     private List<String> execInContainer(final String containerName,
