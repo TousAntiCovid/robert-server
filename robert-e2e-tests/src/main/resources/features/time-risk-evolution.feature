@@ -6,7 +6,8 @@ Fonctionnalité: Evolution du risque au fil du temps
   Dans le but de sortir d'isolement
 
   Contexte:
-    Etant donné que John, Sarah et Paul ont l'application TAC
+    Etant donné que l'on est aujourd'hui
+    Et que John, Sarah et Paul ont l'application TAC
 
   Plan du Scénario: On n'est plus à risque <jours> après le dernier contact
     Etant donné que Sarah et John étaient à proximité 60 minutes il y a <jours> jours et que John s'est déclaré malade

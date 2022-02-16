@@ -1,15 +1,18 @@
 #!/bin/bash
-echo "Generate keys..."
-cd /work/config
-keytool -genseckey -alias federation-key -keyalg AES -keysize 256 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v
-keytool -genseckey -alias key-encryption-key -keyalg AES -keysize 256 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v
-for i in {0..5};do keytool -genseckey -alias server-key-$(date --date="$i days" +%Y%m%d) -keyalg AES -keysize 192 -keystore keystore.p12 -storepass 1234 -storetype PKCS12 -v; done
 
-echo "Check keys"
-keytool -list -keystore keystore.p12 -storepass 1234
+function generate_aes_key() {
+  local size=$1
+  local alias=$2
+  echo "Generating $alias"
+  keytool -genseckey -alias "$alias" -keyalg AES -keysize "$size" -keystore keystore.p12 -storepass 1234 -storetype PKCS12
+}
 
-echo "Launch appli"
-cd /opt/robert-crypto-server
-java -jar /opt/robert-crypto-server/app.jar
-# useful to debug image build
-#. /run.sh
+generate_aes_key 256 federation-key
+generate_aes_key 256 key-encryption-key
+for i in {-15..6} ; do
+  generate_aes_key 192 "server-key-$(date --date="$i days" +%Y%m%d)"
+done
+
+wait
+
+exec "$@"
