@@ -123,8 +123,7 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
 
     private boolean isExpositionInRiskExpositionPeriod(RobertInstant expositionTime) {
         final var riskDateThreshold = robertClock.now()
-                .minus(properties.getRiskThreshold().getLastContactDelay())
-                .truncatedTo(DAYS);
+                .minus(properties.getRiskThreshold().getLastContactDelay());
         return expositionTime.isAfter(riskDateThreshold);
     }
 

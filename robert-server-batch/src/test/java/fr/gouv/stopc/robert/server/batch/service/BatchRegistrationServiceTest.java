@@ -47,7 +47,7 @@ public class BatchRegistrationServiceTest {
     @BeforeEach
     public void setUp() {
         final var properties = new RobertServerBatchProperties(
-                new RiskThreshold(Duration.ofDays(10))
+                new RiskThreshold(Duration.ofDays(11))
         );
         final var propertyLoader = mock(PropertyLoader.class, withSettings().lenient());
         when(propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
@@ -245,6 +245,7 @@ public class BatchRegistrationServiceTest {
         // GIVEN
         final var expositionEpoch = robertClock.now()
                 .minus(11, DAYS)
+                .minus(1, MINUTES)
                 .asEpochId();
         final var registration = Registration.builder()
                 .atRisk(false)
