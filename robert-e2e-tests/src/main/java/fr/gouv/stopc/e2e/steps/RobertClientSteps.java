@@ -9,7 +9,6 @@ import io.cucumber.java.fr.Lorsque;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -59,14 +58,13 @@ public class RobertClientSteps {
         );
     }
 
-    @Etantdonnéque("{wordList} étaient à proximité {duration} {relativeTime} et que {word} s'est déclaré/déclarée malade")
-    public void falsifyExposedEpochs(final List<String> users, final Duration duration, final Instant startDate,
-            final String userNameReporter) {
-        generateContactsBetweenTwoUsersWithDuration(users, duration);
+    @Etantdonnéque("{wordList} étaient à proximité {duration} il y a {duration} et que {word} s'est déclaré/déclarée malade")
+    public void fakePastContactAndReport(final List<String> users, final Duration proximityExpositionDuration,
+            final Duration durationBackInTime, final String userNameReporter) {
+        generateContactsBetweenTwoUsersWithDuration(users, proximityExpositionDuration);
         reportContacts(userNameReporter);
         robertBatchSteps.launchBatch();
-        final var daysBackInTime = Duration.between(startDate, Instant.now()).toDays();
-        users.forEach(user -> mobilePhonesEmulator.getMobileApplication(user).fakeExposedEpochs(daysBackInTime));
+        users.forEach(user -> mobilePhonesEmulator.getMobileApplication(user).fakeExposedEpochs(durationBackInTime));
     }
 
     @Etantdonnéque("{word} se déclare malade")
