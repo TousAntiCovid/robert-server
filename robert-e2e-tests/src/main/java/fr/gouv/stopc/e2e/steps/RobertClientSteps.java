@@ -59,7 +59,7 @@ public class RobertClientSteps {
         );
     }
 
-    @Etantdonnéque("{wordList} étaient à proximité {duration} il y a {naturalTime} et que {word} s'est déclaré malade")
+    @Etantdonnéque("{wordList} étaient à proximité {duration} {relativeTime} et que {word} s'est déclaré/déclarée malade")
     public void falsifyExposedEpochs(final List<String> users, final Duration duration, final Instant startDate,
             final String userNameReporter) {
         generateContactsBetweenTwoUsersWithDuration(users, duration);
@@ -107,7 +107,7 @@ public class RobertClientSteps {
                 .isEqualTo(0);
     }
 
-    @Alors("le token CNAM de {word} est proche de {naturalTime}")
+    @Alors("le token CNAM de {word} est proche de {relativeTime}")
     public void assertLastContactDateIsNear(final String userName, final Instant startDate) {
         final var exposureStatus = mobilePhonesEmulator.getMobileApplication(userName)
                 .requestStatus();
