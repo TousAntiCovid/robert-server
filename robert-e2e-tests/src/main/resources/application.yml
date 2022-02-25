@@ -2,6 +2,8 @@ robert:
   ws-rest-base-url: http://ws-rest:8086
   crypto-public-key: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7fAxfrLtG5tXyjomCOg9r1wNnr9len4m9sTflJUHDdkwubKyidTtFkVfNLrM91yuffdrpJZe9XOkof8P+zPGDg=="
   batch-command: "docker-compose up batch"
+  management-url-ws: http://ws-rest:8081
+  management-url-crypto-server: http://crypto-server:8082
 
 spring:
   data:

@@ -20,4 +20,8 @@ public class ApplicationProperties {
     private final String batchCommand;
 
     private final String batchCommandDown;
+
+    private final String managementUrlWs;
+
+    private final String managementUrlCryptoServer;
 }

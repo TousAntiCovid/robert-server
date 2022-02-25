@@ -104,7 +104,7 @@ public class RobertClock {
 
         @Override
         public String toString() {
-            return String.format("%s=%sE", time.toString(), asEpochId());
+            return time.toString();
         }
     }
 }
