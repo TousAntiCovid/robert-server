@@ -74,7 +74,7 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
         Double totalRisk = scoringStrategy.aggregate(allScoresFromAllEpochs);
 
         final var latestExpositionTime = robertClock.atEpoch(
-                scoresSinceLastNotif.stream()
+                registration.getExposedEpochs().stream()
                         .mapToInt(EpochExposition::getEpochId)
                         .max()
                         .orElse(0)
