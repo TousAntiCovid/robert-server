@@ -74,7 +74,7 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
         Double totalRisk = scoringStrategy.aggregate(allScoresFromAllEpochs);
 
         final var latestExpositionTime = robertClock.atEpoch(
-                scoresSinceLastNotif.stream()
+                registration.getExposedEpochs().stream()
                         .mapToInt(EpochExposition::getEpochId)
                         .max()
                         .orElse(0)
@@ -123,8 +123,7 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
 
     private boolean isExpositionInRiskExpositionPeriod(RobertInstant expositionTime) {
         final var riskDateThreshold = robertClock.now()
-                .minus(properties.getRiskThreshold().getLastContactDelay())
-                .truncatedTo(DAYS);
+                .minus(properties.getRiskThreshold().getLastContactDelay());
         return expositionTime.isAfter(riskDateThreshold);
     }
 

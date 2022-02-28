@@ -5,28 +5,28 @@ import io.cucumber.java.ParameterType;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import static java.time.temporal.ChronoUnit.*;
 
 public class ParameterTypes {
 
-    @ParameterType(".*")
-    public Instant naturalTime(final String timeExpression) {
+    @ParameterType("(maintenant|dans .*|il y a .*)")
+    public Instant relativeTime(final String timeExpression) {
         if ("maintenant".equals(timeExpression)) {
             return Instant.now();
+        } else if (timeExpression.startsWith("il y a ")) {
+            final var delta = duration(timeExpression);
+            return Instant.now().minus(delta);
+        } else if (timeExpression.startsWith("dans ")) {
+            final var delta = duration(timeExpression);
+            return Instant.now().plus(delta);
         }
-        final var matcher = Pattern.compile("^(\\d+) jours$")
-                .matcher(timeExpression);
-        if (!matcher.find()) {
-            throw new IllegalArgumentException("time expression can't be parsed: " + timeExpression);
-        }
-        final var days = Integer.parseInt(matcher.group(1));
-        return ZonedDateTime.now()
-                .minusDays(days)
-                .toInstant();
+        throw new IllegalArgumentException("can't parse relative time expression: " + timeExpression);
     }
 
     @ParameterType("(DEBUG|INFO|WARN|ERROR)")
@@ -34,25 +34,34 @@ public class ParameterTypes {
         return Level.valueOf(logLevel);
     }
 
-    @ParameterType("(\\d+) (jours?|heures?|minutes?)")
-    public Duration duration(final String amountExpression, final String unitExpression) {
-        final var amount = Integer.parseInt(amountExpression);
-
-        ChronoUnit unit = null;
-        switch (unitExpression) {
-            case "jour":
-            case "jours":
-                unit = ChronoUnit.DAYS;
-                break;
-            case "heures":
-                unit = ChronoUnit.HOURS;
-                break;
-            case "minutes":
-                unit = ChronoUnit.MINUTES;
-                break;
+    @ParameterType(".*")
+    public Duration duration(final String durationExpression) {
+        final var matcher = Pattern.compile("(\\d+) (jours?|heures?|minutes?)")
+                .matcher(durationExpression);
+        final var expressions = Stream.<Duration>builder();
+        while (matcher.find()) {
+            final var amount = Integer.parseInt(matcher.group(1));
+            final TemporalUnit unit;
+            switch (matcher.group(2)) {
+                case "jour":
+                case "jours":
+                    unit = DAYS;
+                    break;
+                case "heure":
+                case "heures":
+                    unit = HOURS;
+                    break;
+                case "minute":
+                case "minutes":
+                    unit = MINUTES;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid unit in time expression: " + durationExpression);
+            }
+            expressions.add(Duration.of(amount, unit));
         }
-
-        return Duration.of(amount, unit);
+        return expressions.build()
+                .reduce(Duration.ZERO, Duration::plus);
     }
 
     @ParameterType(".*")

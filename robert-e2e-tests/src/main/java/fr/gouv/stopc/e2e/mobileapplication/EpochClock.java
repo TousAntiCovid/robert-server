@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ public class EpochClock {
     }
 
     public RobertInstant atEpoch(int epochId) {
-        final var ntpTimestamp = startNtpTimestamp + epochId + TimeUtils.EPOCH_DURATION_SECS;
+        final var ntpTimestamp = startNtpTimestamp + epochId * TimeUtils.EPOCH_DURATION_SECS;
         return atNtpTimestamp(ntpTimestamp);
     }
 
@@ -60,6 +61,10 @@ public class EpochClock {
 
         public RobertInstant minus(final long amountToSubtract, final TemporalUnit unit) {
             return EpochClock.this.at(time.minus(amountToSubtract, unit));
+        }
+
+        public RobertInstant minus(final TemporalAmount amountToSubtract) {
+            return EpochClock.this.at(time.minus(amountToSubtract));
         }
 
         public RobertInstant truncatedTo(final TemporalUnit unit) {
