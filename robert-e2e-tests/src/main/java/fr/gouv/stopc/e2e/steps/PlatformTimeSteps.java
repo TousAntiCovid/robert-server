@@ -1,7 +1,6 @@
 package fr.gouv.stopc.e2e.steps;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Etantdonnéque;
@@ -18,16 +17,15 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.System.getProperty;
 import static java.time.Duration.ZERO;
-import static java.time.Instant.*;
+import static java.time.Instant.now;
 import static java.time.format.DateTimeFormatter.*;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.Locale.*;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
-import static org.hamcrest.Matchers.is;
 
 @AllArgsConstructor
 public class PlatformTimeSteps {
@@ -64,9 +62,13 @@ public class PlatformTimeSteps {
         assertThat(containerInstant).isCloseTo(expectedFakedInstant, within(1, MINUTES));
 
         await("Wait for faked time to be set accross service process")
-                .atMost(2, TimeUnit.MINUTES)
-                .pollInterval(fibonacci(SECONDS))
-                .until(() -> getServiceDateFromContainer(containerName), is(containerInstant.truncatedTo(MINUTES)));
+                .atMost(1, TimeUnit.MINUTES)
+                .pollInterval(fibonacci(MILLISECONDS))
+                .untilAsserted(
+                        () -> assertThat(getServiceDateFromContainer(containerName))
+                                .isCloseTo(containerInstant, within(1, MINUTES))
+                );
+
     }
 
     private List<String> execInContainer(final String containerName,
@@ -103,18 +105,17 @@ public class PlatformTimeSteps {
         reader.lines().iterator().forEachRemaining(stringJoiner::add);
         final var retrievedString = stringJoiner.toString();
 
-        JsonObject actuatorInfoAsJson = JsonParser.parseString(retrievedString).getAsJsonObject();
+        new ObjectMapper().reader().readTree(retrievedString)
+                .get("robertClock")
+                .get("currentTime")
+                .asText();
 
-        return parse(
-                actuatorInfoAsJson
-                        .get("robert-clock")
-                        .getAsJsonObject()
+        return Instant.parse(
+                new ObjectMapper().reader().readTree(retrievedString)
+                        .get("robertClock")
                         .get("currentTime")
-                        .toString()
-                        .replace("\"", "")
-                        .split("=")[0]
-        )
-                .truncatedTo(MINUTES);
+                        .asText()
+        );
     }
 
 }
