@@ -18,16 +18,16 @@ public class RobertClockContributor implements InfoContributor {
 
     private final IServerConfigurationService serverConfigurationService;
 
+    private final RobertClock clock;
+
     @Override
     public void contribute(Info.Builder builder) {
-        final var clock = new RobertClock(serverConfigurationService.getServiceTimeStart());
-        var robertClockDetails = Map.of(
-                "startTime", valueOf(clock.atNtpTimestamp(serverConfigurationService.getServiceTimeStart())),
-                "startNtpTimestamp",
-                valueOf(clock.atNtpTimestamp(serverConfigurationService.getServiceTimeStart()).asNtpTimestamp()),
-                "currentTime", valueOf(clock.at(now())),
-                "currentEpoch", valueOf(clock.at(now()).asEpochId())
+        builder.withDetail(
+                "robert-clock", Map.of(
+                        "startTime", clock.atNtpTimestamp(serverConfigurationService.getServiceTimeStart()).toString(),
+                        "currentTime", clock.at(now()).toString(),
+                        "currentEpoch", clock.at(now()).asEpochId()
+                )
         );
-        builder.withDetail("robert-clock", robertClockDetails);
     }
 }

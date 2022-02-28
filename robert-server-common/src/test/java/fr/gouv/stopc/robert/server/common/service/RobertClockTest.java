@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robert.server.common.service;
 
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -50,6 +51,13 @@ public class RobertClockTest {
                 .isEqualTo(ntpTimestamp);
         assertThat(robertInstant.asEpochId())
                 .isEqualTo(epochId);
+    }
+
+    @Test
+    void can_generate_useful_toString() {
+        final var instant = Instant.parse("2022-04-23T08:30:00Z");
+        assertThat(robertClock.at(instant).toString())
+                .isEqualTo("2022-04-23T08:30:00Z=10786E");
     }
 
 }

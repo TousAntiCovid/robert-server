@@ -8,8 +8,6 @@ services:
       - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/keystore.p12
       - ROBERT_CRYPTO_SERVER_KEYSTORE_PASSWORD=1234
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
-    ports:
-      - "8082:8081"
     depends_on:
       - postgres
     volumes:
@@ -28,7 +26,6 @@ services:
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
     ports:
       - "8086:8086"
-      - "8081:8081"
     depends_on:
       - mongo
       - crypto-server

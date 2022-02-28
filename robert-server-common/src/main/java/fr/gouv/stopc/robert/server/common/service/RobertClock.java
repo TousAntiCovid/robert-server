@@ -1,8 +1,7 @@
 package fr.gouv.stopc.robert.server.common.service;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -13,10 +12,12 @@ import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
 
 @RequiredArgsConstructor
+@AllArgsConstructor
+@Component
 public class RobertClock {
 
     @Getter
-    private final long startNtpTimestamp;
+    private long startNtpTimestamp;
 
     public RobertClock(final String startDate) {
         this(Instant.parse(startDate + "T00:00:00Z").getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970);
@@ -104,7 +105,7 @@ public class RobertClock {
 
         @Override
         public String toString() {
-            return time.toString();
+            return String.format("%s=%sE", time.toString(), asEpochId());
         }
     }
 }

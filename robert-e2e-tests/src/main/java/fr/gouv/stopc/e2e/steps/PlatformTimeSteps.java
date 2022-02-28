@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
-import static io.restassured.RestAssured.given;
 import static java.lang.System.getProperty;
 import static java.time.Duration.ZERO;
 import static java.time.Instant.*;
@@ -64,18 +63,10 @@ public class PlatformTimeSteps {
 
         assertThat(containerInstant).isCloseTo(expectedFakedInstant, within(1, MINUTES));
 
-        String serviceManagementUrl = null;
-        if (containerName.equals("ws-rest")) {
-            serviceManagementUrl = applicationProperties.getManagementUrlWs();
-        } else if (containerName.equals("crypto-server")) {
-            serviceManagementUrl = applicationProperties.getManagementUrlCryptoServer();
-        }
-
-        final var managementUrl = serviceManagementUrl;
         await("Wait for faked time to be set accross service process")
                 .atMost(2, TimeUnit.MINUTES)
                 .pollInterval(fibonacci(SECONDS))
-                .until(() -> serviceDate(managementUrl), is(containerInstant.truncatedTo(MINUTES)));
+                .until(() -> getServiceDateFromContainer(containerName), is(containerInstant.truncatedTo(MINUTES)));
     }
 
     private List<String> execInContainer(final String containerName,
@@ -100,16 +91,19 @@ public class PlatformTimeSteps {
                 .truncatedTo(ChronoUnit.MINUTES);
     }
 
-    public Instant serviceDate(final String serviceEndpoint) {
+    private Instant getServiceDateFromContainer(final String containerName) throws IOException {
 
-        final var actuatorInfo = given()
-                .baseUri(serviceEndpoint)
-                .expect()
-                .statusCode(200)
-                .when()
-                .get("/actuator/info");
+        final var command = "curl -X GET -H 'Content-Type: application/json' localhost:8081/actuator/info";
+        final var getTimeProcess = new ProcessBuilder()
+                .command(execInContainer(containerName, command))
+                .start();
 
-        JsonObject actuatorInfoAsJson = JsonParser.parseString(actuatorInfo.getBody().asString()).getAsJsonObject();
+        final var reader = new BufferedReader(new InputStreamReader(getTimeProcess.getInputStream()));
+        final var stringJoiner = new StringJoiner(getProperty("line.separator"));
+        reader.lines().iterator().forEachRemaining(stringJoiner::add);
+        final var retrievedString = stringJoiner.toString();
+
+        JsonObject actuatorInfoAsJson = JsonParser.parseString(retrievedString).getAsJsonObject();
 
         return parse(
                 actuatorInfoAsJson
@@ -118,6 +112,7 @@ public class PlatformTimeSteps {
                         .get("currentTime")
                         .toString()
                         .replace("\"", "")
+                        .split("=")[0]
         )
                 .truncatedTo(MINUTES);
     }
