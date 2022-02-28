@@ -11,16 +11,18 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
+import static java.lang.System.getProperty;
 import static java.time.Duration.ZERO;
+import static java.time.Instant.*;
+import static java.time.format.DateTimeFormatter.*;
 import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.util.Locale.*;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -57,7 +59,7 @@ public class PlatformTimeSteps {
     public void verifyServiceClock(final String containerName,
             final Duration duration) throws IOException {
 
-        final var expectedFakedInstant = Instant.now().minus(duration);
+        final var expectedFakedInstant = now().minus(duration);
         final var containerInstant = getContainerTime(containerName);
 
         assertThat(containerInstant).isCloseTo(expectedFakedInstant, within(1, MINUTES));
@@ -69,7 +71,7 @@ public class PlatformTimeSteps {
             serviceManagementUrl = applicationProperties.getManagementUrlCryptoServer();
         }
 
-        String managementUrl = serviceManagementUrl;
+        final var managementUrl = serviceManagementUrl;
         await("Wait for faked time to be set accross service process")
                 .atMost(2, TimeUnit.MINUTES)
                 .pollInterval(fibonacci(SECONDS))
@@ -81,24 +83,24 @@ public class PlatformTimeSteps {
         return List.of("docker-compose", "exec", "-T", containerName, "bash", "-c", command);
     }
 
-    public Instant getContainerTime(String containerName) throws IOException {
+    public Instant getContainerTime(final String containerName) throws IOException {
 
         final var getTimeProcess = new ProcessBuilder()
                 .command(execInContainer(containerName, "date"))
                 .start();
 
         final var reader = new BufferedReader(new InputStreamReader(getTimeProcess.getInputStream()));
-        final var stringJoiner = new StringJoiner(System.getProperty("line.separator"));
+        final var stringJoiner = new StringJoiner(getProperty("line.separator"));
         reader.lines().iterator().forEachRemaining(stringJoiner::add);
         final var retrievedString = stringJoiner.toString();
 
         return ZonedDateTime
-                .parse(retrievedString, DateTimeFormatter.ofPattern("EEE dd MMM yyyy hh:mm:ss a zzz", Locale.ENGLISH))
+                .parse(retrievedString, ofPattern("EEE dd MMM yyyy hh:mm:ss a zzz", ENGLISH))
                 .toInstant()
                 .truncatedTo(ChronoUnit.MINUTES);
     }
 
-    public Instant serviceDate(String serviceEndpoint) {
+    public Instant serviceDate(final String serviceEndpoint) {
 
         final var actuatorInfo = given()
                 .baseUri(serviceEndpoint)
@@ -109,7 +111,7 @@ public class PlatformTimeSteps {
 
         JsonObject actuatorInfoAsJson = JsonParser.parseString(actuatorInfo.getBody().asString()).getAsJsonObject();
 
-        return Instant.parse(
+        return parse(
                 actuatorInfoAsJson
                         .get("robert-clock")
                         .getAsJsonObject()
