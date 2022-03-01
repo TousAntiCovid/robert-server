@@ -14,6 +14,7 @@ import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
+import static java.lang.String.join;
 import static java.lang.System.getProperty;
 import static java.time.Duration.ZERO;
 import static java.time.Instant.now;
@@ -70,7 +71,9 @@ public class PlatformTimeSteps {
         final var process = new ProcessBuilder()
                 .command(dockerExecCommand)
                 .start();
-        assertThat(process.waitFor()).as("docker exec exit code").isEqualTo(0);
+        assertThat(process.waitFor())
+                .as("docker exec exit code : %s", join(" ", dockerExecCommand))
+                .isEqualTo(0);
 
         final var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         final var stringJoiner = new StringJoiner(getProperty("line.separator"));
