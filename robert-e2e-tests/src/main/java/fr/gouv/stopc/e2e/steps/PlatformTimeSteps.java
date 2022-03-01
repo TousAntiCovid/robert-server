@@ -14,7 +14,6 @@ import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
-import static java.lang.String.valueOf;
 import static java.lang.System.getProperty;
 import static java.time.Duration.ZERO;
 import static java.time.Instant.now;
@@ -39,7 +38,7 @@ public class PlatformTimeSteps {
     @Etantdonnéque("l'on est il y a {duration}")
     public void changeSystemDateTo(final Duration durationAgo) throws IOException, InterruptedException {
 
-        execInContainer("ws-rest", "echo -%s > /etc/faketime.d/faketime", valueOf(durationAgo.toSeconds()));
+        execInContainer("ws-rest", format("echo -%d > /etc/faketime.d/faketime", durationAgo.toSeconds()));
         verifyServiceClock("ws-rest", durationAgo);
         verifyServiceClock("crypto-server", durationAgo);
     }
@@ -64,11 +63,10 @@ public class PlatformTimeSteps {
 
     private String execInContainer(
             final String containerName,
-            final String command,
-            final String... parameters) throws IOException, InterruptedException {
+            final String command) throws IOException, InterruptedException {
 
         final var dockerExecCommand = List
-                .of("docker-compose", "exec", "-T", containerName, "bash", "-c", format(command, parameters));
+                .of("docker-compose", "exec", "-T", containerName, "bash", "-c", command);
         final var process = new ProcessBuilder()
                 .command(dockerExecCommand)
                 .start();
