@@ -1,7 +1,6 @@
 package fr.gouv.stopc.e2e.steps;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Etantdonnéque;
 import lombok.AllArgsConstructor;
@@ -10,108 +9,85 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.*;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.String.format;
+import static java.lang.String.valueOf;
 import static java.lang.System.getProperty;
 import static java.time.Duration.ZERO;
 import static java.time.Instant.now;
-import static java.time.format.DateTimeFormatter.*;
 import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.util.Locale.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.given;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
 @AllArgsConstructor
 public class PlatformTimeSteps {
 
-    private final ApplicationProperties applicationProperties;
-
     @Etantdonnéque("l'on est aujourd'hui")
-    public void resetFakeTimeToNow() throws IOException {
-        new ProcessBuilder()
-                .command(execInContainer("ws-rest", "rm -f /etc/faketime.d/faketime"))
-                .start();
+    public void resetFakeTimeToNow() throws IOException, InterruptedException {
+
+        execInContainer("ws-rest", "rm -f /etc/faketime.d/faketime");
         verifyServiceClock("ws-rest", ZERO);
         verifyServiceClock("crypto-server", ZERO);
     }
 
     @Etantdonnéque("l'on est il y a {duration}")
-    public void changeSystemDateTo(final Duration durationAgo) throws IOException {
+    public void changeSystemDateTo(final Duration durationAgo) throws IOException, InterruptedException {
 
-        new ProcessBuilder()
-                .command(execInContainer("ws-rest", "echo -" + durationAgo.toSeconds() + " > /etc/faketime.d/faketime"))
-                .start();
-
+        execInContainer("ws-rest", "echo -%s > /etc/faketime.d/faketime", valueOf(durationAgo.toSeconds()));
         verifyServiceClock("ws-rest", durationAgo);
         verifyServiceClock("crypto-server", durationAgo);
     }
 
     @Alors("l'horloge de {word} est à il y a {duration}")
     public void verifyServiceClock(final String containerName,
-            final Duration duration) throws IOException {
+            final Duration duration) {
 
         final var expectedFakedInstant = now().minus(duration);
-        final var containerInstant = getContainerTime(containerName);
-
-        assertThat(containerInstant).isCloseTo(expectedFakedInstant, within(1, MINUTES));
-
-        await("Wait for faked time to be set accross service process")
+        given()
+                .await("Wait for faked time to be set in service " + containerName)
                 .atMost(1, TimeUnit.MINUTES)
+                .with()
                 .pollInterval(fibonacci(MILLISECONDS))
+                .and()
                 .untilAsserted(
                         () -> assertThat(getServiceDateFromContainer(containerName))
-                                .isCloseTo(containerInstant, within(1, MINUTES))
+                                .isCloseTo(expectedFakedInstant, within(1, MINUTES))
                 );
 
     }
 
-    private List<String> execInContainer(final String containerName,
-            final String command) {
-        return List.of("docker-compose", "exec", "-T", containerName, "bash", "-c", command);
-    }
+    private String execInContainer(
+            final String containerName,
+            final String command,
+            final String... parameters) throws IOException, InterruptedException {
 
-    public Instant getContainerTime(final String containerName) throws IOException {
-
-        final var getTimeProcess = new ProcessBuilder()
-                .command(execInContainer(containerName, "date"))
+        final var dockerExecCommand = List
+                .of("docker-compose", "exec", "-T", containerName, "bash", "-c", format(command, parameters));
+        final var process = new ProcessBuilder()
+                .command(dockerExecCommand)
                 .start();
+        assertThat(process.waitFor()).as("docker exec exit code").isEqualTo(0);
 
-        final var reader = new BufferedReader(new InputStreamReader(getTimeProcess.getInputStream()));
+        final var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         final var stringJoiner = new StringJoiner(getProperty("line.separator"));
         reader.lines().iterator().forEachRemaining(stringJoiner::add);
-        final var retrievedString = stringJoiner.toString();
-
-        return ZonedDateTime
-                .parse(retrievedString, ofPattern("EEE dd MMM yyyy hh:mm:ss a zzz", ENGLISH))
-                .toInstant()
-                .truncatedTo(ChronoUnit.MINUTES);
+        return stringJoiner.toString();
     }
 
-    private Instant getServiceDateFromContainer(final String containerName) throws IOException {
+    private Instant getServiceDateFromContainer(final String containerName) throws IOException, InterruptedException {
 
-        final var command = "curl -X GET -H 'Content-Type: application/json' localhost:8081/actuator/info";
-        final var getTimeProcess = new ProcessBuilder()
-                .command(execInContainer(containerName, command))
-                .start();
-
-        final var reader = new BufferedReader(new InputStreamReader(getTimeProcess.getInputStream()));
-        final var stringJoiner = new StringJoiner(getProperty("line.separator"));
-        reader.lines().iterator().forEachRemaining(stringJoiner::add);
-        final var retrievedString = stringJoiner.toString();
-
-        new ObjectMapper().reader().readTree(retrievedString)
-                .get("robertClock")
-                .get("currentTime")
-                .asText();
-
+        final var actuatorInfoResult = execInContainer(
+                containerName,
+                "curl -X GET -H 'Content-Type: application/json' localhost:8081/actuator/info"
+        );
         return Instant.parse(
-                new ObjectMapper().reader().readTree(retrievedString)
+                new ObjectMapper().reader().readTree(actuatorInfoResult)
                         .get("robertClock")
                         .get("currentTime")
                         .asText()
