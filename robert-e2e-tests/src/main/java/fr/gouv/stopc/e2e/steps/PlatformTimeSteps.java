@@ -10,16 +10,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.*;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
-import static java.lang.String.join;
-import static java.lang.System.getProperty;
 import static java.time.Duration.ZERO;
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.given;
@@ -72,13 +70,13 @@ public class PlatformTimeSteps {
                 .command(dockerExecCommand)
                 .start();
         assertThat(process.waitFor())
-                .as("docker exec exit code : %s", join(" ", dockerExecCommand))
+                .as("exit code for command: %s", String.join(" ", dockerExecCommand))
                 .isEqualTo(0);
 
-        final var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        final var stringJoiner = new StringJoiner(getProperty("line.separator"));
-        reader.lines().iterator().forEachRemaining(stringJoiner::add);
-        return stringJoiner.toString();
+        try (final var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            return reader.lines()
+                    .collect(joining());
+        }
     }
 
     private Instant getServiceDateFromContainer(final String containerName) throws IOException, InterruptedException {
