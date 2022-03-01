@@ -59,4 +59,5 @@ public class RobertClockTest {
         assertThat(robertClock.at(instant).toString())
                 .isEqualTo("2022-04-23T08:30:00Z=10786E");
     }
+
 }
