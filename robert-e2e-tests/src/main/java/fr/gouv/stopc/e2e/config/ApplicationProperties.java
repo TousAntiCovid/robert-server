@@ -20,4 +20,5 @@ public class ApplicationProperties {
     private final String batchCommand;
 
     private final String batchCommandDown;
+
 }
