@@ -9,6 +9,7 @@ import io.cucumber.java.fr.Lorsque;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -62,11 +63,11 @@ public class RobertClientSteps {
 
     @Etantdonnéque("{wordList} étaient à proximité {duration} il y a {duration} et que {word} s'est déclaré/déclarée malade")
     public void fakePastContactAndReport(final List<String> users, final Duration proximityExpositionDuration,
-            final Duration durationBackInTime, final String userNameReporter) {
+            final Duration durationBackInTime, final String userNameReporter) throws IOException, InterruptedException {
+        platformTimeSteps.changeSystemDateTo(durationBackInTime);
         generateContactsBetweenTwoUsersWithDuration(users, proximityExpositionDuration);
         reportContacts(userNameReporter);
         robertBatchSteps.launchBatch();
-        users.forEach(user -> mobilePhonesEmulator.getMobileApplication(user).fakeExposedEpochs(durationBackInTime));
     }
 
     @Etantdonnéque("{word} se déclare malade")

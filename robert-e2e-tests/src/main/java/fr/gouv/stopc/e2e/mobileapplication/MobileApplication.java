@@ -17,13 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
-import static java.time.temporal.ChronoUnit.DAYS;
 import static java.util.Base64.getEncoder;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
@@ -221,25 +219,5 @@ public class MobileApplication {
     public Registration getRegistration() {
         return this.registrationRepository.findById(Base64.getDecoder().decode(applicationId))
                 .orElseThrow();
-    }
-
-    public void fakeExposedEpochs(final Duration durationBackInTime) {
-        final var registration = getRegistration();
-
-        final var lastContactTime = clock.now()
-                .minus(durationBackInTime)
-                .truncatedTo(DAYS);
-        registration.setLastContactTimestamp(lastContactTime.asNtpTimestamp());
-
-        final var latestRiskTime = clock.atEpoch(registration.getLatestRiskEpoch())
-                .minus(durationBackInTime);
-        registration.setLatestRiskEpoch(latestRiskTime.asEpochId());
-
-        for (final var epochExposition : registration.getExposedEpochs()) {
-            final var expositionTime = clock.atEpoch(epochExposition.getEpochId())
-                    .minus(durationBackInTime);
-            epochExposition.setEpochId(expositionTime.asEpochId());
-        }
-        this.registrationRepository.save(registration);
     }
 }
