@@ -30,6 +30,8 @@ public class RobertClientSteps {
 
     private final RobertBatchSteps robertBatchSteps;
 
+    private final PlatformTimeSteps platformTimeSteps;
+
     @Etantdonnéque("l'application robert ws rest est démarrée")
     public void applicationRobertIsReady() {
         given()
@@ -53,7 +55,7 @@ public class RobertClientSteps {
             final Duration durationOfExchange) {
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
                 users,
-                Instant.now(),
+                platformTimeSteps.getPlatformTime(),
                 durationOfExchange
         );
     }
