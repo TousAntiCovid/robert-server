@@ -15,7 +15,6 @@
     <artifactId>robert-e2e-tests</artifactId>
 
     <properties>
-        <java.version>11</java.version>
         <cucumber.version>7.2.3</cucumber.version>
         <gson-fire.version>1.8.5</gson-fire.version>
         <jsr305.version>3.0.2</jsr305.version>
@@ -113,21 +112,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

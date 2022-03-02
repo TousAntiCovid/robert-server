@@ -44,10 +44,6 @@
 
 	<properties>
 		<java.version>11</java.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.jar.plugin.version>3.1.1</maven.jar.plugin.version>
-		<javax-rs.version>2.1.1</javax-rs.version>
 		<grpc.version>1.29.0</grpc.version>
 		<protobuf.version>3.11.0</protobuf.version>
 		<error_prone_annotations.version>2.3.4</error_prone_annotations.version>
@@ -176,11 +172,6 @@
 					<groupId>org.sonarsource.scanner.maven</groupId>
 					<artifactId>sonar-maven-plugin</artifactId>
 					<version>3.6.0.1398</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>${maven.jar.plugin.version}</version>
 				</plugin>
 
 				<plugin>
