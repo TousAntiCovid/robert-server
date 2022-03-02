@@ -92,7 +92,7 @@ public class MobileApplication {
         // challenge
         final var response = captchaApi.captchaChallengeImageWithHttpInfo(captchaChallenge.getId());
         assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
-        assertThat("image content", response.getData(), notNullValue());
+        assertThat("image content", response.getBody(), notNullValue());
 
         // The user reads the image content
         return new CaptchaSolution(captchaId, "ABCD");
