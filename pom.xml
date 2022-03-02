@@ -117,12 +117,6 @@
 			</dependency>
 
 			<dependency>
-				<groupId>javax.ws.rs</groupId>
-				<artifactId>javax.ws.rs-api</artifactId>
-				<version>${javax-rs.version}</version>
-			</dependency>
-
-			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>grpc-bom</artifactId>
 				<version>${grpc.version}</version>

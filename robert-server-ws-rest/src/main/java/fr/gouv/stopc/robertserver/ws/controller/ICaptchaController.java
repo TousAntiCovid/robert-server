@@ -1,8 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Produces;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +25,6 @@ import fr.gouv.stopc.robertserver.ws.vo.CaptchaCreationVo;
 public interface ICaptchaController {
 
     @PostMapping(value = UriConstants.CAPTCHA)
-    @Consumes(MediaType.APPLICATION_JSON_VALUE)
-    @Produces(MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<CaptchaCreationDto> createCaptcha(
             @Valid @RequestBody(required=true) CaptchaCreationVo captchaCreationVo)
             throws RobertServerException;
