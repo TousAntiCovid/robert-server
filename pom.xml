@@ -50,7 +50,7 @@
 		<postgresql.version>42.2.12</postgresql.version>
 		<bountycastle.version>1.65</bountycastle.version>
 		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
-		<io.jsonwebtoken.version>0.11.2</io.jsonwebtoken.version>
+		<jjwt.version>0.11.2</jjwt.version>
 		<junit-jupiter.version>5.7.1</junit-jupiter.version>
 		<logcaptor.version>2.6.1</logcaptor.version>
 		<mockito.version>3.7.0</mockito.version>
@@ -129,11 +129,6 @@
 							</goals>
 						</execution>
 					</executions>
-				</plugin>
-				<plugin>
-					<groupId>org.sonarsource.scanner.maven</groupId>
-					<artifactId>sonar-maven-plugin</artifactId>
-					<version>3.6.0.1398</version>
 				</plugin>
 
 				<plugin>
