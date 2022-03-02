@@ -1,5 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
 	<modelVersion>4.0.0</modelVersion>
 
 	<licenses>
@@ -36,35 +40,5 @@
 			<artifactId>bson</artifactId>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<!-- Disabled because fails when not executed from each module's directory -->
-			<!--
-			<plugin>
-				<groupId>org.complykit</groupId>
-				<artifactId>license-check-maven-plugin</artifactId>
-				<version>0.5.3</version>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>os-check</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<blacklist>
-						<param>agpl-3.0</param>
-						<param>gpl-2.0</param>
-						<param>gpl-3.0</param>
-					</blacklist>
-					<excludes>
-					</excludes>
-				</configuration>
-			</plugin>
-			-->
-		</plugins>
-	</build>
 
 </project>
