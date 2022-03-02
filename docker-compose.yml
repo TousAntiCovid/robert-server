@@ -23,6 +23,7 @@ services:
       - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8080/private/api/v1/captcha/{captchaId}/checkAnswer
       - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
       - ESR_LIMIT=0
+      - ROBERT_EPOCH_BUNDLE_DURATION_IN_DAYS=20
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
     ports:
       - "8086:8086"
