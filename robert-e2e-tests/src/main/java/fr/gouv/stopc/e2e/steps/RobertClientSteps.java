@@ -46,12 +46,12 @@ public class RobertClientSteps {
                 .body("status", equalTo("UP"));
     }
 
-    @Etantdonnéque("{wordList} a/ont l'application TAC")
+    @Etantdonnéque("{wordList} a/ont/avait/avaient l'application TAC")
     public void createMobileApplication(final List<String> users) {
         users.forEach(mobilePhonesEmulator::createMobileApplication);
     }
 
-    @Etantdonnéque("{wordList} sont à proximité {duration}")
+    @Etantdonnéque("{wordList} sont/étaient à proximité {duration}")
     public void generateContactsBetweenTwoUsersWithDuration(final List<String> users,
             final Duration durationOfExchange) {
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
@@ -70,7 +70,7 @@ public class RobertClientSteps {
         robertBatchSteps.launchBatch();
     }
 
-    @Etantdonnéque("{word} se déclare malade")
+    @Etantdonnéque("{word} se/s'est déclare/déclaré/déclarée malade")
     public void reportContacts(final String userName) {
         mobilePhonesEmulator.getMobileApplication(userName).reportContacts();
     }

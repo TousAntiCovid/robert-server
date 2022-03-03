@@ -10,6 +10,7 @@ import fr.gouv.stopc.e2e.mobileapplication.model.*;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import fr.gouv.stopc.robert.client.model.*;
@@ -51,9 +52,12 @@ public class MobileApplication {
 
     private final RegistrationRepository registrationRepository;
 
+    private final PlatformTimeSteps platformTime;
+
     public MobileApplication(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
             DefaultApi robertApi, ClientIdentifierRepository clientIdentifierRepository,
-            RegistrationRepository registrationRepository) {
+            RegistrationRepository registrationRepository, PlatformTimeSteps platformTime) {
+        this.platformTime = platformTime;
         this.username = username;
         this.applicationProperties = applicationProperties;
         this.registrationRepository = registrationRepository;
@@ -182,7 +186,7 @@ public class MobileApplication {
     }
 
     public ExposureStatus requestStatus() {
-        final var now = clock.now();
+        final var now = clock.at(platformTime.getPlatformTime());
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
         final var exposureStatusResponse = robertApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())

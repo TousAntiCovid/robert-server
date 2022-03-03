@@ -34,7 +34,7 @@ public class PlatformTimeSteps {
     @Getter
     private Instant platformTime = Instant.now();
 
-    @Etantdonnéque("l'on est aujourd'hui")
+    @Etantdonnéque("on est aujourd'hui")
     public void resetFakeTimeToNow() throws IOException, InterruptedException {
         platformTime = Instant.now();
         execInContainer("ws-rest", "rm -f /etc/faketime.d/faketime");
@@ -42,7 +42,7 @@ public class PlatformTimeSteps {
         verifyServiceClock("crypto-server", ZERO);
     }
 
-    @Etantdonnéque("l'on est il y a {duration}")
+    @Etantdonnéque("on est il y a {duration}")
     public void changeSystemDateTo(final Duration durationAgo) throws IOException, InterruptedException {
         platformTime = Instant.now().minus(durationAgo);
         execInContainer("ws-rest", format("echo -%d > /etc/faketime.d/faketime", durationAgo.toSeconds()));

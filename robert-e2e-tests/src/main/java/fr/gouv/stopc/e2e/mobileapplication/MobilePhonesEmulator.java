@@ -3,6 +3,7 @@ package fr.gouv.stopc.e2e.mobileapplication;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
 import io.cucumber.spring.ScenarioScope;
@@ -33,6 +34,8 @@ public class MobilePhonesEmulator {
 
     private final Map<String, MobileApplication> mobileApplications = new HashMap<>();
 
+    private final PlatformTimeSteps platformTime;
+
     public MobileApplication getMobileApplication(final String userName) {
         return mobileApplications.get(userName);
     }
@@ -40,7 +43,7 @@ public class MobilePhonesEmulator {
     public void createMobileApplication(final String userName) {
         final var mobileApplication = new MobileApplication(
                 userName, applicationProperties, captchaApi, robertApi, clientIdentifierRepository,
-                registrationRepository
+                registrationRepository, platformTime
         );
         mobileApplications.put(userName, mobileApplication);
     }
