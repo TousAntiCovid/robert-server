@@ -9,7 +9,7 @@ function generate_aes_key() {
 
 generate_aes_key 256 federation-key
 generate_aes_key 256 key-encryption-key
-for i in {-15..14} ; do
+for i in {-15..6} ; do
   generate_aes_key 192 "server-key-$(date --date="$i days" +%Y%m%d)"
 done
 
