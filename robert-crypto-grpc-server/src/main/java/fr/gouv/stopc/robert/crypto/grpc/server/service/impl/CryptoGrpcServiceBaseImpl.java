@@ -30,8 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import javax.inject.Inject;
-
 import java.security.Key;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -55,7 +53,6 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
     private final PropertyLoader propertyLoader;
 
-    @Inject
     public CryptoGrpcServiceBaseImpl(final ICryptoServerConfigurationService serverConfigurationService,
             final CryptoService cryptoService,
             final IECDHKeyService keyService,

@@ -9,11 +9,10 @@ import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import io.micrometer.core.instrument.util.StringUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import javax.inject.Inject;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,18 +22,12 @@ import static java.lang.Boolean.FALSE;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ReportControllerDelegate {
 
-    private IRestApiService restApiService;
+    private final IRestApiService restApiService;
 
-    private PropertyLoader propertyLoader;
-
-    @Inject
-    public ReportControllerDelegate(final IRestApiService restApiService,
-            final PropertyLoader propertyLoader) {
-        this.restApiService = restApiService;
-        this.propertyLoader = propertyLoader;
-    }
+    private final PropertyLoader propertyLoader;
 
     public boolean isReportRequestValid(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
         if (this.areBothFieldsPresent(reportBatchRequestVo)) {

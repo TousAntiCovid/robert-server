@@ -45,7 +45,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.CollectionUtils;
 
 import javax.crypto.spec.SecretKeySpec;
-import javax.inject.Inject;
 
 import java.security.Key;
 import java.security.SecureRandom;
@@ -66,7 +65,7 @@ import static org.mockito.Mockito.*;
         "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK" })
 public class ScoringAndRiskEvaluationJobConfigurationTest {
 
-    @Inject
+    @Autowired
     JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
@@ -591,7 +590,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         private Job scoreAndProcessRisks;
 
         @Bean
-        @Inject
         JobLauncherTestUtils jobLauncherTestUtils(Job scoreAndProcessRisks) {
 
             this.scoreAndProcessRisks = scoreAndProcessRisks;

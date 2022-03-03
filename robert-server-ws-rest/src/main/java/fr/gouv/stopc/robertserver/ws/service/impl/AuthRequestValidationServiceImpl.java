@@ -13,13 +13,12 @@ import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.vo.AuthRequestVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import javax.inject.Inject;
 
 import java.util.Date;
 import java.util.Objects;
@@ -27,6 +26,7 @@ import java.util.Optional;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AuthRequestValidationServiceImpl implements AuthRequestValidationService {
 
     @Value("${robert.server.request-time-delta-tolerance:60}")
@@ -39,17 +39,6 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
     private final IRegistrationService registrationService;
 
     private final WsServerConfiguration wsServerConfiguration;
-
-    @Inject
-    public AuthRequestValidationServiceImpl(final IServerConfigurationService serverConfigurationService,
-            final ICryptoServerGrpcClient cryptoServerClient,
-            final IRegistrationService registrationService,
-            final WsServerConfiguration wsServerConfiguration) {
-        this.serverConfigurationService = serverConfigurationService;
-        this.cryptoServerClient = cryptoServerClient;
-        this.registrationService = registrationService;
-        this.wsServerConfiguration = wsServerConfiguration;
-    }
 
     private ResponseEntity createErrorValidationFailed() {
         log.info("Discarding authenticated request because validation failed");

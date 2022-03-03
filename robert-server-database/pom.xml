@@ -22,23 +22,12 @@
 	<name>robert-server-database</name>
 	<description>Database management module</description>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-	</properties>
-
 	<dependencies>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -50,11 +39,6 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
 		</dependency>
 
 		<dependency>
@@ -81,33 +65,4 @@
 
 	</dependencies>
 
-	<build>
-		<plugins>
-			<!-- Disabled because fails when not executed from each module's directory -->
-			<!--
-			<plugin>
-				<groupId>org.complykit</groupId>
-				<artifactId>license-check-maven-plugin</artifactId>
-				<version>0.5.3</version>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>os-check</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<blacklist>
-						<param>agpl-3.0</param>
-						<param>gpl-2.0</param>
-						<param>gpl-3.0</param>
-					</blacklist>
-					<excludes>
-					</excludes>
-				</configuration>
-			</plugin>
-			-->
-		</plugins>
-	</build>
 </project>

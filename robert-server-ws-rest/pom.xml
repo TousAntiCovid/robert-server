@@ -1,5 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
 	<modelVersion>4.0.0</modelVersion>
 
 	<licenses>
@@ -29,18 +33,6 @@
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 
@@ -66,16 +58,6 @@
 			<groupId>${project.parent.groupId}</groupId>
 			<artifactId>robert-server-common</artifactId>
 			<version>${project.parent.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>javax.ws.rs</groupId>
-			<artifactId>javax.ws.rs-api</artifactId>
 		</dependency>
 
 		<dependency>
@@ -119,39 +101,26 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
-			<version>${io.jsonwebtoken.version}</version>
+			<version>${jjwt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
-			<version>${io.jsonwebtoken.version}</version>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
-			<version>${io.jsonwebtoken.version}</version>
-			<scope>runtime</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-api</artifactId>
-			<version>0.11.2</version>
-		</dependency>
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-impl</artifactId>
-			<version>0.11.2</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
-			<version>0.11.2</version>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -160,38 +129,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-			<!-- java.ws.rs-api verified as EPL 2.0 -->
-			<!-- Disabled because fails when not executed from each module's directory -->
-			<!-- <plugin> <groupId>org.complykit</groupId> <artifactId>license-check-maven-plugin</artifactId> 
-				<version>0.5.3</version> <executions> <execution> <phase>verify</phase> <goals> 
-				<goal>os-check</goal> </goals> </execution> </executions> <configuration> 
-				<blacklist> <param>agpl-3.0</param> <param>gpl-2.0</param> <param>gpl-3.0</param> 
-				</blacklist> <excludes> <param>javax.ws.rs:javax.ws.rs-api:2.1.1</param> 
-				</excludes> </configuration> </plugin> -->
 		</plugins>
 	</build>
-
-	<profiles>
-		<profile>
-			<id>swagger</id>
-			<dependencies>
-				<dependency>
-					<groupId>io.springfox</groupId>
-					<artifactId>springfox-boot-starter</artifactId>
-					<version>3.0.0</version>
-				</dependency>
-			</dependencies>
-		</profile>
-		<profile>
-			<id>logstash</id>
-			<dependencies>
-				<dependency>
-					<groupId>net.logstash.logback</groupId>
-					<artifactId>logstash-logback-encoder</artifactId>
-					<version>6.4</version>
-				</dependency>
-			</dependencies>
-		</profile>
-	</profiles>
 
 </project>

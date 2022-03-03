@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robertserver.dataset.injector.service.impl;
 
-import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.repository.ClientIdentifierRepository;
@@ -20,13 +19,12 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.dataset.injector.service.GeneratorIdService;
 import fr.gouv.stopc.robertserver.dataset.injector.service.InjectorDataSetService;
 import fr.gouv.stopc.robertserver.dataset.injector.utils.PropertyLoader;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import javax.inject.Inject;
 
 import java.security.Key;
 import java.util.*;
@@ -34,6 +32,7 @@ import java.util.stream.IntStream;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class InjectorDataSetServiceImpl implements InjectorDataSetService {
 
     @Autowired
@@ -50,9 +49,6 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
 
     @Autowired
     private ICryptographicStorageService cryptographicStorageService;
-
-    @Autowired
-    private ICryptoServerGrpcClient cryptoServerClient;
 
     @Autowired
     private ClientIdentifierRepository clientIdentifierRepository;
@@ -74,11 +70,6 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
     private long serviceTimeStart;
 
     private final PropertyLoader propertyLoader;
-
-    @Inject
-    public InjectorDataSetServiceImpl(PropertyLoader propertyLoader) {
-        this.propertyLoader = propertyLoader;
-    }
 
     @Override
     public void injectContacts(int contactCount) {

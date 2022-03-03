@@ -5,6 +5,7 @@ import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import io.micrometer.core.instrument.util.StringUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +16,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
-import javax.inject.Inject;
-
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +24,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RestApiServiceImpl implements IRestApiService {
 
     private final PropertyLoader propertyLoader;
@@ -32,14 +32,6 @@ public class RestApiServiceImpl implements IRestApiService {
     private final RestTemplate restTemplate;
 
     private final WebClient webClient;
-
-    @Inject
-    public RestApiServiceImpl(final PropertyLoader propertyLoader, final RestTemplate restTemplate,
-            final WebClient webClient) {
-        this.propertyLoader = propertyLoader;
-        this.restTemplate = restTemplate;
-        this.webClient = webClient;
-    }
 
     @Override
     public Optional<VerifyResponseDto> verifyReportToken(String token) {

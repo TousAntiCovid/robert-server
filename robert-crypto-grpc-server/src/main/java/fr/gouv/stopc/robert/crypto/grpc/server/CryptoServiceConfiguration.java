@@ -7,14 +7,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.inject.Inject;
-
 import java.io.IOException;
 
 @Configuration
 public class CryptoServiceConfiguration {
 
-    @Inject
     public CryptoServiceConfiguration(CryptoServiceGrpcServer server,
             PropertyLoader propertyLoader,
             ICryptographicStorageService cryptoStorageService) throws IOException {

@@ -1,32 +1,28 @@
 package fr.gouv.stopc.robertserver.database.service.impl;
 
-import java.util.List;
-import java.util.Optional;
-
-import javax.inject.Inject;
-
-import org.springframework.stereotype.Service;
-
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.RegistrationRepository;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
+@RequiredArgsConstructor
 public class RegistrationService implements IRegistrationService {
 
-    private RegistrationRepository registrationRepository;
-
-    @Inject
-    public RegistrationService(RegistrationRepository registrationRepository) {
-        this.registrationRepository = registrationRepository;
-    }
+    private final RegistrationRepository registrationRepository;
 
     @Override
     public Optional<Registration> createRegistration(byte[] id) {
-        return Optional.ofNullable(Registration.builder()
-                .permanentIdentifier(id)
-                .build())
+        return Optional.ofNullable(
+                Registration.builder()
+                        .permanentIdentifier(id)
+                        .build()
+        )
                 .map(this.registrationRepository::insert);
     }
 
@@ -71,7 +67,7 @@ public class RegistrationService implements IRegistrationService {
     public Long countNbUsersAtRisk() {
         return this.registrationRepository.countNbUsersAtRisk();
     }
-    
+
     /**
      * {@inheritDoc}
      */
