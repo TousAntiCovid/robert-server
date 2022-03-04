@@ -1,6 +1,6 @@
 include:
   - project: stopcovid19/accueil
-    ref: master
+    ref: feature/use-inria-s-new-runners
     file: gitlab/gitlab-ci-java-template.yml
 
 e2e-tests-docker:
