@@ -5,7 +5,8 @@ import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifi
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.DefaultApi;
-import lombok.AllArgsConstructor;
+import io.cucumber.spring.ScenarioScope;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -16,7 +17,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 @Service
-@AllArgsConstructor
+@ScenarioScope
+@RequiredArgsConstructor
 public class MobilePhonesEmulator {
 
     private final ApplicationProperties applicationProperties;
@@ -25,11 +27,11 @@ public class MobilePhonesEmulator {
 
     private final CaptchaApi captchaApi;
 
-    private ClientIdentifierRepository clientIdentifierRepository;
+    private final ClientIdentifierRepository clientIdentifierRepository;
 
     private final RegistrationRepository registrationRepository;
 
-    final Map<String, MobileApplication> mobileApplications = new HashMap<>();
+    private final Map<String, MobileApplication> mobileApplications = new HashMap<>();
 
     public MobileApplication getMobileApplication(final String userName) {
         return mobileApplications.get(userName);

@@ -1,7 +1,11 @@
 package fr.gouv.stopc.robert.server.batch.service.impl;
 
+import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
 import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robert.server.common.service.RobertClock.RobertInstant;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
@@ -11,9 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
 @Service
@@ -21,6 +27,12 @@ import java.util.stream.Collectors;
 public class BatchRegistrationServiceImpl implements BatchRegistrationService {
 
     private final ScoringStrategyService scoringStrategy;
+
+    private final PropertyLoader propertyLoader;
+
+    private final RobertServerBatchProperties properties;
+
+    private final RobertClock robertClock;
 
     /**
      * Keep epochs within the contagious period
@@ -61,7 +73,14 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
 
         Double totalRisk = scoringStrategy.aggregate(allScoresFromAllEpochs);
 
-        if (totalRisk >= riskThreshold) {
+        final var latestExpositionTime = robertClock.atEpoch(
+                registration.getExposedEpochs().stream()
+                        .mapToInt(EpochExposition::getEpochId)
+                        .max()
+                        .orElse(0)
+        );
+
+        if (totalRisk >= riskThreshold && isExpositionInRiskExpositionPeriod(latestExpositionTime)) {
             log.info(
                     "Risk detected. Aggregated risk since {}: {} greater than threshold {}",
                     latestRiskEpoch,
@@ -69,35 +88,26 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
                     riskThreshold
             );
 
-            scoresSinceLastNotif.stream()
-                    .max(Comparator.comparing(EpochExposition::getEpochId))
-                    .ifPresent(lastContactEpoch -> {
-                        long lastContactTimestamp = TimeUtils
-                                .getNtpSeconds(lastContactEpoch.getEpochId(), serviceTimeStart);
-                        long randomizedLastContactTimestamp = TimeUtils.dayTruncatedTimestamp(
-                                TimeUtils.getRandomizedDateNotInFuture(lastContactTimestamp)
-                        );
-                        if (randomizedLastContactTimestamp > registration.getLastContactTimestamp()) {
-                            log.debug(
-                                    "Last contact date is updating : last contact date from hello message : {}" +
-                                            " - previous last contact date : {} ==> stored last contact date : {}  ",
-                                    lastContactTimestamp,
-                                    registration.getLastContactTimestamp(),
-                                    randomizedLastContactTimestamp
-                            );
-                            registration.setLastContactTimestamp(randomizedLastContactTimestamp);
-                        } else {
-                            log.debug(
-                                    "Last contact date isn't updating : last contact date from hello message : {} - randomized to {}"
-                                            +
-                                            " - previous last contact date : {}",
-                                    lastContactTimestamp,
-                                    randomizedLastContactTimestamp,
-                                    registration.getLastContactTimestamp()
-                            );
-                        }
-                    });
+            final var randomLastContactTime = randomizePlusOrMinusOneDay(latestExpositionTime);
+            final var actualRegistrationLastContact = robertClock
+                    .atNtpTimestamp(registration.getLastContactTimestamp());
 
+            if (randomLastContactTime.isAfter(robertClock.now())) {
+                log.warn("last contact exposition is in the future, setting lastContactDate to today");
+                final var today = robertClock.now().truncatedTo(DAYS);
+                registration.setLastContactTimestamp(today.asNtpTimestamp());
+            } else if (randomLastContactTime.isAfter(actualRegistrationLastContact)) {
+                log.debug(
+                        "updating last contact date with randomized value: {} -> {}", actualRegistrationLastContact,
+                        randomLastContactTime
+                );
+                registration.setLastContactTimestamp(randomLastContactTime.asNtpTimestamp());
+            } else {
+                log.debug(
+                        "keeping previous last contact date {} because is was older than randomized value {}",
+                        actualRegistrationLastContact, randomLastContactTime
+                );
+            }
             // A risk has been detected, move time marker to now so that further risks are
             // only posterior to this one
             int newLatestRiskEpoch = TimeUtils.getCurrentEpochFrom(serviceTimeStart);
@@ -109,6 +119,40 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
             // It is up to the client to know if it should notify (new risk) or not given
             // the risk change or not.
         }
+    }
 
+    private boolean isExpositionInRiskExpositionPeriod(RobertInstant expositionTime) {
+        final var riskDateThreshold = robertClock.now()
+                .minus(properties.getRiskThreshold().getLastContactDelay());
+        return expositionTime.isAfter(riskDateThreshold);
+    }
+
+    private RobertInstant randomizePlusOrMinusOneDay(final RobertInstant lastContactTime) {
+        final var dayCountFromLastContact = lastContactTime.until(robertClock.now())
+                .toDays();
+        final int pastBound;
+        final int futureBound;
+        // comment assumes the risk level retention is 7 days
+        if (dayCountFromLastContact == 0) {
+            // take care to generate a random date between yesterday and today
+            pastBound = -1;
+            futureBound = 0;
+        } else if (dayCountFromLastContact == propertyLoader.getRiskLevelRetentionPeriodInDays()) {
+            // take care to generate a random date between 7 days ago and 6 days ago
+            pastBound = 0;
+            futureBound = 1;
+        } else if (dayCountFromLastContact == propertyLoader.getRiskLevelRetentionPeriodInDays() + 1) {
+            // take care to generate a random date between 9 days ago and 8 days ago
+            pastBound = -1;
+            futureBound = 0;
+        } else {
+            // generate a random date 1 day around last contact date
+            pastBound = -1;
+            futureBound = 1;
+        }
+        final var random = ThreadLocalRandom.current().nextInt(pastBound, futureBound + 1);
+        return lastContactTime
+                .plus(random, DAYS)
+                .truncatedTo(DAYS);
     }
 }

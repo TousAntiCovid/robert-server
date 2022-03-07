@@ -9,30 +9,23 @@ import fr.gouv.stopc.robertserver.ws.dto.DeleteHistoryResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import javax.inject.Inject;
 
 import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DeleteHistoryControllerImpl implements IDeleteHistoryController {
 
     private final IRegistrationService registrationService;
 
     private final AuthRequestValidationService authRequestValidationService;
-
-    @Inject
-    public DeleteHistoryControllerImpl(final IRegistrationService registrationService,
-            final AuthRequestValidationService authRequestValidationService) {
-        this.registrationService = registrationService;
-        this.authRequestValidationService = authRequestValidationService;
-    }
 
     @Override
     public ResponseEntity<DeleteHistoryResponseDto> deleteHistory(DeleteHistoryRequestVo deleteHistoryRequestVo)

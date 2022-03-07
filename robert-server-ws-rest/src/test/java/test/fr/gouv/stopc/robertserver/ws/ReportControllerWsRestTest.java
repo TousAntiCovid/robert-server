@@ -2,10 +2,12 @@ package test.fr.gouv.stopc.robertserver.ws;
 
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
+import fr.gouv.stopc.robertserver.ws.controller.impl.ReportControllerDelegate;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseV4Dto;
 import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.ApiError;
+import fr.gouv.stopc.robertserver.ws.exception.CustomRestExceptionHandler;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
@@ -15,6 +17,7 @@ import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.ContactVo;
 import fr.gouv.stopc.robertserver.ws.vo.HelloMessageDetailVo;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
+import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -25,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
@@ -214,11 +216,13 @@ public class ReportControllerWsRestTest {
     }
 
     @Test
-    public void should_produce_log_for_short_token_at_info_level(CapturedOutput logOutput) {
+    public void should_produce_log_for_short_token_at_info_level() {
         this.reportBatchRequestVo.setToken(SHORT_CODE);
         try {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
+            final var logCaptorDelegate = LogCaptor.forClass(ReportControllerDelegate.class);
+            final var logCaptorExceptionHandler = LogCaptor.forClass(CustomRestExceptionHandler.class);
 
             // When
             final var response = this.testRestTemplate
@@ -232,8 +236,10 @@ public class ReportControllerWsRestTest {
                     response.getBody(),
                     buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
             );
-            assertThat(logOutput).contains("Verifying the token failed for short report code");
-            assertThat(logOutput.toString()).contains("INFO");
+
+            assertThat(logCaptorDelegate.getInfoLogs()).contains("Verifying the token failed for short report code");
+            assertThat(logCaptorExceptionHandler.getWarnLogs())
+                    .contains(String.format("Unrecognized token of length: %d", SHORT_CODE.length()));
 
             verify(this.contactDtoService, never()).saveContacts(any());
         } catch (RobertServerException e) {
@@ -242,11 +248,13 @@ public class ReportControllerWsRestTest {
     }
 
     @Test
-    public void should_produce_log_for_test_token_at_info_level(CapturedOutput logOutput) {
+    public void should_produce_log_for_test_token_at_info_level() {
         this.reportBatchRequestVo.setToken(TEST_CODE);
         try {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
+            final var logCaptorDelegate = LogCaptor.forClass(ReportControllerDelegate.class);
+            final var logCaptorExceptionHandler = LogCaptor.forClass(CustomRestExceptionHandler.class);
 
             // When
             final var response = this.testRestTemplate
@@ -260,8 +268,10 @@ public class ReportControllerWsRestTest {
                     response.getBody(),
                     buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
             );
-            assertThat(logOutput).contains("Verifying the token failed for test report code");
-            assertThat(logOutput.toString()).contains("INFO");
+
+            assertThat(logCaptorDelegate.getInfoLogs()).contains("Verifying the token failed for test report code");
+            assertThat(logCaptorExceptionHandler.getWarnLogs())
+                    .contains(String.format("Unrecognized token of length: %d", TEST_CODE.length()));
 
             verify(this.contactDtoService, never()).saveContacts(any());
         } catch (RobertServerException e) {
@@ -270,11 +280,13 @@ public class ReportControllerWsRestTest {
     }
 
     @Test
-    public void should_produce_log_for_long_token_at_warn_level(CapturedOutput logOutput) {
+    public void should_produce_log_for_long_token_at_warn_level() {
         this.reportBatchRequestVo.setToken(LONG_CODE);
         try {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
+            final var logCaptorDelegate = LogCaptor.forClass(ReportControllerDelegate.class);
+            final var logCaptorExceptionHandler = LogCaptor.forClass(CustomRestExceptionHandler.class);
 
             // When
             final var response = this.testRestTemplate
@@ -288,8 +300,10 @@ public class ReportControllerWsRestTest {
                     response.getBody(),
                     buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
             );
-            assertThat(logOutput).contains("Verifying the token failed for long report code");
-            assertThat(logOutput.toString()).contains("WARN");
+
+            assertThat(logCaptorDelegate.getWarnLogs()).contains("Verifying the token failed for long report code");
+            assertThat(logCaptorExceptionHandler.getWarnLogs())
+                    .contains(String.format("Unrecognized token of length: %d", LONG_CODE.length()));
 
             verify(this.contactDtoService, never()).saveContacts(any());
         } catch (RobertServerException e) {

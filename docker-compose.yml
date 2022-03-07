@@ -1,79 +1,124 @@
 version: "3.5"
 services:
-  postgresql-robert:
-    build:
-      context: ./docker-compose/postgresql
-      dockerfile: ./Dockerfile
+  crypto-server:
+    build: robert-crypto-grpc-server
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/robert
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/keystore.p12
+      - ROBERT_CRYPTO_SERVER_KEYSTORE_PASSWORD=1234
+      - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
+    depends_on:
+      - postgres
+    volumes:
+      - faketime:/etc/faketime.d/
+
+  ws-rest:
+    build: robert-server-ws-rest
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
+      - ROBERT_CRYPTO_SERVER_HOST=crypto-server
+      - SUBMISSION_CODE_SERVER_HOST=mock-submission-code-server
+      - CAPTCHA_INTERNAL_HOSTNAME=http://mock-captcha:8080
+      - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8080/private/api/v1/captcha/{captchaId}/checkAnswer
+      - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
+      - ESR_LIMIT=0
+      - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
+    ports:
+      - "8086:8086"
+    depends_on:
+      - mongo
+      - crypto-server
+      - mock-submission-code-server
+      - mock-captcha
+    volumes:
+      - faketime:/etc/faketime.d/
+
+  batch:
+    build: robert-server-batch
+    environment:
+      - ROBERT_CRYPTO_SERVER_HOST=crypto-server
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_ENABLED=true
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_BASEURL=http://pushgateway:9091
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_GROUPINGKEY_INSTANCE=robert-batch
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_SHUTDOWNOPERATION=DELETE
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_PUSHRATE=5s
+      - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
+    depends_on:
+      - mongo
+      - crypto-server
+    volumes:
+      - faketime:/etc/faketime.d/
+
+  postgres:
+    image: postgres:9.6
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=robert
       - POSTGRES_DB=robert
       - POSTGRES_USER=robert
-  robert-crypto-grpc-server:
-    build:
-      context: ./robert-crypto-grpc-server
-      dockerfile: ./src/main/docker/Dockerfile
-    ports:
-      - "9090:9090"
-      - "19090:19090"
+
+  flyway:
+    image: flyway/flyway:7.8
+    command: migrate -connectRetries=60
     environment:
-      - JAVA_OPTS=-Xrunjdwp:transport=dt_socket,address=*:19090,server=y,suspend=n
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresql-robert:5432/robert
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_CONFIG_FILE=/conf/softhsm2.cfg
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
-      - ROBERT_CRYPTO_SERVER_KEYSTORE_FILE=file:/work/config/keystore.p12
+      FLYWAY_URL: jdbc:postgresql://postgres:5432/robert
+      FLYWAY_USER: robert
+      FLYWAY_PASSWORD: robert
+    volumes:
+      - ./robert-crypto-grpc-server-storage/src/main/resources/db/migration:/flyway/sql
     depends_on:
-      - postgresql-robert
+      - postgres
+
   mongo:
     image: "mongo:4.2.5"
     ports:
       - "27017:27017"
-  robert-server-ws-rest:
-    build:
-      context: ./robert-server-ws-rest
-      dockerfile: ./src/main/docker/Dockerfile
-    environment:
-      - ROBERT_JWT_PRIVATE_KEY=${ROBERT_JWT_PRIVATE_KEY}
-      - ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID=${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}
-      - ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY=${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}
-      - ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY=${ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
-      - ROBERT_CRYPTO_SERVER_HOST=robert-crypto-grpc-server
-      - SUBMISSION_CODE_SERVER_HOST=mock-submission-code-server
-      - CAPTCHA_INTERNAL_HOSTNAME=http://mock-captcha:8055
-      - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8055/private/api/v1/captcha/{captchaId}/checkAnswer
-      - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
-      - ESR_LIMIT=0
-    ports:
-      - "8086:8086"
-    depends_on:
-      - robert-crypto-grpc-server
-  robert-server-batch:
-    build:
-      context: ./robert-server-batch
-      dockerfile: ./src/main/docker/Dockerfile
-    environment:
-      - ROBERT_CRYPTO_SERVER_HOST=robert-crypto-grpc-server
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
-    depends_on:
-      - mongo
-      - robert-crypto-grpc-server
+
   mock-captcha:
     image: mockserver/mockserver:mockserver-5.11.2
-    command: -logLevel DEBUG -serverPort 8055
-    ports:
-      - "8055:8055"
+    command: -logLevel INFO -serverPort 8080
     volumes:
-      - ./docker-compose/mock-captcha-orange-server-config:/mock-expectation
+      - ./docker-compose/mock-captcha-orange-server-config:/mock-expectation:ro
     environment:
       - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
+
   mock-submission-code-server:
     image: mockserver/mockserver:mockserver-5.11.2
-    command: -logLevel DEBUG -serverPort 8087
-    ports:
-      - "8087:8087"
+    command: -logLevel INFO -serverPort 8080
     volumes:
-      - ./docker-compose/mock-submission-code-server-ws-rest-config:/mock-expectation
+      - ./docker-compose/mock-submission-code-server-ws-rest-config:/mock-expectation:ro
     environment:
       - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
+
+  prometheus:
+    profiles:
+      - monitoring
+    image: prom/prometheus:v2.32.1
+    command:
+      - --config.file=/etc/prometheus/config.yml
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker-compose/prometheus/config.yml:/etc/prometheus/config.yml:ro
+
+  pushgateway:
+    profiles:
+      - monitoring
+    image: prom/pushgateway:v1.4.2
+
+  grafana:
+    profiles:
+      - monitoring
+    image: grafana/grafana:6.7.2
+    volumes:
+      - ./docker-compose/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+    ports:
+      - "3000:3000"
+
+volumes:
+  faketime:

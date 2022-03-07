@@ -1,8 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.exception;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
+import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,61 +12,74 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
-import lombok.extern.slf4j.Slf4j;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 @ControllerAdvice
 @Slf4j
 public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
 
-	@Override
-	protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    @Override
+    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(
+            final HttpRequestMethodNotSupportedException e,
+            final HttpHeaders headers,
+            final HttpStatus status,
+            final WebRequest request) {
 
-		String message = e.getLocalizedMessage();
-		log.error(message);
+        final var message = e.getLocalizedMessage();
+        log.error(message);
 
-		return new ResponseEntity<>(buildApiError(message), status);
-	}
+        return new ResponseEntity<>(buildApiError(message), status);
+    }
 
-	@Override
-	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            final MethodArgumentNotValidException e,
+            final HttpHeaders headers,
+            final HttpStatus status,
+            final WebRequest request) {
 
-		String message = MessageConstants.INVALID_DATA.getValue();
-		log.error(e.getMessage());
-		log.error(message, e.getCause());
+        final var message = MessageConstants.INVALID_DATA.getValue();
+        log.error(e.getMessage());
+        log.error(message, e.getCause());
 
-		return new ResponseEntity<>(buildApiError(message), status);
-	}
+        return new ResponseEntity<>(buildApiError(message), status);
+    }
 
-	@ExceptionHandler(value = Exception.class)
-	public ResponseEntity<Object> handleException(Exception e) {
+    @ExceptionHandler(value = Exception.class)
+    public ResponseEntity<Object> handleException(final Exception e) {
 
-		String message = MessageConstants.ERROR_OCCURED.getValue();
-		if (e instanceof RobertServerException) {
-			message = e.getMessage();
-		}
-		log.error(e.getMessage());
-		log.error(message, e.getCause());
-		StringWriter errors = new StringWriter();
-		e.printStackTrace(new PrintWriter(errors));
-		log.error(errors.toString());
+        var message = MessageConstants.ERROR_OCCURED.getValue();
+        if (e instanceof RobertServerException) {
+            message = e.getMessage();
+        }
+        log.error(e.getMessage());
+        log.error(message, e.getCause());
+        StringWriter errors = new StringWriter();
+        e.printStackTrace(new PrintWriter(errors));
+        log.error(errors.toString());
 
-		return new ResponseEntity<>(buildApiError(message), retrieveHttpStatus(e));
-	}
+        return new ResponseEntity<>(buildApiError(message), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-	private HttpStatus retrieveHttpStatus(Exception e) {
+    @ExceptionHandler(value = RobertServerBadRequestException.class)
+    public ResponseEntity<Object> handleBadRequestException(Exception badRequestException) {
 
-		if (e instanceof RobertServerUnauthorizedException) {
-			return HttpStatus.UNAUTHORIZED;
-		} else if (e instanceof RobertServerBadRequestException) {
-			return HttpStatus.BAD_REQUEST;
-		}
+        final var message = badRequestException.getMessage();
+        log.warn(message, badRequestException);
+        return new ResponseEntity<>(buildApiError(message), HttpStatus.BAD_REQUEST);
+    }
 
-		return HttpStatus.INTERNAL_SERVER_ERROR;
-	}
+    @ExceptionHandler(value = RobertServerUnauthorizedException.class)
+    public ResponseEntity<Object> handleUnauthorizedException(final Exception unauthorizedException) {
 
-	private ApiError buildApiError(String message) {
+        final var message = unauthorizedException.getMessage();
+        log.warn(message, unauthorizedException);
+        return new ResponseEntity<>(buildApiError(message), HttpStatus.UNAUTHORIZED);
+    }
 
-		return ApiError.builder().message(message).build();
-	}
+    private ApiError buildApiError(final String message) {
+
+        return ApiError.builder().message(message).build();
+    }
 }

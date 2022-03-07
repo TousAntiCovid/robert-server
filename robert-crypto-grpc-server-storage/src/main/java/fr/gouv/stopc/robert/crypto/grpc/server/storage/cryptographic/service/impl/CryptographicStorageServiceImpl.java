@@ -1,8 +1,10 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.impl;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.MetricsService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.utils.KeystoreTypeEnum;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CryptographicStorageServiceImpl implements ICryptographicStorageService {
 
     private static final int SERVER_KEY_SIZE = 24;
@@ -42,6 +45,8 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     private static final String PKCS11_KEYSTORE_TYPE = "PKCS11";
 
     private static final String PKCS12_KEYSTORE_TYPE = "pkcs12";
+
+    private final MetricsService metricsService;
 
     private KeyPair keyPair;
 
@@ -233,6 +238,7 @@ public class CryptographicStorageServiceImpl implements ICryptographicStorageSer
     }
 
     private byte[] getServerKey(LocalDate dateFromEpoch) {
+        metricsService.recordKeyAccess(dateFromEpoch);
         byte[] serverKey = null;
         try {
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");

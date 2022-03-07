@@ -1,7 +1,12 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
-import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.POPULATE_REGISTRATION_WITH_SCORE_STEP_NAME;
-
+import fr.gouv.stopc.robert.server.batch.listener.ResetIdMappingTableListener;
+import fr.gouv.stopc.robert.server.batch.processor.RegistrationIdMappingProcessor;
+import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -11,13 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import fr.gouv.stopc.robert.server.batch.listener.ResetIdMappingTableListener;
-import fr.gouv.stopc.robert.server.batch.processor.RegistrationIdMappingProcessor;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
-import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
+import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.POPULATE_REGISTRATION_WITH_SCORE_STEP_NAME;
 
 @Configuration
 public class ScoredRegistrationIdMappingStepConfiguration extends StepConfigurationBase {
@@ -40,12 +39,13 @@ public class ScoredRegistrationIdMappingStepConfiguration extends StepConfigurat
                 .listener(this.scoredRegistrationIdMappingStepListener())
                 .build();
     }
-    
+
     @Bean
     public MongoItemReader<Registration> scoredRegistrationReader(MongoTemplate mongoTemplate) {
 
         String queryAsString = "{outdatedRisk: true}";
-        return registrationMongoItemReaderFactory.getMongoItemReader(mongoTemplate, queryAsString, this.getSorts(), CHUNK_SIZE);
+        return registrationMongoItemReaderFactory
+                .getMongoItemReader(mongoTemplate, queryAsString, this.getSorts(), CHUNK_SIZE);
     }
 
     public StepExecutionListener scoredRegistrationIdMappingStepListener() {

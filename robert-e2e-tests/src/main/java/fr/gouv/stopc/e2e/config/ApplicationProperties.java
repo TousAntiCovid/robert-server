@@ -18,4 +18,7 @@ public class ApplicationProperties {
     private final String cryptoPublicKey;
 
     private final String batchCommand;
+
+    private final String batchCommandDown;
+
 }

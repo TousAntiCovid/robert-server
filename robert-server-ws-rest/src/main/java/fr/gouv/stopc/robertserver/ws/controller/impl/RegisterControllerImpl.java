@@ -1,84 +1,68 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import javax.inject.Inject;
-import javax.validation.Valid;
-
 import com.google.protobuf.ByteString;
+import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.ApplicationConfigurationModel;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
+import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
+import fr.gouv.stopc.robertserver.ws.controller.IRegisterController;
 import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
+import fr.gouv.stopc.robertserver.ws.dto.RegisterResponseDto;
+import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
+import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
+import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
-import fr.gouv.stopc.robertserver.ws.controller.IRegisterController;
-import fr.gouv.stopc.robertserver.ws.dto.RegisterResponseDto;
-import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
-import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
-import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import org.springframework.util.CollectionUtils;
+
+import javax.validation.Valid;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RegisterControllerImpl implements IRegisterController {
 
-    private IRegistrationService registrationService;
-    private IServerConfigurationService serverConfigurationService;
-    private IApplicationConfigService applicationConfigService;
-    private ICryptoServerGrpcClient cryptoServerClient;
-    private IRestApiService restApiService;
+    private final IRegistrationService registrationService;
 
-    private WsServerConfiguration wsServerConfiguration;
+    private final IServerConfigurationService serverConfigurationService;
+
+    private final IApplicationConfigService applicationConfigService;
+
+    private final ICryptoServerGrpcClient cryptoServerClient;
+
+    private final IRestApiService restApiService;
+
+    private final WsServerConfiguration wsServerConfiguration;
 
     private final CaptchaService captchaService;
 
-    @Inject
-    public RegisterControllerImpl(final IRegistrationService registrationService,
-                                  final IServerConfigurationService serverConfigurationService,
-                                  final IApplicationConfigService applicationConfigService,
-                                  final CaptchaService captchaService,
-                                  final ICryptoServerGrpcClient cryptoServerClient,
-                                  final IRestApiService restApiService,
-                                  final WsServerConfiguration wsServerConfiguration) {
-
-        this.registrationService = registrationService;
-        this.serverConfigurationService = serverConfigurationService;
-        this.applicationConfigService = applicationConfigService;
-        this.captchaService = captchaService;
-        this.cryptoServerClient = cryptoServerClient;
-        this.restApiService = restApiService;
-        this.wsServerConfiguration = wsServerConfiguration;
-    }
-
-	@Override
-	public ResponseEntity<RegisterResponseDto> register(@Valid RegisterVo registerVo)
-			throws RobertServerException {
+    @Override
+    public ResponseEntity<RegisterResponseDto> register(@Valid RegisterVo registerVo)
+            throws RobertServerException {
 
         if (!this.captchaService.verifyCaptcha(registerVo)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
-        return postCheckRegister(registerVo);
-	}
 
+        return postCheckRegister(registerVo);
+    }
 
     private ResponseEntity<RegisterResponseDto> postCheckRegister(RegisterVo registerVo) throws RobertServerException {
 
@@ -95,7 +79,7 @@ public class RegisterControllerImpl implements IRegisterController {
 
         Optional<CreateRegistrationResponse> response = this.cryptoServerClient.createRegistration(request);
 
-        if(!response.isPresent() || response.get().hasError()) {
+        if (!response.isPresent() || response.get().hasError()) {
             log.error("Unable to generate an identity for the client");
             throw new RobertServerException(MessageConstants.ERROR_OCCURED);
         }
@@ -115,10 +99,15 @@ public class RegisterControllerImpl implements IRegisterController {
             if (CollectionUtils.isEmpty(serverConf)) {
                 registerResponseDto.setConfig(Collections.emptyList());
             } else {
-                registerResponseDto.setConfig(serverConf
-                        .stream()
-                        .map(item -> ClientConfigDto.builder().name(item.getName()).value(item.getValue()).build())
-                        .collect(Collectors.toList()));
+                registerResponseDto.setConfig(
+                        serverConf
+                                .stream()
+                                .map(
+                                        item -> ClientConfigDto.builder().name(item.getName()).value(item.getValue())
+                                                .build()
+                                )
+                                .collect(Collectors.toList())
+                );
             }
 
             registerResponseDto.setTuples(Base64.encode(identity.getTuples().toByteArray()));

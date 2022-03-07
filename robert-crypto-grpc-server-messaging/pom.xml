@@ -1,5 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
 	<modelVersion>4.0.0</modelVersion>
 
 	<licenses>
@@ -27,19 +31,16 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-batch</artifactId>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-			</exclusions>
+			<groupId>javax.annotation</groupId>
+			<artifactId>javax.annotation-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
@@ -56,14 +57,20 @@
 		</dependency>
 
 		<dependency>
-			<groupId>io.grpc</groupId>
-			<artifactId>grpc-testing</artifactId>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java-util</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>com.google.protobuf</groupId>
-			<artifactId>protobuf-java-util</artifactId>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-testing</artifactId>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
@@ -109,16 +116,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- javax.annotation-api verified as CCDL 1.1 -->
-			<!-- protobuf-java-util verified as BDS 3 -->
-			<!-- Disabled because fails when not executed from each module's directory -->
-			<!-- <plugin> <groupId>org.complykit</groupId> <artifactId>license-check-maven-plugin</artifactId> 
-				<version>0.5.3</version> <executions> <execution> <phase>verify</phase> <goals> 
-				<goal>os-check</goal> </goals> </execution> </executions> <configuration> 
-				<blacklist> <param>agpl-3.0</param> <param>gpl-2.0</param> <param>gpl-3.0</param> 
-				</blacklist> <excludes> <param>javax.annotation:javax.annotation-api:1.3.2</param> 
-				<param>com.google.protobuf:protobuf-java-util:${protobuf.version}</param> 
-				</excludes> </configuration> </plugin> -->
 		</plugins>
 	</build>
 

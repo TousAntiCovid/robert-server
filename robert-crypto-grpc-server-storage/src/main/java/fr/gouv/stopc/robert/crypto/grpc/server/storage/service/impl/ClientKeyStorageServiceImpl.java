@@ -17,7 +17,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
-import javax.inject.Inject;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -39,7 +38,6 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
 
     private ClientIdentifierRepository clientIdentifierRepository;
 
-    @Inject
     public ClientKeyStorageServiceImpl(final ICryptographicStorageService cryptographicStorageService,
             final ClientIdentifierRepository clientIdentifierRepository) {
 

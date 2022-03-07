@@ -24,12 +24,11 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import io.grpc.stub.StreamObserver;
+import io.micrometer.core.annotation.Timed;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import javax.inject.Inject;
 
 import java.security.Key;
 import java.time.Instant;
@@ -54,7 +53,6 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
 
     private final PropertyLoader propertyLoader;
 
-    @Inject
     public CryptoGrpcServiceBaseImpl(final ICryptoServerConfigurationService serverConfigurationService,
             final CryptoService cryptoService,
             final IECDHKeyService keyService,
@@ -71,6 +69,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     @Override
+    @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "reloadHSM" })
     public void reloadHSM(ReloadHSMRequest request, StreamObserver<ReloadHSMResponse> responseObserver) {
 
         boolean success = this.cryptographicStorageService.reloadHSM(
@@ -89,6 +88,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     @Override
+    @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "getHSMCacheStatus" })
     public void getHSMCacheStatus(HSMCacheStatusRequest request,
             StreamObserver<HSMCacheStatusResponse> responseObserver) {
 
@@ -103,6 +103,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     @Override
+    @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "createRegistration" })
     public void createRegistration(CreateRegistrationRequest request,
             StreamObserver<CreateRegistrationResponse> responseObserver) {
 
@@ -204,6 +205,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     @Override
+    @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "getIdFromAuth" })
     public void getIdFromAuth(GetIdFromAuthRequest request,
             StreamObserver<GetIdFromAuthResponse> responseObserver) {
         DigestSaltEnum digestSalt = DigestSaltEnum.valueOf((byte) request.getRequestType());
@@ -290,6 +292,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     @Override
+    @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "getIdFromStatus" })
     public void getIdFromStatus(GetIdFromStatusRequest request,
             StreamObserver<GetIdFromStatusResponse> responseObserver) {
         Optional<AuthRequestValidationResult> validationResult = null;
@@ -402,6 +405,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     @Override
+    @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "validateContact" })
     public void validateContact(ValidateContactRequest request,
             StreamObserver<ValidateContactResponse> responseObserver) {
 
@@ -522,18 +526,19 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
         }
 
         responseObserver.onNext(
-            ValidateContactResponse.newBuilder()
-                .setIdA(ByteString.copyFrom(ebidContent.get().getIdA()))
-                .setCountryCode(ByteString.copyFrom(cc))
-                .setEpochId(ebidContent.get().getEpochId())
-                .addAllInvalidHelloMessageDetails(invalidMessageDetails)
-                .build()
-            );
+                ValidateContactResponse.newBuilder()
+                        .setIdA(ByteString.copyFrom(ebidContent.get().getIdA()))
+                        .setCountryCode(ByteString.copyFrom(cc))
+                        .setEpochId(ebidContent.get().getEpochId())
+                        .addAllInvalidHelloMessageDetails(invalidMessageDetails)
+                        .build()
+        );
         responseObserver.onCompleted();
 
     }
 
     @Override
+    @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "getInfoFromHelloMessage" })
     public void getInfoFromHelloMessage(GetInfoFromHelloMessageRequest request,
             StreamObserver<GetInfoFromHelloMessageResponse> responseObserver) {
         byte[] idA;
@@ -698,6 +703,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     }
 
     @Override
+    @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "deleteId" })
     public void deleteId(DeleteIdRequest request,
             StreamObserver<DeleteIdResponse> responseObserver) {
         Optional<AuthRequestValidationResult> validationResult;
@@ -896,7 +902,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     /**
      * Decrypt the provided ebid and check the authRequestEpoch it contains the
      * provided one or the next/previous
-     * 
+     *
      * @param ebid
      * @param authRequestEpoch
      * @param enableEpochOverlapping authorize the epoch overlapping (ie too close

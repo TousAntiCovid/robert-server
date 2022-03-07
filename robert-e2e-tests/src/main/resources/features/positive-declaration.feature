@@ -1,39 +1,73 @@
-Feature: Covid-19 positive declaration
-  As a user
-  I want to declare myself at risk
-  in order to notify people I met.
+# language: fr
+Fonctionnalité: Covid-19 positive declaration
 
-  Background:
-    Given John installs the application TAC
-    Given Sarah installs the application TAC
-    Given Paul installs the application TAC
+  En tant qu'utilisateur de Robert
+  Je souhaite être notifié si je croise une personne malade
+  Dans le but de limiter la propagation du Covid19
 
-  Scenario: No notification if the batch has not been executed
-    Given just now, the users John and Sarah will be near during 60 minutes
-    When John report himself sick
-    And robert batch as not been executed yet
-    Then Sarah has no notification
+  Contexte:
+    Etant donné que l'on est aujourd'hui
+    Et que John, Sarah et Paul ont l'application TAC
 
-  Scenario: One people is notified when someone declare himself positive
-    Given just now, the users John and Sarah will be near during 60 minutes
-    When John report himself sick
-    And robert batch has been triggered
-    Then Sarah is notified at risk
+  Scénario: Une personne est prévenue si un de ses contacts se déclare malade
+    Etant donné que John et Sarah sont à proximité 60 minutes
+    Lorsque John se déclare malade
+    Et que le batch robert est exécuté
+    Alors Sarah est à risque
 
-  Scenario: Two people are notified when someone declare himself positive
-    Given just now, the users John, Sarah and Paul will be near during 60 minutes
-    When John report himself sick
-    And robert batch has been triggered
-    Then Sarah is notified at risk
-    And Paul is notified at risk
+  Scénario: Deux personnes sont prévenues si elles croisent une personne qui se déclare malade
+    Etant donné que John, Sarah et Paul sont à proximité 60 minutes
+    Lorsque John se déclare malade
+    Et que le batch robert est exécuté
+    Alors Sarah est à risque
+    Et Paul est à risque
 
-  Scenario: Nobody meets in person
-    When Paul report himself sick
-    And robert batch has been triggered
-    Then Sarah has no notification
+  Scénario: Personne ne croise la personne qui se déclare malade
+    Etant donné que Sarah et Paul sont à proximité 60 minutes
+    Lorsque John se déclare malade
+    Et que le batch robert est exécuté
+    Alors Sarah n'est pas à risque
+    Et Paul n'est pas à risque
 
-  Scenario: People meet not long enough
-    Given just now, the users Paul and Sarah will be near during 5 minutes
-    When Paul report himself sick
-    And robert batch has been triggered
-    Then Sarah has no notification
+  Scénario: La personne qui se déclare malade n'est pas à risque
+    Etant donné que John et Sarah sont à proximité 60 minutes
+    Lorsque John se déclare malade
+    Et que le batch robert est exécuté
+    Alors John n'est pas à risque
+
+  Scénario: Pas d'alerte si des personnes croisent furtivement une personne qui se déclare malade
+    Etant donné que John, Sarah et Paul sont à proximité 5 minutes
+    Lorsque John se déclare malade
+    Et que le batch robert est exécuté
+    Alors Sarah n'est pas à risque
+    Et Paul n'est pas à risque
+
+  Plan du Scénario: On passe à risque lorsque notre dernier contact date d'il y a 7 jours ou moins (exemple avec il y a <jours>)
+    Etant donné que John et Sarah étaient à proximité 60 minutes il y a <jours> jours et que Sarah s'est déclarée malade
+    Lorsque le batch robert est exécuté
+    Alors John est à risque
+    Exemples:
+      | jours |
+      | 1     |
+      | 2     |
+      | 3     |
+      | 4     |
+      | 5     |
+      | 6     |
+      | 7     |
+
+  Plan du Scénario: Pas d'alerte si le dernier contact date d'il y a plus de 7 jours (exemple avec il y a <jours>)
+    Etant donné que John et Sarah étaient à proximité 60 minutes il y a <jours> jours et que Sarah s'est déclarée malade
+    Lorsque le batch robert est exécuté
+    Alors John n'est pas à risque
+    Exemples:
+      | jours |
+      | 8     |
+      | 9     |
+      | 10    |
+      | 11    |
+      | 12    |
+      | 13    |
+      | 14    |
+      | 15    |
+      | 16    |

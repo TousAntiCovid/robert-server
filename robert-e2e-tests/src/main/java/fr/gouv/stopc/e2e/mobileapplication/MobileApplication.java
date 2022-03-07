@@ -7,7 +7,6 @@ import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.e2e.mobileapplication.model.*;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.EpochExposition;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
@@ -18,12 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
-import static java.util.Base64.*;
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.util.Base64.getEncoder;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -91,7 +92,7 @@ public class MobileApplication {
         // challenge
         final var response = captchaApi.captchaChallengeImageWithHttpInfo(captchaChallenge.getId());
         assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
-        assertThat("image content", response.getData(), notNullValue());
+        assertThat("image content", response.getBody(), notNullValue());
 
         // The user reads the image content
         return new CaptchaSolution(captchaId, "ABCD");
@@ -222,17 +223,23 @@ public class MobileApplication {
                 .orElseThrow();
     }
 
-    public void changeExposedEpochsDatesStartingAt(Instant startDate) {
-        var registration = getRegistration();
-        final var epochDate = clock.at(startDate);
-        registration.setLatestRiskEpoch(epochDate.asEpochId());
-        registration.setLastContactTimestamp(epochDate.asNtpTimestamp());
-        int index = 0;
-        for (EpochExposition epochExposition : registration.getExposedEpochs()) {
-            epochExposition.setEpochId(epochDate.plusEpochs(index++).asEpochId());
+    public void fakeExposedEpochs(final Duration durationBackInTime) {
+        final var registration = getRegistration();
+
+        final var lastContactTime = clock.now()
+                .minus(durationBackInTime)
+                .truncatedTo(DAYS);
+        registration.setLastContactTimestamp(lastContactTime.asNtpTimestamp());
+
+        final var latestRiskTime = clock.atEpoch(registration.getLatestRiskEpoch())
+                .minus(durationBackInTime);
+        registration.setLatestRiskEpoch(latestRiskTime.asEpochId());
+
+        for (final var epochExposition : registration.getExposedEpochs()) {
+            final var expositionTime = clock.atEpoch(epochExposition.getEpochId())
+                    .minus(durationBackInTime);
+            epochExposition.setEpochId(expositionTime.asEpochId());
         }
-        registration.setOutdatedRisk(true);
         this.registrationRepository.save(registration);
     }
-
 }

@@ -1,32 +1,21 @@
-Feature: Covid-19 risk exposure deletion
-  As a user
-  I want to be able to delete my exposure history
-  In order to assert my right to be forgotten
+# language: fr
+Fonctionnalité: Suppression de l'historique d'exposition
 
-  Background:
-    Given John installs the application TAC
-    Given Sarah installs the application TAC
-    Given Paul installs the application TAC
+  En tant qu'utilisateur de Robert
+  Je souhaite supprimer mon historique d'exposition
+  Dans le but de faire respecter mon droit de modification sur mes données
 
-  Scenario: One People with no history ask to delete its exposure history
-    Then Sarah delete her risk exposure history
+  Contexte:
+    Etant donné que l'on est aujourd'hui
+    Et que Sarah et Paul ont l'application TAC
 
-  Scenario: One People delete its exposure history
-    Given tomorrow at 23:45, the users Paul and Sarah will be near during 15 minutes
-    When Paul report himself sick
-    And robert batch has been triggered
-    And Sarah delete her risk exposure history
-    Given in two days at 00:00, the users John and Sarah will be near during 15 minutes
-    When John report himself sick
-    And robert batch has been triggered
-    Then Sarah has no notification
+  Scénario: Une personne supprime son historique d'exposition
+    Etant donné que Paul et Sarah sont à proximité 15 minutes
+    Et que Paul se déclare malade
+    Et que le batch robert est exécuté
+    Lorsque Sarah supprime son historique d'exposition
+    Alors les données de Sarah n'existent plus
 
-  Scenario: One People does not delete its exposure history
-    Given tomorrow at 23:45, the users Paul and Sarah will be near during 15 minutes
-    When Paul report himself sick
-    And robert batch has been triggered
-    And Sarah does not delete her risk exposure history
-    Given in two days at 00:00, the users John and Sarah will be near during 15 minutes
-    When John report himself sick
-    And robert batch has been triggered
-    Then Sarah is notified at risk
+  Scénario: Une personne sans historique demande la suppression de son historique
+    Lorsque Sarah supprime son historique d'exposition
+    Alors les données de Sarah n'existent plus

@@ -1,30 +1,32 @@
-Feature: Covid-19 risk evolution
-  As a user
-  I want to know when I'm no longer at risk
-  in order to get out personal confinement.
+# language: fr
+Fonctionnalité: Evolution du risque au fil du temps
 
-  Background:
-    Given John installs the application TAC
-    Given Sarah installs the application TAC
-    Given Yoko installs the application TAC
+  En tant qu'utilisateur de Robert
+  Je veux être prévenu lorsque ma période à risque est terminée
+  Dans le but de sortir d'isolement
 
-  Scenario: Fourteen days after contact user is still at risk
-    Given fourteen days ago, Sarah and John met and Sarah was at risk following John report
-    Then Sarah is notified at risk
+  Contexte:
+    Etant donné que l'on est aujourd'hui
+    Et que John, Sarah et Paul ont l'application TAC
 
-  Scenario: Fifteen days after contact nobody is at risk
-    Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
-    Then Sarah has no notification
+  Plan du Scénario: On n'est plus à risque <jours> après le dernier contact
+    Etant donné que Sarah et John étaient à proximité 60 minutes il y a <jours> jours et que John s'est déclaré malade
+    Lorsque le batch robert est exécuté
+    Alors Sarah n'est pas à risque
+    Exemples:
+      | jours |
+      | 8     |
+      | 10    |
+      | 15    |
 
-  Scenario: User data is deleted after 15 days
-    Given fifteen days ago, Sarah and John met and Sarah was at risk following John report
-    Then all Sarah's contact and risk data older than 15 days were deleted
+  Plan du Scénario: On est toujours à risque <jours> après le dernier contact
+    Etant donné que Sarah et John étaient à proximité 60 minutes il y a <jours> jours et que John s'est déclaré malade
+    Lorsque le batch robert est exécuté
+    Alors Sarah est à risque
+    Exemples:
+      | jours |
+      | 1     |
+      | 2     |
+      | 6     |
+      | 7     |
 
-  Scenario: If a user meet an other ill person, CNAME will be updated
-    Given fourteen days ago, Sarah and John met and Sarah was at risk following John report
-    And Sarah is notified at risk
-    And Sarah last contact is now near fourteen days ago
-    When just now, the users Yoko and Sarah will be near during 60 minutes
-    And Yoko report herself sick
-    And robert batch has been triggered
-    Then Sarah last contact is now near now

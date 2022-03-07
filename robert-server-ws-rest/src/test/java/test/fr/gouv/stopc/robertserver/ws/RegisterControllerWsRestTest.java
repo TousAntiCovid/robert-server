@@ -1,28 +1,5 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.net.URI;
-import java.util.Optional;
-
-import javax.inject.Inject;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
@@ -43,6 +20,26 @@ import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -65,7 +62,7 @@ public class RegisterControllerWsRestTest {
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
-    @Inject
+    @Autowired
     private TestRestTemplate restTemplate;
 
     HttpEntity<RegisterVo> requestEntity;
@@ -107,9 +104,10 @@ public class RegisterControllerWsRestTest {
         // TODO: review this or find a better way to validate epochid
         // Sanity check: this test will fail twenty years after the start of the service
         // (used to prevent epoch calculation errors)
-        // Robert protocol uses 24 bits to store epochId. It means we can have 2^24 = 16777216 epochs.
+        // Robert protocol uses 24 bits to store epochId. It means we can have 2^24 =
+        // 16777216 epochs.
         // We use 4 epochs per hour and it can last for hundred of years.
-        assertTrue(this.currentEpoch <= 4*24*365*20);
+        assertTrue(this.currentEpoch <= 4 * 24 * 365 * 20);
     }
 
     @Test
@@ -118,8 +116,10 @@ public class RegisterControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.body, this.headers);
 
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.GET,
-                this.requestEntity, String.class);
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl.toString(), HttpMethod.GET,
+                this.requestEntity, String.class
+        );
 
         log.info("******* Bad HTTP Verb Payload: {}", response.getBody());
 
@@ -127,61 +127,98 @@ public class RegisterControllerWsRestTest {
         verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
     }
 
-    	@Test
-    	public void testNullCaptcha() {
-    		this.body = RegisterVo.builder().captcha(null).build();
+    @Test
+    public void testNullCaptcha() {
+        this.body = RegisterVo.builder().captcha(null).build();
 
-    		this.requestEntity = new HttpEntity<>(this.body, this.headers);
+        this.requestEntity = new HttpEntity<>(this.body, this.headers);
 
-    		ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
-    				this.requestEntity, String.class);
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl.toString(), HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
-    		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    		verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
-    	}
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
+    }
 
-    	@Test
-    	public void testNoCaptcha() {
-    		this.body = RegisterVo.builder().build();
+    @Test
+    public void testNoCaptcha() {
+        this.body = RegisterVo.builder().build();
 
-    		this.requestEntity = new HttpEntity<>(this.body, this.headers);
+        this.requestEntity = new HttpEntity<>(this.body, this.headers);
 
-    		ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
-    				this.requestEntity, String.class);
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl.toString(), HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
-    		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    		verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
-    	}
-
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
+    }
 
     @Test
     public void testBadRequests() {
         String captchaId = "92c9623a7c474c4a92661614cd29d08b";
 
-        assertEquals(HttpStatus.BAD_REQUEST, 
-                this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-                        RegisterVo.builder().captcha("").captchaId(captchaId).clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
-                        , this.headers), String.class).getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST, 
-                this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-                        RegisterVo.builder().captchaId(captchaId).clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
-                        , this.headers), String.class).getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST, 
-                this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-                        RegisterVo.builder().captcha("mycaptcha").captchaId("").clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
-                        , this.headers), String.class).getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST, 
-                this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-                        RegisterVo.builder().captcha("mycaptcha").clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build()
-                        , this.headers), String.class).getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST, 
-                this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-                        RegisterVo.builder().captcha("mycaptcha").captchaId(captchaId).clientPublicECDHKey("").build()
-                        , this.headers), String.class).getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST, 
-                this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
-                        RegisterVo.builder().captcha("mycaptcha").captchaId(captchaId).build()
-                        , this.headers), String.class).getStatusCode());
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                this.restTemplate.exchange(
+                        this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
+                                RegisterVo.builder().captcha("").captchaId(captchaId)
+                                        .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build(),
+                                this.headers
+                        ), String.class
+                ).getStatusCode()
+        );
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                this.restTemplate.exchange(
+                        this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
+                                RegisterVo.builder().captchaId(captchaId)
+                                        .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build(),
+                                this.headers
+                        ), String.class
+                ).getStatusCode()
+        );
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                this.restTemplate.exchange(
+                        this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
+                                RegisterVo.builder().captcha("mycaptcha").captchaId("")
+                                        .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build(),
+                                this.headers
+                        ), String.class
+                ).getStatusCode()
+        );
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                this.restTemplate.exchange(
+                        this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
+                                RegisterVo.builder().captcha("mycaptcha")
+                                        .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes())).build(),
+                                this.headers
+                        ), String.class
+                ).getStatusCode()
+        );
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                this.restTemplate.exchange(
+                        this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
+                                RegisterVo.builder().captcha("mycaptcha").captchaId(captchaId).clientPublicECDHKey("")
+                                        .build(),
+                                this.headers
+                        ), String.class
+                ).getStatusCode()
+        );
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                this.restTemplate.exchange(
+                        this.targetUrl.toString(), HttpMethod.POST, new HttpEntity<>(
+                                RegisterVo.builder().captcha("mycaptcha").captchaId(captchaId).build(), this.headers
+                        ), String.class
+                ).getStatusCode()
+        );
     }
 
     @Test
@@ -198,8 +235,10 @@ public class RegisterControllerWsRestTest {
         // difference between solving and the request)
         doReturn(false).when(this.captchaService).verifyCaptcha(ArgumentMatchers.any());
 
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
-                this.requestEntity, String.class);
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl.toString(), HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
@@ -224,8 +263,10 @@ public class RegisterControllerWsRestTest {
         when(this.cryptoServerClient.createRegistration(any())).thenReturn(Optional.empty());
 
         // When
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
-                this.requestEntity, String.class);
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl.toString(), HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
         // Then
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -260,8 +301,10 @@ public class RegisterControllerWsRestTest {
 
         when(this.registrationService.saveRegistration(any())).thenReturn(Optional.empty());
         // When
-        ResponseEntity<String> response = this.restTemplate.exchange(this.targetUrl.toString(), HttpMethod.POST,
-                this.requestEntity, String.class);
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                this.targetUrl.toString(), HttpMethod.POST,
+                this.requestEntity, String.class
+        );
 
         // Then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -272,26 +315,34 @@ public class RegisterControllerWsRestTest {
 
     @Test
     public void testSuccessV2() {
-        testRegisterSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REGISTER).build().toUri()
-                .toString());
+        testRegisterSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REGISTER).build().toUri()
+                        .toString()
+        );
     }
 
     @Test
     public void testSuccessV3() {
-        testRegisterSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REGISTER).build().toUri()
-                .toString());
+        testRegisterSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REGISTER).build().toUri()
+                        .toString()
+        );
     }
 
     @Test
     public void testSuccessV4() {
-        testRegisterSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REGISTER).build().toUri()
-                .toString());
+        testRegisterSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REGISTER).build().toUri()
+                        .toString()
+        );
     }
 
     @Test
     public void testSuccessV5() {
-        testRegisterSucceeds(UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REGISTER).build().toUri()
-                .toString());
+        testRegisterSucceeds(
+                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REGISTER).build().toUri()
+                        .toString()
+        );
     }
 
     @Test
@@ -339,8 +390,10 @@ public class RegisterControllerWsRestTest {
         when(this.captchaService.verifyCaptcha(this.body)).thenReturn(true);
 
         // When
-        ResponseEntity<RegisterResponseDto> response = this.restTemplate.exchange(this.targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, RegisterResponseDto.class);
+        ResponseEntity<RegisterResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, RegisterResponseDto.class
+        );
 
         // Then
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -384,8 +437,10 @@ public class RegisterControllerWsRestTest {
         when(this.captchaService.verifyCaptcha(this.body)).thenReturn(true);
 
         // When
-        ResponseEntity<RegisterResponseDto> response = this.restTemplate.exchange(url,
-                HttpMethod.POST, this.requestEntity, RegisterResponseDto.class);
+        ResponseEntity<RegisterResponseDto> response = this.restTemplate.exchange(
+                url,
+                HttpMethod.POST, this.requestEntity, RegisterResponseDto.class
+        );
 
         // Then
         assertEquals(HttpStatus.CREATED, response.getStatusCode());

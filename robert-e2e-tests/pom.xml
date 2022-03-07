@@ -15,21 +15,21 @@
     <artifactId>robert-e2e-tests</artifactId>
 
     <properties>
-        <java.version>11</java.version>
-        <cucumber.version>7.0.0</cucumber.version>
-        <gson-fire.version>1.8.5</gson-fire.version>
+        <cucumber.version>7.2.3</cucumber.version>
         <jsr305.version>3.0.2</jsr305.version>
-        <junit-platform.version>1.8.1</junit-platform.version>
+        <junit-platform.version>1.8.2</junit-platform.version>
         <junit-jupiter.version>5.8.1</junit-jupiter.version>
-        <okhttp3.version>4.9.1</okhttp3.version>
-        <prettytime-nlp.version>5.0.2.Final</prettytime-nlp.version>
-        <swagger-annotations.version>1.6.3</swagger-annotations.version>
+        <swagger-annotations.version>1.6.4</swagger-annotations.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-json</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -58,28 +58,8 @@
             <version>${jsr305.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.gsonfire</groupId>
-            <artifactId>gson-fire</artifactId>
-            <version>${gson-fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>logging-interceptor</artifactId>
-            <version>${okhttp3.version}</version>
-        </dependency>
-        <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.ocpsoft.prettytime</groupId>
-            <artifactId>prettytime-nlp</artifactId>
-            <version>${prettytime-nlp.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -121,21 +101,6 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
@@ -155,9 +120,13 @@
                     <modelPackage>
                         fr.gouv.stopc.robert.client.model
                     </modelPackage>
+                    <typeMappings>
+                        <typeMapping>File=org.springframework.core.io.Resource</typeMapping>
+                    </typeMappings>
                     <configOptions>
-                        <library>okhttp-gson</library>
+                        <library>resttemplate</library>
                         <dateLibrary>java8</dateLibrary>
+                        <useAbstractionForFiles>true</useAbstractionForFiles>
                         <openApiNullable>false</openApiNullable>
                         <useRuntimeException>true</useRuntimeException>
                         <additionalModelTypeAnnotations>

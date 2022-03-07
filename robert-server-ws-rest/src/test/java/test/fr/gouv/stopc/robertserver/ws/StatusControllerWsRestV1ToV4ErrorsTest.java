@@ -7,6 +7,7 @@ import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -15,8 +16,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.inject.Inject;
 
 import java.net.URI;
 
@@ -32,7 +31,7 @@ public class StatusControllerWsRestV1ToV4ErrorsTest {
     @Value("${controller.path.prefix}" + UriConstants.API_V4)
     private String pathPrefixV4;
 
-    @Inject
+    @Autowired
     private TestRestTemplate restTemplate;
 
     HttpEntity<StatusVo> requestEntity;

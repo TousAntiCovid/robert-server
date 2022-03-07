@@ -34,7 +34,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.KeyGenerator;
-import javax.inject.Inject;
 
 import java.net.URI;
 import java.security.Key;
@@ -68,7 +67,7 @@ public class DeleteHistoryControllerWsRestTest {
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
-    @Inject
+    @Autowired
     private TestRestTemplate restTemplate;
 
     HttpEntity<DeleteHistoryRequestVo> requestEntity;

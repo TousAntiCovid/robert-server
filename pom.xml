@@ -39,21 +39,18 @@
 		<module>robert-crypto-grpc-server-storage</module>
 		<module>robert-server-mobile-app-emulator</module>
 		<module>robert-e2e-tests</module>
+		<module>robert-server-dataset-injector</module>
 	</modules>
 
 	<properties>
 		<java.version>11</java.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.jar.plugin.version>3.1.1</maven.jar.plugin.version>
-		<javax-rs.version>2.1.1</javax-rs.version>
 		<grpc.version>1.29.0</grpc.version>
 		<protobuf.version>3.11.0</protobuf.version>
 		<error_prone_annotations.version>2.3.4</error_prone_annotations.version>
 		<postgresql.version>42.2.12</postgresql.version>
 		<bountycastle.version>1.65</bountycastle.version>
 		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
-		<io.jsonwebtoken.version>0.11.2</io.jsonwebtoken.version>
+		<jjwt.version>0.11.2</jjwt.version>
 		<junit-jupiter.version>5.7.1</junit-jupiter.version>
 		<logcaptor.version>2.6.1</logcaptor.version>
 		<mockito.version>3.7.0</mockito.version>
@@ -67,64 +64,14 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>junit</groupId>
-					<artifactId>junit</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.batch</groupId>
-			<artifactId>spring-batch-test</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>junit</groupId>
-					<artifactId>junit</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<scope>test</scope>
-		</dependency>
-
 	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>javax.inject</groupId>
-				<artifactId>javax.inject</artifactId>
-				<version>1</version>
-			</dependency>
-
-			<dependency>
 				<groupId>javax.validation</groupId>
 				<artifactId>validation-api</artifactId>
 				<version>2.0.1.Final</version>
-			</dependency>
-
-			<dependency>
-				<groupId>javax.ws.rs</groupId>
-				<artifactId>javax.ws.rs-api</artifactId>
-				<version>${javax-rs.version}</version>
 			</dependency>
 
 			<dependency>
@@ -173,11 +120,6 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
-					<groupId>org.liquibase</groupId>
-					<artifactId>liquibase-maven-plugin</artifactId>
-					<version>${liquibase.version}</version>
-				</plugin>
-				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
 					<executions>
@@ -187,16 +129,6 @@
 							</goals>
 						</execution>
 					</executions>
-				</plugin>
-				<plugin>
-					<groupId>org.sonarsource.scanner.maven</groupId>
-					<artifactId>sonar-maven-plugin</artifactId>
-					<version>3.6.0.1398</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>${maven.jar.plugin.version}</version>
 				</plugin>
 
 				<plugin>
@@ -252,7 +184,6 @@
 				<artifactId>spotless-maven-plugin</artifactId>
 				<version>2.11.1</version>
 				<configuration>
-					<skip>true</skip>
 					<ratchetFrom>7ce5d21af5410159743da75c1429497518ab735d</ratchetFrom>
 					<java>
 						<importOrder>
