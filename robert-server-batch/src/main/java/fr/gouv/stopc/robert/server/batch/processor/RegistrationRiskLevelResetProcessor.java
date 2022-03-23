@@ -28,6 +28,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
             // We do not reset registration#isNotified as it is used to compute the number
             // of notifications in TAC
             // It should evolve when a statistic table will be used to count notifications.
+            registration.setNotifiedForCurrentRisk(false);
             return registration;
         }
         return null;

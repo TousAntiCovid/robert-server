@@ -114,6 +114,7 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
             registration.setLatestRiskEpoch(newLatestRiskEpoch);
             log.info("Updating latest risk epoch {}", newLatestRiskEpoch);
             registration.setAtRisk(true);
+            registration.setNotifiedForCurrentRisk(false);
             // Do not reset isNotified since it is used to compute the number of
             // notifications
             // It is up to the client to know if it should notify (new risk) or not given

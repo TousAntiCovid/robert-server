@@ -1,52 +1,52 @@
 package fr.gouv.stopc.robertserver.ws.service.impl;
 
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.database.service.StatisticService;
 import fr.gouv.stopc.robertserver.ws.dto.RobertServerKpi;
 import fr.gouv.stopc.robertserver.ws.service.IKpiService;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.List;
 
 /**
  * Default implementation of the <code>IKpiService</code>
- * 
  */
 @Service
+@AllArgsConstructor
 public class KpiServiceImpl implements IKpiService {
 
-	/**
-	 * The registration management service
-	 */
-	private IRegistrationService registrationDbService;
+    /**
+     * The registration management service
+     */
+    private final IRegistrationService registrationDbService;
 
-	/**
-	 * Spring Injection constructor
-	 * 
-	 * @param registrationDbService the <code>IRegistrationService</code> bean to
-	 *                              inject
-	 */
-	public KpiServiceImpl(IRegistrationService registrationDbService) {
-		this.registrationDbService = registrationDbService;
-	}
+    private final StatisticService statisticService;
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public List<RobertServerKpi> computeKpi(LocalDate fromDate, LocalDate toDate) {
-		// Retrieve the different kpis of the current date (because of the
-		// implementation of the Robert Protocol, kpis of Robert Server can be
-		// calculated only for the current date)
-		Long nbAlertedUsers = registrationDbService.countNbUsersNotified();
-		Long nbExposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
-		Long nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
-		Long nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
-		
-		return Arrays.asList(new RobertServerKpi(LocalDate.now(), nbAlertedUsers, nbExposedUsersNotAtRisk,
-				nbInfectedUsersNotNotified, nbNotifiedUsersScoredAgain));
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RobertServerKpi> computeKpi(LocalDate fromDate, LocalDate toDate) {
+        // Retrieve the different kpis of the current date (because of the
+        // implementation of the Robert Protocol, kpis of Robert Server can be
+        // calculated only for the current date)
+        final var nbAlertedUsers = registrationDbService.countNbUsersNotified();
+        final var nbExposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
+        final var nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
+        final var nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
+        final var nbNotifiedTotal = statisticService.countNbNotifiedTotalBetween(
+                fromDate.atStartOfDay().toInstant(ZoneOffset.UTC),
+                toDate.atStartOfDay().toInstant(ZoneOffset.UTC)
+        );
+        return List.of(
+                new RobertServerKpi(
+                        LocalDate.now(), nbAlertedUsers, nbExposedUsersNotAtRisk,
+                        nbInfectedUsersNotNotified, nbNotifiedUsersScoredAgain, nbNotifiedTotal
+                )
+        );
+    }
 
 }
