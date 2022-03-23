@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.ws;
+package fr.gouv.stopc.robertserver.ws;
 
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
@@ -14,7 +14,6 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
-import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
@@ -1694,6 +1693,62 @@ public class StatusControllerWsRestTest {
         Registration reg = Registration.builder()
                 .permanentIdentifier(idA)
                 .atRisk(false)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(
+                Optional.of(
+                        GetIdFromStatusResponse.newBuilder()
+                                .setEpochId(currentEpoch)
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class
+        );
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody().getAnalyticsToken());
+    }
+
+    @Test
+    public void should_increment_total_notifications_for_registration() {
+
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(true)
+                .notifiedForCurrentRisk(false)
                 .isNotified(false)
                 .lastStatusRequestEpoch(currentEpoch - 3).build();
 

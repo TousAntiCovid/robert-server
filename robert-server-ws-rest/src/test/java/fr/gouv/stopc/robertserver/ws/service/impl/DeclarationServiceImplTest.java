@@ -1,19 +1,18 @@
-package test.fr.gouv.stopc.robertserver.ws.service.impl;
+package fr.gouv.stopc.robertserver.ws.service.impl;
+
+import com.jayway.jsonpath.JsonPath;
+import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
 
 import static io.jsonwebtoken.Claims.EXPIRATION;
 import static io.jsonwebtoken.Claims.ISSUED_AT;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Base64;
-
-import com.jayway.jsonpath.JsonPath;
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
-import fr.gouv.stopc.robertserver.ws.service.impl.DeclarationServiceImpl;
-import org.junit.jupiter.api.Test;
 
 public class DeclarationServiceImplTest {
 

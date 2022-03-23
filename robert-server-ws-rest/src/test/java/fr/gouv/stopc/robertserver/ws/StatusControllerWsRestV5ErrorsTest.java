@@ -1,6 +1,5 @@
-package test.fr.gouv.stopc.robertserver.ws;
+package fr.gouv.stopc.robertserver.ws;
 
-import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.controller.impl.StatusControllerImpl;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
@@ -26,10 +25,10 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application.properties")
-public class StatusControllerWsRestV1ToV4ErrorsTest {
+public class StatusControllerWsRestV5ErrorsTest {
 
-    @Value("${controller.path.prefix}" + UriConstants.API_V4)
-    private String pathPrefixV4;
+    @Value("${controller.path.prefix}" + UriConstants.API_V5)
+    private String pathPrefixV5;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -50,7 +49,7 @@ public class StatusControllerWsRestV1ToV4ErrorsTest {
 
     @BeforeEach
     public void setUp() {
-        this.targetUrl = UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.STATUS).build()
+        this.targetUrl = UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.STATUS).build()
                 .encode().toUri();
         this.statusBody = StatusVo.builder()
                 .ebid("012345678912")
@@ -62,7 +61,7 @@ public class StatusControllerWsRestV1ToV4ErrorsTest {
     }
 
     @Test
-    public void testWhenGetStatusReturnsBadRequestThenGetStatusV1ToV4ReturnsBadRequest() {
+    public void testWhenGetStatusReturnsBadRequestThenGetStatusV5ReturnsBadRequest() {
         when(statusController.getStatus(any())).thenReturn(ResponseEntity.badRequest().build());
 
         ResponseEntity<String> response = this.restTemplate.exchange(
@@ -74,7 +73,7 @@ public class StatusControllerWsRestV1ToV4ErrorsTest {
     }
 
     @Test
-    public void testWhenGetStatusReturnsInternalServerErrorThenGetStatusV1ToV4ReturnsInternalServerError() {
+    public void testWhenGetStatusReturnsInternalServerErrorThenGetStatusV5ReturnsInternalServerError() {
         when(statusController.getStatus(any()))
                 .thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
 
@@ -87,7 +86,7 @@ public class StatusControllerWsRestV1ToV4ErrorsTest {
     }
 
     @Test
-    public void testWhenGetStatusReturnsNotFoundThenGetStatusV1ToV4ReturnsNotFound() {
+    public void testWhenGetStatusReturnsNotFoundThenGetStatusV5ReturnsNotFound() {
         when(statusController.getStatus(any())).thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
 
         ResponseEntity<String> response = this.restTemplate.exchange(
@@ -99,7 +98,7 @@ public class StatusControllerWsRestV1ToV4ErrorsTest {
     }
 
     @Test
-    public void testWhenGetStatusReturnsNullThenGetStatusV1ToV4ReturnsInternalServerError() {
+    public void testWhenGetStatusReturnsNullThenGetStatusV5ReturnsInternalServerError() {
         when(statusController.getStatus(any())).thenReturn(null);
 
         ResponseEntity<String> response = this.restTemplate.exchange(

@@ -1,6 +1,5 @@
-package test.fr.gouv.stopc.robertserver.ws;
+package fr.gouv.stopc.robertserver.ws;
 
-import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.impl.ReportControllerDelegate;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;

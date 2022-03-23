@@ -56,6 +56,7 @@
 		<mockito.version>3.7.0</mockito.version>
 		<prometheus-pushgateway.version>0.9.0</prometheus-pushgateway.version>
 		<log4j2.version>2.17.0</log4j2.version>
+		<mongodb-embedded.version>1.16.3</mongodb-embedded.version>
 	</properties>
 
 	<dependencies>
@@ -112,6 +113,12 @@
 				<version>${spring-cloud.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>mongodb</artifactId>
+				<version>${mongodb-embedded.version}</version>
+				<scope>test</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

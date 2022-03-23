@@ -20,6 +20,8 @@ public class Registration {
 
     private boolean isNotified;
 
+    private boolean notifiedForCurrentRisk;
+
     private boolean atRisk;
 
     private int lastStatusRequestEpoch;

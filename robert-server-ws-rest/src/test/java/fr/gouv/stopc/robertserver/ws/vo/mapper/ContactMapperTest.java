@@ -1,15 +1,9 @@
-package test.fr.gouv.stopc.robertserver.ws.vo.mapper;
+package fr.gouv.stopc.robertserver.ws.vo.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.database.model.Contact;
+import fr.gouv.stopc.robertserver.ws.vo.ContactVo;
+import fr.gouv.stopc.robertserver.ws.vo.HelloMessageDetailVo;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,20 +11,28 @@ import org.mockito.InjectMocks;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.CollectionUtils;
 
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
-import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.ws.vo.ContactVo;
-import fr.gouv.stopc.robertserver.ws.vo.HelloMessageDetailVo;
-import fr.gouv.stopc.robertserver.ws.vo.mapper.ContactMapper;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(SpringExtension.class)
 public class ContactMapperTest {
+
     @InjectMocks
     private ContactMapper contactMapper;
 
     private final String sampleMac = "mac";
+
     private final String sampleEcc = "ecc";
+
     private final String sampleEbid = "ebid";
+
     private final int sampleRssiCalibrated = -127;
 
     @Test

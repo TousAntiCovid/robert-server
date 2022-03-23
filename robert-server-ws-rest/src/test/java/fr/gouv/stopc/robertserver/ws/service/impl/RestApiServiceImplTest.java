@@ -1,7 +1,6 @@
-package test.fr.gouv.stopc.robertserver.ws.service.impl;
+package fr.gouv.stopc.robertserver.ws.service.impl;
 
 import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
-import fr.gouv.stopc.robertserver.ws.service.impl.RestApiServiceImpl;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import org.junit.jupiter.api.BeforeEach;
