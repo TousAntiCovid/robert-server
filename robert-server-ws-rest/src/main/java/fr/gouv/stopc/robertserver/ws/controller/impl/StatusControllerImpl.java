@@ -7,6 +7,7 @@ import fr.gouv.stopc.robertserver.database.model.ApplicationConfigurationModel;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.database.service.StatisticService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IStatusController;
 import fr.gouv.stopc.robertserver.ws.dto.*;
@@ -33,6 +34,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.DAYS;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -53,6 +57,8 @@ public class StatusControllerImpl implements IStatusController {
     private final IRestApiService restApiService;
 
     private final DeclarationService declarationService;
+
+    private final StatisticService statisticsService;
 
     @Override
     public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo)
@@ -140,11 +146,18 @@ public class StatusControllerImpl implements IStatusController {
             return ResponseEntity.badRequest().build();
         }
 
-        Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
-        if (record.isPresent()) {
+        Optional<Registration> registration = this.registrationService.findById(response.getIdA().toByteArray());
+        if (registration.isPresent()) {
             try {
                 Optional<ResponseEntity<StatusResponseDto>> responseEntity = this
-                        .validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
+                        .validate(registration.get(), response.getEpochId(), response.getTuples().toByteArray());
+
+                if (!registration.get().isNotifiedForCurrentRisk() && registration.get().isAtRisk()) {
+                    statisticsService.getByDate(now().truncatedTo(DAYS))
+                            .ifPresent((statisticsService::incrementNotifiedTotal));
+                    registration.get().setNotifiedForCurrentRisk(true);
+                    registrationService.saveRegistration(registration.get());
+                }
 
                 if (responseEntity.isPresent()) {
 

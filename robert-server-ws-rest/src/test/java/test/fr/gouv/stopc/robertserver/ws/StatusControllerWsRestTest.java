@@ -242,7 +242,7 @@ public class StatusControllerWsRestTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(this.registrationService, times(2)).findById(ArgumentMatchers.any());
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
     }
 
     @Test
@@ -771,7 +771,7 @@ public class StatusControllerWsRestTest {
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -799,7 +799,7 @@ public class StatusControllerWsRestTest {
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -827,7 +827,7 @@ public class StatusControllerWsRestTest {
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
         assertNotNull(response.getBody().getAnalyticsToken());
     }
@@ -1128,7 +1128,7 @@ public class StatusControllerWsRestTest {
         assertTrue(reg.isAtRisk());
         assertTrue(reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -1330,7 +1330,7 @@ public class StatusControllerWsRestTest {
         assertTrue(reg.isAtRisk());
         assertTrue(reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -1399,7 +1399,7 @@ public class StatusControllerWsRestTest {
         assertTrue(reg.isAtRisk());
         assertTrue(reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService).registerPushNotif(pushInfo);
     }
 
@@ -1493,7 +1493,7 @@ public class StatusControllerWsRestTest {
                         || reg.getLastTimestampDrift() == Math.abs(timestampDelta)
         );
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -1646,7 +1646,7 @@ public class StatusControllerWsRestTest {
         assertTrue(reg.isNotified());
         assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
 
         Claims claims = Jwts.parserBuilder()

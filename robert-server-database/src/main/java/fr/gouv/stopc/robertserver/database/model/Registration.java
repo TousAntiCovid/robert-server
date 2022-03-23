@@ -22,6 +22,8 @@ public class Registration {
 
     private boolean atRisk;
 
+    private boolean notifiedForCurrentRisk;
+
     private int lastStatusRequestEpoch;
 
     private int latestRiskEpoch;
