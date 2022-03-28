@@ -13,6 +13,8 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.repository.StatisticRepository;
+import fr.gouv.stopc.robertserver.database.service.StatisticService;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
@@ -52,8 +54,10 @@ import java.security.Key;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.*;
 
+import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -109,6 +113,12 @@ public class StatusControllerWsRestTest {
     @Autowired
     private IServerConfigurationService serverConfigurationService;
 
+    @Autowired
+    private StatisticService statisticService;
+
+    @Autowired
+    private StatisticRepository statisticRepository;
+
     @MockBean
     private PropertyLoader propertyLoader;
 
@@ -140,6 +150,8 @@ public class StatusControllerWsRestTest {
                 .thenReturn(this.statusRequestMinimumEpochGap);
 
         this.serverKey = this.generateKey(24);
+
+        statisticRepository.deleteAll();
     }
 
     @Test
@@ -1737,6 +1749,270 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody().getAnalyticsToken());
+    }
+
+    @Test
+    public void when_calling_status_on_a_registration_not_notified_for_current_risk_and_not_at_risk_does_not_increment_today_stat() {
+
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(false)
+                .notifiedForCurrentRisk(false)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(
+                Optional.of(
+                        GetIdFromStatusResponse.newBuilder()
+                                .setEpochId(currentEpoch)
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        final var statisticBeforeStatus = statisticService.countNbNotifiedTotalBetween(
+                Instant.now().minus(1, DAYS),
+                Instant.now().plus(1, DAYS)
+        );
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class
+        );
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertThat(
+                statisticService.countNbNotifiedTotalBetween(
+                        Instant.now().minus(1, DAYS),
+                        Instant.now().plus(1, DAYS)
+                )
+        ).isEqualTo(statisticBeforeStatus);
+    }
+
+    @Test
+    public void when_calling_status_on_a_registration_not_notified_for_current_risk_and_at_risk_increment_today_stat() {
+
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(true)
+                .notifiedForCurrentRisk(false)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(
+                Optional.of(
+                        GetIdFromStatusResponse.newBuilder()
+                                .setEpochId(currentEpoch)
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        final var statisticBeforeStatus = statisticService.countNbNotifiedTotalBetween(
+                Instant.now().minus(1, DAYS),
+                Instant.now().plus(1, DAYS)
+        );
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class
+        );
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertThat(
+                statisticService.countNbNotifiedTotalBetween(
+                        Instant.now().minus(1, DAYS),
+                        Instant.now().plus(1, DAYS)
+                )
+        ).isEqualTo(statisticBeforeStatus + 1);
+    }
+
+    @Test
+    public void when_calling_status_on_a_registration_already_notified_for_current_risk_and_not_at_risk_does_not_increment_today_stat() {
+
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(false)
+                .notifiedForCurrentRisk(true)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(
+                Optional.of(
+                        GetIdFromStatusResponse.newBuilder()
+                                .setEpochId(currentEpoch)
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        final var statisticBeforeStatus = statisticService.countNbNotifiedTotalBetween(
+                Instant.now().minus(1, DAYS),
+                Instant.now().plus(1, DAYS)
+        );
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class
+        );
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertThat(
+                statisticService.countNbNotifiedTotalBetween(
+                        Instant.now().minus(1, DAYS),
+                        Instant.now().plus(1, DAYS)
+                )
+        ).isEqualTo(statisticBeforeStatus);
+    }
+
+    @Test
+    public void when_calling_status_on_a_registration_already_notified_for_current_risk_and_at_risk_does_not_increment_today_stat() {
+
+        // Given
+        byte[] idA = this.generateKey(5);
+        byte[] kA = this.generateKA();
+
+        Registration reg = Registration.builder()
+                .permanentIdentifier(idA)
+                .atRisk(true)
+                .notifiedForCurrentRisk(true)
+                .isNotified(false)
+                .lastStatusRequestEpoch(currentEpoch - 3).build();
+
+        byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
+
+        statusBody = StatusVo.builder()
+                .ebid(Base64.encode(reqContent[0]))
+                .epochId(currentEpoch)
+                .time(Base64.encode(reqContent[1]))
+                .mac(Base64.encode(reqContent[2])).build();
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        byte[] decryptedEbid = new byte[8];
+        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
+        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
+
+        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
+
+        doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
+
+        doReturn(
+                Optional.of(
+                        GetIdFromStatusResponse.newBuilder()
+                                .setEpochId(currentEpoch)
+                                .setIdA(ByteString.copyFrom(idA))
+                                .setTuples(ByteString.copyFrom("Base64encodedEncryptedJSONStringWithTuples".getBytes()))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromStatus(any());
+
+        final var statisticBeforeStatus = statisticService.countNbNotifiedTotalBetween(
+                Instant.now().minus(1, DAYS),
+                Instant.now().plus(1, DAYS)
+        );
+
+        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+
+        // When
+        ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(
+                this.targetUrl.toString(),
+                HttpMethod.POST, this.requestEntity, StatusResponseDto.class
+        );
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertThat(
+                statisticService.countNbNotifiedTotalBetween(
+                        Instant.now().minus(1, DAYS),
+                        Instant.now().plus(1, DAYS)
+                )
+        ).isEqualTo(statisticBeforeStatus);
     }
 
 }

@@ -34,9 +34,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.time.Instant.now;
-import static java.time.temporal.ChronoUnit.DAYS;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -146,38 +143,34 @@ public class StatusControllerImpl implements IStatusController {
             return ResponseEntity.badRequest().build();
         }
 
-        Optional<Registration> registration = this.registrationService.findById(response.getIdA().toByteArray());
-        if (registration.isPresent()) {
-            try {
-                Optional<ResponseEntity<StatusResponseDto>> responseEntity = this
-                        .validate(registration.get(), response.getEpochId(), response.getTuples().toByteArray());
+        return (ResponseEntity<StatusResponseDto>) registrationService.findById(response.getIdA().toByteArray())
+                .map(registration -> {
+                    try {
+                        Optional<ResponseEntity<StatusResponseDto>> responseEntity = this
+                                .validate(registration, response.getEpochId(), response.getTuples().toByteArray());
 
-                if (!registration.get().isNotifiedForCurrentRisk() && registration.get().isAtRisk()) {
-                    statisticsService.getByDate(now().truncatedTo(DAYS))
-                            .ifPresent((statisticsService::incrementNotifiedTotal));
-                    registration.get().setNotifiedForCurrentRisk(true);
-                    registrationService.saveRegistration(registration.get());
-                }
+                        statisticsService.updateWebserviceStatistics(registration);
 
-                if (responseEntity.isPresent()) {
+                        if (responseEntity.isPresent()) {
 
-                    Optional.ofNullable(statusVo.getPushInfo())
-                            .filter(push -> Objects.nonNull(responseEntity.get().getStatusCode()))
-                            .filter(push -> responseEntity.get().getStatusCode().equals(HttpStatus.OK))
-                            .ifPresent(this.restApiService::registerPushNotif);
+                            Optional.ofNullable(statusVo.getPushInfo())
+                                    .filter(push -> Objects.nonNull(responseEntity.get().getStatusCode()))
+                                    .filter(push -> responseEntity.get().getStatusCode().equals(HttpStatus.OK))
+                                    .ifPresent(this.restApiService::registerPushNotif);
 
-                    return responseEntity.get();
-                } else {
-                    log.info("Status request failed validation");
-                    return ResponseEntity.badRequest().build();
-                }
-            } catch (RobertServerException e) {
-                return ResponseEntity.badRequest().build();
-            }
-        } else {
-            log.info("Discarding status request because id unknown (fake or was deleted)");
-            return ResponseEntity.notFound().build();
-        }
+                            return responseEntity.get();
+                        } else {
+                            log.info("Status request failed validation");
+                            return ResponseEntity.badRequest().build();
+                        }
+                    } catch (RobertServerException e) {
+                        return ResponseEntity.badRequest().build();
+                    }
+                }).orElseGet(() -> {
+                    log.info("Discarding status request because id unknown (fake or was deleted)");
+                    return ResponseEntity.notFound().build();
+                });
+
     }
 
     protected void logErrorInDatabaseIfIdIsProvided(GetIdFromStatusResponse response) {
