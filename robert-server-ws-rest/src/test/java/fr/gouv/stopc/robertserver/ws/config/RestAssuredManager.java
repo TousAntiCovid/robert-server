@@ -1,4 +1,4 @@
-package test.fr.gouv.stopc.robertserver.ws.config;
+package fr.gouv.stopc.robertserver.ws.config;
 
 import io.restassured.RestAssured;
 import org.springframework.test.context.TestContext;
