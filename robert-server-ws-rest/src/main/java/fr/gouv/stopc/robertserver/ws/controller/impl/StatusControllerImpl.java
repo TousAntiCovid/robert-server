@@ -7,7 +7,7 @@ import fr.gouv.stopc.robertserver.database.model.ApplicationConfigurationModel;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.database.service.StatisticService;
+import fr.gouv.stopc.robertserver.database.service.WebserviceStatisticsService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IStatusController;
 import fr.gouv.stopc.robertserver.ws.dto.*;
@@ -55,7 +55,7 @@ public class StatusControllerImpl implements IStatusController {
 
     private final DeclarationService declarationService;
 
-    private final StatisticService statisticsService;
+    private final WebserviceStatisticsService statisticsService;
 
     @Override
     public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo) {
@@ -151,7 +151,10 @@ public class StatusControllerImpl implements IStatusController {
                     } catch (RobertServerException e) {
                         return ResponseEntity.badRequest().build();
                     }
+
                     statisticsService.updateWebserviceStatistics(registration);
+                    registration.setNotifiedForCurrentRisk(true);
+                    registrationService.saveRegistration(registration);
 
                     if (responseEntity.isPresent()) {
 

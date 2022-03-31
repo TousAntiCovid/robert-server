@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.ws;
 
 import fr.gouv.stopc.robertserver.database.model.WebserviceStatistic;
-import fr.gouv.stopc.robertserver.database.repository.StatisticRepository;
+import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
 import fr.gouv.stopc.robertserver.ws.config.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import static org.springframework.http.HttpStatus.OK;
 class KpiControllerTest {
 
     @Autowired
-    private StatisticRepository repository;
+    private WebserviceStatisticsRepository repository;
 
     @BeforeEach
     void beforeEach() {

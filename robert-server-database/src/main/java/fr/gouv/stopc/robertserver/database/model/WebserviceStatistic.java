@@ -20,9 +20,4 @@ public class WebserviceStatistic {
     private Instant date;
 
     private int notifiedTotal;
-
-    public WebserviceStatistic incrementNotifiedTotal() {
-        this.notifiedTotal++;
-        return this;
-    }
 }
