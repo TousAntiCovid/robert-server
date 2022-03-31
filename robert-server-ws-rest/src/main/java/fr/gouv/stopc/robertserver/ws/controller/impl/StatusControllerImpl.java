@@ -58,8 +58,7 @@ public class StatusControllerImpl implements IStatusController {
     private final StatisticService statisticsService;
 
     @Override
-    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo)
-            throws RobertServerException {
+    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo) {
 
         ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
 
@@ -88,7 +87,7 @@ public class StatusControllerImpl implements IStatusController {
     }
 
     @Override
-    public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) throws RobertServerException {
+    public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) {
 
         ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
 
@@ -145,25 +144,25 @@ public class StatusControllerImpl implements IStatusController {
 
         return (ResponseEntity<StatusResponseDto>) registrationService.findById(response.getIdA().toByteArray())
                 .map(registration -> {
+                    Optional<ResponseEntity<StatusResponseDto>> responseEntity;
                     try {
-                        Optional<ResponseEntity<StatusResponseDto>> responseEntity = this
+                        responseEntity = this
                                 .validate(registration, response.getEpochId(), response.getTuples().toByteArray());
-
-                        statisticsService.updateWebserviceStatistics(registration);
-
-                        if (responseEntity.isPresent()) {
-
-                            Optional.ofNullable(statusVo.getPushInfo())
-                                    .filter(push -> Objects.nonNull(responseEntity.get().getStatusCode()))
-                                    .filter(push -> responseEntity.get().getStatusCode().equals(HttpStatus.OK))
-                                    .ifPresent(this.restApiService::registerPushNotif);
-
-                            return responseEntity.get();
-                        } else {
-                            log.info("Status request failed validation");
-                            return ResponseEntity.badRequest().build();
-                        }
                     } catch (RobertServerException e) {
+                        return ResponseEntity.badRequest().build();
+                    }
+                    statisticsService.updateWebserviceStatistics(registration);
+
+                    if (responseEntity.isPresent()) {
+
+                        Optional.ofNullable(statusVo.getPushInfo())
+                                .filter(push -> Objects.nonNull(responseEntity.get().getStatusCode()))
+                                .filter(push -> responseEntity.get().getStatusCode().equals(HttpStatus.OK))
+                                .ifPresent(this.restApiService::registerPushNotif);
+
+                        return responseEntity.get();
+                    } else {
+                        log.info("Status request failed validation");
                         return ResponseEntity.badRequest().build();
                     }
                 }).orElseGet(() -> {
