@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.service.impl;
 
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.database.service.StatisticService;
+import fr.gouv.stopc.robertserver.database.service.WebserviceStatisticsService;
 import fr.gouv.stopc.robertserver.ws.dto.RobertServerKpi;
 import fr.gouv.stopc.robertserver.ws.service.IKpiService;
 import lombok.AllArgsConstructor;
@@ -23,7 +23,7 @@ public class KpiServiceImpl implements IKpiService {
      */
     private final IRegistrationService registrationDbService;
 
-    private final StatisticService statisticService;
+    private final WebserviceStatisticsService webserviceStatisticsService;
 
     /**
      * {@inheritDoc}
@@ -37,7 +37,7 @@ public class KpiServiceImpl implements IKpiService {
         final var nbExposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
         final var nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
         final var nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
-        final var nbNotifiedTotal = statisticService.countNbNotifiedTotalBetween(
+        final var nbNotifiedTotal = webserviceStatisticsService.countNbNotifiedTotalBetween(
                 fromDate.atStartOfDay().toInstant(ZoneOffset.UTC),
                 toDate.atStartOfDay().toInstant(ZoneOffset.UTC)
         );

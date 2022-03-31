@@ -9,11 +9,11 @@ import java.time.Instant;
 import java.util.List;
 
 @Repository
-public interface StatisticRepository extends MongoRepository<WebserviceStatistic, Instant> {
+public interface WebserviceStatisticsRepository
+        extends MongoRepository<WebserviceStatistic, Instant>, WebserviceStatisticsCustomRepository {
 
     @Aggregation(pipeline = {
-            "{$match : { _id: { $gte: ?0, $lte: ?1 }}}"
-    })
-    List<WebserviceStatistic> countNbNotifiedBetween(Instant from, Instant to);
+            "{ $match : { _id: { $gte: ?0, $lte: ?1 } } }" })
+    List<WebserviceStatistic> getWebserviceStatisticsBetween(Instant from, Instant to);
 
 }

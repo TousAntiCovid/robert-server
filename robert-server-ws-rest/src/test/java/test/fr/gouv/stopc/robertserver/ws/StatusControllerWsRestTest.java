@@ -13,8 +13,8 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.repository.StatisticRepository;
-import fr.gouv.stopc.robertserver.database.service.StatisticService;
+import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
+import fr.gouv.stopc.robertserver.database.service.WebserviceStatisticsService;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
@@ -114,10 +114,10 @@ public class StatusControllerWsRestTest {
     private IServerConfigurationService serverConfigurationService;
 
     @Autowired
-    private StatisticService statisticService;
+    private WebserviceStatisticsService webserviceStatisticsService;
 
     @Autowired
-    private StatisticRepository statisticRepository;
+    private WebserviceStatisticsRepository webserviceStatisticsRepository;
 
     @MockBean
     private PropertyLoader propertyLoader;
@@ -151,7 +151,7 @@ public class StatusControllerWsRestTest {
 
         this.serverKey = this.generateKey(24);
 
-        statisticRepository.deleteAll();
+        webserviceStatisticsRepository.deleteAll();
     }
 
     @Test
@@ -965,7 +965,7 @@ public class StatusControllerWsRestTest {
         assertThat(response.getBody().getLastRiskScoringDate()).isNull();
         assertEquals(0, reg.getLastContactTimestamp());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -1056,7 +1056,7 @@ public class StatusControllerWsRestTest {
         assertFalse(reg.isAtRisk());
         assertTrue(reg.isNotified());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -1206,7 +1206,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastFailedStatusRequestEpoch());
         assertEquals(errorMessage, reg.getLastFailedStatusRequestMessage());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -1280,7 +1280,7 @@ public class StatusControllerWsRestTest {
         assertEquals(currentEpoch, reg.getLastFailedStatusRequestEpoch());
         assertEquals(errorMessage, reg.getLastFailedStatusRequestMessage());
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -1563,7 +1563,7 @@ public class StatusControllerWsRestTest {
                         || reg.getLastTimestampDrift() == Math.abs(timestampDelta)
         );
         verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
+        verify(this.registrationService, times(3)).saveRegistration(reg);
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
     }
 
@@ -1794,7 +1794,7 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = statisticService.countNbNotifiedTotalBetween(
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedTotalBetween(
                 Instant.now().minus(1, DAYS),
                 Instant.now().plus(1, DAYS)
         );
@@ -1810,7 +1810,7 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(
-                statisticService.countNbNotifiedTotalBetween(
+                webserviceStatisticsService.countNbNotifiedTotalBetween(
                         Instant.now().minus(1, DAYS),
                         Instant.now().plus(1, DAYS)
                 )
@@ -1860,7 +1860,7 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = statisticService.countNbNotifiedTotalBetween(
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedTotalBetween(
                 Instant.now().minus(1, DAYS),
                 Instant.now().plus(1, DAYS)
         );
@@ -1876,7 +1876,7 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(
-                statisticService.countNbNotifiedTotalBetween(
+                webserviceStatisticsService.countNbNotifiedTotalBetween(
                         Instant.now().minus(1, DAYS),
                         Instant.now().plus(1, DAYS)
                 )
@@ -1926,7 +1926,7 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = statisticService.countNbNotifiedTotalBetween(
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedTotalBetween(
                 Instant.now().minus(1, DAYS),
                 Instant.now().plus(1, DAYS)
         );
@@ -1942,7 +1942,7 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(
-                statisticService.countNbNotifiedTotalBetween(
+                webserviceStatisticsService.countNbNotifiedTotalBetween(
                         Instant.now().minus(1, DAYS),
                         Instant.now().plus(1, DAYS)
                 )
@@ -1992,7 +1992,7 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = statisticService.countNbNotifiedTotalBetween(
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedTotalBetween(
                 Instant.now().minus(1, DAYS),
                 Instant.now().plus(1, DAYS)
         );
@@ -2008,7 +2008,7 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(
-                statisticService.countNbNotifiedTotalBetween(
+                webserviceStatisticsService.countNbNotifiedTotalBetween(
                         Instant.now().minus(1, DAYS),
                         Instant.now().plus(1, DAYS)
                 )
