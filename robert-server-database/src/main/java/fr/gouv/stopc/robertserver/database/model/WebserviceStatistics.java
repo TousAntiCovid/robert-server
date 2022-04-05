@@ -14,7 +14,7 @@ import java.time.Instant;
 @Data
 @Builder
 @Document
-public class WebserviceStatistic {
+public class WebserviceStatistics {
 
     @Id
     private Instant date;

@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.database.service;
 
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.model.WebserviceStatistic;
+import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ public class WebserviceStatisticsService {
     public long countNbNotifiedTotalBetween(Instant from, Instant to) {
         final var webserviceStatistics = repository.getWebserviceStatisticsBetween(from, to);
         return webserviceStatistics.stream()
-                .mapToLong(WebserviceStatistic::getNotifiedTotal)
+                .mapToLong(WebserviceStatistics::getNotifiedTotal)
                 .sum();
     }
 

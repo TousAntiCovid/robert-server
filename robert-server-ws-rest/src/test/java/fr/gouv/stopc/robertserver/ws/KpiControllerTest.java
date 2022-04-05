@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.ws;
 
-import fr.gouv.stopc.robertserver.database.model.WebserviceStatistic;
+import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
 import fr.gouv.stopc.robertserver.ws.config.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +32,7 @@ class KpiControllerTest {
     @Test
     void should_retrieve_a_statistic_with_just_1_notification() {
 
-        final var statistic = WebserviceStatistic.builder()
+        final var statistic = WebserviceStatistics.builder()
                 .date(Instant.now().truncatedTo(DAYS))
                 .notifiedTotal(1)
                 .build();
@@ -58,7 +58,7 @@ class KpiControllerTest {
     @Test
     void should_retrieve_a_statistic_with_all_0_values() {
 
-        final var statistic = WebserviceStatistic.builder()
+        final var statistic = WebserviceStatistics.builder()
                 .date(Instant.now().minus(2, DAYS))
                 .notifiedTotal(1)
                 .build();
@@ -84,17 +84,17 @@ class KpiControllerTest {
     @Test
     void should_aggregate_yesterday_and_today_statistic_with_3_total_notifications() {
 
-        final var oneStatistic = WebserviceStatistic.builder()
+        final var oneStatistic = WebserviceStatistics.builder()
                 .date(Instant.now().minus(1, DAYS))
                 .notifiedTotal(1)
                 .build();
 
-        final var anOtherStatistic = WebserviceStatistic.builder()
+        final var anOtherStatistic = WebserviceStatistics.builder()
                 .date(Instant.now())
                 .notifiedTotal(2)
                 .build();
 
-        final var aThirdStatistic = WebserviceStatistic.builder()
+        final var aThirdStatistic = WebserviceStatistics.builder()
                 .date(Instant.now().plus(1, DAYS))
                 .notifiedTotal(5)
                 .build();
