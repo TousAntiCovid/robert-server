@@ -49,6 +49,7 @@
 		<error_prone_annotations.version>2.3.4</error_prone_annotations.version>
 		<postgresql.version>42.2.12</postgresql.version>
 		<bountycastle.version>1.65</bountycastle.version>
+		<spring-framework.version>5.2.20.RELEASE</spring-framework.version>
 		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
 		<jjwt.version>0.11.2</jjwt.version>
 		<junit-jupiter.version>5.7.1</junit-jupiter.version>
