@@ -142,37 +142,31 @@ public class StatusControllerImpl implements IStatusController {
             return ResponseEntity.badRequest().build();
         }
 
-        return (ResponseEntity<StatusResponseDto>) registrationService.findById(response.getIdA().toByteArray())
-                .map(registration -> {
-                    Optional<ResponseEntity<StatusResponseDto>> responseEntity;
-                    try {
-                        responseEntity = this
-                                .validate(registration, response.getEpochId(), response.getTuples().toByteArray());
-                    } catch (RobertServerException e) {
-                        return ResponseEntity.badRequest().build();
-                    }
+        Optional<Registration> record = this.registrationService.findById(response.getIdA().toByteArray());
+        if (record.isPresent()) {
+            try {
+                Optional<ResponseEntity<StatusResponseDto>> responseEntity = this
+                        .validate(record.get(), response.getEpochId(), response.getTuples().toByteArray());
 
-                    statisticsService.updateWebserviceStatistics(registration);
-                    registration.setNotifiedForCurrentRisk(true);
-                    registrationService.saveRegistration(registration);
+                if (responseEntity.isPresent()) {
 
-                    if (responseEntity.isPresent()) {
+                    Optional.ofNullable(statusVo.getPushInfo())
+                            .filter(push -> Objects.nonNull(responseEntity.get().getStatusCode()))
+                            .filter(push -> responseEntity.get().getStatusCode().equals(HttpStatus.OK))
+                            .ifPresent(this.restApiService::registerPushNotif);
 
-                        Optional.ofNullable(statusVo.getPushInfo())
-                                .filter(push -> Objects.nonNull(responseEntity.get().getStatusCode()))
-                                .filter(push -> responseEntity.get().getStatusCode().equals(HttpStatus.OK))
-                                .ifPresent(this.restApiService::registerPushNotif);
-
-                        return responseEntity.get();
-                    } else {
-                        log.info("Status request failed validation");
-                        return ResponseEntity.badRequest().build();
-                    }
-                }).orElseGet(() -> {
-                    log.info("Discarding status request because id unknown (fake or was deleted)");
-                    return ResponseEntity.notFound().build();
-                });
-
+                    return responseEntity.get();
+                } else {
+                    log.info("Status request failed validation");
+                    return ResponseEntity.badRequest().build();
+                }
+            } catch (RobertServerException e) {
+                return ResponseEntity.badRequest().build();
+            }
+        } else {
+            log.info("Discarding status request because id unknown (fake or was deleted)");
+            return ResponseEntity.notFound().build();
+        }
     }
 
     protected void logErrorInDatabaseIfIdIsProvided(GetIdFromStatusResponse response) {
@@ -306,6 +300,10 @@ public class StatusControllerImpl implements IStatusController {
         String analyticsToken = declarationService.generateAnalyticsToken().orElse(null);
         statusResponse.setAnalyticsToken(analyticsToken);
         log.debug("analytics token generated : {}", analyticsToken);
+
+        // update statistics about user being notified of its risk status
+        statisticsService.updateWebserviceStatistics(record);
+        record.setNotifiedForCurrentRisk(true);
 
         // Save changes to the record
         this.registrationService.saveRegistration(record);
