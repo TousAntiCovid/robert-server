@@ -45,5 +45,5 @@ public class RobertServerKpi {
     /**
      * Total of users notified following a scoring
      */
-    private Long nbNotifiedTotal;
+    private Long nbNotifiedUsers;
 }

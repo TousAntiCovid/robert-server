@@ -34,7 +34,7 @@ class KpiControllerTest {
 
         final var statistic = WebserviceStatistics.builder()
                 .date(Instant.now().truncatedTo(DAYS))
-                .notifiedTotal(1)
+                .nbNotifiedUsers(1)
                 .build();
 
         repository.save(statistic);
@@ -51,7 +51,7 @@ class KpiControllerTest {
                 .get("/internal/api/v1/kpi")
                 .then()
                 .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
-                .body("[0].nbNotifiedTotal", equalTo(1));
+                .body("[0].nbNotifiedUsers", equalTo(1));
 
     }
 
@@ -60,7 +60,7 @@ class KpiControllerTest {
 
         final var statistic = WebserviceStatistics.builder()
                 .date(Instant.now().minus(2, DAYS))
-                .notifiedTotal(1)
+                .nbNotifiedUsers(1)
                 .build();
 
         repository.save(statistic);
@@ -77,7 +77,7 @@ class KpiControllerTest {
                 .get("/internal/api/v1/kpi")
                 .then()
                 .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
-                .body("[0].nbNotifiedTotal", equalTo(0));
+                .body("[0].nbNotifiedUsers", equalTo(0));
 
     }
 
@@ -86,17 +86,17 @@ class KpiControllerTest {
 
         final var oneStatistic = WebserviceStatistics.builder()
                 .date(Instant.now().minus(1, DAYS))
-                .notifiedTotal(1)
+                .nbNotifiedUsers(1)
                 .build();
 
         final var anOtherStatistic = WebserviceStatistics.builder()
                 .date(Instant.now())
-                .notifiedTotal(2)
+                .nbNotifiedUsers(2)
                 .build();
 
         final var aThirdStatistic = WebserviceStatistics.builder()
                 .date(Instant.now().plus(1, DAYS))
-                .notifiedTotal(5)
+                .nbNotifiedUsers(5)
                 .build();
 
         repository.saveAll(
@@ -119,7 +119,7 @@ class KpiControllerTest {
                 .get("/internal/api/v1/kpi")
                 .then()
                 .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
-                .body("[0].nbNotifiedTotal", equalTo(3));
+                .body("[0].nbNotifiedUsers", equalTo(3));
 
     }
 

@@ -1794,7 +1794,7 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedTotalBetween(
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(
                 Instant.now().minus(1, DAYS),
                 Instant.now().plus(1, DAYS)
         );
@@ -1810,7 +1810,7 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(
-                webserviceStatisticsService.countNbNotifiedTotalBetween(
+                webserviceStatisticsService.countNbNotifiedUsersBetween(
                         Instant.now().minus(1, DAYS),
                         Instant.now().plus(1, DAYS)
                 )
@@ -1860,7 +1860,7 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedTotalBetween(
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(
                 Instant.now().minus(1, DAYS),
                 Instant.now().plus(1, DAYS)
         );
@@ -1876,7 +1876,7 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(
-                webserviceStatisticsService.countNbNotifiedTotalBetween(
+                webserviceStatisticsService.countNbNotifiedUsersBetween(
                         Instant.now().minus(1, DAYS),
                         Instant.now().plus(1, DAYS)
                 )
@@ -1926,7 +1926,7 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedTotalBetween(
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(
                 Instant.now().minus(1, DAYS),
                 Instant.now().plus(1, DAYS)
         );
@@ -1942,7 +1942,7 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(
-                webserviceStatisticsService.countNbNotifiedTotalBetween(
+                webserviceStatisticsService.countNbNotifiedUsersBetween(
                         Instant.now().minus(1, DAYS),
                         Instant.now().plus(1, DAYS)
                 )
@@ -1992,7 +1992,7 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedTotalBetween(
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(
                 Instant.now().minus(1, DAYS),
                 Instant.now().plus(1, DAYS)
         );
@@ -2008,7 +2008,7 @@ public class StatusControllerWsRestTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(
-                webserviceStatisticsService.countNbNotifiedTotalBetween(
+                webserviceStatisticsService.countNbNotifiedUsersBetween(
                         Instant.now().minus(1, DAYS),
                         Instant.now().plus(1, DAYS)
                 )

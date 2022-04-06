@@ -64,7 +64,7 @@ components:
           type: number
         nbNotifiedUsersScoredAgain:
           type: number
-        nbNotifiedTotal:
+        nbNotifiedUsers:
           type: number
       required:
         - date
@@ -72,4 +72,4 @@ components:
         - nbExposedButNotAtRiskUsers
         - nbInfectedUsersNotNotified
         - nbNotifiedUsersScoredAgain
-        - nbNotifiedTotal
+        - nbNotifiedUsers

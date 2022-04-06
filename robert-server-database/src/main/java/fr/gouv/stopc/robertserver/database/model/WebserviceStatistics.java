@@ -19,5 +19,5 @@ public class WebserviceStatistics {
     @Id
     private Instant date;
 
-    private int notifiedTotal;
+    private int nbNotifiedUsers;
 }

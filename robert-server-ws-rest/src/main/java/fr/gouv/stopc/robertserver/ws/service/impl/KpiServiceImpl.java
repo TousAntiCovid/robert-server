@@ -37,14 +37,14 @@ public class KpiServiceImpl implements IKpiService {
         final var nbExposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
         final var nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
         final var nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
-        final var nbNotifiedTotal = webserviceStatisticsService.countNbNotifiedTotalBetween(
+        final var nbNotifiedUsers = webserviceStatisticsService.countNbNotifiedUsersBetween(
                 fromDate.atStartOfDay().toInstant(ZoneOffset.UTC),
                 toDate.atStartOfDay().toInstant(ZoneOffset.UTC)
         );
         return List.of(
                 new RobertServerKpi(
                         LocalDate.now(), nbAlertedUsers, nbExposedUsersNotAtRisk,
-                        nbInfectedUsersNotNotified, nbNotifiedUsersScoredAgain, nbNotifiedTotal
+                        nbInfectedUsersNotNotified, nbNotifiedUsersScoredAgain, nbNotifiedUsers
                 )
         );
     }
