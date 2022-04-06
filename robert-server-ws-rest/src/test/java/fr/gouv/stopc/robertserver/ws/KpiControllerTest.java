@@ -51,7 +51,8 @@ class KpiControllerTest {
                 .get("/internal/api/v1/kpi")
                 .then()
                 .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
-                .body("[0].nbNotifiedUsers", equalTo(1));
+                .body("[0].nbNotifiedUsers", equalTo(1))
+                .body("size()", equalTo(1));
 
     }
 
@@ -77,7 +78,8 @@ class KpiControllerTest {
                 .get("/internal/api/v1/kpi")
                 .then()
                 .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
-                .body("[0].nbNotifiedUsers", equalTo(0));
+                .body("[0].nbNotifiedUsers", equalTo(0))
+                .body("size()", equalTo(1));
 
     }
 
@@ -119,7 +121,8 @@ class KpiControllerTest {
                 .get("/internal/api/v1/kpi")
                 .then()
                 .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
-                .body("[0].nbNotifiedUsers", equalTo(3));
+                .body("[0].nbNotifiedUsers", equalTo(3))
+                .body("size()", equalTo(1));
 
     }
 

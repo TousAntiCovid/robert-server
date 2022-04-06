@@ -17,7 +17,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @Retention(RUNTIME)
 @Target(TYPE)
 @SpringBootTest(webEnvironment = RANDOM_PORT, classes = RobertServerWsRestApplication.class)
-@TestExecutionListeners(listeners = { RestAssuredManager.class, MongoManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(listeners = { RestAssuredManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {
 
