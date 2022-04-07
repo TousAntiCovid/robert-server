@@ -8,6 +8,7 @@ import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.BatchStatisticsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -37,11 +38,16 @@ public class RegistrationRiskLevelResetProcessorTest {
 
     private ListAppender<ILoggingEvent> processorLoggerAppender;
 
+    @Mock
+    private BatchStatisticsService batchStatisticsService;
+
     @BeforeEach
     public void beforeEach() {
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
         final var robertClock = new RobertClock("2020-06-01");
-        this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock);
+        this.processor = new RegistrationRiskLevelResetProcessor(
+                this.propertyLoader, robertClock, batchStatisticsService
+        );
     }
 
     @Test

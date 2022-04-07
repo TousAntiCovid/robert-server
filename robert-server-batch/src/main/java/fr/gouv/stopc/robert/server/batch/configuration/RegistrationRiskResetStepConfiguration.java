@@ -7,6 +7,7 @@ import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.BatchStatisticsService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +30,14 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     private final IRegistrationService registrationService;
 
+    private final BatchStatisticsService batchStatisticsService;
+
     public RegistrationRiskResetStepConfiguration(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
             IServerConfigurationService serverConfigurationService, IRegistrationService registrationService,
-            ItemIdMappingService itemIdMappingService) {
+            ItemIdMappingService itemIdMappingService, BatchStatisticsService batchStatisticsService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
+        this.batchStatisticsService = batchStatisticsService;
     }
 
     @Bean
@@ -59,7 +63,7 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     @Bean
     public ItemProcessor<Registration, Registration> registrationRiskResetProcessor(final RobertClock robertClock) {
-        return new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock);
+        return new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock, batchStatisticsService);
     }
 
     @Bean
