@@ -18,7 +18,7 @@ public class WebserviceStatisticsService {
     private final WebserviceStatisticsRepository repository;
 
     public long countNbNotifiedUsersBetween(Instant from, Instant to) {
-        final var webserviceStatistics = repository.getWebserviceStatisticsBetween(from, to);
+        final var webserviceStatistics = repository.getWebserviceStatisticsByDateBetween(from, to);
         return webserviceStatistics.stream()
                 .mapToLong(WebserviceStatistics::getNbNotifiedUsers)
                 .sum();
