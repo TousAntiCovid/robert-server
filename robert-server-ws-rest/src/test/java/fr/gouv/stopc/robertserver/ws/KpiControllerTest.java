@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
@@ -84,7 +85,7 @@ class KpiControllerTest {
     }
 
     @Test
-    void should_aggregate_yesterday_and_today_statistic_with_3_total_notifications() {
+    void should_aggregate_today_statistics_with_3_total_notifications() {
 
         final var oneStatistic = WebserviceStatistics.builder()
                 .date(Instant.now().minus(1, DAYS))
@@ -97,15 +98,27 @@ class KpiControllerTest {
                 .build();
 
         final var aThirdStatistic = WebserviceStatistics.builder()
+                .date(LocalDate.now().atTime(23, 59, 59).toInstant(ZoneOffset.UTC))
+                .nbNotifiedUsers(3)
+                .build();
+
+        final var aFourthStatistic = WebserviceStatistics.builder()
+                .date(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC))
+                .nbNotifiedUsers(7)
+                .build();
+
+        final var aFifthStatistic = WebserviceStatistics.builder()
                 .date(Instant.now().plus(1, DAYS))
-                .nbNotifiedUsers(5)
+                .nbNotifiedUsers(13)
                 .build();
 
         repository.saveAll(
                 List.of(
                         oneStatistic,
                         anOtherStatistic,
-                        aThirdStatistic
+                        aThirdStatistic,
+                        aFourthStatistic,
+                        aFifthStatistic
                 )
         );
 
@@ -121,7 +134,7 @@ class KpiControllerTest {
                 .get("/internal/api/v1/kpi")
                 .then()
                 .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
-                .body("[0].nbNotifiedUsers", equalTo(3))
+                .body("[0].nbNotifiedUsers", equalTo(12))
                 .body("size()", equalTo(1));
 
     }

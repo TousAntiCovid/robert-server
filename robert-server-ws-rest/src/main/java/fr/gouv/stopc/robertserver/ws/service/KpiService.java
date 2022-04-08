@@ -1,14 +1,14 @@
-package fr.gouv.stopc.robertserver.ws.service.impl;
+package fr.gouv.stopc.robertserver.ws.service;
 
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.database.service.WebserviceStatisticsService;
 import fr.gouv.stopc.robertserver.ws.dto.RobertServerKpi;
-import fr.gouv.stopc.robertserver.ws.service.IKpiService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Service
 @AllArgsConstructor
-public class KpiServiceImpl implements IKpiService {
+public class KpiService {
 
     /**
      * The registration management service
@@ -25,10 +25,6 @@ public class KpiServiceImpl implements IKpiService {
 
     private final WebserviceStatisticsService webserviceStatisticsService;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public List<RobertServerKpi> computeKpi(LocalDate fromDate, LocalDate toDate) {
         // Retrieve the different kpis of the current date (because of the
         // implementation of the Robert Protocol, kpis of Robert Server can be
@@ -38,8 +34,8 @@ public class KpiServiceImpl implements IKpiService {
         final var nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
         final var nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
         final var nbNotifiedUsers = webserviceStatisticsService.countNbNotifiedUsersBetween(
-                fromDate.atStartOfDay().toInstant(ZoneOffset.UTC),
-                toDate.atStartOfDay().toInstant(ZoneOffset.UTC)
+                LocalDate.now().minus(1, ChronoUnit.DAYS).atTime(23, 59, 59).toInstant(ZoneOffset.UTC),
+                LocalDate.now().plus(1, ChronoUnit.DAYS).atStartOfDay().toInstant(ZoneOffset.UTC)
         );
         return List.of(
                 new RobertServerKpi(
