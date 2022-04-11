@@ -1,6 +1,5 @@
-package fr.gouv.stopc.robertserver.ws.config;
+package fr.gouv.stopc.robertserver.ws.test;
 
-import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,7 +15,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 
 @Retention(RUNTIME)
 @Target(TYPE)
-@SpringBootTest(webEnvironment = RANDOM_PORT, classes = RobertServerWsRestApplication.class)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners(listeners = { RestAssuredManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {

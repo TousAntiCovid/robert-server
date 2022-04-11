@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.data.domain.Range;
 import org.springframework.http.*;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -54,14 +55,17 @@ import java.security.Key;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.data.domain.Range.Bound.exclusive;
+import static org.springframework.data.domain.Range.Bound.inclusive;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -1794,10 +1798,10 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(
-                Instant.now().minus(1, DAYS),
-                Instant.now().plus(1, DAYS)
-        );
+        final var range = Range
+                .from(inclusive(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)))
+                .to(exclusive(LocalDate.now().atStartOfDay().plus(1, ChronoUnit.DAYS).toInstant(ZoneOffset.UTC)));
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -1809,12 +1813,7 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertThat(
-                webserviceStatisticsService.countNbNotifiedUsersBetween(
-                        Instant.now().minus(1, DAYS),
-                        Instant.now().plus(1, DAYS)
-                )
-        ).isEqualTo(statisticBeforeStatus);
+        assertThat(webserviceStatisticsService.countNbNotifiedUsersBetween(range)).isEqualTo(statisticBeforeStatus);
     }
 
     @Test
@@ -1860,10 +1859,10 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(
-                Instant.now().minus(1, DAYS),
-                Instant.now().plus(1, DAYS)
-        );
+        final var range = Range
+                .from(inclusive(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)))
+                .to(exclusive(LocalDate.now().atStartOfDay().plus(1, ChronoUnit.DAYS).toInstant(ZoneOffset.UTC)));
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -1875,12 +1874,7 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertThat(
-                webserviceStatisticsService.countNbNotifiedUsersBetween(
-                        Instant.now().minus(1, DAYS),
-                        Instant.now().plus(1, DAYS)
-                )
-        ).isEqualTo(statisticBeforeStatus + 1);
+        assertThat(webserviceStatisticsService.countNbNotifiedUsersBetween(range)).isEqualTo(statisticBeforeStatus + 1);
     }
 
     @Test
@@ -1926,10 +1920,10 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(
-                Instant.now().minus(1, DAYS),
-                Instant.now().plus(1, DAYS)
-        );
+        final var range = Range
+                .from(inclusive(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)))
+                .to(exclusive(LocalDate.now().atStartOfDay().plus(1, ChronoUnit.DAYS).toInstant(ZoneOffset.UTC)));
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -1941,12 +1935,7 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertThat(
-                webserviceStatisticsService.countNbNotifiedUsersBetween(
-                        Instant.now().minus(1, DAYS),
-                        Instant.now().plus(1, DAYS)
-                )
-        ).isEqualTo(statisticBeforeStatus);
+        assertThat(webserviceStatisticsService.countNbNotifiedUsersBetween(range)).isEqualTo(statisticBeforeStatus);
     }
 
     @Test
@@ -1992,10 +1981,10 @@ public class StatusControllerWsRestTest {
         )
                 .when(this.cryptoServerClient).getIdFromStatus(any());
 
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(
-                Instant.now().minus(1, DAYS),
-                Instant.now().plus(1, DAYS)
-        );
+        final var range = Range
+                .from(inclusive(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)))
+                .to(exclusive(LocalDate.now().atStartOfDay().plus(1, ChronoUnit.DAYS).toInstant(ZoneOffset.UTC)));
+        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -2007,12 +1996,7 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertThat(
-                webserviceStatisticsService.countNbNotifiedUsersBetween(
-                        Instant.now().minus(1, DAYS),
-                        Instant.now().plus(1, DAYS)
-                )
-        ).isEqualTo(statisticBeforeStatus);
+        assertThat(webserviceStatisticsService.countNbNotifiedUsersBetween(range)).isEqualTo(statisticBeforeStatus);
     }
 
 }

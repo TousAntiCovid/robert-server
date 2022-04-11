@@ -2,14 +2,13 @@ package fr.gouv.stopc.robertserver.ws;
 
 import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
-import fr.gouv.stopc.robertserver.ws.config.IntegrationTest;
+import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 
@@ -43,15 +42,15 @@ class KpiControllerTest {
         given()
                 .contentType(JSON)
                 .params(
-                        "fromDate", LocalDate.now(ZoneId.systemDefault()).minus(1, DAYS).toString(),
-                        "toDate", LocalDate.now(ZoneId.systemDefault()).plus(1, DAYS).toString()
+                        "fromDate", LocalDate.now().minus(1, DAYS).toString(),
+                        "toDate", LocalDate.now().plus(1, DAYS).toString()
                 )
                 .expect()
                 .statusCode(OK.value())
                 .when()
                 .get("/internal/api/v1/kpi")
                 .then()
-                .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
+                .body("[0].date", equalTo(LocalDate.now().toString()))
                 .body("[0].nbNotifiedUsers", equalTo(1))
                 .body("size()", equalTo(1));
 
@@ -70,15 +69,15 @@ class KpiControllerTest {
         given()
                 .contentType(JSON)
                 .params(
-                        "fromDate", LocalDate.now(ZoneId.systemDefault()).minus(1, DAYS).toString(),
-                        "toDate", LocalDate.now(ZoneId.systemDefault()).plus(1, DAYS).toString()
+                        "fromDate", LocalDate.now().minus(1, DAYS).toString(),
+                        "toDate", LocalDate.now().plus(1, DAYS).toString()
                 )
                 .expect()
                 .statusCode(OK.value())
                 .when()
                 .get("/internal/api/v1/kpi")
                 .then()
-                .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
+                .body("[0].date", equalTo(LocalDate.now().toString()))
                 .body("[0].nbNotifiedUsers", equalTo(0))
                 .body("size()", equalTo(1));
 
@@ -125,15 +124,15 @@ class KpiControllerTest {
         given()
                 .contentType(JSON)
                 .params(
-                        "fromDate", LocalDate.now(ZoneId.systemDefault()).minus(1, DAYS).toString(),
-                        "toDate", LocalDate.now(ZoneId.systemDefault()).plus(1, DAYS).toString()
+                        "fromDate", LocalDate.now().minus(1, DAYS).toString(),
+                        "toDate", LocalDate.now().plus(1, DAYS).toString()
                 )
                 .expect()
                 .statusCode(OK.value())
                 .when()
                 .get("/internal/api/v1/kpi")
                 .then()
-                .body("[0].date", equalTo(LocalDate.now(ZoneId.systemDefault()).toString()))
+                .body("[0].date", equalTo(LocalDate.now().toString()))
                 .body("[0].nbNotifiedUsers", equalTo(12))
                 .body("size()", equalTo(1));
 

@@ -4,6 +4,7 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Range;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,8 +18,8 @@ public class WebserviceStatisticsService {
 
     private final WebserviceStatisticsRepository repository;
 
-    public long countNbNotifiedUsersBetween(Instant from, Instant to) {
-        final var webserviceStatistics = repository.getWebserviceStatisticsByDateBetween(from, to);
+    public long countNbNotifiedUsersBetween(Range<Instant> range) {
+        final var webserviceStatistics = repository.getWebserviceStatisticsByDateBetween(range);
         return webserviceStatistics.stream()
                 .mapToLong(WebserviceStatistics::getNbNotifiedUsers)
                 .sum();
