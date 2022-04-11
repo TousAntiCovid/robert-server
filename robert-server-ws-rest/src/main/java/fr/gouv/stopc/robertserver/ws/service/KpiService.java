@@ -2,7 +2,7 @@ package fr.gouv.stopc.robertserver.ws.service;
 
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.database.service.WebserviceStatisticsService;
-import fr.gouv.stopc.robertserver.ws.dto.RobertServerKpi;
+import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Range;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import static org.springframework.data.domain.Range.*;
 import static org.springframework.data.domain.Range.Bound.exclusive;
 import static org.springframework.data.domain.Range.Bound.inclusive;
 
@@ -45,10 +44,14 @@ public class KpiService {
         final var nbNotifiedUsers = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
 
         return List.of(
-                new RobertServerKpi(
-                        LocalDate.now(), nbAlertedUsers, nbExposedUsersNotAtRisk,
-                        nbInfectedUsersNotNotified, nbNotifiedUsersScoredAgain, nbNotifiedUsers
-                )
+                RobertServerKpi.builder()
+                        .date(LocalDate.now())
+                        .nbAlertedUsers(nbAlertedUsers)
+                        .nbExposedButNotAtRiskUsers(nbExposedUsersNotAtRisk)
+                        .nbInfectedUsersNotNotified(nbInfectedUsersNotNotified)
+                        .nbNotifiedUsersScoredAgain(nbNotifiedUsersScoredAgain)
+                        .nbNotifiedUsers(nbNotifiedUsers)
+                        .build()
         );
     }
 

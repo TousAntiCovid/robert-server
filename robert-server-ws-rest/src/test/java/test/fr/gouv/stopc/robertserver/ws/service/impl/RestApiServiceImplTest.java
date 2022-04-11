@@ -47,9 +47,6 @@ public class RestApiServiceImplTest {
     @Mock
     private WebClient webClient;
 
-    @Value("${controller.internal.path.prefix}")
-    private String internalPathPrefix;
-
     @Value("${push.server.host}")
     private String pushServerHost;
 
@@ -84,7 +81,6 @@ public class RestApiServiceImplTest {
 
         when(this.propertyLoader.getPushServerHost()).thenReturn(this.pushServerHost);
         when(this.propertyLoader.getPushServerPort()).thenReturn(this.pushServerPort);
-        when(this.propertyLoader.getInternalPathPrefix()).thenReturn(this.internalPathPrefix);
         when(this.propertyLoader.getPushApiVersion()).thenReturn(this.pushApiVersion);
         when(this.propertyLoader.getPushApiPath()).thenReturn(this.pushApiPath);
         when(this.propertyLoader.getPushApiTokenPath()).thenReturn(this.pushApiTokenPath);

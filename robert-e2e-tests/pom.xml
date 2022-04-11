@@ -111,7 +111,7 @@
                 <version>5.1.0</version>
                 <configuration>
                     <inputSpec>
-                        ${project.basedir}/../robert-server-ws-rest/src/main/resources/api-robert-server-v1.yaml
+                        ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-server-v1.yml
                     </inputSpec>
                     <generatorName>java</generatorName>
                     <apiPackage>
@@ -121,7 +121,8 @@
                         fr.gouv.stopc.robert.client.model
                     </modelPackage>
                     <typeMappings>
-                        <typeMapping>File=org.springframework.core.io.Resource</typeMapping>
+                        <typeMapping
+            >File=org.springframework.core.io.Resource</typeMapping>
                     </typeMappings>
                     <configOptions>
                         <library>resttemplate</library>

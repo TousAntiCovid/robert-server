@@ -1,6 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -117,7 +120,8 @@
 						<phase>generate-sources</phase>
 						<configuration>
 
-							<inputSpec>${project.basedir}/../robert-server-ws-rest/src/main/resources/api-robert-server-v1.yaml</inputSpec>
+							<inputSpec
+              >${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-server-v1.yml</inputSpec>
 							<output>target/generated-sources/robert-server</output>
 							<generatorName>java</generatorName>
 							<apiPackage>fr.gouv.tac.mobile.emulator.robert.api</apiPackage>

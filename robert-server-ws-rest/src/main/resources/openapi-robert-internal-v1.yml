@@ -26,11 +26,13 @@ paths:
           required: true
           schema:
             type: string
+            format: date
         - name: toDate
           in: query
           required: true
           schema:
             type: string
+            format: date
       responses:
         "200":
           description: Returns the KPI list for date range
@@ -50,22 +52,28 @@ components:
     KpisResponse:
       type: array
       items:
-        $ref: "#/components/schemas/Kpi"
-    Kpi:
+        $ref: "#/components/schemas/RobertServerKpi"
+    RobertServerKpi:
       type: object
       properties:
         date:
           type: string
+          format: date
         nbAlertedUsers:
-          type: number
+          type: integer
+          format: int64
         nbExposedButNotAtRiskUsers:
-          type: number
+          type: integer
+          format: int64
         nbInfectedUsersNotNotified:
-          type: number
+          type: integer
+          format: int64
         nbNotifiedUsersScoredAgain:
-          type: number
+          type: integer
+          format: int64
         nbNotifiedUsers:
-          type: number
+          type: integer
+          format: int64
       required:
         - date
         - nbAlertedUsers

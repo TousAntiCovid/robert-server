@@ -148,6 +148,39 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>5.4.0</version>
+				<executions>
+					<execution>
+						<id>generate-internal-api</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi-robert-internal-v1.yml
+							</inputSpec>
+							<generatorName>spring</generatorName>
+							<apiPackage>fr.gouv.stopc.robertserver.ws.api</apiPackage>
+							<modelPackage>fr.gouv.stopc.robertserver.ws.api.model</modelPackage>
+							<configOptions>
+								<annotationLibrary>none</annotationLibrary>
+								<documentationProvider>none</documentationProvider>
+								<openApiNullable>false</openApiNullable>
+								<interfaceOnly>true</interfaceOnly>
+								<useTags>true</useTags>
+								<additionalModelTypeAnnotations>
+									@lombok.Builder
+									@lombok.AllArgsConstructor
+									@lombok.NoArgsConstructor
+								</additionalModelTypeAnnotations>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
