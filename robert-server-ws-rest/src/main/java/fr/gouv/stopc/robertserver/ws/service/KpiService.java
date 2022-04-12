@@ -73,7 +73,7 @@ public class KpiService {
 
     public void updateWebserviceStatistics(final Registration registration) {
         if (!registration.isNotifiedForCurrentRisk() && registration.isAtRisk()) {
-            webserviceStatisticsRepository.increment(Instant.now().truncatedTo(DAYS));
+            webserviceStatisticsRepository.incrementNotifiedUsers(Instant.now().truncatedTo(DAYS));
         }
     }
 }

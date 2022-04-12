@@ -16,7 +16,7 @@ public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStati
     private final MongoOperations mongoOperations;
 
     @Override
-    public void increment(Instant date) {
+    public void incrementNotifiedUsers(Instant date) {
         final var query = new Query().addCriteria(Criteria.where("_id").is(date));
         final var update = new Update().inc("notifiedUsers", 1);
         final var options = FindAndModifyOptions.options()

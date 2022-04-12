@@ -4,5 +4,5 @@ import java.time.Instant;
 
 public interface WebserviceStatisticsCustomRepository {
 
-    void increment(Instant date);
+    void incrementNotifiedUsers(Instant date);
 }

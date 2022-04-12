@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 >
     <modelVersion>4.0.0</modelVersion>
 
@@ -114,15 +114,14 @@
                         ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-server-v1.yml
                     </inputSpec>
                     <generatorName>java</generatorName>
-                    <apiPackage>
-                        fr.gouv.stopc.robert.client.api
-                    </apiPackage>
+                    <apiPackage>fr.gouv.stopc.robert.client.api</apiPackage>
                     <modelPackage>
                         fr.gouv.stopc.robert.client.model
                     </modelPackage>
                     <typeMappings>
-                        <typeMapping
-            >File=org.springframework.core.io.Resource</typeMapping>
+                        <typeMapping>
+                            File=org.springframework.core.io.Resource
+                        </typeMapping>
                     </typeMappings>
                     <configOptions>
                         <library>resttemplate</library>
@@ -147,5 +146,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
