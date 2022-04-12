@@ -42,6 +42,16 @@ paths:
                 $ref: "#/components/schemas/KpisResponse"
         "400":
           description: bad request
+  /tasks/compute-daily-kpis:
+    get:
+      tags:
+        - KPI
+      summary: Trigger daily KPI computation
+      description: Computes KPIs for the current day.
+      operationId: compute-kpis
+      responses:
+        202:
+          description: KPIs generation request accepted and scheduled in background
 externalDocs:
   description: Find out more about ROBERT
   url: https://github.com/ROBERT-proximity-tracing/

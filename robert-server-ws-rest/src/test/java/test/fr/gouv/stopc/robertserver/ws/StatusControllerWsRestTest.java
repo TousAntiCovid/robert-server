@@ -13,8 +13,8 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
-import fr.gouv.stopc.robertserver.database.service.WebserviceStatisticsService;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
@@ -57,10 +57,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -116,9 +116,6 @@ public class StatusControllerWsRestTest {
 
     @Autowired
     private IServerConfigurationService serverConfigurationService;
-
-    @Autowired
-    private WebserviceStatisticsService webserviceStatisticsService;
 
     @Autowired
     private WebserviceStatisticsRepository webserviceStatisticsRepository;
@@ -223,10 +220,6 @@ public class StatusControllerWsRestTest {
                 .atRisk(true)
                 .isNotified(false)
                 .lastStatusRequestEpoch(currentEpoch - 3).build();
-
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(oldEpoch), 1, decryptedEbid, 0, 3);
 
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
@@ -672,7 +665,9 @@ public class StatusControllerWsRestTest {
         return res;
     }
 
-    /** Test the access for API V1, should not be used since API V2 */
+    /**
+     * Test the access for API V1, should not be used since API V2
+     */
     @Test
     public void testAccessV1() {
         statusRequestAtRiskSucceedsV1ToV4(
@@ -680,7 +675,9 @@ public class StatusControllerWsRestTest {
         );
     }
 
-    /** Test the access for API V2, should not be used since API V3 */
+    /**
+     * Test the access for API V2, should not be used since API V3
+     */
     @Test
     public void testAccessV2() {
         statusRequestAtRiskSucceedsV1ToV4(
@@ -688,7 +685,9 @@ public class StatusControllerWsRestTest {
         );
     }
 
-    /** Test the access for API V3, should not be used since API V4 */
+    /**
+     * Test the access for API V3, should not be used since API V4
+     */
     @Test
     public void testAccessV3() {
         statusRequestAtRiskSucceedsV1ToV4(
@@ -696,7 +695,9 @@ public class StatusControllerWsRestTest {
         );
     }
 
-    /** Test the access for API V4, should not be used since API V5 */
+    /**
+     * Test the access for API V4, should not be used since API V5
+     */
     @Test
     public void testAccessV4() {
         statusRequestAtRiskSucceedsV1ToV4(
@@ -744,10 +745,6 @@ public class StatusControllerWsRestTest {
                 .time(Base64.encode(reqContent[1]))
                 .mac(Base64.encode(reqContent[2]))
                 .build();
-
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -876,10 +873,6 @@ public class StatusControllerWsRestTest {
                 .pushInfo(pushInfo)
                 .build();
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
@@ -932,10 +925,6 @@ public class StatusControllerWsRestTest {
                 .mac(Base64.encode(reqContent[2])).build();
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
-
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
@@ -1017,10 +1006,6 @@ public class StatusControllerWsRestTest {
                 .build();
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
-
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1104,10 +1089,6 @@ public class StatusControllerWsRestTest {
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
@@ -1179,10 +1160,6 @@ public class StatusControllerWsRestTest {
                 .time(Base64.encode(reqContent[1]))
                 .mac(Base64.encode(reqContent[2])).build();
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -1253,10 +1230,6 @@ public class StatusControllerWsRestTest {
                 .pushInfo(pushInfo)
                 .build();
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -1308,10 +1281,6 @@ public class StatusControllerWsRestTest {
                 .time(Base64.encode(reqContent[1]))
                 .mac(Base64.encode(reqContent[2]))
                 .build();
-
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
@@ -1377,10 +1346,6 @@ public class StatusControllerWsRestTest {
                 .mac(Base64.encode(reqContent[2]))
                 .pushInfo(pushInfo)
                 .build();
-
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
@@ -1463,10 +1428,6 @@ public class StatusControllerWsRestTest {
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch, timestampDelta);
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
@@ -1534,10 +1495,6 @@ public class StatusControllerWsRestTest {
                 .time(Base64.encode(reqContent[1]))
                 .mac(Base64.encode(reqContent[2])).build();
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -1593,10 +1550,6 @@ public class StatusControllerWsRestTest {
                 .mac(Base64.encode(reqContent[2])).build();
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
-
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
 
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
@@ -1723,10 +1676,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
@@ -1800,8 +1749,8 @@ public class StatusControllerWsRestTest {
 
         final var range = Range
                 .from(inclusive(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)))
-                .to(exclusive(LocalDate.now().atStartOfDay().plus(1, ChronoUnit.DAYS).toInstant(ZoneOffset.UTC)));
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
+                .to(exclusive(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+        final var statisticBeforeStatus = webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -1813,7 +1762,8 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertThat(webserviceStatisticsService.countNbNotifiedUsersBetween(range)).isEqualTo(statisticBeforeStatus);
+        assertThat(webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range))
+                .containsExactlyElementsOf(statisticBeforeStatus);
     }
 
     @Test
@@ -1840,10 +1790,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
@@ -1861,8 +1807,12 @@ public class StatusControllerWsRestTest {
 
         final var range = Range
                 .from(inclusive(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)))
-                .to(exclusive(LocalDate.now().atStartOfDay().plus(1, ChronoUnit.DAYS).toInstant(ZoneOffset.UTC)));
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
+                .to(exclusive(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+        final var notifiedUsersBeforeStatus = webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range)
+                .stream()
+                .map(WebserviceStatistics::getNotifiedUsers)
+                .findFirst()
+                .orElse(0L);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -1874,7 +1824,12 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertThat(webserviceStatisticsService.countNbNotifiedUsersBetween(range)).isEqualTo(statisticBeforeStatus + 1);
+        final var statisticAfterStatus = webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range);
+        assertThat(statisticAfterStatus)
+                .extracting(stats -> tuple(stats.getDate(), stats.getNotifiedUsers()))
+                .containsExactly(
+                        tuple(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC), notifiedUsersBeforeStatus + 1)
+                );
     }
 
     @Test
@@ -1901,10 +1856,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
@@ -1922,8 +1873,8 @@ public class StatusControllerWsRestTest {
 
         final var range = Range
                 .from(inclusive(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)))
-                .to(exclusive(LocalDate.now().atStartOfDay().plus(1, ChronoUnit.DAYS).toInstant(ZoneOffset.UTC)));
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
+                .to(exclusive(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+        final var statisticBeforeStatus = webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -1935,7 +1886,8 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertThat(webserviceStatisticsService.countNbNotifiedUsersBetween(range)).isEqualTo(statisticBeforeStatus);
+        assertThat(webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range))
+                .containsExactlyElementsOf(statisticBeforeStatus);
     }
 
     @Test
@@ -1962,10 +1914,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
-        byte[] decryptedEbid = new byte[8];
-        System.arraycopy(idA, 0, decryptedEbid, 3, 5);
-        System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
         when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
@@ -1983,8 +1931,8 @@ public class StatusControllerWsRestTest {
 
         final var range = Range
                 .from(inclusive(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC)))
-                .to(exclusive(LocalDate.now().atStartOfDay().plus(1, ChronoUnit.DAYS).toInstant(ZoneOffset.UTC)));
-        final var statisticBeforeStatus = webserviceStatisticsService.countNbNotifiedUsersBetween(range);
+                .to(exclusive(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+        final var statisticBeforeStatus = webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -1996,7 +1944,8 @@ public class StatusControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertThat(webserviceStatisticsService.countNbNotifiedUsersBetween(range)).isEqualTo(statisticBeforeStatus);
+        assertThat(webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range))
+                .containsExactlyElementsOf(statisticBeforeStatus);
     }
 
 }

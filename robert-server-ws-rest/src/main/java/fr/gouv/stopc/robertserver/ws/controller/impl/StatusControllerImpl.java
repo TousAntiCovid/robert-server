@@ -7,7 +7,6 @@ import fr.gouv.stopc.robertserver.database.model.ApplicationConfigurationModel;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.database.service.WebserviceStatisticsService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.IStatusController;
 import fr.gouv.stopc.robertserver.ws.dto.*;
@@ -16,6 +15,7 @@ import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.service.DeclarationService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
+import fr.gouv.stopc.robertserver.ws.service.KpiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +55,7 @@ public class StatusControllerImpl implements IStatusController {
 
     private final DeclarationService declarationService;
 
-    private final WebserviceStatisticsService statisticsService;
+    private final KpiService kpiService;
 
     @Override
     public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo) {
@@ -302,7 +302,7 @@ public class StatusControllerImpl implements IStatusController {
         log.debug("analytics token generated : {}", analyticsToken);
 
         // update statistics about user being notified of its risk status
-        statisticsService.updateWebserviceStatistics(record);
+        kpiService.updateWebserviceStatistics(record);
         record.setNotifiedForCurrentRisk(true);
 
         // Save changes to the record

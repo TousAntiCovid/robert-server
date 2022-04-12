@@ -12,12 +12,20 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Builder
+@Builder(toBuilder = true)
 @Document
 public class WebserviceStatistics {
 
     @Id
     private Instant date;
 
-    private int nbNotifiedUsers;
+    private Long totalAlertedUsers;
+
+    private Long totalExposedButNotAtRiskUsers;
+
+    private Long totalInfectedUsersNotNotified;
+
+    private Long totalNotifiedUsersScoredAgain;
+
+    private Long notifiedUsers;
 }
