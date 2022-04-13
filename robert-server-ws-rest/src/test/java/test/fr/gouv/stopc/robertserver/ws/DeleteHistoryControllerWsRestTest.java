@@ -18,7 +18,6 @@ import fr.gouv.stopc.robertserver.ws.dto.DeleteHistoryResponseDto;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo;
-import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +48,6 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application.properties")
-@Slf4j
 public class DeleteHistoryControllerWsRestTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
@@ -552,7 +550,7 @@ public class DeleteHistoryControllerWsRestTest {
             ka = key.getEncoded();
 
         } catch (NoSuchAlgorithmException e) {
-            log.info("Problem generating KA");
+            throw new RuntimeException("Problem generating KA", e);
         }
         return ka;
     }
@@ -605,7 +603,7 @@ public class DeleteHistoryControllerWsRestTest {
         try {
             mac = this.generateHMAC(new CryptoHMACSHA256(ka), agg, AUTH_REQUEST_TYPE);
         } catch (Exception e) {
-            log.info("Problem generating SHA256");
+            throw new RuntimeException("Problem generating SHA256", e);
         }
         return mac;
     }
@@ -624,7 +622,7 @@ public class DeleteHistoryControllerWsRestTest {
             res[1] = this.generateTime32(adjustTimeBySeconds);
             res[2] = this.generateMACforESR(res[0], res[1], ka);
         } catch (Exception e) {
-            log.info("Problem creating EBID, Time and MAC for test");
+            throw new RuntimeException("Problem creating EBID, Time and MAC for test", e);
         }
         return res;
     }

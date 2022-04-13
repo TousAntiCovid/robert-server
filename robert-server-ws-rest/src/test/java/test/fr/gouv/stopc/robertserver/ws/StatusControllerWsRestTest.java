@@ -33,7 +33,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,7 +69,6 @@ import static org.springframework.data.domain.Range.Bound.inclusive;
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application.properties")
-@Slf4j
 public class StatusControllerWsRestTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V1)
@@ -165,8 +163,6 @@ public class StatusControllerWsRestTest {
                 this.targetUrl.toString(), HttpMethod.GET,
                 this.requestEntity, String.class
         );
-
-        log.info("******* Bad HTTP Verb Payload: {}", response.getBody());
 
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
         verify(this.registrationService, times(0)).findById(ArgumentMatchers.any());
@@ -589,7 +585,7 @@ public class StatusControllerWsRestTest {
             ka = key.getEncoded();
 
         } catch (NoSuchAlgorithmException e) {
-            log.info("Problem generating KA");
+            throw new RuntimeException("Problem generating KA", e);
         }
         return ka;
     }
@@ -641,7 +637,7 @@ public class StatusControllerWsRestTest {
         try {
             mac = this.generateHMAC(new CryptoHMACSHA256(ka), agg, DigestSaltEnum.STATUS);
         } catch (Exception e) {
-            log.info("Problem generating SHA256");
+            throw new RuntimeException("Problem generating SHA256", e);
         }
         return mac;
     }
@@ -660,7 +656,7 @@ public class StatusControllerWsRestTest {
             res[1] = this.generateTime32(adjustTimeBySeconds);
             res[2] = this.generateMACforESR(res[0], res[1], ka);
         } catch (Exception e) {
-            log.info("Problem creating EBID, Time and MAC for test");
+            throw new RuntimeException("Problem creating EBID, Time and MAC for test", e);
         }
         return res;
     }

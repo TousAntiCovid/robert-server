@@ -16,7 +16,6 @@ import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import io.micrometer.core.instrument.util.StringUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +47,6 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestExecutionListeners(listeners = { MongodbManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 @TestPropertySource("classpath:application.properties")
-@Slf4j
 public class RegisterControllerWsRestTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
@@ -124,8 +122,6 @@ public class RegisterControllerWsRestTest {
                 this.targetUrl.toString(), HttpMethod.GET,
                 this.requestEntity, String.class
         );
-
-        log.info("******* Bad HTTP Verb Payload: {}", response.getBody());
 
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
         verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
