@@ -6,8 +6,8 @@ import fr.gouv.stopc.robertserver.ws.test.RestAssuredManager;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.TestPropertySource;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -19,8 +19,8 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 
 @Retention(RUNTIME)
 @Target(TYPE)
+@ActiveProfiles({ "dev", "test" })
 @SpringBootTest(classes = { RobertServerWsRestApplication.class }, webEnvironment = RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
 @TestExecutionListeners(listeners = { RestAssuredManager.class, MongodbManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface LegacyIntegrationTest {
