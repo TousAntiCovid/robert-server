@@ -17,21 +17,18 @@ import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV5;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
+import fr.gouv.stopc.robertserver.ws.test.JwtKeysManager;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Encoders;
-import io.jsonwebtoken.security.Keys;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +45,6 @@ import javax.crypto.KeyGenerator;
 
 import java.net.URI;
 import java.security.Key;
-import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -84,9 +80,6 @@ public class StatusControllerWsRestTest {
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
-    @Value("${robert.server.status-request-minimum-epoch-gap}")
-    private Integer statusRequestMinimumEpochGap;
-
     @Autowired
     private TestRestTemplate restTemplate;
 
@@ -117,9 +110,6 @@ public class StatusControllerWsRestTest {
     private PropertyLoader propertyLoader;
 
     @MockBean
-    private WsServerConfiguration wsServerConfiguration;
-
-    @MockBean
     private RobertServerWsConfiguration config;
 
     @MockBean
@@ -140,8 +130,6 @@ public class StatusControllerWsRestTest {
         this.currentEpoch = this.getCurrentEpoch();
 
         when(this.propertyLoader.getEsrLimit()).thenReturn(-1);
-        when(this.wsServerConfiguration.getStatusRequestMinimumEpochGap())
-                .thenReturn(this.statusRequestMinimumEpochGap);
 
         this.serverKey = this.generateKey(24);
 
@@ -211,8 +199,6 @@ public class StatusControllerWsRestTest {
                 .atRisk(true)
                 .isNotified(false)
                 .lastStatusRequestEpoch(currentEpoch - 3).build();
-
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -759,9 +745,6 @@ public class StatusControllerWsRestTest {
         byte[] idA = this.generateKey(5);
         Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
 
-        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
-
         // When
         ResponseEntity<StatusResponseDtoV1ToV4> response = this.restTemplate.exchange(
                 targetUrl.toString(),
@@ -783,9 +766,6 @@ public class StatusControllerWsRestTest {
         // Given
         byte[] idA = this.generateKey(5);
         Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
-
-        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         // When
         ResponseEntity<StatusResponseDtoV5> response = this.restTemplate.exchange(
@@ -811,9 +791,6 @@ public class StatusControllerWsRestTest {
         // Given
         byte[] idA = this.generateKey(5);
         Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
-
-        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         // When
         ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(
@@ -863,9 +840,6 @@ public class StatusControllerWsRestTest {
                 .mac(Base64.encode(reqContent[2]))
                 .pushInfo(pushInfo)
                 .build();
-
-        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
@@ -917,8 +891,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -957,8 +929,6 @@ public class StatusControllerWsRestTest {
     public void testStatusRequestNoNewRiskSinceLastNotifSucceeds() {
         byte[] idA = this.generateKey(5);
         byte[] kA = this.generateKA();
-
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         List<EpochExposition> epochExpositions = new ArrayList<>();
 
@@ -1080,8 +1050,6 @@ public class StatusControllerWsRestTest {
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch);
 
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -1132,7 +1100,7 @@ public class StatusControllerWsRestTest {
                 currentEpoch,
                 currentEpoch,
                 0,
-                this.wsServerConfiguration.getStatusRequestMinimumEpochGap()
+                2
         );
 
         byte[] idA = this.generateKey(5);
@@ -1194,7 +1162,7 @@ public class StatusControllerWsRestTest {
                 currentEpoch,
                 currentEpoch,
                 0,
-                this.wsServerConfiguration.getStatusRequestMinimumEpochGap()
+                2
         );
 
         byte[] idA = this.generateKey(5);
@@ -1273,8 +1241,6 @@ public class StatusControllerWsRestTest {
                 .mac(Base64.encode(reqContent[2]))
                 .build();
 
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -1337,8 +1303,6 @@ public class StatusControllerWsRestTest {
                 .mac(Base64.encode(reqContent[2]))
                 .pushInfo(pushInfo)
                 .build();
-
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1418,8 +1382,6 @@ public class StatusControllerWsRestTest {
         int timestampDelta = -20;
 
         byte[][] reqContent = createEBIDTimeMACFor(idA, kA, currentEpoch, timestampDelta);
-
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1542,8 +1504,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -1578,18 +1538,8 @@ public class StatusControllerWsRestTest {
     public void when_at_risk_then_status_got_a_declaration_token_with_last_contact_date_and_last_status_request_both_in_timestamp() {
 
         // Given
-        KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
-
         byte[] idA = this.generateKey(5);
         Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
-
-        when(this.wsServerConfiguration.getDeclareTokenKid()).thenReturn("kid");
-        when(this.wsServerConfiguration.getDeclareTokenPrivateKey())
-                .thenReturn(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()));
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(false);
-
-        when(this.wsServerConfiguration.getAnalyticsTokenPrivateKey())
-                .thenReturn(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()));
 
         // When
         ResponseEntity<StatusResponseDto> response = this.restTemplate.exchange(
@@ -1610,7 +1560,7 @@ public class StatusControllerWsRestTest {
         verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
 
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(keyPair.getPublic())
+                .setSigningKey(JwtKeysManager.JWT_KEYS_DECLARATION.getPublic())
                 .build()
                 .parseClaimsJws(response.getBody().getDeclarationToken())
                 .getBody();
@@ -1667,8 +1617,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -1722,8 +1670,6 @@ public class StatusControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, 5);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, 3);
-
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1780,8 +1726,6 @@ public class StatusControllerWsRestTest {
                 .mac(Base64.encode(reqContent[2])).build();
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
-
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
@@ -1847,8 +1791,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
 
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
-
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(
@@ -1904,8 +1846,6 @@ public class StatusControllerWsRestTest {
                 .mac(Base64.encode(reqContent[2])).build();
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
-
-        when(this.wsServerConfiguration.getJwtUseTransientKey()).thenReturn(true);
 
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 

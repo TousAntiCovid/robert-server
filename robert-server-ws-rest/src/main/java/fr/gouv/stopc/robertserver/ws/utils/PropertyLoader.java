@@ -68,9 +68,6 @@ public class PropertyLoader {
     @Value("${robert.jwt.lifetime}")
     private int jwtLifeTime;
 
-    @Value("${robert.jwt.use-transient-key}")
-    private Boolean jwtUseTransientKey;
-
     @Value("${robert.server.disable-check-captcha}")
     private Boolean disableCaptcha;
 

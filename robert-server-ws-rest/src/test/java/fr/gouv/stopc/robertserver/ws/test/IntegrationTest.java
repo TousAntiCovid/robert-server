@@ -18,7 +18,8 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @Target(TYPE)
 @ActiveProfiles({ "dev", "test" })
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestExecutionListeners(listeners = { RestAssuredManager.class, MongodbManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(listeners = { JwtKeysManager.class, RestAssuredManager.class,
+        MongodbManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {
 
