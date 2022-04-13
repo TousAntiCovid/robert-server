@@ -11,6 +11,7 @@ import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.dto.RegisterResponseDto;
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
+import fr.gouv.stopc.robertserver.ws.test.MongodbManager;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
@@ -31,6 +32,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -40,9 +42,11 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
 @SpringBootTest(classes = {
         RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestExecutionListeners(listeners = { MongodbManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 @TestPropertySource("classpath:application.properties")
 @Slf4j
 public class RegisterControllerWsRestTest {
