@@ -18,9 +18,9 @@ services:
     environment:
       - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
       - ROBERT_CRYPTO_SERVER_HOST=crypto-server
-      - SUBMISSION_CODE_SERVER_HOST=mock-submission-code-server
-      - CAPTCHA_INTERNAL_HOSTNAME=http://mock-captcha:8080
-      - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:8080/private/api/v1/captcha/{captchaId}/checkAnswer
+      - SUBMISSION_CODE_SERVER_URL=http://mock-submission-code-server:1080
+      - CAPTCHA_INTERNAL_HOSTNAME=http://mock-captcha:1080
+      - CAPTCHA_INTERNAL_VERIFY_URL=http://mock-captcha:1080/private/api/v1/captcha/{captchaId}/checkAnswer
       - PUSH_SERVER_HOST=robert-push-notif-server-ws-rest
       - ESR_LIMIT=0
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
@@ -78,20 +78,18 @@ services:
       - "27017:27017"
 
   mock-captcha:
-    image: mockserver/mockserver:mockserver-5.11.2
-    command: -logLevel INFO -serverPort 8080
-    volumes:
-      - ./docker-compose/mock-captcha-orange-server-config:/mock-expectation:ro
+    image: mockserver/mockserver:mockserver-5.13.2
     environment:
-      - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /expectations.json
+    volumes:
+      - ./docker-compose/mock-server/captcha.json:/expectations.json:ro
 
   mock-submission-code-server:
-    image: mockserver/mockserver:mockserver-5.11.2
-    command: -logLevel INFO -serverPort 8080
-    volumes:
-      - ./docker-compose/mock-submission-code-server-ws-rest-config:/mock-expectation:ro
+    image: mockserver/mockserver:mockserver-5.13.2
     environment:
-      - MOCKSERVER_INITIALIZATION_JSON_PATH=/mock-expectation/mock-server-expectation.json
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /expectations.json
+    volumes:
+      - ./docker-compose/mock-server/submission-code-server.json:/expectations.json:ro
 
   prometheus:
     profiles:
