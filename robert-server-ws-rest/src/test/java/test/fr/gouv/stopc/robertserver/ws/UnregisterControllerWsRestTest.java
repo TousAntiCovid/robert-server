@@ -14,7 +14,6 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.dto.UnregisterResponseDto;
-import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.UnregisterRequestVo;
@@ -38,10 +37,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Optional;
 
+import static fr.gouv.stopc.robertserver.ws.test.PushNotifMockManager.verifyNoInteractionsWithPushNotifServer;
+import static fr.gouv.stopc.robertserver.ws.test.PushNotifMockManager.verifyPushNotifServerReceivedUnregisterForToken;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @LegacyIntegrationTest
@@ -81,9 +81,6 @@ public class UnregisterControllerWsRestTest {
 
     @MockBean
     private ICryptoServerGrpcClient cryptoServerClient;
-
-    @MockBean
-    private IRestApiService restApiService;
 
     @Autowired
     private PropertyLoader propertyLoader;
@@ -660,7 +657,7 @@ public class UnregisterControllerWsRestTest {
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
-        verify(this.restApiService).unregisterPushNotif(pushToken);
+        verifyPushNotifServerReceivedUnregisterForToken(pushToken);
     }
 
     @Test
@@ -683,7 +680,7 @@ public class UnregisterControllerWsRestTest {
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
-        verify(this.restApiService, never()).unregisterPushNotif(anyString());
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     private void generateSuccessPayload(byte[] idA, String pushToken) {

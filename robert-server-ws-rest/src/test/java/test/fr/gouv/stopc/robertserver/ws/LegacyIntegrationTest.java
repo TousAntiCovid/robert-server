@@ -20,8 +20,14 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @Target(TYPE)
 @ActiveProfiles({ "dev", "test" })
 @SpringBootTest(classes = { RobertServerWsRestApplication.class }, webEnvironment = RANDOM_PORT)
-@TestExecutionListeners(listeners = { JwtKeysManager.class, RestAssuredManager.class,
-        MongodbManager.class, CaptchaMockManager.class, SubmissionMockManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(listeners = {
+        JwtKeysManager.class,
+        RestAssuredManager.class,
+        MongodbManager.class,
+        CaptchaMockManager.class,
+        SubmissionMockManager.class,
+        PushNotifMockManager.class
+}, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface LegacyIntegrationTest {
 
