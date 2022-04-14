@@ -25,7 +25,7 @@ public class ClockControllerTest {
                 .get("/api/v6/clock")
                 .then()
                 .statusCode(OK.value())
-                .body("serviceStartTime", equalTo("2020-06-01"))
+                .body("serviceStartDate", equalTo("2020-06-01"))
                 .body("time", isBetweenNowAndTimeAgo(1, SECONDS))
                 .body("epoch", equalTo(secondsSinceServiceStartTime / EPOCH_DURATION_SECS));
     }

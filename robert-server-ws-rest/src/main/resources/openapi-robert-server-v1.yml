@@ -644,7 +644,7 @@ components:
     ClockResponse:
       type: object
       properties:
-        serviceStartTime:
+        serviceStartDate:
           type: string
           format: date
           nullable: false

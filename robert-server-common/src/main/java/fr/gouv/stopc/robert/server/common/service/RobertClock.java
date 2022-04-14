@@ -39,16 +39,12 @@ public class RobertClock {
     }
 
     public RobertInstant atEpoch(int epochId) {
-        final var ntpTimestamp = startNtpTimestamp + epochId * EPOCH_DURATION_SECS;
+        final var ntpTimestamp = startNtpTimestamp + (long) epochId * EPOCH_DURATION_SECS;
         return atNtpTimestamp(ntpTimestamp);
     }
 
     public RobertInstant now() {
         return at(Instant.now());
-    }
-
-    public RobertInstant getServiceStartTime() {
-        return atEpoch(0);
     }
 
     @RequiredArgsConstructor

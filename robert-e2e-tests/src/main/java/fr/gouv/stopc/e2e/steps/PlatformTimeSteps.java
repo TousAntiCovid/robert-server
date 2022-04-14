@@ -83,12 +83,12 @@ public class PlatformTimeSteps {
 
         final var actuatorInfoResult = execInContainer(
                 containerName,
-                "curl -X GET -H 'Content-Type: application/json' localhost:8081/actuator/info"
+                "curl -X GET -H 'Content-Type: application/json' localhost:8081/api/v6/clock"
         );
         return Instant.parse(
                 new ObjectMapper().reader().readTree(actuatorInfoResult)
                         .get("robertClock")
-                        .get("currentTime")
+                        .get("time")
                         .asText()
         );
     }

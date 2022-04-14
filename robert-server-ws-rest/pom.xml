@@ -161,6 +161,7 @@
                     <configuration>
                         <generatorName>spring</generatorName>
                         <configOptions>
+                            <skipDefaultInterface>true</skipDefaultInterface>
                             <annotationLibrary>none</annotationLibrary>
                             <documentationProvider>
                                 none
