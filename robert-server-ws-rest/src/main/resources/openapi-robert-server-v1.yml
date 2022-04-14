@@ -243,6 +243,21 @@ paths:
           description: invalid authentication
         "430":
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
+  /clock:
+    get:
+      tags:
+        - robert
+      summary: Return server instant for apps sync purposes
+      operationId: clock
+      responses:
+        200:
+          description: Robert current time
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClockResponse"
+        400:
+          description: bad request
 externalDocs:
   description: Find out more about ROBERT
   url: https://github.com/ROBERT-proximity-tracing/
@@ -626,3 +641,22 @@ components:
       required:
         - name
         - value
+    ClockResponse:
+      type: object
+      properties:
+        serviceStartTime:
+          type: string
+          format: date
+          nullable: false
+        time:
+          type: string
+          format: date-time
+          example: "1970-01-01T04:20:00.000Z"
+          nullable: false
+        epoch:
+          type: integer
+          nullable: false
+      required:
+        - serviceStartTime
+        - time
+        - epoch

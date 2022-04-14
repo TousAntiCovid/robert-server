@@ -47,6 +47,10 @@ public class RobertClock {
         return at(Instant.now());
     }
 
+    public RobertInstant getServiceStartTime() {
+        return atEpoch(0);
+    }
+
     @RequiredArgsConstructor
     @EqualsAndHashCode
     public class RobertInstant {

@@ -142,9 +142,43 @@
             <artifactId>rest-assured</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.exparity</groupId>
+            <artifactId>hamcrest-date</artifactId>
+            <version>2.0.8</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.openapitools</groupId>
+                    <artifactId>openapi-generator-maven-plugin</artifactId>
+                    <version>5.4.0</version>
+                    <configuration>
+                        <generatorName>spring</generatorName>
+                        <configOptions>
+                            <annotationLibrary>none</annotationLibrary>
+                            <documentationProvider>
+                                none
+                            </documentationProvider>
+                            <openApiNullable>false</openApiNullable>
+                            <interfaceOnly>true</interfaceOnly>
+                            <useTags>true</useTags>
+                            <additionalModelTypeAnnotations>
+                                @lombok.Builder
+                                @lombok.AllArgsConstructor
+                                @lombok.NoArgsConstructor
+                            </additionalModelTypeAnnotations>
+                        </configOptions>
+
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.openapitools</groupId>
@@ -157,30 +191,20 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>
-                                ${project.basedir}/src/main/resources/openapi-robert-internal-v1.yml
-                            </inputSpec>
-                            <generatorName>spring</generatorName>
-                            <apiPackage>
-                                fr.gouv.stopc.robertserver.ws.api
-                            </apiPackage>
-                            <modelPackage>
-                                fr.gouv.stopc.robertserver.ws.api.model
-                            </modelPackage>
-                            <configOptions>
-                                <annotationLibrary>none</annotationLibrary>
-                                <documentationProvider>
-                                    none
-                                </documentationProvider>
-                                <openApiNullable>false</openApiNullable>
-                                <interfaceOnly>true</interfaceOnly>
-                                <useTags>true</useTags>
-                                <additionalModelTypeAnnotations>
-                                    @lombok.Builder
-									@lombok.AllArgsConstructor
-									@lombok.NoArgsConstructor
-                                </additionalModelTypeAnnotations>
-                            </configOptions>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi-robert-internal-v1.yml</inputSpec>
+                            <apiPackage>fr.gouv.stopc.robertserver.ws.api</apiPackage>
+                            <modelPackage>fr.gouv.stopc.robertserver.ws.api.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-external-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi-robert-server-v1.yml</inputSpec>
+                            <apiPackage>fr.gouv.stopc.robertserver.ws.api</apiPackage>
+                            <modelPackage>fr.gouv.stopc.robertserver.ws.api.model</modelPackage>
                         </configuration>
                     </execution>
                 </executions>
