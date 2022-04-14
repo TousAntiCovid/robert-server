@@ -1,0 +1,65 @@
+[
+  {
+    "id": "registration success",
+    "httpRequest": {
+      "method": "POST",
+      "path": "/internal/api/v1/push-token",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "token": "${json-unit.regex}valid.*",
+          "locale": "${json-unit.regex}[a-z]{2}-[A-Z]{2}",
+          "timezone": "${json-unit.regex}\\w+/\\w+"
+        }
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 201
+    }
+  },
+  {
+    "id": "registration bad request",
+    "httpRequest": {
+      "method": "POST",
+      "path": "/internal/api/v1/push-token"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 400
+    }
+  },
+  {
+    "id": "unregister accepted",
+    "httpRequest": {
+      "method": "DELETE",
+      "path": "/internal/api/v1/push-token/{token}",
+      "pathParameters": {
+        "token": ["valid.*"]
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 202
+    }
+  },
+  {
+    "id": "unregister bad request",
+    "httpRequest": {
+      "method": "DELETE",
+      "path": "/internal/api/v1/push-token/.*"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 400
+    }
+  }
+]

@@ -30,7 +30,7 @@ POST /private/api/v1/captcha
 ```
 
 
-# submission-code-server
+## submission-code-server
 
 Any request to validate a code of length 6, 12 or 36 and starting with `valid` will succeed.
 
@@ -57,4 +57,46 @@ Any other request will fail.
 GET /api/v1/verify?code=AZERTY
 
 { "valid": false }
+```
+
+## push-notif-server
+
+Any registration request with a token starting with `valid` request will result in a _created_ response.
+```http request
+POST /api/v1/push-token
+
+{
+  "token": "valid-token",
+  "locale": "fr-FR",
+  "timezone": "Europe/Paris"
+}
+
+201 Created
+```
+
+Registration requests malformed or with a token not starting with `valid` request will result in a _bad request_ response.
+```http request
+POST /api/v1/push-token
+
+{
+  "token": "bad-token",
+  "locale": "fr-FR",
+  "timezone": "Europe/Paris"
+}
+
+400 Bad Request
+```
+
+Any request with a token starting with `valid` request will result in an _accepted_ response.
+```http request
+DELETE /api/v1/push-token/valid-token
+
+202 Accepted
+```
+
+Any other request will fail.
+```http request
+DELETE /api/v1/push-token/some-token
+
+400 Bad Request
 ```
