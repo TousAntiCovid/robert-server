@@ -1,9 +1,14 @@
 package fr.gouv.stopc.robertserver.ws.test;
 
 import com.mongodb.client.MongoCollection;
+import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.model.Registration.RegistrationBuilder;
+import lombok.Builder;
 import lombok.SneakyThrows;
+import lombok.Value;
 import org.assertj.core.api.ListAssert;
+import org.assertj.core.api.ObjectAssert;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.lang.NonNull;
@@ -12,8 +17,13 @@ import org.springframework.test.context.TestExecutionListener;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.List;
+import java.util.function.Function;
+
 import static java.lang.Boolean.TRUE;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MongodbManager implements TestExecutionListener {
@@ -42,8 +52,15 @@ public class MongodbManager implements TestExecutionListener {
                 .forEach(MongoCollection::drop);
     }
 
-    public static void givenRegistrationExists(final Registration registration) {
-        mongoOperations.save(registration);
+    public static void givenRegistrationExistsForUser(final String user) {
+        givenRegistrationExistsForUser(user, identity());
+    }
+
+    public static void givenRegistrationExistsForUser(final String user,
+            final Function<RegistrationBuilder, RegistrationBuilder> transformer) {
+        final var registration = Registration.builder()
+                .permanentIdentifier(user.getBytes());
+        mongoOperations.save(transformer.apply(registration).build());
     }
 
     /**
@@ -77,5 +94,49 @@ public class MongodbManager implements TestExecutionListener {
 
     public static ListAssert<Registration> assertThatRegistrations() {
         return assertThat(mongoOperations.find(new Query(), Registration.class));
+    }
+
+    public static ObjectAssert<Registration> assertThatRegistrationForUser(final String user) {
+        return assertThatRegistrations()
+                .filteredOn(r -> user.equals(new String(r.getPermanentIdentifier())))
+                .hasSize(1)
+                .first();
+    }
+
+    public static ListAssert<Contact> assertThatContactsToProcess() {
+        return assertThat(mongoOperations.find(new Query(), Contact.class));
+    }
+
+    public static List<HelloMessage> helloMessages(final Contact contact) {
+        return contact.getMessageDetails()
+                .stream()
+                .map(
+                        hello -> HelloMessage.builder()
+                                .ebid(new String(contact.getEbid()))
+                                .ecc(new String(contact.getEcc()))
+                                .time(hello.getTimeFromHelloMessage())
+                                .mac(new String(hello.getMac()))
+                                .rssi(hello.getRssiCalibrated())
+                                .receptionTime(hello.getTimeCollectedOnDevice())
+                                .build()
+                )
+                .collect(toList());
+    }
+
+    @Value
+    @Builder
+    public static class HelloMessage {
+
+        String ebid;
+
+        String ecc;
+
+        int time;
+
+        String mac;
+
+        int rssi;
+
+        long receptionTime;
     }
 }

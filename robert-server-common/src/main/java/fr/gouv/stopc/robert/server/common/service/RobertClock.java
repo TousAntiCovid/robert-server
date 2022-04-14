@@ -1,13 +1,18 @@
 package fr.gouv.stopc.robert.server.common.service;
 
-import lombok.*;
+import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
+import java.util.Arrays;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
@@ -68,6 +73,11 @@ public class RobertClock {
             return (int) numberEpochs;
         }
 
+        public byte[] asTime32() {
+            final var unixTimestampByteArray = ByteUtils.longToBytes(asNtpTimestamp());
+            return Arrays.copyOfRange(unixTimestampByteArray, 4, 8);
+        }
+
         public RobertInstant plusEpochs(int numberOfEpochs) {
             return RobertClock.this.at(time.plusSeconds((long) numberOfEpochs * EPOCH_DURATION_SECS));
         }
@@ -111,6 +121,43 @@ public class RobertClock {
         @Override
         public String toString() {
             return String.format("%s=%sE", time.toString(), asEpochId());
+        }
+    }
+
+    public final static TemporalUnit EPOCH = new Epoch();
+
+    private static class Epoch implements TemporalUnit {
+
+        @Override
+        public Duration getDuration() {
+            return Duration.ofMinutes(15);
+        }
+
+        @Override
+        public boolean isDurationEstimated() {
+            return false;
+        }
+
+        @Override
+        public boolean isDateBased() {
+            return true;
+        }
+
+        @Override
+        public boolean isTimeBased() {
+            return true;
+        }
+
+        @Override
+        public <R extends Temporal> R addTo(R temporal, long amount) {
+            @SuppressWarnings("unchecked")
+            final var result = (R) temporal.plus(amount, this);
+            return result;
+        }
+
+        @Override
+        public long between(Temporal temporal1Inclusive, Temporal temporal2Exclusive) {
+            return temporal1Inclusive.until(temporal2Exclusive, this);
         }
     }
 }

@@ -22,7 +22,8 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
         JwtKeysManager.class,
         RestAssuredManager.class,
         MongodbManager.class,
-        MockServerManager.class
+        MockServerManager.class,
+        GrpcMockManager.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {
