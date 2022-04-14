@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robertserver.database.repository;
 
 import fr.gouv.stopc.robertserver.database.model.BatchStatistics;
+import org.springframework.data.domain.Range;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +12,6 @@ import java.util.List;
 public interface BatchStatisticsRepository
         extends MongoRepository<BatchStatistics, Instant>, BatchStatisticsCustomRepository {
 
-    List<BatchStatistics> getBatchStatisticsByBatchExecutionBetween(Instant from, Instant to);
+    List<BatchStatistics> getBatchStatisticsByBatchExecutionBetween(Range<Instant> range);
 
 }

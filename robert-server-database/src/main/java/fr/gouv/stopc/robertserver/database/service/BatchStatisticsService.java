@@ -3,6 +3,7 @@ package fr.gouv.stopc.robertserver.database.service;
 import fr.gouv.stopc.robertserver.database.model.BatchStatistics;
 import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Range;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -13,15 +14,15 @@ public class BatchStatisticsService {
 
     private final BatchStatisticsRepository repository;
 
-    public long countNbUsersAboveThresholdButNotAtRiskBetween(Instant from, Instant to) {
-        final var batchStatistics = repository.getBatchStatisticsByBatchExecutionBetween(from, to);
+    public long countUsersAboveRiskThresholdButRetentionPeriodExpired(Range<Instant> range) {
+        final var batchStatistics = repository.getBatchStatisticsByBatchExecutionBetween(range);
         return batchStatistics.stream()
-                .mapToLong(BatchStatistics::getNbUsersAboveThresholdButNotAtRisk)
+                .mapToLong(BatchStatistics::getUsersAboveRiskThresholdButRetentionPeriodExpired)
                 .sum();
     }
 
-    public void increment(Instant date) {
-        repository.increment(date);
+    public void incrementUsersAboveRiskThresholdButRetentionPeriodExpired(Instant date) {
+        repository.incrementUsersAboveRiskThresholdButRetentionPeriodExpired(date);
     }
 
 }

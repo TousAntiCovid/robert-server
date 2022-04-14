@@ -3,6 +3,7 @@ package fr.gouv.stopc.robertserver.ws.service;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
+import fr.gouv.stopc.robertserver.database.service.BatchStatisticsService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,8 @@ public class KpiService {
     private final IRegistrationService registrationDbService;
 
     private final WebserviceStatisticsRepository webserviceStatisticsRepository;
+
+    private final BatchStatisticsService batchStatisticsService;
 
     public void computeDailyKpis() {
         final var nbAlertedUsers = registrationDbService.countNbUsersNotified();
@@ -56,7 +59,7 @@ public class KpiService {
         final var range = Range
                 .from(inclusive(fromDate.atStartOfDay().toInstant(ZoneOffset.UTC)))
                 .to(exclusive(toDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
-        return webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range).stream()
+        final var robertServerKpis = webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range).stream()
                 .map(
                         stats -> RobertServerKpi.builder()
                                 .date(stats.getDate().atZone(UTC).toLocalDate())
@@ -67,6 +70,19 @@ public class KpiService {
                                 .nbNotifiedUsers(stats.getNotifiedUsers())
                                 .build()
                 )
+                .sorted(comparing(RobertServerKpi::getDate))
+                .collect(toList());
+
+        return robertServerKpis.stream()
+                .map(kpi -> {
+                    final var kpiOfDayRange = Range
+                            .from(inclusive(kpi.getDate().atStartOfDay().toInstant(ZoneOffset.UTC)))
+                            .to(exclusive(kpi.getDate().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)));
+                    kpi.setUsersAboveRiskThresholdButRetentionPeriodExpired(
+                            batchStatisticsService.countUsersAboveRiskThresholdButRetentionPeriodExpired(kpiOfDayRange)
+                    );
+                    return kpi;
+                })
                 .sorted(comparing(RobertServerKpi::getDate))
                 .collect(toList());
     }

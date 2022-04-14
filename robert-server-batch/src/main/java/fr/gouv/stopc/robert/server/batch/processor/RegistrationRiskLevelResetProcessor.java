@@ -38,7 +38,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
     public Registration process(final Registration registration) throws Exception {
 
         if (isAtRiskAndRetentionPeriodHasExpired(registration)) {
-            return resetRiskAndSaveStatistic(registration, batchExecutionInstant);
+            return resetRiskAndSaveStatistics(registration, batchExecutionInstant);
         }
         return null;
     }
@@ -53,7 +53,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
         return registration.isAtRisk() && riskRetentionThresholdHasExpired(registration);
     }
 
-    private Registration resetRiskAndSaveStatistic(Registration registration, Instant batchExecutionInstant) {
+    private Registration resetRiskAndSaveStatistics(Registration registration, Instant batchExecutionInstant) {
 
         if (batchExecutionInstant == null) {
             batchExecutionInstant = Instant.now();
@@ -63,7 +63,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
         }
         registration.setAtRisk(false);
         registration.setNotifiedForCurrentRisk(false);
-        batchStatisticsService.increment(batchExecutionInstant);
+        batchStatisticsService.incrementUsersAboveRiskThresholdButRetentionPeriodExpired(batchExecutionInstant);
         return registration;
     }
 
