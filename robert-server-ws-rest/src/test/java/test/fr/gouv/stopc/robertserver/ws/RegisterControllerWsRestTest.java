@@ -8,7 +8,6 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.dto.RegisterResponseDto;
-import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
@@ -33,6 +32,7 @@ import java.net.URI;
 import java.util.Optional;
 
 import static fr.gouv.stopc.robertserver.ws.test.CaptchaMockManager.*;
+import static fr.gouv.stopc.robertserver.ws.test.PushNotifMockManager.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -74,9 +74,6 @@ public class RegisterControllerWsRestTest {
 
     @Autowired
     private IServerConfigurationService serverConfigurationService;
-
-    @MockBean
-    private IRestApiService restApiService;
 
     private int currentEpoch;
 
@@ -226,7 +223,7 @@ public class RegisterControllerWsRestTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
-        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     @Test
@@ -253,7 +250,7 @@ public class RegisterControllerWsRestTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService, never()).saveRegistration(any());
-        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     @Test
@@ -288,7 +285,7 @@ public class RegisterControllerWsRestTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService).saveRegistration(any());
-        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     @Test
@@ -378,7 +375,7 @@ public class RegisterControllerWsRestTest {
         assertTrue(StringUtils.isNotEmpty(response.getBody().getTuples()));
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService).saveRegistration(any());
-        verify(this.restApiService).registerPushNotif(pushInfo);
+        verifyPushNotifServerReceivedRegisterForToken(pushInfo);
     }
 
     private void testRegisterSucceeds(String url) {
@@ -423,7 +420,7 @@ public class RegisterControllerWsRestTest {
         assertTrue(StringUtils.isNotEmpty(response.getBody().getTuples()));
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService).saveRegistration(any());
-        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     private int getCurrentEpoch() {

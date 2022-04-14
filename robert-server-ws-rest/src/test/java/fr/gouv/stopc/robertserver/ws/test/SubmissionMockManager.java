@@ -8,9 +8,14 @@ import org.testcontainers.utility.DockerImageName;
 
 import static org.mockserver.model.ClearType.LOG;
 import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.verify.VerificationTimes.exactly;
 import static org.testcontainers.utility.MountableFile.forHostPath;
 
+/**
+ * Starts a mockserver container with responses looking like the
+ * submission-code-server.
+ * <p>
+ * See /docker-compose/mocks/README.md
+ */
 public class SubmissionMockManager implements TestExecutionListener {
 
     private static final MockServerContainer MOCK_SERVER_CONTAINER = new MockServerContainer(
@@ -32,11 +37,7 @@ public class SubmissionMockManager implements TestExecutionListener {
     }
 
     public static void verifyNoInteractionsWithSubmissionCodeServer() {
-        mockServerClient.verify(
-                request()
-                        .withPath("/api/v1/verify"),
-                exactly(0)
-        );
+        mockServerClient.verifyZeroInteractions();
     }
 
     @Override
