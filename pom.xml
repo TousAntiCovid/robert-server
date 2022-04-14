@@ -53,10 +53,12 @@
 		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
 		<jjwt.version>0.11.2</jjwt.version>
 		<junit-jupiter.version>5.7.1</junit-jupiter.version>
+		<log4j2.version>2.17.0</log4j2.version>
 		<logcaptor.version>2.6.1</logcaptor.version>
 		<mockito.version>3.7.0</mockito.version>
+		<mockserver.version>5.13.2</mockserver.version>
 		<prometheus-pushgateway.version>0.9.0</prometheus-pushgateway.version>
-		<log4j2.version>2.17.0</log4j2.version>
+		<testcontainers.version>1.17.1</testcontainers.version>
 	</properties>
 
 	<dependencies>

@@ -1,9 +1,7 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
 import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
-import fr.gouv.stopc.robertserver.ws.test.JwtKeysManager;
-import fr.gouv.stopc.robertserver.ws.test.MongodbManager;
-import fr.gouv.stopc.robertserver.ws.test.RestAssuredManager;
+import fr.gouv.stopc.robertserver.ws.test.*;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,7 +21,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @ActiveProfiles({ "dev", "test" })
 @SpringBootTest(classes = { RobertServerWsRestApplication.class }, webEnvironment = RANDOM_PORT)
 @TestExecutionListeners(listeners = { JwtKeysManager.class, RestAssuredManager.class,
-        MongodbManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
+        MongodbManager.class, CaptchaMockManager.class, SubmissionMockManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface LegacyIntegrationTest {
 
