@@ -32,7 +32,6 @@ public class IsBetweenNowAndTimeAgoMatcher extends TypeSafeDiagnosingMatcher<Str
 
     private Matcher<ZonedDateTime> isBetweenNowAndTimeAgo() {
         final var now = now();
-
         return allOf(
                 sameOrAfter(now.minus(quantity, timeUnit)),
                 sameOrBefore(now)
