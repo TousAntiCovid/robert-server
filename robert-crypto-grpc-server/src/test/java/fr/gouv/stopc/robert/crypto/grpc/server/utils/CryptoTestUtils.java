@@ -1,4 +1,6 @@
-package test.fr.gouv.stopc.robert.crypto.grpc.server.utils;
+package fr.gouv.stopc.robert.crypto.grpc.server.utils;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -6,8 +8,6 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.ECGenParameterSpec;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class CryptoTestUtils {
@@ -56,7 +56,7 @@ public final class CryptoTestUtils {
 
             return keyPair.getPublic().getEncoded();
 
-        } catch (NoSuchAlgorithmException | IllegalStateException  e) {
+        } catch (NoSuchAlgorithmException | IllegalStateException e) {
             log.error("Unable to generate DH public key", e.getMessage());
         }
 

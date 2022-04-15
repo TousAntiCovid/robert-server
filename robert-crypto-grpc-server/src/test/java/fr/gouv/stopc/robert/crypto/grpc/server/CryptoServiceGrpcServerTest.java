@@ -1,9 +1,6 @@
-package test.fr.gouv.stopc.robert.crypto.grpc.server;
+package fr.gouv.stopc.robert.crypto.grpc.server;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
-import fr.gouv.stopc.robert.crypto.grpc.server.CryptoServiceGrpcServer;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplStub;
@@ -13,6 +10,8 @@ import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.ECDHKeyServiceImpl;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.IClientKeyStorageService;
+import fr.gouv.stopc.robert.crypto.grpc.server.test.TuplesMatchers;
+import fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
 import fr.gouv.stopc.robert.crypto.grpc.server.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
@@ -22,7 +21,6 @@ import fr.gouv.stopc.robert.server.crypto.service.CryptoService;
 import fr.gouv.stopc.robert.server.crypto.service.impl.CryptoServiceImpl;
 import fr.gouv.stopc.robert.server.crypto.structure.CryptoAES;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
-import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import io.grpc.ManagedChannel;
@@ -40,7 +38,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import test.fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
@@ -66,13 +63,13 @@ import static org.mockito.Mockito.when;
 @TestPropertySource(locations = "classpath:application.properties")
 class CryptoServiceGrpcServerTest {
 
-    private final static String UNEXPECTED_FAILURE_MESSAGE = "Should not fail";
-
     private final static byte[] SERVER_COUNTRY_CODE = new byte[] { (byte) 0x21 };
+
+    private final static int MAX_EPOCH_DOUBLE_KS_CHECK = 672;
 
     private final static int NUMBER_OF_DAYS_FOR_BUNDLES = 4;
 
-    private final static int MAX_EPOCH_DOUBLE_KS_CHECK = 672;
+    private final static String UNEXPECTED_FAILURE_MESSAGE = "Should not fail";
 
     final GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
 
@@ -195,100 +192,16 @@ class CryptoServiceGrpcServerTest {
                 res
         );
 
-        assertTrue(!res.isError());
+        assertFalse(res.isError());
         assertTrue(ByteUtils.isNotEmpty(createRegistrationResponse.getIdA().toByteArray()));
         byte[] tuples = createRegistrationResponse.getTuples().toByteArray();
         assertTrue(ByteUtils.isNotEmpty(tuples));
         assertTrue(
-                checkTuples(createRegistrationResponse.getIdA().toByteArray(), tuples, this.currentEpochId, serverKeys)
+                TuplesMatchers.checkTuples(
+                        createRegistrationResponse.getIdA().toByteArray(), tuples, this.currentEpochId, serverKeys,
+                        clientStorageService, cryptoService
+                )
         );
-    }
-
-    private byte[] getIdFromDecryptedEBID(byte[] ebid) {
-        byte[] idA = new byte[5];
-        System.arraycopy(ebid, 3, idA, 0, idA.length);
-        return idA;
-    }
-
-    private int getEpochIdFromDecryptedEBID(byte[] ebid) {
-        byte[] epochId = new byte[3];
-        System.arraycopy(ebid, 0, epochId, 0, epochId.length);
-        return ByteUtils.convertEpoch24bitsToInt(epochId);
-    }
-
-    private boolean checkTuplesForDay(List<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> tuples, byte[] key) {
-        byte[] id = null;
-        boolean atLeastOneError = false;
-        for (CryptoGrpcServiceBaseImpl.EphemeralTupleJson tuple : tuples) {
-            int epochIdFromTuple = tuple.getEpochId();
-            try {
-                byte[] decryptedEbid = this.cryptoService
-                        .decryptEBID(new CryptoSkinny64(key), tuple.getKey().getEbid());
-                byte[] idFromMessage = getIdFromDecryptedEBID(decryptedEbid);
-                if (id == null) {
-                    id = idFromMessage;
-                } else {
-                    if (!Arrays.equals(id, idFromMessage)) {
-                        log.error(
-                                "ids do not match from first message {} and from other message {}", id, idFromMessage
-                        );
-                        atLeastOneError = true;
-                    }
-                }
-                int epochIdFromMessage = getEpochIdFromDecryptedEBID(decryptedEbid);
-                if (epochIdFromMessage != epochIdFromTuple) {
-                    log.error(
-                            "epoch ids do not match from message {} and from tuple {}", epochIdFromMessage,
-                            epochIdFromTuple
-                    );
-                    atLeastOneError = true;
-                }
-            } catch (RobertServerCryptoException e) {
-                log.error("An error occurred during EBID decription", e);
-                atLeastOneError = true;
-            }
-        }
-        return !atLeastOneError;
-    }
-
-    private boolean checkTuplesContentMatchesKeysForDays(
-            Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> decodedTuples,
-            int epochId,
-            byte[][] serverKeys) {
-
-        ArrayList<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> list = new ArrayList(decodedTuples);
-
-        int offset = TimeUtils.remainingEpochsForToday(epochId);
-        int lowerBound = 0;
-        ArrayList<Boolean> results = new ArrayList<>();
-        for (int i = 0; i < serverKeys.length; i++) {
-            List<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> listToProcess = list.subList(lowerBound, offset);
-            log.info("Chunking list of size {}", listToProcess.size());
-            results.add(checkTuplesForDay(listToProcess, serverKeys[i]));
-            lowerBound = offset;
-            offset += 96;
-        }
-        return results.stream().allMatch(Boolean::valueOf);
-    }
-
-    private boolean checkTuples(byte[] id, byte[] tuples, int epochId, byte[][] serverKeys) {
-        CryptoAESGCM aesGcm = new CryptoAESGCM(this.clientStorageService.findKeyById(id).get().getKeyForTuples());
-        try {
-            byte[] decryptedTuples = aesGcm.decrypt(tuples);
-            ObjectMapper objectMapper = new ObjectMapper();
-            Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> decodedTuples = objectMapper.readValue(
-                    decryptedTuples,
-                    new TypeReference<Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson>>() {
-                    }
-            );
-            boolean sizeMatches = ((NUMBER_OF_DAYS_FOR_BUNDLES - 1) * 96
-                    + TimeUtils.remainingEpochsForToday(epochId)) == decodedTuples.size();
-
-            return sizeMatches && checkTuplesContentMatchesKeysForDays(decodedTuples, epochId, serverKeys);
-        } catch (RobertServerCryptoException | IOException e) {
-            fail(UNEXPECTED_FAILURE_MESSAGE);
-        }
-        return false;
     }
 
     @Test
@@ -312,9 +225,9 @@ class CryptoServiceGrpcServerTest {
                 res
         );
 
-        assertTrue(!res.isError());
+        assertFalse(res.isError());
         assertTrue(response.hasError());
-        assertTrue(response.getError().getCode() == 400);
+        assertEquals(400, response.getError().getCode());
     }
 
     @Test
@@ -335,9 +248,9 @@ class CryptoServiceGrpcServerTest {
                 res
         );
 
-        assertTrue(!res.isError());
+        assertFalse(res.isError());
         assertTrue(response.hasError());
-        assertTrue(response.getError().getCode() == 400);
+        assertEquals(400, response.getError().getCode());
     }
 
     @Test
@@ -878,9 +791,9 @@ class CryptoServiceGrpcServerTest {
                 (t) -> fail(),
                 res
         );
-        assertTrue(!res.isError());
+        assertFalse(res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
-        assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
+        assertArrayEquals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray());
     }
 
     @Test
@@ -911,9 +824,9 @@ class CryptoServiceGrpcServerTest {
                 (t) -> fail(),
                 res
         );
-        assertTrue(!res.isError());
+        assertFalse(res.isError());
         assertTrue(response.hasError());
-        assertTrue(response.getError().getCode() == 400);
+        assertEquals(400, response.getError().getCode());
     }
 
     @Test
@@ -1305,13 +1218,13 @@ class CryptoServiceGrpcServerTest {
                 (t) -> fail(),
                 res
         );
-        assertTrue(!res.isError());
+        assertFalse(res.isError());
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
-        assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
+        assertArrayEquals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray());
         assertTrue(
-                checkTuples(
+                TuplesMatchers.checkTuples(
                         response.getIdA().toByteArray(), response.getTuples().toByteArray(), this.currentEpochId,
-                        serverKeys
+                        serverKeys, clientStorageService, cryptoService
                 )
         );
     }
@@ -1590,9 +1503,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(ByteUtils.isNotEmpty(response.getIdA().toByteArray()));
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
         assertTrue(
-                checkTuples(
+                TuplesMatchers.checkTuples(
                         response.getIdA().toByteArray(), response.getTuples().toByteArray(), this.currentEpochId,
-                        serverKeys
+                        serverKeys, clientStorageService, cryptoService
                 )
         );
     }

@@ -1,11 +1,9 @@
-package test.fr.gouv.stopc.robert.crypto.grpc.server.service.impl;
+package fr.gouv.stopc.robert.crypto.grpc.server.service;
 
-import java.security.*;
-import java.security.spec.ECGenParameterSpec;
-import java.util.Optional;
-
+import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.ECDHKeyServiceImpl;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
+import fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -18,10 +16,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.ECDHKeyServiceImpl;
-import test.fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
-
 import javax.crypto.KeyAgreement;
+
+import java.security.*;
+import java.security.spec.ECGenParameterSpec;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -45,7 +44,7 @@ public class ECDHKeyServiceImplTest {
     void testKeyDerivationFromClientPublicKeySucceeds() {
 
         // Given
-        byte [] clientPublicKey = CryptoTestUtils.generateECDHPublicKey();
+        byte[] clientPublicKey = CryptoTestUtils.generateECDHPublicKey();
         Optional<ClientIdentifierBundle> clientIdentifierBundle = null;
 
         when(this.cryptographicStorageService.getServerKeyPair())
