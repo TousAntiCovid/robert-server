@@ -22,9 +22,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
         JwtKeysManager.class,
         RestAssuredManager.class,
         MongodbManager.class,
-        CaptchaMockManager.class,
-        SubmissionMockManager.class,
-        PushNotifMockManager.class
+        MockServerManager.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {

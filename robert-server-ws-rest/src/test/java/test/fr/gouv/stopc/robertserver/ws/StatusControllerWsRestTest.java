@@ -50,7 +50,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
 
-import static fr.gouv.stopc.robertserver.ws.test.PushNotifMockManager.*;
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.*;
