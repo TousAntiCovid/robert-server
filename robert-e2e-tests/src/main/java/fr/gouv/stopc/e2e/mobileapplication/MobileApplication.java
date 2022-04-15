@@ -6,20 +6,35 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
-import fr.gouv.stopc.e2e.mobileapplication.model.*;
+import fr.gouv.stopc.e2e.mobileapplication.model.CaptchaSolution;
+import fr.gouv.stopc.e2e.mobileapplication.model.ClientKeys;
+import fr.gouv.stopc.e2e.mobileapplication.model.ContactTuple;
+import fr.gouv.stopc.e2e.mobileapplication.model.ExposureStatus;
+import fr.gouv.stopc.e2e.mobileapplication.model.HelloMessage;
+import fr.gouv.stopc.e2e.mobileapplication.model.RobertRequestBuilder;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
-import fr.gouv.stopc.robert.client.api.DefaultApi;
-import fr.gouv.stopc.robert.client.model.*;
+import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
+import fr.gouv.stopc.robert.client.model.CaptchaGenerationRequest;
+import fr.gouv.stopc.robert.client.model.Contact;
+import fr.gouv.stopc.robert.client.model.HelloMessageDetail;
+import fr.gouv.stopc.robert.client.model.PushInfo;
+import fr.gouv.stopc.robert.client.model.RegisterRequest;
+import fr.gouv.stopc.robert.client.model.RegisterSuccessResponse;
+import fr.gouv.stopc.robert.client.model.ReportBatchRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
@@ -47,20 +62,23 @@ public class MobileApplication {
 
     private final CaptchaApi captchaApi;
 
-    private final DefaultApi robertApi;
+    private final RobertLegacyApi robertLegacyApi;
 
     private final String applicationId;
 
     private final RegistrationRepository registrationRepository;
 
-    public MobileApplication(String username, ApplicationProperties applicationProperties, CaptchaApi captchaApi,
-            DefaultApi robertApi, ClientIdentifierRepository clientIdentifierRepository,
-            RegistrationRepository registrationRepository) {
+    public MobileApplication(final String username,
+            final ApplicationProperties applicationProperties,
+            final CaptchaApi captchaApi,
+            final RobertLegacyApi robertLegacyApi,
+            final ClientIdentifierRepository clientIdentifierRepository,
+            final RegistrationRepository registrationRepository) {
         this.username = username;
         this.applicationProperties = applicationProperties;
         this.registrationRepository = registrationRepository;
         this.captchaApi = captchaApi;
-        this.robertApi = robertApi;
+        this.robertLegacyApi = robertLegacyApi;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
         final var captchaSolution = resolveMockedCaptchaChallenge();
@@ -102,7 +120,7 @@ public class MobileApplication {
         final var publicKey = getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
 
-        final var registerResponse = robertApi.register(
+        final var registerResponse = robertLegacyApi.register(
                 RegisterRequest.builder()
                         .captcha(captchaSolution)
                         .captchaId(captchaId)
@@ -161,7 +179,7 @@ public class MobileApplication {
     }
 
     public void reportContacts() {
-        final var reportResponse = robertApi.reportBatch(
+        final var reportResponse = robertLegacyApi.reportBatch(
                 ReportBatchRequest.builder()
                         .token("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
                         .contacts(new ArrayList<>(receivedHelloMessages.values()))
@@ -186,7 +204,7 @@ public class MobileApplication {
     public ExposureStatus requestStatus() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
-        final var exposureStatusResponse = robertApi.eSR(
+        final var exposureStatusResponse = robertLegacyApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .exposureStatusRequest(currentEpochTuple.getEbid(), now)
                         .build()
@@ -199,7 +217,7 @@ public class MobileApplication {
     public void deleteExposureHistory() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
-        final var deleteResponse = robertApi.deleteExposureHistory(
+        final var deleteResponse = robertLegacyApi.deleteExposureHistory(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .deleteExposureHistory(currentEpochTuple.getEbid(), now)
                         .build()
@@ -210,7 +228,7 @@ public class MobileApplication {
     public void unregister() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
-        final var deleteResponse = robertApi.unregister(
+        final var deleteResponse = robertLegacyApi.unregister(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .unregisterRequest(currentEpochTuple.getEbid(), now)
                         .build()

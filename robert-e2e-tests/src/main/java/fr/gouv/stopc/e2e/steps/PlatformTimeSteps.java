@@ -1,22 +1,23 @@
 package fr.gouv.stopc.e2e.steps;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.gouv.stopc.robert.client.api.RobertApi;
 import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Etantdonnéque;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.time.*;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static java.time.Duration.ZERO;
 import static java.time.Instant.now;
-import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -25,6 +26,9 @@ import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
 @AllArgsConstructor
 public class PlatformTimeSteps {
+
+    @Autowired
+    private final RobertApi robertApi;
 
     @Etantdonnéque("l'on est aujourd'hui")
     public void resetFakeTimeToNow() throws IOException, InterruptedException {
@@ -49,13 +53,13 @@ public class PlatformTimeSteps {
         final var expectedFakedInstant = now().minus(duration);
         given()
                 .await("Wait for faked time to be set in service " + containerName)
-                .atMost(1, TimeUnit.MINUTES)
+                .atMost(1, MINUTES)
                 .with()
                 .pollInterval(fibonacci(MILLISECONDS))
                 .and()
                 .untilAsserted(
-                        () -> assertThat(getServiceDateFromContainer(containerName))
-                                .isCloseTo(expectedFakedInstant, within(1, MINUTES))
+                        () -> assertThat(robertApi.clock().getTime().toInstant())
+                                .isCloseTo(expectedFakedInstant, within(1, ChronoUnit.MINUTES))
                 );
 
     }
@@ -78,19 +82,4 @@ public class PlatformTimeSteps {
                     .collect(joining());
         }
     }
-
-    private Instant getServiceDateFromContainer(final String containerName) throws IOException, InterruptedException {
-
-        final var actuatorInfoResult = execInContainer(
-                containerName,
-                "curl -X GET -H 'Content-Type: application/json' localhost:8081/api/v6/clock"
-        );
-        return Instant.parse(
-                new ObjectMapper().reader().readTree(actuatorInfoResult)
-                        .get("robertClock")
-                        .get("time")
-                        .asText()
-        );
-    }
-
 }
