@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.test;
 
+import com.mongodb.client.MongoCollection;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.SneakyThrows;
 import org.assertj.core.api.ListAssert;
@@ -17,17 +18,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MongodbManager implements TestExecutionListener {
 
-    private static final MongoDBContainer mongodbContainer = new MongoDBContainer(
+    private static final MongoDBContainer MONGO_DB_CONTAINER = new MongoDBContainer(
             DockerImageName.parse("mongo:4.2.11")
     );
 
     private static MongoOperations mongoOperations;
 
     static {
-        mongodbContainer.start();
+        MONGO_DB_CONTAINER.start();
         System.setProperty(
                 "spring.data.mongodb.uri",
-                mongodbContainer.getReplicaSetUrl("robert") + "?connectTimeoutMS=1000&socketTimeoutMS=1000"
+                MONGO_DB_CONTAINER.getReplicaSetUrl("robert") + "?connectTimeoutMS=1000&socketTimeoutMS=1000"
         );
     }
 
@@ -35,17 +36,25 @@ public class MongodbManager implements TestExecutionListener {
     public void beforeTestMethod(@NonNull TestContext testContext) {
         givenMongodbIsOnline();
         mongoOperations = testContext.getApplicationContext().getBean(MongoOperations.class);
+        mongoOperations.getCollectionNames()
+                .stream()
+                .map(mongoOperations::getCollection)
+                .forEach(MongoCollection::drop);
+    }
+
+    public static void givenRegistrationExists(final Registration registration) {
+        mongoOperations.save(registration);
     }
 
     /**
      * Ensure the container is not "paused", "unpausing" it if necessary.
      */
     private static void givenMongodbIsOnline() {
-        final var docker = mongodbContainer.getDockerClient();
-        final var mongodbContainerInspect = docker.inspectContainerCmd(mongodbContainer.getContainerId())
+        final var docker = MONGO_DB_CONTAINER.getDockerClient();
+        final var mongodbContainerInspect = docker.inspectContainerCmd(MONGO_DB_CONTAINER.getContainerId())
                 .exec();
         if (TRUE.equals(mongodbContainerInspect.getState().getPaused())) {
-            docker.unpauseContainerCmd(mongodbContainer.getContainerId())
+            docker.unpauseContainerCmd(MONGO_DB_CONTAINER.getContainerId())
                     .exec();
         }
     }
@@ -54,8 +63,8 @@ public class MongodbManager implements TestExecutionListener {
      * Put the container in "paused" state. Can be used to simulate failure.
      */
     public static void givenMongodbIsOffline() {
-        mongodbContainer.getDockerClient()
-                .pauseContainerCmd(mongodbContainer.getContainerId())
+        MONGO_DB_CONTAINER.getDockerClient()
+                .pauseContainerCmd(MONGO_DB_CONTAINER.getContainerId())
                 .exec();
     }
 
