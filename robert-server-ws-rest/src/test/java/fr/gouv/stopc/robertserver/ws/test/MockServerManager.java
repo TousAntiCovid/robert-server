@@ -2,7 +2,6 @@ package fr.gouv.stopc.robertserver.ws.test;
 
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import org.mockserver.client.MockServerClient;
-import org.mockserver.model.JsonBody;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 import org.testcontainers.containers.MockServerContainer;
@@ -15,6 +14,7 @@ import java.util.function.Function;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockserver.model.ClearType.LOG;
 import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.JsonBody.json;
 import static org.mockserver.verify.VerificationTimes.exactly;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import static org.testcontainers.shaded.org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
@@ -80,21 +80,29 @@ public class MockServerManager implements TestExecutionListener {
     }
 
     public static void verifyPushNotifServerReceivedRegisterForToken(PushInfoVo pushInfo) {
-        PUSH_NOTIF_SERVER.verify(
-                request()
-                        .withMethod("POST")
-                        .withPath("/internal/api/v1/push-token")
-                        .withBody(
-                                JsonBody.json(
-                                        "{" +
-                                                "\"token\": \"" + pushInfo.getToken() + "\"," +
-                                                "\"locale\": \"" + pushInfo.getLocale() + "\"," +
-                                                "\"timezone\": \"" + pushInfo.getTimezone() + "\"" +
-                                                "}"
-                                )
-                        ),
-                exactly(1)
-        );
+        await(
+                "a POST /internal/api/v1/push-token request for token " + pushInfo.getToken()
+                        + " on push-notif-server-mock"
+        )
+                .pollInterval(fibonacci())
+                .atMost(2, SECONDS)
+                .untilAsserted(
+                        () -> PUSH_NOTIF_SERVER.verify(
+                                request()
+                                        .withMethod("POST")
+                                        .withPath("/internal/api/v1/push-token")
+                                        .withBody(
+                                                json(
+                                                        "{" +
+                                                                "\"token\": \"" + pushInfo.getToken() + "\"," +
+                                                                "\"locale\": \"" + pushInfo.getLocale() + "\"," +
+                                                                "\"timezone\": \"" + pushInfo.getTimezone() + "\"" +
+                                                                "}"
+                                                )
+                                        ),
+                                exactly(1)
+                        )
+                );
     }
 
     public static void verifyPushNotifServerReceivedUnregisterForToken(String token) {
