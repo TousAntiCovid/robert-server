@@ -37,8 +37,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Optional;
 
-import static fr.gouv.stopc.robertserver.ws.test.PushNotifMockManager.verifyNoInteractionsWithPushNotifServer;
-import static fr.gouv.stopc.robertserver.ws.test.PushNotifMockManager.verifyPushNotifServerReceivedUnregisterForToken;
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithPushNotifServer;
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyPushNotifServerReceivedUnregisterForToken;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;

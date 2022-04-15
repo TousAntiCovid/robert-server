@@ -31,8 +31,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.Optional;
 
-import static fr.gouv.stopc.robertserver.ws.test.CaptchaMockManager.*;
-import static fr.gouv.stopc.robertserver.ws.test.PushNotifMockManager.*;
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
