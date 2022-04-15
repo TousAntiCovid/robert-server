@@ -26,7 +26,7 @@ public class ClockControllerTest {
                 .then()
                 .statusCode(OK.value())
                 .body("serviceStartDate", equalTo("2020-06-01"))
-                .body("time", isBetweenNowAndTimeAgo(1, SECONDS))
+                .body("time", isBetweenNowAndTimeAgo(2, SECONDS))
                 .body("epoch", equalTo(secondsSinceServiceStartTime / EPOCH_DURATION_SECS));
     }
 }
