@@ -1,9 +1,9 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
+import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.BatchStatisticsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepExecution;
@@ -11,6 +11,7 @@ import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemProcessor;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -38,7 +39,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
     public Registration process(final Registration registration) throws Exception {
 
         if (isAtRiskAndRetentionPeriodHasExpired(registration)) {
-            return resetRiskAndSaveStatistics(registration, batchExecutionInstant);
+            return resetRiskAndSaveStatistics(registration, Optional.ofNullable(batchExecutionInstant));
         }
         return null;
     }
@@ -53,17 +54,18 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
         return registration.isAtRisk() && riskRetentionThresholdHasExpired(registration);
     }
 
-    private Registration resetRiskAndSaveStatistics(Registration registration, Instant batchExecutionInstant) {
+    private Registration resetRiskAndSaveStatistics(final Registration registration,
+            final Optional<Instant> batchExecutionInstant) {
 
-        if (batchExecutionInstant == null) {
-            batchExecutionInstant = Instant.now();
-        }
         if (!registration.isNotified()) {
             log.info("Resetting risk level of a user never notified!");
         }
         registration.setAtRisk(false);
         registration.setNotifiedForCurrentRisk(false);
-        batchStatisticsService.incrementUsersAboveRiskThresholdButRetentionPeriodExpired(batchExecutionInstant);
+        batchExecutionInstant.ifPresentOrElse(
+                batchStatisticsService::incrementUsersAboveRiskThresholdButRetentionPeriodExpired,
+                () -> batchStatisticsService.incrementUsersAboveRiskThresholdButRetentionPeriodExpired(Instant.now())
+        );
         return registration;
     }
 

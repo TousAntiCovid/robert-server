@@ -1,13 +1,13 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationRiskLevelResetProcessor;
+import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.utils.StepNameUtils;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.BatchStatisticsService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +32,13 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     private final BatchStatisticsService batchStatisticsService;
 
-    public RegistrationRiskResetStepConfiguration(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
-            IServerConfigurationService serverConfigurationService, IRegistrationService registrationService,
-            ItemIdMappingService itemIdMappingService, BatchStatisticsService batchStatisticsService) {
+    public RegistrationRiskResetStepConfiguration(
+            final PropertyLoader propertyLoader,
+            final StepBuilderFactory stepBuilderFactory,
+            final IServerConfigurationService serverConfigurationService,
+            final IRegistrationService registrationService,
+            final ItemIdMappingService itemIdMappingService,
+            final BatchStatisticsService batchStatisticsService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
         this.batchStatisticsService = batchStatisticsService;
@@ -63,7 +67,7 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     @Bean
     public ItemProcessor<Registration, Registration> registrationRiskResetProcessor(final RobertClock robertClock) {
-        return new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock, batchStatisticsService);
+        return new RegistrationRiskLevelResetProcessor(propertyLoader, robertClock, batchStatisticsService);
     }
 
     @Bean
