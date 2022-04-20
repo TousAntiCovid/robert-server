@@ -59,9 +59,9 @@ class StatusControllerSuccessTest {
                 .body("declarationToken", nullValue())
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", unixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
                                 .withClaim(
-                                        "exp", isUnixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
+                                        "exp", unixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
@@ -101,23 +101,23 @@ class StatusControllerSuccessTest {
                 .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for user___1")))
                 .body("config.size()", equalTo(0))
                 .body("lastContactDate", equalTo("888"))
-                .body("lastRiskScoringDate", isNtpTimestamp(clock.atEpoch(999).asInstant()))
+                .body("lastRiskScoringDate", ntpTimestamp(clock.atEpoch(999).asInstant()))
                 .body(
                         "declarationToken", isJwtSignedBy(JWT_KEYS_DECLARATION)
                                 .withClaim("jti", matchesRegex("\\w{64}"))
-                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", unixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
                                 .withClaim("iss", equalTo("tac"))
                                 .withClaim(
                                         "notificationDateTimestamp",
-                                        isNtpTimestamp(clock.now().truncatedTo(EPOCH).asInstant())
+                                        ntpTimestamp(clock.now().truncatedTo(EPOCH).asInstant())
                                 )
                                 .withClaim("lastContactDateTimestamp", equalTo(888))
                 )
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", unixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
                                 .withClaim(
-                                        "exp", isUnixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
+                                        "exp", unixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
