@@ -19,16 +19,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.sql.Date;
 import java.time.Instant;
-import java.util.Optional;
 
 import static java.time.temporal.ChronoUnit.DAYS;
-import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.when;
 import static org.mockito.quality.Strictness.LENIENT;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -53,12 +54,19 @@ public class RegistrationRiskLevelResetProcessorTest {
     private BatchStatisticsRepository batchStatisticsRepository;
 
     @BeforeEach
-    public void beforeEach() {
-        when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
+    public void initializeProcessor() {
         final var robertClock = new RobertClock("2020-06-01");
-        this.processor = new RegistrationRiskLevelResetProcessor(
+        final var jobExecution = new JobExecution(0L);
+        jobExecution.setStartTime(Date.from(Instant.parse("2021-01-01T12:30:00Z")));
+        processor = new RegistrationRiskLevelResetProcessor(
                 this.propertyLoader, robertClock, batchStatisticsService
         );
+        processor.retrieveInterStepData(new StepExecution("test", jobExecution));
+    }
+
+    @BeforeEach
+    public void beforeEach() {
+        when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
         batchStatisticsRepository.deleteAll();
     }
 
@@ -136,13 +144,13 @@ public class RegistrationRiskLevelResetProcessorTest {
 
         final var batchStatistics = batchStatisticsRepository.findAll();
         assertThat(batchStatistics).hasSize(1);
-        assertThat(batchStatistics.get(0).getBatchExecution()).isCloseTo(Instant.now(), within(2, MINUTES));
+        assertThat(batchStatistics.get(0).getBatchExecution()).isEqualTo(Instant.parse("2021-01-01T12:30:00Z"));
         assertThat(batchStatistics.get(0).getUsersAboveRiskThresholdButRetentionPeriodExpired()).isEqualTo(1L);
 
     }
 
     @Test
-    public void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat() {
+    public void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat() throws Exception {
 
         final long nowMinus8DaysNtpTimestamp = TimeUtils.convertUnixMillistoNtpSeconds(
                 Instant.now()
@@ -151,30 +159,32 @@ public class RegistrationRiskLevelResetProcessorTest {
                         .toEpochMilli()
         );
 
-        Registration registration = Registration.builder()
+        final var registration1 = Registration.builder()
+                .atRisk(true)
+                .isNotified(true)
+                .latestRiskEpoch(4808)
+                .lastContactTimestamp(nowMinus8DaysNtpTimestamp)
+                .build();
+        final var registration2 = Registration.builder()
                 .atRisk(true)
                 .isNotified(true)
                 .latestRiskEpoch(4808)
                 .lastContactTimestamp(nowMinus8DaysNtpTimestamp)
                 .build();
 
-        final var batchExectionTime = Instant.now();
+        processor.process(registration1);
+        processor.process(registration2);
 
-        processor.resetRiskAndSaveStatistics(registration, Optional.of(batchExectionTime));
-
-        final var beforeBatchStatistics = batchStatisticsRepository.findAll();
-        assertThat(beforeBatchStatistics).hasSize(1);
-        assertThat(beforeBatchStatistics.get(0).getBatchExecution()).isCloseTo(Instant.now(), within(2, MINUTES));
-        assertThat(beforeBatchStatistics.get(0).getUsersAboveRiskThresholdButRetentionPeriodExpired()).isEqualTo(1L);
-
-        processor.resetRiskAndSaveStatistics(registration, Optional.of(batchExectionTime));
-
-        final var incrementedBatchStatistics = batchStatisticsRepository.findAll();
-        assertThat(incrementedBatchStatistics).hasSize(1);
-        assertThat(incrementedBatchStatistics.get(0).getBatchExecution()).isCloseTo(Instant.now(), within(2, MINUTES));
-        assertThat(incrementedBatchStatistics.get(0).getUsersAboveRiskThresholdButRetentionPeriodExpired())
-                .isEqualTo(2L);
-
+        assertThat(batchStatisticsRepository.findAll())
+                .extracting(
+                        stat -> tuple(
+                                stat.getBatchExecution(),
+                                stat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
+                        )
+                )
+                .containsExactly(
+                        tuple(Instant.parse("2021-01-01T12:30:00Z"), 2L)
+                );
     }
 
     @Test
