@@ -54,7 +54,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
         return registration.isAtRisk() && riskRetentionThresholdHasExpired(registration);
     }
 
-    private Registration resetRiskAndSaveStatistics(final Registration registration,
+    public Registration resetRiskAndSaveStatistics(final Registration registration,
             final Optional<Instant> batchExecutionInstant) {
 
         if (!registration.isNotified()) {
