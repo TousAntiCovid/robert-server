@@ -18,7 +18,7 @@ POST /private/api/v1/captcha/some-captcha-id/checkAnswer
 ```http request
 POST /private/api/v1/captcha/some-captcha-id/checkAnswer
 
-{ "answer": "wrong response"}
+{ "answer": "bad response"}
 
 200 OK
 { "result": "WRONG" }

@@ -18,7 +18,6 @@ public class RestAssuredManager implements TestExecutionListener {
                 .getEnvironment()
                 .getRequiredProperty("local.server.port", Integer.class);
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-
         clock = testContext.getApplicationContext().getBean(RobertClock.class);
     }
 
