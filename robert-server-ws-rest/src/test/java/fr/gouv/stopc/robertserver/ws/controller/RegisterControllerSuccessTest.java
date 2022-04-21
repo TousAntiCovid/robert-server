@@ -24,8 +24,8 @@ class RegisterControllerSuccessTest {
                 .contentType(JSON)
                 .body(
                         RegisterVo.builder()
-                                .captcha("challenge answer")
-                                .captchaId("success-captcha-id")
+                                .captcha("valid challenge answer")
+                                .captchaId("captcha-id")
                                 .clientPublicECDHKey(toBase64("fake public key"))
                                 .build()
                 )
@@ -47,8 +47,8 @@ class RegisterControllerSuccessTest {
                 .contentType(JSON)
                 .body(
                         RegisterVo.builder()
-                                .captcha("challenge answer")
-                                .captchaId("success-captcha-id")
+                                .captcha("valid challenge answer")
+                                .captchaId("captcha-id")
                                 .clientPublicECDHKey(toBase64("fake public key"))
                                 .pushInfo(
                                         PushInfoVo.builder()

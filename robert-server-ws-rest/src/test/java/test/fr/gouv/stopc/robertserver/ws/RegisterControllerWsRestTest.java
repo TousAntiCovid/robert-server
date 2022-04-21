@@ -86,7 +86,7 @@ public class RegisterControllerWsRestTest {
 
     @Test
     public void testBadHttpVerb() {
-        this.body = RegisterVo.builder().captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b-success").build();
+        this.body = RegisterVo.builder().captcha("valid answer").captchaId("92c9623a7c474c4a92661614cd29d08b").build();
 
         this.requestEntity = new HttpEntity<>(this.body, this.headers);
 
@@ -131,7 +131,7 @@ public class RegisterControllerWsRestTest {
 
     @Test
     public void testBadRequests() {
-        String captchaId = "92c9623a7c474c4a92661614cd29d08b-success";
+        String captchaId = "92c9623a7c474c4a92661614cd29d08b";
 
         assertEquals(
                 HttpStatus.BAD_REQUEST,
@@ -197,7 +197,7 @@ public class RegisterControllerWsRestTest {
     public void testCaptchaFailure() {
 
         this.body = RegisterVo.builder()
-                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b-wrong")
+                .captcha("wrong answer").captchaId("92c9623a7c474c4a92661614cd29d08b")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
@@ -218,7 +218,7 @@ public class RegisterControllerWsRestTest {
 
         // Given
         this.body = RegisterVo.builder()
-                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b-success")
+                .captcha("valid answer").captchaId("92c9623a7c474c4a92661614cd29d08b")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
@@ -245,7 +245,7 @@ public class RegisterControllerWsRestTest {
 
         // Given
         this.body = RegisterVo.builder()
-                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b-success")
+                .captcha("valid answer").captchaId("92c9623a7c474c4a92661614cd29d08b")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
@@ -291,8 +291,8 @@ public class RegisterControllerWsRestTest {
                 .build();
 
         this.body = RegisterVo.builder()
-                .captcha("TEST")
-                .captchaId("92c9623a7c474c4a92661614cd29d08b-success")
+                .captcha("valid answer")
+                .captchaId("92c9623a7c474c4a92661614cd29d08b")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .pushInfo(pushInfo)
                 .build();
@@ -337,8 +337,8 @@ public class RegisterControllerWsRestTest {
 
         // Given
         this.body = RegisterVo.builder()
-                .captcha("TEST")
-                .captchaId("92c9623a7c474c4a92661614cd29d08b-success")
+                .captcha("valid answer")
+                .captchaId("92c9623a7c474c4a92661614cd29d08b")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
