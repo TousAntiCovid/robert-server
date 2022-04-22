@@ -24,4 +24,25 @@ public class BatchStatisticsCustomRepositoryImpl implements BatchStatisticsCusto
                 .returnNew(true);
         mongoOperations.findAndModify(query, update, options, BatchStatistics.class);
     }
+
+    @Override
+    public void saveNbNotifiedUsersScoredAgainInStatistics(Instant date, Long nbNotifiedUsersScoredAgain) {
+        Query query = new Query().addCriteria(Criteria.where("_id").is(date));
+        Update update = new Update().set("nbNotifiedUsersScoredAgain", nbNotifiedUsersScoredAgain);
+        FindAndModifyOptions options = FindAndModifyOptions.options()
+                .upsert(true)
+                .returnNew(true);
+        mongoOperations.findAndModify(query, update, options, BatchStatistics.class);
+    }
+
+    @Override
+    public void saveNbExposedButNotAtRiskUsersInStatistics(Instant date, Long nbExposedButNotAtRiskUsers) {
+        Query query = new Query().addCriteria(Criteria.where("_id").is(date));
+        Update update = new Update().set("nbExposedButNotAtRiskUsers", nbExposedButNotAtRiskUsers);
+        FindAndModifyOptions options = FindAndModifyOptions.options()
+                .upsert(true)
+                .returnNew(true);
+        mongoOperations.findAndModify(query, update, options, BatchStatistics.class);
+    }
+
 }

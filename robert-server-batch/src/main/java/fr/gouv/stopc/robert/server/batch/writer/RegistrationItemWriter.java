@@ -1,11 +1,13 @@
 package fr.gouv.stopc.robert.server.batch.writer;
 
+import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.AfterStep;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
@@ -24,9 +26,22 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
 
     private String totalItemCountKey;
 
-    public RegistrationItemWriter(IRegistrationService registrationService, String totalItemCountKey){
+    private BatchStatisticsService batchStatisticsService;
+
+    private Instant batchExecutionInstant;
+
+    public RegistrationItemWriter(IRegistrationService registrationService, String totalItemCountKey) {
         this.registrationService = registrationService;
         this.totalItemCountKey = totalItemCountKey;
+    }
+
+    @BeforeStep
+    public void beforeStep(StepExecution stepExecution) {
+        batchExecutionInstant = stepExecution
+                .getJobExecution()
+                .getStartTime()
+                .toInstant();
+        totalRegistrationCount = stepExecution.getJobExecution().getExecutionContext().getLong(totalItemCountKey);
     }
 
     @Override
@@ -48,7 +63,7 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
      *
      * @param registrationList
      */
-    private void updateRegistrationList(List<Registration> registrationList){
+    private void updateRegistrationList(List<Registration> registrationList) {
         Instant startTime = Instant.now();
 
         log.info("{} Registration(s) to update.", registrationList.size());
@@ -59,11 +74,15 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
                 .addNumberOfProcessedRegistrations(registrationList.size());
 
         log.info("Execution duration of the update registrations : {} second(s).", timeElapsed);
-        log.info("Total number of updated registrations/Total number of registrations to update : {}/{}", processedRegistrationCount, totalRegistrationCount);
+        log.info(
+                "Total number of updated registrations/Total number of registrations to update : {}/{}",
+                processedRegistrationCount, totalRegistrationCount
+        );
     }
 
-    @BeforeStep
-    public void beforeStep(StepExecution stepExecution) {
-            totalRegistrationCount = stepExecution.getJobExecution().getExecutionContext().getLong(totalItemCountKey);
+    @AfterStep
+    public void saveBatchStatistics() {
+        batchStatisticsService.saveNbExposedButNotAtRiskUsersInStatistics(batchExecutionInstant);
+        batchStatisticsService.saveNbNotifiedUsersScoredAgainInStatistics(batchExecutionInstant);
     }
 }

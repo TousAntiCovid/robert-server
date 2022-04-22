@@ -37,21 +37,17 @@ public class KpiService {
 
     public void computeDailyKpis() {
         final var nbAlertedUsers = registrationDbService.countNbUsersNotified();
-        final var nbExposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
         final var nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
-        final var nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
 
         final var nowAtStartOfDay = LocalDate.now().atStartOfDay().atZone(UTC).toInstant();
         final var todayStatistics = webserviceStatisticsRepository
                 .findById(nowAtStartOfDay)
-                .orElse(new WebserviceStatistics(nowAtStartOfDay, 0L, 0L, 0L, 0L, 0L));
+                .orElse(new WebserviceStatistics(nowAtStartOfDay, 0L, 0L, 0L));
         final var updatedStatistics = todayStatistics.toBuilder()
                 .date(nowAtStartOfDay)
                 // override statistics relative to the service start time
                 .totalAlertedUsers(nbAlertedUsers)
-                .totalExposedButNotAtRiskUsers(nbExposedUsersNotAtRisk)
                 .totalInfectedUsersNotNotified(nbInfectedUsersNotNotified)
-                .totalNotifiedUsersScoredAgain(nbNotifiedUsersScoredAgain)
                 // keep statistics incremented on the fly
                 .notifiedUsers(todayStatistics.getNotifiedUsers())
                 .build();
@@ -72,10 +68,10 @@ public class KpiService {
                 wsStats, batchStats, (wsStat, batchStat) -> RobertServerKpi.builder()
                         .date(LocalDate.ofInstant(wsStat.getDate(), UTC))
                         .nbAlertedUsers(wsStat.getTotalAlertedUsers())
-                        .nbExposedButNotAtRiskUsers(wsStat.getTotalExposedButNotAtRiskUsers())
                         .nbInfectedUsersNotNotified(wsStat.getTotalInfectedUsersNotNotified())
-                        .nbNotifiedUsersScoredAgain(wsStat.getTotalNotifiedUsersScoredAgain())
                         .nbNotifiedUsers(wsStat.getNotifiedUsers())
+                        .nbExposedButNotAtRiskUsers(batchStat.getNbExposedButNotAtRiskUsers())
+                        .nbNotifiedUsersScoredAgain(batchStat.getNbNotifiedUsersScoredAgain())
                         .usersAboveRiskThresholdButRetentionPeriodExpired(
                                 batchStat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
                         )

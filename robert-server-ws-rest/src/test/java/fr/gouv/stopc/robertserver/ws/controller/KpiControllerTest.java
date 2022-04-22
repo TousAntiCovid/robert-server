@@ -41,22 +41,32 @@ class KpiControllerTest {
                         BatchStatistics.builder()
                                 .batchExecution(now().minusDays(4).atStartOfDay().toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(1L)
+                                .nbExposedButNotAtRiskUsers(5L)
+                                .nbNotifiedUsersScoredAgain(2L)
                                 .build(),
                         BatchStatistics.builder()
                                 .batchExecution(now().minusDays(3).atStartOfDay().toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(2L)
+                                .nbExposedButNotAtRiskUsers(6L)
+                                .nbNotifiedUsersScoredAgain(3L)
                                 .build(),
                         BatchStatistics.builder()
                                 .batchExecution(now().minusDays(2).atStartOfDay().toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(3L)
+                                .nbExposedButNotAtRiskUsers(7L)
+                                .nbNotifiedUsersScoredAgain(4L)
                                 .build(),
                         BatchStatistics.builder()
                                 .batchExecution(now().minusDays(1).atStartOfDay().toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(4L)
+                                .nbExposedButNotAtRiskUsers(8L)
+                                .nbNotifiedUsersScoredAgain(5L)
                                 .build(),
                         BatchStatistics.builder()
                                 .batchExecution(now().atStartOfDay().toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(90L)
+                                .nbExposedButNotAtRiskUsers(98L)
+                                .nbNotifiedUsersScoredAgain(96L)
                                 .build()
                 )
         );
@@ -66,41 +76,31 @@ class KpiControllerTest {
                         WebserviceStatistics.builder()
                                 .date(now().minusDays(4).atStartOfDay().toInstant(UTC))
                                 .totalAlertedUsers(10L)
-                                .totalExposedButNotAtRiskUsers(5L)
                                 .totalInfectedUsersNotNotified(3L)
-                                .totalNotifiedUsersScoredAgain(2L)
                                 .notifiedUsers(1L)
                                 .build(),
                         WebserviceStatistics.builder()
                                 .date(now().minusDays(3).atStartOfDay().toInstant(UTC))
                                 .totalAlertedUsers(11L)
-                                .totalExposedButNotAtRiskUsers(6L)
                                 .totalInfectedUsersNotNotified(4L)
-                                .totalNotifiedUsersScoredAgain(3L)
                                 .notifiedUsers(1L)
                                 .build(),
                         WebserviceStatistics.builder()
                                 .date(now().minusDays(2).atStartOfDay().toInstant(UTC))
                                 .totalAlertedUsers(12L)
-                                .totalExposedButNotAtRiskUsers(7L)
                                 .totalInfectedUsersNotNotified(5L)
-                                .totalNotifiedUsersScoredAgain(4L)
                                 .notifiedUsers(2L)
                                 .build(),
                         WebserviceStatistics.builder()
                                 .date(now().minusDays(1).atStartOfDay().toInstant(UTC))
                                 .totalAlertedUsers(12L)
-                                .totalExposedButNotAtRiskUsers(8L)
                                 .totalInfectedUsersNotNotified(6L)
-                                .totalNotifiedUsersScoredAgain(5L)
                                 .notifiedUsers(0L)
                                 .build(),
                         WebserviceStatistics.builder()
                                 .date(now().atStartOfDay().toInstant(UTC))
                                 .totalAlertedUsers(99L)
-                                .totalExposedButNotAtRiskUsers(98L)
                                 .totalInfectedUsersNotNotified(97L)
-                                .totalNotifiedUsersScoredAgain(96L)
                                 .notifiedUsers(95L)
                                 .build()
                 )
@@ -187,13 +187,11 @@ class KpiControllerTest {
                                 .extracting(
                                         "date",
                                         "totalAlertedUsers",
-                                        "totalExposedButNotAtRiskUsers",
                                         "totalInfectedUsersNotNotified",
-                                        "totalNotifiedUsersScoredAgain",
                                         "notifiedUsers"
                                 )
                                 .containsExactly(
-                                        tuple(now().atStartOfDay(UTC).toInstant(), 0L, 0L, 0L, 0L, 0L)
+                                        tuple(now().atStartOfDay(UTC).toInstant(), 0L, 0L, 0L)
                                 )
                 );
     }
@@ -219,9 +217,7 @@ class KpiControllerTest {
                                         WebserviceStatistics.builder()
                                                 .date(now().atStartOfDay().toInstant(UTC))
                                                 .totalAlertedUsers(0L)
-                                                .totalExposedButNotAtRiskUsers(0L)
                                                 .totalInfectedUsersNotNotified(0L)
-                                                .totalNotifiedUsersScoredAgain(0L)
                                                 .notifiedUsers(95L)
                                                 .build()
                                 )

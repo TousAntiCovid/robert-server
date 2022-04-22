@@ -5,4 +5,8 @@ import java.time.Instant;
 public interface BatchStatisticsCustomRepository {
 
     void incrementUsersAboveRiskThresholdButRetentionPeriodExpired(Instant date);
+
+    void saveNbNotifiedUsersScoredAgainInStatistics(Instant date, Long nbNotifiedUsersScoredAgain);
+
+    void saveNbExposedButNotAtRiskUsersInStatistics(Instant date, Long nbExposedUsersButNotAtRisk);
 }

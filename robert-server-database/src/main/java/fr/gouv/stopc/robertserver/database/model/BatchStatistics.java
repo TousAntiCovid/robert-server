@@ -23,4 +23,8 @@ public class BatchStatistics {
 
     private long usersAboveRiskThresholdButRetentionPeriodExpired;
 
+    private long nbNotifiedUsersScoredAgain;
+
+    private long nbExposedButNotAtRiskUsers;
+
 }

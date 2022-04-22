@@ -21,11 +21,7 @@ public class WebserviceStatistics {
 
     private Long totalAlertedUsers;
 
-    private Long totalExposedButNotAtRiskUsers;
-
     private Long totalInfectedUsersNotNotified;
-
-    private Long totalNotifiedUsersScoredAgain;
 
     private Long notifiedUsers;
 }
