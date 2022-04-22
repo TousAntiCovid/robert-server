@@ -7,7 +7,8 @@ import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.data.domain.Range;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
+import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.util.Comparator.comparing;
@@ -25,7 +27,6 @@ import static org.springframework.data.domain.Range.Bound.exclusive;
 import static org.springframework.data.domain.Range.Bound.inclusive;
 
 @Service
-@RequiredArgsConstructor
 public class KpiService {
 
     private final IRegistrationService registrationDbService;
@@ -33,6 +34,27 @@ public class KpiService {
     private final WebserviceStatisticsRepository webserviceStatisticsRepository;
 
     private final BatchStatisticsRepository batchStatisticsRepository;
+
+    private Instant lastKpiComputationTimeInSeconds = Instant.ofEpochSecond(0);
+
+    private final Gauge lastKpiComputationAgeGauge;
+
+    public KpiService(final IRegistrationService registrationDbService,
+            final WebserviceStatisticsRepository webserviceStatisticsRepository,
+            final BatchStatisticsRepository batchStatisticsRepository,
+            final MeterRegistry meterRegistry) {
+        this.registrationDbService = registrationDbService;
+        this.webserviceStatisticsRepository = webserviceStatisticsRepository;
+        this.batchStatisticsRepository = batchStatisticsRepository;
+        lastKpiComputationAgeGauge = Gauge
+                .builder(
+                        "robert.dailystatistics.lastsuccess.age",
+                        () -> now().getEpochSecond() - lastKpiComputationTimeInSeconds.getEpochSecond()
+                )
+                .description("last kpi computation success")
+                .baseUnit("seconds")
+                .register(meterRegistry);
+    }
 
     public void computeDailyKpis() {
         final var nbAlertedUsers = registrationDbService.countNbUsersNotified();
@@ -54,7 +76,9 @@ public class KpiService {
                 // keep statistics incremented on the fly
                 .notifiedUsers(todayStatistics.getNotifiedUsers())
                 .build();
+
         webserviceStatisticsRepository.save(updatedStatistics);
+        lastKpiComputationTimeInSeconds = now();
     }
 
     public List<RobertServerKpi> getKpis(final LocalDate fromDate, final LocalDate toDate) {
@@ -104,7 +128,7 @@ public class KpiService {
 
     public void updateWebserviceStatistics(final Registration registration) {
         if (!registration.isNotifiedForCurrentRisk() && registration.isAtRisk()) {
-            webserviceStatisticsRepository.incrementNotifiedUsers(Instant.now().truncatedTo(DAYS));
+            webserviceStatisticsRepository.incrementNotifiedUsers(now().truncatedTo(DAYS));
         }
     }
 }
