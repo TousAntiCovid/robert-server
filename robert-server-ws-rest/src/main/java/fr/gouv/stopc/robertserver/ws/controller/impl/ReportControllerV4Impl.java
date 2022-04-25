@@ -11,14 +11,12 @@ import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.KeyFactory;
-import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
@@ -87,19 +85,13 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
     }
 
     protected PrivateKey getJwtPrivateKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        if (this.jwtPrivateKey != null)
-            return this.jwtPrivateKey;
-
-        if (this.wsServerConfiguration.getJwtUseTransientKey()) {
-            // In test mode, we generate a transient key
-            KeyPair keyPair = Keys.keyPairFor(signatureAlgo);
-            this.jwtPrivateKey = keyPair.getPrivate();
-        } else {
+        if (this.jwtPrivateKey == null) {
             byte[] encoded = Decoders.BASE64.decode(this.wsServerConfiguration.getJwtPrivateKey());
             KeyFactory keyFactory = KeyFactory.getInstance(signatureAlgo.getFamilyName());
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
             this.jwtPrivateKey = keyFactory.generatePrivate(keySpec);
         }
         return this.jwtPrivateKey;
+
     }
 }

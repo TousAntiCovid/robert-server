@@ -6,7 +6,8 @@ import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
 /*
- * Global configuration of the Robert Server WS application, which is editable through Consul.
+ * Global configuration of the Robert Server WS application, which is editable
+ * through Consul.
  */
 @Data
 @Component
@@ -24,9 +25,6 @@ public class WsServerConfiguration {
 
     @Value("${robert.jwt.lifetime}")
     private int jwtLifeTime;
-
-    @Value("${robert.jwt.use-transient-key}")
-    private Boolean jwtUseTransientKey;
 
     @Value("${robert.jwt.declare.public-kid}")
     private String declareTokenKid;

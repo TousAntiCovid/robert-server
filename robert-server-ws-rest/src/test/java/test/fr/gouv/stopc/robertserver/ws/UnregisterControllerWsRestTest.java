@@ -13,13 +13,10 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
-import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.dto.UnregisterResponseDto;
-import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.UnregisterRequestVo;
-import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,11 +24,9 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.KeyGenerator;
@@ -42,16 +37,14 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Optional;
 
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithPushNotifServer;
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyPushNotifServerReceivedUnregisterForToken;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = {
-        RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
-@Slf4j
+@LegacyIntegrationTest
 public class UnregisterControllerWsRestTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
@@ -89,9 +82,6 @@ public class UnregisterControllerWsRestTest {
     @MockBean
     private ICryptoServerGrpcClient cryptoServerClient;
 
-    @MockBean
-    private IRestApiService restApiService;
-
     @Autowired
     private PropertyLoader propertyLoader;
 
@@ -125,8 +115,6 @@ public class UnregisterControllerWsRestTest {
                 this.targetUrl.toString(), HttpMethod.GET,
                 this.requestEntity, String.class
         );
-
-        log.info("******* Bad HTTP Verb Payload: {}", response.getBody());
 
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
         verify(this.registrationService, never()).delete(ArgumentMatchers.any());
@@ -426,7 +414,7 @@ public class UnregisterControllerWsRestTest {
             ka = key.getEncoded();
 
         } catch (NoSuchAlgorithmException e) {
-            log.info("Problem generating KA");
+            throw new RuntimeException("Problem generating KA", e);
         }
         return ka;
     }
@@ -475,7 +463,7 @@ public class UnregisterControllerWsRestTest {
         try {
             mac = this.generateHMAC(new CryptoHMACSHA256(ka), agg, DigestSaltEnum.UNREGISTER);
         } catch (Exception e) {
-            log.info("Problem generating SHA256");
+            throw new RuntimeException("Problem generating SHA256", e);
         }
         return mac;
     }
@@ -494,7 +482,7 @@ public class UnregisterControllerWsRestTest {
             res[1] = this.generateTime32(adjustTimeBySeconds);
             res[2] = this.generateMACFor(res[0], res[1], ka);
         } catch (Exception e) {
-            log.info("Problem creating EBID, Time and MAC for test");
+            throw new RuntimeException("Problem creating EBID, Time and MAC for test", e);
         }
         return res;
     }
@@ -669,7 +657,7 @@ public class UnregisterControllerWsRestTest {
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
-        verify(this.restApiService).unregisterPushNotif(pushToken);
+        verifyPushNotifServerReceivedUnregisterForToken(pushToken);
     }
 
     @Test
@@ -692,7 +680,7 @@ public class UnregisterControllerWsRestTest {
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
         verify(this.registrationService, times(2)).findById(idA);
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
-        verify(this.restApiService, never()).unregisterPushNotif(anyString());
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     private void generateSuccessPayload(byte[] idA, String pushToken) {

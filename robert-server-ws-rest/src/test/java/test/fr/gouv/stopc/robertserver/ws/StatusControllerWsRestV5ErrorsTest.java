@@ -1,20 +1,15 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.controller.impl.StatusControllerImpl;
-import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -23,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = {
-        RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
+@LegacyIntegrationTest
 public class StatusControllerWsRestV5ErrorsTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V5)
@@ -40,11 +33,6 @@ public class StatusControllerWsRestV5ErrorsTest {
 
     private StatusVo statusBody;
 
-    private HttpHeaders headers;
-
-    @MockBean
-    private IRestApiService restApiService;
-
     @SpyBean
     private StatusControllerImpl statusController;
 
@@ -58,7 +46,7 @@ public class StatusControllerWsRestV5ErrorsTest {
                 .time("12345678")
                 .mac("01234567890123456789012345678901234567891234")
                 .build();
-        this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
+        this.requestEntity = new HttpEntity<>(this.statusBody);
     }
 
     @Test

@@ -1,16 +1,13 @@
 package test.fr.gouv.stopc.robertserver.ws;
 
-import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
 import fr.gouv.stopc.robertserver.ws.controller.impl.ReportControllerDelegate;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseV4Dto;
-import fr.gouv.stopc.robertserver.ws.dto.VerifyResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.ApiError;
 import fr.gouv.stopc.robertserver.ws.exception.CustomRestExceptionHandler;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
-import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
@@ -19,16 +16,11 @@ import fr.gouv.stopc.robertserver.ws.vo.HelloMessageDetailVo;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayNameGeneration;
-import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -36,15 +28,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithSubmissionCodeServer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -52,11 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = {
-        RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
-@ExtendWith(OutputCaptureExtension.class)
-@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+@LegacyIntegrationTest
 public class ReportControllerWsRestTest {
 
     @Autowired
@@ -68,9 +55,6 @@ public class ReportControllerWsRestTest {
 
     @MockBean
     private ContactDtoService contactDtoService;
-
-    @MockBean
-    private IRestApiService restApiService;
 
     @Mock
     private PropertyLoader propertyLoader;
@@ -98,7 +82,7 @@ public class ReportControllerWsRestTest {
 
     private URI targetUrl;
 
-    private final String token = "23DC4B32-7552-44C1-B98A-DDE5F75B1729";
+    private final String token = "validB32-7552-44C1-B98A-DDE5F75B1729";
 
     private final String contactsAsBinary = "contactsAsBinary";
 
@@ -327,7 +311,7 @@ public class ReportControllerWsRestTest {
             assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
             assertNull(response.getBody());
 
-            verify(this.restApiService, never()).verifyReportToken(any());
+            verifyNoInteractionsWithSubmissionCodeServer();
             verify(this.contactDtoService, never()).saveContacts(any());
         } catch (RobertServerException e) {
             fail(EXCEPTION_FAIL_MESSAGE);
@@ -350,9 +334,6 @@ public class ReportControllerWsRestTest {
             this.reportBatchRequestVo = ReportBatchRequestVo.builder().token(token).contacts(this.contacts).build();
 
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
-
-            when(this.restApiService.verifyReportToken(token))
-                    .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
 
             // When
             ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate
@@ -417,9 +398,6 @@ public class ReportControllerWsRestTest {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
-            when(this.restApiService.verifyReportToken(token))
-                    .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
-
             // When
             ResponseEntity<ReportBatchResponseDto> response = this.testRestTemplate
                     .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseDto.class);
@@ -432,7 +410,6 @@ public class ReportControllerWsRestTest {
             assertNotNull(response.getBody());
             assertResponseBodyV3IsSuccess(response.getBody());
 
-            verify(this.restApiService).verifyReportToken(token);
             verify(this.contactDtoService, atLeast(1)).saveContacts(any());
         } catch (RobertServerException e) {
             fail(EXCEPTION_FAIL_MESSAGE);
@@ -466,9 +443,6 @@ public class ReportControllerWsRestTest {
             // Given
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
-            when(this.restApiService.verifyReportToken(token))
-                    .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
-
             // When
             ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate
                     .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseV4Dto.class);
@@ -481,7 +455,6 @@ public class ReportControllerWsRestTest {
             assertNotNull(response.getBody());
             assertResponseBodyIsSuccess(response.getBody());
 
-            verify(this.restApiService).verifyReportToken(token);
             verify(this.contactDtoService, atLeast(1)).saveContacts(any());
         } catch (RobertServerException e) {
             fail(EXCEPTION_FAIL_MESSAGE);
@@ -496,9 +469,6 @@ public class ReportControllerWsRestTest {
             this.reportBatchRequestVo.setContacts(Collections.emptyList());
             this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
 
-            when(this.restApiService.verifyReportToken(token))
-                    .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
-
             // When
             ResponseEntity<ReportBatchResponseV4Dto> response = this.testRestTemplate
                     .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ReportBatchResponseV4Dto.class);
@@ -511,7 +481,6 @@ public class ReportControllerWsRestTest {
             assertNotNull(response.getBody());
             assertResponseBodyIsSuccess(response.getBody());
 
-            verify(this.restApiService).verifyReportToken(token);
             verify(this.contactDtoService, atLeast(1)).saveContacts(any());
         } catch (RobertServerException e) {
             fail(EXCEPTION_FAIL_MESSAGE);
@@ -536,7 +505,7 @@ public class ReportControllerWsRestTest {
             assertNotNull(response);
             assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 
-            verify(this.restApiService, never()).verifyReportToken(any());
+            verifyNoInteractionsWithSubmissionCodeServer();
             verify(this.contactDtoService, never()).saveContacts(any());
         } catch (RobertServerException e) {
             fail(EXCEPTION_FAIL_MESSAGE);
@@ -582,7 +551,7 @@ public class ReportControllerWsRestTest {
             // Then
             assertNotNull(response);
             assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            verify(this.restApiService, never()).verifyReportToken(any());
+            verifyNoInteractionsWithSubmissionCodeServer();
             verify(this.contactDtoService, never()).saveContacts(any());
         } catch (RobertServerException e) {
 
@@ -604,7 +573,7 @@ public class ReportControllerWsRestTest {
         assertNotNull(response);
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
         assertNotNull(response.getBody());
-        verify(this.restApiService, never()).verifyReportToken(any());
+        verifyNoInteractionsWithSubmissionCodeServer();
         verify(this.contactDtoService, never()).saveContacts(any());
     }
 
@@ -613,9 +582,6 @@ public class ReportControllerWsRestTest {
 
         // Given
         this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
-
-        when(this.restApiService.verifyReportToken(token))
-                .thenReturn(Optional.of(VerifyResponseDto.builder().valid(true).build()));
 
         doThrow(new RobertServerException(MessageConstants.ERROR_OCCURED)).when(this.contactDtoService)
                 .saveContacts(any());
@@ -631,16 +597,14 @@ public class ReportControllerWsRestTest {
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaders().getContentType());
         assertNotNull(response.getBody());
         assertThat(response.getBody(), equalTo(buildApiError(MessageConstants.ERROR_OCCURED.getValue())));
-        verify(this.restApiService).verifyReportToken(token);
     }
 
     @Test
     public void testReportContactHistoryShouldFailWhenTokenVerificationFails() throws Exception {
 
         // Given
+        reportBatchRequestVo.setToken("wrongZ");
         this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
-
-        when(this.restApiService.verifyReportToken(token)).thenReturn(Optional.empty());
 
         // When
         ResponseEntity<ApiError> response = this.testRestTemplate
@@ -656,7 +620,6 @@ public class ReportControllerWsRestTest {
                 response.getBody(),
                 equalTo(buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length()))
         );
-        verify(this.restApiService).verifyReportToken(token);
         verify(this.contactDtoService, never()).saveContacts(any());
 
     }

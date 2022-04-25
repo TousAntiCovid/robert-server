@@ -1,11 +1,17 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
+import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.lang.NonNull;
+
+import java.time.Instant;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -17,17 +23,28 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
 
     private final RobertClock robertClock;
 
-    @Override
-    public Registration process(Registration registration) throws Exception {
-        if (registration.isAtRisk() && riskRetentionThresholdHasExpired(registration)) {
+    private final BatchStatisticsService batchStatisticsService;
 
+    private Instant batchExecutionInstant;
+
+    @BeforeStep
+    void retrieveInterStepData(final StepExecution stepExecution) {
+        batchExecutionInstant = stepExecution
+                .getJobExecution()
+                .getStartTime()
+                .toInstant();
+    }
+
+    @Override
+    public Registration process(@NonNull final Registration registration) throws Exception {
+
+        if (isAtRiskAndRetentionPeriodHasExpired(registration)) {
             if (!registration.isNotified()) {
                 log.info("Resetting risk level of a user never notified!");
             }
             registration.setAtRisk(false);
-            // We do not reset registration#isNotified as it is used to compute the number
-            // of notifications in TAC
-            // It should evolve when a statistic table will be used to count notifications.
+            registration.setNotifiedForCurrentRisk(false);
+            batchStatisticsService.incrementUsersAboveRiskThresholdButRetentionPeriodExpired(batchExecutionInstant);
             return registration;
         }
         return null;
@@ -39,4 +56,7 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
         return lastContactTime.until(today).toDays() > propertyLoader.getRiskLevelRetentionPeriodInDays();
     }
 
+    private boolean isAtRiskAndRetentionPeriodHasExpired(final Registration registration) {
+        return registration.isAtRisk() && riskRetentionThresholdHasExpired(registration);
+    }
 }

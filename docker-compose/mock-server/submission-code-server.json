@@ -1,0 +1,38 @@
+[
+  {
+    "id": "By default, any call to the verify endpoint of submission-code-server-ws-rest containing a 6, 12 or 38 characters code starting with 'valid' must succeed",
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/v1/verify",
+      "queryStringParameters": {
+        "code": ["valid([a-zA-Z0-9]{1}|[a-zA-Z0-9]{7}|[a-zA-Z0-9-]{31})"]
+      }
+    },
+    "httpResponse": {
+      "headers": {
+          "Content-Type": ["application/json"]
+        },
+      "statusCode": 200,
+      "body": "{\"valid\":true}"
+    }
+  },
+  {
+    "id": "By default, any call to the verify endpoint of submission-code-server-ws-rest containing a code not starting with 'valid' must fail",
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/v1/verify",
+      "queryStringParameters": {
+        "code": [
+          ".*"
+        ]
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 200,
+      "body": "{\"valid\":false}"
+    }
+  }
+]

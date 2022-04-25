@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationRiskLevelResetProcessor;
+import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.utils.StepNameUtils;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
@@ -29,11 +30,18 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     private final IRegistrationService registrationService;
 
-    public RegistrationRiskResetStepConfiguration(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
-            IServerConfigurationService serverConfigurationService, IRegistrationService registrationService,
-            ItemIdMappingService itemIdMappingService) {
+    private final BatchStatisticsService batchStatisticsService;
+
+    public RegistrationRiskResetStepConfiguration(
+            final PropertyLoader propertyLoader,
+            final StepBuilderFactory stepBuilderFactory,
+            final IServerConfigurationService serverConfigurationService,
+            final IRegistrationService registrationService,
+            final ItemIdMappingService itemIdMappingService,
+            final BatchStatisticsService batchStatisticsService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
+        this.batchStatisticsService = batchStatisticsService;
     }
 
     @Bean
@@ -59,7 +67,7 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     @Bean
     public ItemProcessor<Registration, Registration> registrationRiskResetProcessor(final RobertClock robertClock) {
-        return new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock);
+        return new RegistrationRiskLevelResetProcessor(propertyLoader, robertClock, batchStatisticsService);
     }
 
     @Bean

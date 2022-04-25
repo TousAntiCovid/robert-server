@@ -4,7 +4,7 @@ import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
-import fr.gouv.stopc.robert.client.api.DefaultApi;
+import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
 import io.cucumber.spring.ScenarioScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public class MobilePhonesEmulator {
 
     private final ApplicationProperties applicationProperties;
 
-    private final DefaultApi robertApi;
+    private final RobertLegacyApi robertLegacyApi;
 
     private final CaptchaApi captchaApi;
 
@@ -39,7 +39,11 @@ public class MobilePhonesEmulator {
 
     public void createMobileApplication(final String userName) {
         final var mobileApplication = new MobileApplication(
-                userName, applicationProperties, captchaApi, robertApi, clientIdentifierRepository,
+                userName,
+                applicationProperties,
+                captchaApi,
+                robertLegacyApi,
+                clientIdentifierRepository,
                 registrationRepository
         );
         mobileApplications.put(userName, mobileApplication);

@@ -26,11 +26,13 @@ paths:
           required: true
           schema:
             type: string
+            format: date
         - name: toDate
           in: query
           required: true
           schema:
             type: string
+            format: date
       responses:
         "200":
           description: Returns the KPI list for date range
@@ -40,6 +42,16 @@ paths:
                 $ref: "#/components/schemas/KpisResponse"
         "400":
           description: bad request
+  /tasks/compute-daily-kpis:
+    get:
+      tags:
+        - KPI
+      summary: Trigger daily KPI computation
+      description: Computes KPIs for the current day.
+      operationId: compute-kpis
+      responses:
+        202:
+          description: KPIs generation request accepted and scheduled in background
 externalDocs:
   description: Find out more about ROBERT
   url: https://github.com/ROBERT-proximity-tracing/
@@ -50,23 +62,36 @@ components:
     KpisResponse:
       type: array
       items:
-        $ref: "#/components/schemas/Kpi"
-    Kpi:
+        $ref: "#/components/schemas/RobertServerKpi"
+    RobertServerKpi:
       type: object
       properties:
         date:
           type: string
+          format: date
         nbAlertedUsers:
-          type: number
+          type: integer
+          format: int64
         nbExposedButNotAtRiskUsers:
-          type: number
+          type: integer
+          format: int64
         nbInfectedUsersNotNotified:
-          type: number
+          type: integer
+          format: int64
         nbNotifiedUsersScoredAgain:
-          type: number
+          type: integer
+          format: int64
+        nbNotifiedUsers:
+          type: integer
+          format: int64
+        usersAboveRiskThresholdButRetentionPeriodExpired:
+          type: integer
+          format: int64
       required:
         - date
         - nbAlertedUsers
         - nbExposedButNotAtRiskUsers
         - nbInfectedUsersNotNotified
         - nbNotifiedUsersScoredAgain
+        - nbNotifiedUsers
+        - usersAboveRiskThresholdButRetentionPeriodExpired

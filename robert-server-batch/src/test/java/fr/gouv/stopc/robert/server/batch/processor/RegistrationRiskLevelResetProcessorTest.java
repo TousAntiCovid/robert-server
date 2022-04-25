@@ -4,10 +4,12 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -17,17 +19,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
+import java.sql.Date;
 import java.time.Instant;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.when;
 import static org.mockito.quality.Strictness.LENIENT;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = LENIENT)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 public class RegistrationRiskLevelResetProcessorTest {
 
     @Mock
@@ -37,11 +47,27 @@ public class RegistrationRiskLevelResetProcessorTest {
 
     private ListAppender<ILoggingEvent> processorLoggerAppender;
 
+    @Autowired
+    private BatchStatisticsService batchStatisticsService;
+
+    @Autowired
+    private BatchStatisticsRepository batchStatisticsRepository;
+
+    @BeforeEach
+    public void initializeProcessor() {
+        final var robertClock = new RobertClock("2020-06-01");
+        final var jobExecution = new JobExecution(0L);
+        jobExecution.setStartTime(Date.from(Instant.parse("2021-01-01T12:30:00Z")));
+        processor = new RegistrationRiskLevelResetProcessor(
+                this.propertyLoader, robertClock, batchStatisticsService
+        );
+        processor.retrieveInterStepData(new StepExecution("test", jobExecution));
+    }
+
     @BeforeEach
     public void beforeEach() {
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
-        final var robertClock = new RobertClock("2020-06-01");
-        this.processor = new RegistrationRiskLevelResetProcessor(this.propertyLoader, robertClock);
+        batchStatisticsRepository.deleteAll();
     }
 
     @Test
@@ -87,6 +113,7 @@ public class RegistrationRiskLevelResetProcessorTest {
         Registration processedRegistration = this.processor.process(registration);
         // Then
         assertThat(processedRegistration).isNull();
+        assertThat(batchStatisticsRepository.count()).isEqualTo(0L);
     }
 
     @Test
@@ -114,6 +141,50 @@ public class RegistrationRiskLevelResetProcessorTest {
         assertThat(processedRegistration).isNotNull();
         assertThat(processedRegistration.isAtRisk()).isFalse();
         assertThat(processedRegistration.isNotified()).isTrue();
+
+        final var batchStatistics = batchStatisticsRepository.findAll();
+        assertThat(batchStatistics).hasSize(1);
+        assertThat(batchStatistics.get(0).getJobStartInstant()).isEqualTo(Instant.parse("2021-01-01T12:30:00Z"));
+        assertThat(batchStatistics.get(0).getUsersAboveRiskThresholdButRetentionPeriodExpired()).isEqualTo(1L);
+
+    }
+
+    @Test
+    public void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat() throws Exception {
+
+        final long nowMinus8DaysNtpTimestamp = TimeUtils.convertUnixMillistoNtpSeconds(
+                Instant.now()
+                        .truncatedTo(DAYS)
+                        .minus(8, DAYS)
+                        .toEpochMilli()
+        );
+
+        final var registration1 = Registration.builder()
+                .atRisk(true)
+                .isNotified(true)
+                .latestRiskEpoch(4808)
+                .lastContactTimestamp(nowMinus8DaysNtpTimestamp)
+                .build();
+        final var registration2 = Registration.builder()
+                .atRisk(true)
+                .isNotified(true)
+                .latestRiskEpoch(4808)
+                .lastContactTimestamp(nowMinus8DaysNtpTimestamp)
+                .build();
+
+        processor.process(registration1);
+        processor.process(registration2);
+
+        assertThat(batchStatisticsRepository.findAll())
+                .extracting(
+                        stat -> tuple(
+                                stat.getJobStartInstant(),
+                                stat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
+                        )
+                )
+                .containsExactly(
+                        tuple(Instant.parse("2021-01-01T12:30:00Z"), 2L)
+                );
     }
 
     @Test

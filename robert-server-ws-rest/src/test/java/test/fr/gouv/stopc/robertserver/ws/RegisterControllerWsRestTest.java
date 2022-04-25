@@ -7,22 +7,17 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
-import fr.gouv.stopc.robertserver.ws.RobertServerWsRestApplication;
 import fr.gouv.stopc.robertserver.ws.dto.RegisterResponseDto;
-import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
-import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import io.micrometer.core.instrument.util.StringUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
@@ -31,20 +26,17 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Optional;
 
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = {
-        RobertServerWsRestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application.properties")
-@Slf4j
+@LegacyIntegrationTest
 public class RegisterControllerWsRestTest {
 
     @Value("${controller.path.prefix}" + UriConstants.API_V2)
@@ -77,16 +69,10 @@ public class RegisterControllerWsRestTest {
     private RegistrationService registrationService;
 
     @MockBean
-    private CaptchaService captchaService;
-
-    @MockBean
     private ICryptoServerGrpcClient cryptoServerClient;
 
     @Autowired
     private IServerConfigurationService serverConfigurationService;
-
-    @MockBean
-    private IRestApiService restApiService;
 
     private int currentEpoch;
 
@@ -112,7 +98,7 @@ public class RegisterControllerWsRestTest {
 
     @Test
     public void testBadHttpVerb() {
-        this.body = RegisterVo.builder().captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b").build();
+        this.body = RegisterVo.builder().captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b-success").build();
 
         this.requestEntity = new HttpEntity<>(this.body, this.headers);
 
@@ -120,8 +106,6 @@ public class RegisterControllerWsRestTest {
                 this.targetUrl.toString(), HttpMethod.GET,
                 this.requestEntity, String.class
         );
-
-        log.info("******* Bad HTTP Verb Payload: {}", response.getBody());
 
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
         verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
@@ -159,7 +143,7 @@ public class RegisterControllerWsRestTest {
 
     @Test
     public void testBadRequests() {
-        String captchaId = "92c9623a7c474c4a92661614cd29d08b";
+        String captchaId = "92c9623a7c474c4a92661614cd29d08b-success";
 
         assertEquals(
                 HttpStatus.BAD_REQUEST,
@@ -223,17 +207,13 @@ public class RegisterControllerWsRestTest {
 
     @Test
     public void testCaptchaFailure() {
+
         this.body = RegisterVo.builder()
-                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b")
+                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b-wrong")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
         this.requestEntity = new HttpEntity<>(this.body, this.headers);
-
-        // Make it so that CAPTCHA verification fails (either incorrect token or too
-        // great a time
-        // difference between solving and the request)
-        doReturn(false).when(this.captchaService).verifyCaptcha(ArgumentMatchers.any());
 
         ResponseEntity<String> response = this.restTemplate.exchange(
                 this.targetUrl.toString(), HttpMethod.POST,
@@ -242,7 +222,7 @@ public class RegisterControllerWsRestTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         verify(this.registrationService, times(0)).saveRegistration(ArgumentMatchers.any());
-        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     @Test
@@ -250,14 +230,11 @@ public class RegisterControllerWsRestTest {
 
         // Given
         this.body = RegisterVo.builder()
-                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b")
+                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b-success")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
         this.requestEntity = new HttpEntity<>(this.body, this.headers);
-
-        // CAPTCHA passes
-        doReturn(true).when(this.captchaService).verifyCaptcha(ArgumentMatchers.any());
 
         // Error creating registration
         when(this.cryptoServerClient.createRegistration(any())).thenReturn(Optional.empty());
@@ -272,7 +249,7 @@ public class RegisterControllerWsRestTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService, never()).saveRegistration(any());
-        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     @Test
@@ -280,7 +257,7 @@ public class RegisterControllerWsRestTest {
 
         // Given
         this.body = RegisterVo.builder()
-                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b")
+                .captcha("TEST").captchaId("92c9623a7c474c4a92661614cd29d08b-success")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
@@ -293,9 +270,6 @@ public class RegisterControllerWsRestTest {
                 .setIdA(ByteString.copyFrom(id))
                 .setTuples(ByteString.copyFrom("EncryptedJSONStringWithTuples".getBytes()))
                 .build();
-
-        // CAPTCHA passes
-        doReturn(true).when(this.captchaService).verifyCaptcha(ArgumentMatchers.any());
 
         when(this.cryptoServerClient.createRegistration(any())).thenReturn(Optional.of(createRegistrationResponse));
 
@@ -310,7 +284,7 @@ public class RegisterControllerWsRestTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService).saveRegistration(any());
-        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     @Test
@@ -362,7 +336,7 @@ public class RegisterControllerWsRestTest {
 
         this.body = RegisterVo.builder()
                 .captcha("TEST")
-                .captchaId("92c9623a7c474c4a92661614cd29d08b")
+                .captchaId("92c9623a7c474c4a92661614cd29d08b-success")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .pushInfo(pushInfo)
                 .build();
@@ -387,8 +361,6 @@ public class RegisterControllerWsRestTest {
 
         when(this.registrationService.saveRegistration(any())).thenReturn(Optional.of(reg));
 
-        when(this.captchaService.verifyCaptcha(this.body)).thenReturn(true);
-
         // When
         ResponseEntity<RegisterResponseDto> response = this.restTemplate.exchange(
                 this.targetUrl.toString(),
@@ -402,7 +374,7 @@ public class RegisterControllerWsRestTest {
         assertTrue(StringUtils.isNotEmpty(response.getBody().getTuples()));
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService).saveRegistration(any());
-        verify(this.restApiService).registerPushNotif(pushInfo);
+        verifyPushNotifServerReceivedRegisterForToken(pushInfo);
     }
 
     private void testRegisterSucceeds(String url) {
@@ -410,7 +382,7 @@ public class RegisterControllerWsRestTest {
         // Given
         this.body = RegisterVo.builder()
                 .captcha("TEST")
-                .captchaId("92c9623a7c474c4a92661614cd29d08b")
+                .captchaId("92c9623a7c474c4a92661614cd29d08b-success")
                 .clientPublicECDHKey(Base64.encode("an12kmdpsd".getBytes()))
                 .build();
 
@@ -434,8 +406,6 @@ public class RegisterControllerWsRestTest {
 
         when(this.registrationService.saveRegistration(any())).thenReturn(Optional.of(reg));
 
-        when(this.captchaService.verifyCaptcha(this.body)).thenReturn(true);
-
         // When
         ResponseEntity<RegisterResponseDto> response = this.restTemplate.exchange(
                 url,
@@ -449,7 +419,7 @@ public class RegisterControllerWsRestTest {
         assertTrue(StringUtils.isNotEmpty(response.getBody().getTuples()));
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService).saveRegistration(any());
-        verify(this.restApiService, never()).registerPushNotif(any(PushInfoVo.class));
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     private int getCurrentEpoch() {

@@ -13,7 +13,7 @@ tags: []
 paths:
   /captcha:
     post:
-      tags: [ "captcha" ]
+      tags: ["captcha"]
       summary: Create a CAPTCHA
       description: |-
         Request the creation of a CAPTCHA challenge. A CAPTCHA Id is returned.
@@ -44,7 +44,7 @@ paths:
       security: []
   /captcha/{captchaId}/image:
     get:
-      tags: [ "captcha" ]
+      tags: ["captcha"]
       summary: Get image CAPTCHA
       description: Get image version of the CAPTCHA challenge
       operationId: captchaChallengeImage
@@ -62,7 +62,7 @@ paths:
             image/png:
               schema:
                 type: string
-                format: binary        
+                format: binary
         "400":
           description: CAPTCHA Id not found
         "404":
@@ -72,7 +72,7 @@ paths:
       security: []
   /captcha/{captchaId}/audio:
     get:
-      tags: [ "captcha" ]
+      tags: ["captcha"]
       summary: Get audio CAPTCHA
       description: Get audio version of the CAPTCHA challenge
       operationId: captchaChallengeAudio
@@ -90,7 +90,7 @@ paths:
             audio/wav:
               schema:
                 type: string
-                format: binary        
+                format: binary
         "400":
           description: CAPTCHA Id not found
         "404":
@@ -100,7 +100,7 @@ paths:
       security: []
   /register:
     post:
-      tags: []
+      tags: ["robert-legacy"]
       summary: Register app
       description: |-
         Register the app to the ROBERT service.
@@ -130,7 +130,7 @@ paths:
       security: []
   /status:
     post:
-      tags: []
+      tags: ["robert-legacy"]
       summary: Exposure Status Request
       description: >-
         App requests if its user has been exposed
@@ -148,7 +148,8 @@ paths:
         $ref: "#/components/requestBodies/ExposureStatusRequest"
       responses:
         "200":
-          description: Returns whether the app user was exposed to a risk. The app must
+          description:
+            Returns whether the app user was exposed to a risk. The app must
             display associated hardcoded content accordingly and send local
             notification.
           content:
@@ -163,7 +164,7 @@ paths:
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /report:
     post:
-      tags: []
+      tags: ["robert-legacy"]
       summary: Report contact history
       description: >-
         Report contacts from the last X days stored by the app once user has
@@ -194,7 +195,7 @@ paths:
       security: []
   /unregister:
     post:
-      tags: []
+      tags: ["robert-legacy"]
       summary: Unregister app
       description: >-
         User wants to stop using the ROBERT service. Delete all data related to this user from the server
@@ -219,7 +220,7 @@ paths:
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /deleteExposureHistory:
     post:
-      tags: []
+      tags: ["robert-legacy"]
       summary: Delete exposure history
       description: >-
         User wants to delete his exposure history from the back-end. User must still have a valid EBID
@@ -242,6 +243,21 @@ paths:
           description: invalid authentication
         "430":
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
+  /clock:
+    get:
+      tags:
+        - robert
+      summary: Return server instant for apps sync purposes
+      operationId: clock
+      responses:
+        200:
+          description: Robert current time
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClockResponse"
+        400:
+          description: bad request
 externalDocs:
   description: Find out more about ROBERT
   url: https://github.com/ROBERT-proximity-tracing/
@@ -312,7 +328,7 @@ components:
         - mac
     UnregisterRequest:
       allOf:
-        - $ref: '#/components/schemas/AuthentifiedRequest'
+        - $ref: "#/components/schemas/AuthentifiedRequest"
         - type: object
           properties:
             pushToken:
@@ -320,7 +336,7 @@ components:
               description: The push token that is associated with the app in order to delete it from the database
     ExposureStatusRequest:
       allOf:
-        - $ref: '#/components/schemas/AuthentifiedRequest'
+        - $ref: "#/components/schemas/AuthentifiedRequest"
         - type: object
           properties:
             pushInfo:
@@ -332,9 +348,10 @@ components:
           type: integer
           maximum: 4
           minimum: 0
-          description: "riskLevel (0 to 4) : 0 no risk at all, 4 highest risk => this riskLevel is resilient
-          i.e. each time we call it, the backend sends back the status at this given time (on the frontend side,
-          no intelligence whatsoever)"
+          description: |-
+            riskLevel (0 to 4) : 0 no risk at all, 4 highest risk => this riskLevel is resilient
+            i.e. each time we call it, the backend sends back the status at this given time (on the frontend side,
+            no intelligence whatsoever)
         lastContactDate:
           type: string
           minLength: 10
@@ -386,7 +403,8 @@ components:
       properties:
         captcha:
           type: string
-          description: The CAPTCHA resolution token obtained by the app. Required to
+          description:
+            The CAPTCHA resolution token obtained by the app. Required to
             complete the user registration process
         captchaId:
           type: string
@@ -542,7 +560,8 @@ components:
         - ids
         - ecc
         - ebid
-      description: All keys encountered for an epoch for an identical EBID (a "contact").
+      description:
+        All keys encountered for an epoch for an identical EBID (a "contact").
         Reported keys must be removed LocalProximityHistory DB upon success of
         this request
     HelloMessageDetail:
@@ -566,7 +585,8 @@ components:
             Raw content must be 40 bits. Base64 string must be 8 chars.
         rssiCalibrated:
           type: integer
-          description: Calibrated RSSI (as 8-bit) measured when HELLO message was received,
+          description:
+            Calibrated RSSI (as 8-bit) measured when HELLO message was received,
             then normalized by client app filtering algorithm
       required:
         - timeFromHelloMessage
@@ -584,7 +604,8 @@ components:
             description: Epoch identifier for which the accompagnying ids are generated
           key:
             $ref: "#/components/schemas/KeyPair"
-      description: Identifiers to be broadcast by the app during the next M epochs.
+      description:
+        Identifiers to be broadcast by the app during the next M epochs.
         Provided as (EBID, ECC, epochid) tuples.
     PushInfo:
       type: object
@@ -620,3 +641,22 @@ components:
       required:
         - name
         - value
+    ClockResponse:
+      type: object
+      properties:
+        serviceStartDate:
+          type: string
+          format: date
+          nullable: false
+        time:
+          type: string
+          format: date-time
+          example: "1970-01-01T04:20:00.000Z"
+          nullable: false
+        epoch:
+          type: integer
+          nullable: false
+      required:
+        - serviceStartTime
+        - time
+        - epoch

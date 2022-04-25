@@ -15,6 +15,7 @@ import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.service.DeclarationService;
 import fr.gouv.stopc.robertserver.ws.service.IRestApiService;
+import fr.gouv.stopc.robertserver.ws.service.KpiService;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.RequiredArgsConstructor;
@@ -54,9 +55,10 @@ public class StatusControllerImpl implements IStatusController {
 
     private final DeclarationService declarationService;
 
+    private final KpiService kpiService;
+
     @Override
-    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo)
-            throws RobertServerException {
+    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo) {
 
         ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
 
@@ -85,7 +87,7 @@ public class StatusControllerImpl implements IStatusController {
     }
 
     @Override
-    public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) throws RobertServerException {
+    public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) {
 
         ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
 
@@ -298,6 +300,10 @@ public class StatusControllerImpl implements IStatusController {
         String analyticsToken = declarationService.generateAnalyticsToken().orElse(null);
         statusResponse.setAnalyticsToken(analyticsToken);
         log.debug("analytics token generated : {}", analyticsToken);
+
+        // update statistics about user being notified of its risk status
+        kpiService.updateWebserviceStatistics(record);
+        record.setNotifiedForCurrentRisk(true);
 
         // Save changes to the record
         this.registrationService.saveRegistration(record);

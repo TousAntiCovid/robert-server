@@ -53,10 +53,12 @@
 		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
 		<jjwt.version>0.11.2</jjwt.version>
 		<junit-jupiter.version>5.7.1</junit-jupiter.version>
+		<log4j2.version>2.17.0</log4j2.version>
 		<logcaptor.version>2.6.1</logcaptor.version>
 		<mockito.version>3.7.0</mockito.version>
+		<mockserver.version>5.13.2</mockserver.version>
 		<prometheus-pushgateway.version>0.9.0</prometheus-pushgateway.version>
-		<log4j2.version>2.17.0</log4j2.version>
+		<testcontainers.version>1.17.1</testcontainers.version>
 	</properties>
 
 	<dependencies>
@@ -131,34 +133,6 @@
 						</execution>
 					</executions>
 				</plugin>
-
-				<plugin>
-					<groupId>pl.project13.maven</groupId>
-					<artifactId>git-commit-id-plugin</artifactId>
-					<version>2.2.4</version>
-				</plugin>
-				<plugin>
-					<groupId>org.jacoco</groupId>
-					<artifactId>jacoco-maven-plugin</artifactId>
-					<version>0.8.7</version>
-					<executions>
-						<execution>
-							<goals>
-								<goal>prepare-agent</goal>
-							</goals>
-						</execution>
-					</executions>
-				</plugin>
-				<plugin>
-					<groupId>org.owasp</groupId>
-					<artifactId>dependency-check-maven</artifactId>
-					<version>6.3.1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.sonarsource.scanner.maven</groupId>
-					<artifactId>sonar-maven-plugin</artifactId>
-					<version>3.9.0.2155</version>
-				</plugin>
 			</plugins>
 		</pluginManagement>
 		<plugins>
@@ -220,6 +194,28 @@
 			<plugin>
 				<groupId>pl.project13.maven</groupId>
 				<artifactId>git-commit-id-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.7</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>7.1.0</version>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.9.0.2155</version>
 			</plugin>
 		</plugins>
 	</build>
