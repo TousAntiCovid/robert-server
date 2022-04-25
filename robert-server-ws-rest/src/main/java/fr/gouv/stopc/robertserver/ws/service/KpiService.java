@@ -13,6 +13,7 @@ import org.springframework.data.domain.Range;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -35,7 +36,7 @@ public class KpiService {
 
     private final BatchStatisticsRepository batchStatisticsRepository;
 
-    private Instant lastKpiComputationTimeInSeconds = Instant.ofEpochSecond(0);
+    private Instant lastKpiComputationInstant = Instant.ofEpochSecond(0);
 
     private final Gauge lastKpiComputationAgeGauge;
 
@@ -49,7 +50,7 @@ public class KpiService {
         lastKpiComputationAgeGauge = Gauge
                 .builder(
                         "robert.dailystatistics.lastsuccess.age",
-                        () -> now().getEpochSecond() - lastKpiComputationTimeInSeconds.getEpochSecond()
+                        () -> Duration.between(lastKpiComputationInstant, now()).toSeconds()
                 )
                 .description("last kpi computation success")
                 .baseUnit("seconds")
@@ -78,7 +79,7 @@ public class KpiService {
                 .build();
 
         webserviceStatisticsRepository.save(updatedStatistics);
-        lastKpiComputationTimeInSeconds = now();
+        lastKpiComputationInstant = now();
     }
 
     public List<RobertServerKpi> getKpis(final LocalDate fromDate, final LocalDate toDate) {
