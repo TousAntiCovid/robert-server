@@ -1,8 +1,11 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
 import fr.gouv.stopc.robertserver.database.model.BatchStatistics;
+import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
+import fr.gouv.stopc.robertserver.database.repository.RegistrationRepository;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +16,7 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
-import static java.time.LocalDate.*;
+import static java.time.LocalDate.now;
 import static java.time.ZoneOffset.UTC;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,38 +31,100 @@ import static org.testcontainers.shaded.org.awaitility.pollinterval.FibonacciPol
 class KpiControllerTest {
 
     @Autowired
+    private RegistrationRepository registrationRepository;
+
+    @Autowired
     private BatchStatisticsRepository batchStatisticsRepository;
 
     @Autowired
     private WebserviceStatisticsRepository webserviceStatisticsRepository;
 
     @BeforeEach
-    void beforeEach() {
+    void initialize_some_registrations_to_produce_total_statistics() {
+        registrationRepository.saveAll(
+                List.of(
+                        Registration.builder()
+                                .permanentIdentifier("user1".getBytes())
+                                .atRisk(false)
+                                .build(),
+                        Registration.builder()
+                                .permanentIdentifier("user2".getBytes())
+                                .atRisk(false)
+                                .isNotified(true)
+                                .build(),
+                        Registration.builder()
+                                .permanentIdentifier("user2".getBytes())
+                                .atRisk(false)
+                                .isNotified(true)
+                                .exposedEpochs(
+                                        List.of(
+                                                EpochExposition.builder()
+                                                        .epochId(99)
+                                                        .expositionScores(List.of(1.0))
+                                                        .build()
+                                        )
+                                )
+                                .build(),
+                        Registration.builder()
+                                .permanentIdentifier("user3".getBytes())
+                                .atRisk(true)
+                                .build(),
+                        Registration.builder()
+                                .permanentIdentifier("user4".getBytes())
+                                .atRisk(true)
+                                .isNotified(true)
+                                .build()
+                )
+        );
+    }
+
+    @BeforeEach
+    void initialize_batch_statistics() {
         batchStatisticsRepository.deleteAll();
         batchStatisticsRepository.saveAll(
                 List.of(
                         BatchStatistics.builder()
-                                .batchExecution(now().minusDays(4).atStartOfDay().toInstant(UTC))
+                                .jobStartInstant(now().minusDays(4).atTime(2, 0).toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(1L)
                                 .build(),
                         BatchStatistics.builder()
-                                .batchExecution(now().minusDays(3).atStartOfDay().toInstant(UTC))
+                                .jobStartInstant(now().minusDays(4).atTime(14, 0).toInstant(UTC))
+                                .usersAboveRiskThresholdButRetentionPeriodExpired(1L)
+                                .build(),
+                        BatchStatistics.builder()
+                                .jobStartInstant(now().minusDays(3).atTime(2, 0).toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(2L)
                                 .build(),
                         BatchStatistics.builder()
-                                .batchExecution(now().minusDays(2).atStartOfDay().toInstant(UTC))
+                                .jobStartInstant(now().minusDays(3).atTime(14, 0).toInstant(UTC))
+                                .usersAboveRiskThresholdButRetentionPeriodExpired(2L)
+                                .build(),
+                        BatchStatistics.builder()
+                                .jobStartInstant(now().minusDays(2).atTime(2, 0).toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(3L)
                                 .build(),
                         BatchStatistics.builder()
-                                .batchExecution(now().minusDays(1).atStartOfDay().toInstant(UTC))
+                                .jobStartInstant(now().minusDays(2).atTime(15, 0).toInstant(UTC))
+                                .usersAboveRiskThresholdButRetentionPeriodExpired(3L)
+                                .build(),
+                        BatchStatistics.builder()
+                                .jobStartInstant(now().minusDays(1).atTime(2, 0).toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(4L)
                                 .build(),
                         BatchStatistics.builder()
-                                .batchExecution(now().atStartOfDay().toInstant(UTC))
+                                .jobStartInstant(now().minusDays(1).atTime(14, 30).toInstant(UTC))
+                                .usersAboveRiskThresholdButRetentionPeriodExpired(4L)
+                                .build(),
+                        BatchStatistics.builder()
+                                .jobStartInstant(now().atTime(2, 0).toInstant(UTC))
                                 .usersAboveRiskThresholdButRetentionPeriodExpired(90L)
                                 .build()
                 )
         );
+    }
+
+    @BeforeEach
+    void initialize_webservice_statistics() {
         webserviceStatisticsRepository.deleteAll();
         webserviceStatisticsRepository.saveAll(
                 List.of(
@@ -126,7 +191,7 @@ class KpiControllerTest {
                 .body("[0].nbInfectedUsersNotNotified", equalTo(6))
                 .body("[0].nbNotifiedUsersScoredAgain", equalTo(5))
                 .body("[0].nbNotifiedUsers", equalTo(0))
-                .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(4))
+                .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(8))
                 .body("size()", equalTo(1));
 
     }
@@ -150,31 +215,31 @@ class KpiControllerTest {
                 .body("[0].nbInfectedUsersNotNotified", equalTo(4))
                 .body("[0].nbNotifiedUsersScoredAgain", equalTo(3))
                 .body("[0].nbNotifiedUsers", equalTo(1))
-                .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(2))
+                .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(4))
                 .body("[1].date", equalTo(now().minusDays(2).toString()))
                 .body("[1].nbAlertedUsers", equalTo(12))
                 .body("[1].nbExposedButNotAtRiskUsers", equalTo(7))
                 .body("[1].nbInfectedUsersNotNotified", equalTo(5))
                 .body("[1].nbNotifiedUsersScoredAgain", equalTo(4))
                 .body("[1].nbNotifiedUsers", equalTo(2))
-                .body("[1].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(3))
+                .body("[1].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(6))
                 .body("[2].date", equalTo(now().minusDays(1).toString()))
                 .body("[2].nbAlertedUsers", equalTo(12))
                 .body("[2].nbExposedButNotAtRiskUsers", equalTo(8))
                 .body("[2].nbInfectedUsersNotNotified", equalTo(6))
                 .body("[2].nbNotifiedUsersScoredAgain", equalTo(5))
                 .body("[2].nbNotifiedUsers", equalTo(0))
-                .body("[2].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(4))
+                .body("[2].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(8))
                 .body("size()", equalTo(3));
 
     }
 
     @Test
     void can_compute_kpis_for_the_first_time() {
-        webserviceStatisticsRepository.deleteAll();
 
         when()
                 .get("/internal/api/v1/tasks/compute-daily-kpis")
+
                 .then()
                 .statusCode(ACCEPTED.value())
                 .body(is(emptyOrNullString()));
@@ -192,8 +257,8 @@ class KpiControllerTest {
                                         "totalNotifiedUsersScoredAgain",
                                         "notifiedUsers"
                                 )
-                                .containsExactly(
-                                        tuple(now().atStartOfDay(UTC).toInstant(), 0L, 0L, 0L, 0L, 0L)
+                                .contains(
+                                        tuple(now().atStartOfDay(UTC).minusDays(1).toInstant(), 2L, 0L, 1L, 1L, 0L)
                                 )
                 );
     }
@@ -212,18 +277,17 @@ class KpiControllerTest {
                 .pollInterval(fibonacci())
                 .atMost(5, SECONDS)
                 .untilAsserted(
-                        () -> assertThat(
-                                webserviceStatisticsRepository.findById(now().atStartOfDay().toInstant(UTC))
-                        )
+                        () -> assertThat(webserviceStatisticsRepository.findAll())
+                                .extracting(
+                                        "date",
+                                        "totalAlertedUsers",
+                                        "totalExposedButNotAtRiskUsers",
+                                        "totalInfectedUsersNotNotified",
+                                        "totalNotifiedUsersScoredAgain",
+                                        "notifiedUsers"
+                                )
                                 .contains(
-                                        WebserviceStatistics.builder()
-                                                .date(now().atStartOfDay().toInstant(UTC))
-                                                .totalAlertedUsers(0L)
-                                                .totalExposedButNotAtRiskUsers(0L)
-                                                .totalInfectedUsersNotNotified(0L)
-                                                .totalNotifiedUsersScoredAgain(0L)
-                                                .notifiedUsers(95L)
-                                                .build()
+                                        tuple(now().atStartOfDay(UTC).minusDays(1).toInstant(), 2L, 0L, 1L, 1L, 0L)
                                 )
                 );
     }

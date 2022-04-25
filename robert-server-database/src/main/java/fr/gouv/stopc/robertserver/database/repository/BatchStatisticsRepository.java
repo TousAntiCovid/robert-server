@@ -12,6 +12,6 @@ import java.util.List;
 public interface BatchStatisticsRepository
         extends MongoRepository<BatchStatistics, Instant>, BatchStatisticsCustomRepository {
 
-    List<BatchStatistics> getBatchStatisticsByBatchExecutionBetween(Range<Instant> range);
+    List<BatchStatistics> findByJobStartInstantBetween(Range<Instant> range);
 
 }

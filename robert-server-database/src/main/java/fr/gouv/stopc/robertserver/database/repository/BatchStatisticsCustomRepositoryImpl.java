@@ -17,9 +17,9 @@ public class BatchStatisticsCustomRepositoryImpl implements BatchStatisticsCusto
 
     @Override
     public void incrementUsersAboveRiskThresholdButRetentionPeriodExpired(Instant date) {
-        Query query = new Query().addCriteria(Criteria.where("_id").is(date));
-        Update update = new Update().inc("usersAboveRiskThresholdButRetentionPeriodExpired", 1);
-        FindAndModifyOptions options = FindAndModifyOptions.options()
+        final var query = new Query().addCriteria(Criteria.where("jobStartInstant").is(date));
+        final var update = new Update().inc("usersAboveRiskThresholdButRetentionPeriodExpired", 1);
+        final var options = FindAndModifyOptions.options()
                 .upsert(true)
                 .returnNew(true);
         mongoOperations.findAndModify(query, update, options, BatchStatistics.class);

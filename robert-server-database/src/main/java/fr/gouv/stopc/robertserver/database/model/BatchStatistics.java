@@ -18,8 +18,10 @@ import java.time.Instant;
 public class BatchStatistics {
 
     @Id
+    private String id;
+
     @Indexed
-    private Instant batchExecution;
+    private Instant jobStartInstant;
 
     private long usersAboveRiskThresholdButRetentionPeriodExpired;
 

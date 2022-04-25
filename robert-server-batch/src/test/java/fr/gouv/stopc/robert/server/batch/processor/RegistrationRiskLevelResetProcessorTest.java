@@ -144,7 +144,7 @@ public class RegistrationRiskLevelResetProcessorTest {
 
         final var batchStatistics = batchStatisticsRepository.findAll();
         assertThat(batchStatistics).hasSize(1);
-        assertThat(batchStatistics.get(0).getBatchExecution()).isEqualTo(Instant.parse("2021-01-01T12:30:00Z"));
+        assertThat(batchStatistics.get(0).getJobStartInstant()).isEqualTo(Instant.parse("2021-01-01T12:30:00Z"));
         assertThat(batchStatistics.get(0).getUsersAboveRiskThresholdButRetentionPeriodExpired()).isEqualTo(1L);
 
     }
@@ -178,7 +178,7 @@ public class RegistrationRiskLevelResetProcessorTest {
         assertThat(batchStatisticsRepository.findAll())
                 .extracting(
                         stat -> tuple(
-                                stat.getBatchExecution(),
+                                stat.getJobStartInstant(),
                                 stat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
                         )
                 )

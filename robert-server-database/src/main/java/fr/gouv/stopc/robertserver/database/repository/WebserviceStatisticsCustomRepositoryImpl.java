@@ -17,7 +17,7 @@ public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStati
 
     @Override
     public void incrementNotifiedUsers(Instant date) {
-        final var query = new Query().addCriteria(Criteria.where("_id").is(date));
+        final var query = new Query().addCriteria(Criteria.where("date").is(date));
         final var update = new Update().inc("notifiedUsers", 1);
         final var options = FindAndModifyOptions.options()
                 .upsert(true)
