@@ -81,7 +81,7 @@ components:
         nbNotifiedUsersScoredAgain:
           type: integer
           format: int64
-        nbNotifiedUsers:
+        notifiedUsers:
           type: integer
           format: int64
         usersAboveRiskThresholdButRetentionPeriodExpired:
@@ -93,5 +93,5 @@ components:
         - nbExposedButNotAtRiskUsers
         - nbInfectedUsersNotNotified
         - nbNotifiedUsersScoredAgain
-        - nbNotifiedUsers
+        - notifiedUsers
         - usersAboveRiskThresholdButRetentionPeriodExpired

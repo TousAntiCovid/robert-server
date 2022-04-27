@@ -10,20 +10,19 @@ import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.data.domain.Range;
-import org.springframework.data.util.StreamUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.function.Function;
 
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 import static org.springframework.data.domain.Range.Bound.exclusive;
 import static org.springframework.data.domain.Range.Bound.inclusive;
 
@@ -49,10 +48,10 @@ public class KpiService {
         this.batchStatisticsRepository = batchStatisticsRepository;
         lastKpiComputationAgeGauge = Gauge
                 .builder(
-                        "robert.dailystatistics.lastsuccess.age",
+                        "robert.ws.dailystatistics.lastsuccess.age",
                         () -> Duration.between(lastKpiComputationInstant, now()).toSeconds()
                 )
-                .description("last kpi computation success")
+                .description("age of the last kpi computation success")
                 .baseUnit("seconds")
                 .register(meterRegistry);
     }
@@ -66,7 +65,7 @@ public class KpiService {
         final var nowAtStartOfDay = LocalDate.now().minusDays(1).atStartOfDay().atZone(UTC).toInstant();
         final var todayStatistics = webserviceStatisticsRepository
                 .findByDate(nowAtStartOfDay)
-                .orElse(new WebserviceStatistics(null, nowAtStartOfDay, 0L, 0L, 0L, 0L, 0L));
+                .orElse(emptyWebserviceStatistic());
         final var updatedStatistics = todayStatistics.toBuilder()
                 .date(nowAtStartOfDay)
                 // override statistics relative to the service start time
@@ -88,48 +87,63 @@ public class KpiService {
                 .from(inclusive(fromDate.atStartOfDay().toInstant(UTC)))
                 .to(exclusive(toDate.plusDays(1).atStartOfDay().toInstant(UTC)));
 
-        final var wsStats = webserviceStatisticsRepository
-                .getWebserviceStatisticsByDateBetween(range)
+        final var wsStatsByDate = webserviceStatisticsRepository.getWebserviceStatisticsByDateBetween(range)
                 .stream()
-                .sorted(comparing(WebserviceStatistics::getDate));
-        final var batchStats = batchStatisticsRepository.findByJobStartInstantBetween(range)
+                .collect(toMap(stat -> stat.getDate().atZone(UTC).toLocalDate(), Function.identity()));
+
+        final var batchStatsByDate = batchStatisticsRepository.findByJobStartInstantBetween(range)
                 .stream()
                 .collect(groupingBy(stats -> stats.getJobStartInstant().atZone(UTC).toLocalDate()))
                 .entrySet()
                 .stream()
-                .map(
-                        e -> RobertServerKpi.builder()
-                                .date(e.getKey())
-                                .usersAboveRiskThresholdButRetentionPeriodExpired(
-                                        e.getValue()
-                                                .stream()
-                                                .mapToLong(
-                                                        BatchStatistics::getUsersAboveRiskThresholdButRetentionPeriodExpired
-                                                )
-                                                .sum()
-                                )
-                                .build()
-                )
-                .sorted(comparing(RobertServerKpi::getDate));
-        return StreamUtils.zip(
-                wsStats, batchStats, (wsStat, batchStat) -> RobertServerKpi.builder()
-                        .date(LocalDate.ofInstant(wsStat.getDate(), UTC))
-                        .nbAlertedUsers(wsStat.getTotalAlertedUsers())
-                        .nbExposedButNotAtRiskUsers(wsStat.getTotalExposedButNotAtRiskUsers())
-                        .nbInfectedUsersNotNotified(wsStat.getTotalInfectedUsersNotNotified())
-                        .nbNotifiedUsersScoredAgain(wsStat.getTotalNotifiedUsersScoredAgain())
-                        .nbNotifiedUsers(wsStat.getNotifiedUsers())
-                        .usersAboveRiskThresholdButRetentionPeriodExpired(
-                                batchStat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
+                .collect(
+                        toMap(
+                                Entry::getKey, e -> RobertServerKpi.builder()
+                                        .date(e.getKey())
+                                        .usersAboveRiskThresholdButRetentionPeriodExpired(
+                                                aggregateUsersAboveThresholdButRetentionPeriodExpired(e.getValue())
+                                        )
+                                        .build()
                         )
-                        .build()
-        ).collect(toList());
+                );
 
+        return fromDate.datesUntil(toDate.plusDays(1))
+                .map(date -> {
+                    final var wsStat = wsStatsByDate.getOrDefault(date, emptyWebserviceStatistic());
+                    final var batchStat = batchStatsByDate.getOrDefault(date, emptyRobertServerKpi());
+                    return RobertServerKpi.builder()
+                            .date(date)
+                            .nbAlertedUsers(wsStat.getTotalAlertedUsers())
+                            .nbExposedButNotAtRiskUsers(wsStat.getTotalExposedButNotAtRiskUsers())
+                            .nbInfectedUsersNotNotified(wsStat.getTotalInfectedUsersNotNotified())
+                            .nbNotifiedUsersScoredAgain(wsStat.getTotalNotifiedUsersScoredAgain())
+                            .notifiedUsers(wsStat.getNotifiedUsers())
+                            .usersAboveRiskThresholdButRetentionPeriodExpired(
+                                    batchStat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
+                            )
+                            .build();
+                })
+                .collect(toList());
+
+    }
+
+    private long aggregateUsersAboveThresholdButRetentionPeriodExpired(final List<BatchStatistics> stats) {
+        return stats.stream()
+                .mapToLong(BatchStatistics::getUsersAboveRiskThresholdButRetentionPeriodExpired)
+                .sum();
     }
 
     public void updateWebserviceStatistics(final Registration registration) {
         if (!registration.isNotifiedForCurrentRisk() && registration.isAtRisk()) {
             webserviceStatisticsRepository.incrementNotifiedUsers(now().truncatedTo(DAYS));
         }
+    }
+
+    private static WebserviceStatistics emptyWebserviceStatistic() {
+        return new WebserviceStatistics(null, null, null, null, null, null, 0L);
+    }
+
+    private static RobertServerKpi emptyRobertServerKpi() {
+        return new RobertServerKpi(null, 0L, 0L, 0L, 0L, 0L, 0L);
     }
 }

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
@@ -41,6 +42,7 @@ class KpiControllerTest {
 
     @BeforeEach
     void initialize_some_registrations_to_produce_total_statistics() {
+        registrationRepository.deleteAll();
         registrationRepository.saveAll(
                 List.of(
                         Registration.builder()
@@ -185,12 +187,12 @@ class KpiControllerTest {
 
                 .then()
                 .statusCode(OK.value())
-                // .body("[0].date", equalTo(LocalDate.now().minusDays(1).toString()))
+                .body("[0].date", equalTo(LocalDate.now().minusDays(1).toString()))
                 .body("[0].nbAlertedUsers", equalTo(12))
                 .body("[0].nbExposedButNotAtRiskUsers", equalTo(8))
                 .body("[0].nbInfectedUsersNotNotified", equalTo(6))
                 .body("[0].nbNotifiedUsersScoredAgain", equalTo(5))
-                .body("[0].nbNotifiedUsers", equalTo(0))
+                .body("[0].notifiedUsers", equalTo(0))
                 .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(8))
                 .body("size()", equalTo(1));
 
@@ -212,11 +214,12 @@ class KpiControllerTest {
 
                 .then()
                 .statusCode(OK.value())
-                .body("[0].nbAlertedUsers", equalTo(0))
-                .body("[0].nbExposedButNotAtRiskUsers", equalTo(0))
-                .body("[0].nbInfectedUsersNotNotified", equalTo(0))
-                .body("[0].nbNotifiedUsersScoredAgain", equalTo(0))
-                .body("[0].nbNotifiedUsers", equalTo(0))
+                .body("[0].date", equalTo(LocalDate.now().minusDays(1).toString()))
+                .body("[0].nbAlertedUsers", nullValue())
+                .body("[0].nbExposedButNotAtRiskUsers", nullValue())
+                .body("[0].nbInfectedUsersNotNotified", nullValue())
+                .body("[0].nbNotifiedUsersScoredAgain", nullValue())
+                .body("[0].notifiedUsers", equalTo(0))
                 .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(8))
                 .body("size()", equalTo(1));
 
@@ -238,11 +241,36 @@ class KpiControllerTest {
 
                 .then()
                 .statusCode(OK.value())
+                .body("[0].date", equalTo(LocalDate.now().minusDays(1).toString()))
                 .body("[0].nbAlertedUsers", equalTo(12))
                 .body("[0].nbExposedButNotAtRiskUsers", equalTo(8))
                 .body("[0].nbInfectedUsersNotNotified", equalTo(6))
                 .body("[0].nbNotifiedUsersScoredAgain", equalTo(5))
-                .body("[0].nbNotifiedUsers", equalTo(0))
+                .body("[0].notifiedUsers", equalTo(0))
+                .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(0))
+                .body("size()", equalTo(1));
+
+    }
+
+    @Test
+    void can_fetch_statistics_when_no_stats_exists() {
+        given()
+                .params(
+                        "fromDate", now().minusDays(10).toString(),
+                        "toDate", now().minusDays(10).toString()
+                )
+
+                .when()
+                .get("/internal/api/v1/kpi")
+
+                .then()
+                .statusCode(OK.value())
+                .body("[0].date", equalTo(LocalDate.now().minusDays(10).toString()))
+                .body("[0].nbAlertedUsers", nullValue())
+                .body("[0].nbExposedButNotAtRiskUsers", nullValue())
+                .body("[0].nbInfectedUsersNotNotified", nullValue())
+                .body("[0].nbNotifiedUsersScoredAgain", nullValue())
+                .body("[0].notifiedUsers", equalTo(0))
                 .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(0))
                 .body("size()", equalTo(1));
 
@@ -266,21 +294,21 @@ class KpiControllerTest {
                 .body("[0].nbExposedButNotAtRiskUsers", equalTo(6))
                 .body("[0].nbInfectedUsersNotNotified", equalTo(4))
                 .body("[0].nbNotifiedUsersScoredAgain", equalTo(3))
-                .body("[0].nbNotifiedUsers", equalTo(1))
+                .body("[0].notifiedUsers", equalTo(1))
                 .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(4))
                 .body("[1].date", equalTo(now().minusDays(2).toString()))
                 .body("[1].nbAlertedUsers", equalTo(12))
                 .body("[1].nbExposedButNotAtRiskUsers", equalTo(7))
                 .body("[1].nbInfectedUsersNotNotified", equalTo(5))
                 .body("[1].nbNotifiedUsersScoredAgain", equalTo(4))
-                .body("[1].nbNotifiedUsers", equalTo(2))
+                .body("[1].notifiedUsers", equalTo(2))
                 .body("[1].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(6))
                 .body("[2].date", equalTo(now().minusDays(1).toString()))
                 .body("[2].nbAlertedUsers", equalTo(12))
                 .body("[2].nbExposedButNotAtRiskUsers", equalTo(8))
                 .body("[2].nbInfectedUsersNotNotified", equalTo(6))
                 .body("[2].nbNotifiedUsersScoredAgain", equalTo(5))
-                .body("[2].nbNotifiedUsers", equalTo(0))
+                .body("[2].notifiedUsers", equalTo(0))
                 .body("[2].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(8))
                 .body("size()", equalTo(3));
 
