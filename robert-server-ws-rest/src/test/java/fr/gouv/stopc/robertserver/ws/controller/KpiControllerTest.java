@@ -197,6 +197,58 @@ class KpiControllerTest {
     }
 
     @Test
+    void can_fetch_statistics_for_a_single_day_no_ws_stats() {
+
+        webserviceStatisticsRepository.deleteAll();
+
+        given()
+                .params(
+                        "fromDate", now().minusDays(1).toString(),
+                        "toDate", now().minusDays(1).toString()
+                )
+
+                .when()
+                .get("/internal/api/v1/kpi")
+
+                .then()
+                .statusCode(OK.value())
+                .body("[0].nbAlertedUsers", equalTo(0))
+                .body("[0].nbExposedButNotAtRiskUsers", equalTo(0))
+                .body("[0].nbInfectedUsersNotNotified", equalTo(0))
+                .body("[0].nbNotifiedUsersScoredAgain", equalTo(0))
+                .body("[0].nbNotifiedUsers", equalTo(0))
+                .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(8))
+                .body("size()", equalTo(1));
+
+    }
+
+    @Test
+    void can_fetch_statistics_for_a_single_day_no_batch_stats() {
+
+        batchStatisticsRepository.deleteAll();
+
+        given()
+                .params(
+                        "fromDate", now().minusDays(1).toString(),
+                        "toDate", now().minusDays(1).toString()
+                )
+
+                .when()
+                .get("/internal/api/v1/kpi")
+
+                .then()
+                .statusCode(OK.value())
+                .body("[0].nbAlertedUsers", equalTo(12))
+                .body("[0].nbExposedButNotAtRiskUsers", equalTo(8))
+                .body("[0].nbInfectedUsersNotNotified", equalTo(6))
+                .body("[0].nbNotifiedUsersScoredAgain", equalTo(5))
+                .body("[0].nbNotifiedUsers", equalTo(0))
+                .body("[0].usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(0))
+                .body("size()", equalTo(1));
+
+    }
+
+    @Test
     void can_fetch_statistics_for_multiple_days() {
         given()
                 .params(
