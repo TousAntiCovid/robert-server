@@ -9,6 +9,7 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Range;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import static java.util.stream.Collectors.*;
 import static org.springframework.data.domain.Range.Bound.exclusive;
 import static org.springframework.data.domain.Range.Bound.inclusive;
 
+@Slf4j
 @Service
 public class KpiService {
 
@@ -57,28 +59,34 @@ public class KpiService {
     }
 
     public void computeDailyKpis() {
-        final var nbAlertedUsers = registrationDbService.countNbUsersNotified();
-        final var nbExposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
-        final var nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
-        final var nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
+        log.info("starting KPIs computation");
+        try {
+            final var nbAlertedUsers = registrationDbService.countNbUsersNotified();
+            final var nbExposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
+            final var nbInfectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
+            final var nbNotifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
 
-        final var nowAtStartOfDay = LocalDate.now().minusDays(1).atStartOfDay().atZone(UTC).toInstant();
-        final var todayStatistics = webserviceStatisticsRepository
-                .findByDate(nowAtStartOfDay)
-                .orElse(emptyWebserviceStatistic());
-        final var updatedStatistics = todayStatistics.toBuilder()
-                .date(nowAtStartOfDay)
-                // override statistics relative to the service start time
-                .totalAlertedUsers(nbAlertedUsers)
-                .totalExposedButNotAtRiskUsers(nbExposedUsersNotAtRisk)
-                .totalInfectedUsersNotNotified(nbInfectedUsersNotNotified)
-                .totalNotifiedUsersScoredAgain(nbNotifiedUsersScoredAgain)
-                // keep statistics incremented on the fly
-                .notifiedUsers(todayStatistics.getNotifiedUsers())
-                .build();
+            final var nowAtStartOfDay = LocalDate.now().minusDays(1).atStartOfDay().atZone(UTC).toInstant();
+            final var todayStatistics = webserviceStatisticsRepository
+                    .findByDate(nowAtStartOfDay)
+                    .orElse(emptyWebserviceStatistic());
+            final var updatedStatistics = todayStatistics.toBuilder()
+                    .date(nowAtStartOfDay)
+                    // override statistics relative to the service start time
+                    .totalAlertedUsers(nbAlertedUsers)
+                    .totalExposedButNotAtRiskUsers(nbExposedUsersNotAtRisk)
+                    .totalInfectedUsersNotNotified(nbInfectedUsersNotNotified)
+                    .totalNotifiedUsersScoredAgain(nbNotifiedUsersScoredAgain)
+                    // keep statistics incremented on the fly
+                    .notifiedUsers(todayStatistics.getNotifiedUsers())
+                    .build();
 
-        webserviceStatisticsRepository.save(updatedStatistics);
-        lastKpiComputationInstant = now();
+            webserviceStatisticsRepository.save(updatedStatistics);
+            lastKpiComputationInstant = now();
+            log.info("KPIs computation successful");
+        } catch (Exception e) {
+            log.error("unable to compute KPIs", e);
+        }
     }
 
     public List<RobertServerKpi> getKpis(final LocalDate fromDate, final LocalDate toDate) {

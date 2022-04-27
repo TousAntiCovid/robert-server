@@ -10,11 +10,15 @@ import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsReposi
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import java.time.LocalDate;
 import java.util.List;
 
+import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.givenMongodbIsOffline;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static java.time.LocalDate.now;
@@ -29,6 +33,7 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import static org.testcontainers.shaded.org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
 @IntegrationTest
+@ExtendWith(OutputCaptureExtension.class)
 class KpiControllerTest {
 
     @Autowired
@@ -326,7 +331,7 @@ class KpiControllerTest {
 
         await("kpis to be computed")
                 .pollInterval(fibonacci())
-                .atMost(5, SECONDS)
+                .atMost(2, SECONDS)
                 .untilAsserted(
                         () -> assertThat(webserviceStatisticsRepository.findAll())
                                 .extracting(
@@ -355,7 +360,7 @@ class KpiControllerTest {
 
         await("kpis to be recomputed")
                 .pollInterval(fibonacci())
-                .atMost(5, SECONDS)
+                .atMost(2, SECONDS)
                 .untilAsserted(
                         () -> assertThat(webserviceStatisticsRepository.findAll())
                                 .extracting(
@@ -372,4 +377,44 @@ class KpiControllerTest {
                 );
     }
 
+    @Test
+    void compute_kpis_should_produce_info_logs_for_ops(final CapturedOutput output) {
+
+        when()
+                .get("/internal/api/v1/tasks/compute-daily-kpis")
+                .then()
+                .statusCode(ACCEPTED.value())
+                .body(is(emptyOrNullString()));
+
+        await("logs to be produced")
+                .pollInterval(fibonacci())
+                .atMost(2, SECONDS)
+                .untilAsserted(
+                        () -> assertThat(output.getOut())
+                                .contains(
+                                        "queuing a KPI compute task",
+                                        "starting KPIs computation",
+                                        "KPIs computation successful"
+                                )
+                );
+    }
+
+    @Test
+    void compute_kpis_should_produce_error_logs_for_ops(final CapturedOutput output) {
+        givenMongodbIsOffline();
+
+        when()
+                .get("/internal/api/v1/tasks/compute-daily-kpis")
+                .then()
+                .statusCode(ACCEPTED.value())
+                .body(is(emptyOrNullString()));
+
+        await("logs to be produced")
+                .pollInterval(fibonacci())
+                .atMost(5, SECONDS)
+                .untilAsserted(
+                        () -> assertThat(output.getOut())
+                                .contains("unable to compute KPIs")
+                );
+    }
 }
