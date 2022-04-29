@@ -33,13 +33,13 @@ public class TuplesMatchers {
         return idA;
     }
 
-    private static int getEpochIdFromDecryptedEBID(byte[] ebid) {
+    public static int getEpochIdFromDecryptedEBID(byte[] ebid) {
         byte[] epochId = new byte[3];
         System.arraycopy(ebid, 0, epochId, 0, epochId.length);
         return ByteUtils.convertEpoch24bitsToInt(epochId);
     }
 
-    private static boolean checkTuplesForDay(List<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> tuples, byte[] key,
+    public static boolean checkTuplesForDay(List<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> tuples, byte[] key,
             CryptoService cryptoService) {
         byte[] id = null;
         boolean atLeastOneError = false;
@@ -48,6 +48,7 @@ public class TuplesMatchers {
             try {
                 byte[] decryptedEbid = cryptoService
                         .decryptEBID(new CryptoSkinny64(key), tuple.getKey().getEbid());
+
                 byte[] idFromMessage = getIdFromDecryptedEBID(decryptedEbid);
                 if (id == null) {
                     id = idFromMessage;
@@ -104,7 +105,7 @@ public class TuplesMatchers {
             ObjectMapper objectMapper = new ObjectMapper();
             Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson> decodedTuples = objectMapper.readValue(
                     decryptedTuples,
-                    new TypeReference<Collection<CryptoGrpcServiceBaseImpl.EphemeralTupleJson>>() {
+                    new TypeReference<>() {
                     }
             );
             boolean sizeMatches = ((NUMBER_OF_DAYS_FOR_BUNDLES - 1) * 96

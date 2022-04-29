@@ -16,7 +16,8 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @Retention(RUNTIME)
 @Target(TYPE)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestExecutionListeners(listeners = { PostgreSqlManager.class, KeystoreManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(listeners = { PostgreSqlManager.class, KeystoreManager.class,
+        DataManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {
 
