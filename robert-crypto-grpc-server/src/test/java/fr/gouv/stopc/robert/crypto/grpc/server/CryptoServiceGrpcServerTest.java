@@ -10,7 +10,7 @@ import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.ECDHKeyServiceImpl;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.IClientKeyStorageService;
-import fr.gouv.stopc.robert.crypto.grpc.server.test.TuplesMatchers;
+import fr.gouv.stopc.robert.crypto.grpc.server.test.matchers.TuplesMatchers;
 import fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
 import fr.gouv.stopc.robert.crypto.grpc.server.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
