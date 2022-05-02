@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.Duration;
 import java.time.Instant;
 
-import static fr.gouv.stopc.robert.server.common.service.RobertClock.EPOCH;
+import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_ANALYTICS;
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_DECLARATION;
 import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithPushNotifServer;
@@ -109,7 +109,7 @@ class StatusControllerSuccessTest {
                                 .withClaim("iss", equalTo("tac"))
                                 .withClaim(
                                         "notificationDateTimestamp",
-                                        ntpTimestamp(clock.now().truncatedTo(EPOCH).asInstant())
+                                        ntpTimestamp(clock.now().truncatedTo(ROBERT_EPOCH).asInstant())
                                 )
                                 .withClaim("lastContactDateTimestamp", equalTo(888))
                 )

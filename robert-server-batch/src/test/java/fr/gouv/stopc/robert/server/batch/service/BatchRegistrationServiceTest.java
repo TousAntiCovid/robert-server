@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
 import static java.time.temporal.ChronoUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -50,7 +51,9 @@ class BatchRegistrationServiceTest {
     @Autowired
     private BatchStatisticsRepository batchStatisticsRepository;
 
-    final RobertClock robertClock = new RobertClock("2020-06-01");
+    private final RobertClock robertClock = new RobertClock("2020-06-01");
+
+    private final long startNtpTimestamp = robertClock.atEpoch(0).asNtpTimestamp();
 
     @BeforeEach
     public void setUp() {
@@ -151,7 +154,7 @@ class BatchRegistrationServiceTest {
 
         // WHEN
         batchRegistrationService.updateRegistrationIfRisk(
-                registration, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         // THEN
@@ -194,7 +197,7 @@ class BatchRegistrationServiceTest {
 
         // WHEN
         batchRegistrationService.updateRegistrationIfRisk(
-                registration, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         // THEN
@@ -215,7 +218,7 @@ class BatchRegistrationServiceTest {
         // GIVEN
         final var currentEpoch = robertClock.now().asEpochId();
         final var lastContactDateFromExposedEpoch = currentEpoch;
-        final var lastContactDateFromRegistration = robertClock.now().minusEpochs(2).asNtpTimestamp();
+        final var lastContactDateFromRegistration = robertClock.now().minus(2, ROBERT_EPOCH).asNtpTimestamp();
         final var latestRiskEpoch = currentEpoch - 5;
 
         final var registration = Registration.builder()
@@ -240,7 +243,7 @@ class BatchRegistrationServiceTest {
 
         // WHEN
         batchRegistrationService.updateRegistrationIfRisk(
-                registration, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         // THEN
@@ -278,7 +281,7 @@ class BatchRegistrationServiceTest {
 
         // WHEN
         batchRegistrationService.updateRegistrationIfRisk(
-                registration, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         // THEN
@@ -326,10 +329,10 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         assertThat(batchStatisticsRepository.findAll())
@@ -383,10 +386,10 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         assertThat(batchStatisticsRepository.findAll()).isEmpty();
@@ -430,10 +433,10 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         assertThat(batchStatisticsRepository.findAll())
@@ -491,10 +494,10 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         assertThat(batchStatisticsRepository.findAll())
@@ -552,10 +555,10 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
         );
 
         assertThat(batchStatisticsRepository.findAll())
@@ -604,7 +607,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(robertClock.now().plus(2, MINUTES).asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                    registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
@@ -621,7 +624,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(robertClock.now().asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                    registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
@@ -638,7 +641,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(robertClock.now().minus(7, DAYS).asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                    registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
@@ -655,7 +658,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(robertClock.now().minus(8, DAYS).asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, robertClock.getStartNtpTimestamp(), 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                    registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
@@ -688,7 +691,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(lastExposition.asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, robertClock.getStartNtpTimestamp(),
+                    registration, startNtpTimestamp,
                     1.0,
                     Instant.parse("2021-01-01T12:30:00Z")
             );

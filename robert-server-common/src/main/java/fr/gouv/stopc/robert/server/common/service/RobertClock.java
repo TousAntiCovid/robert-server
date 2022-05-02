@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.common.service;
 
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,12 +15,23 @@ import java.util.Arrays;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+import static java.time.temporal.ChronoUnit.SECONDS;
 
+/**
+ * This component aims to help manipulate time and switching from one unit to
+ * another in a manner like the java.time API.
+ * <p>
+ * Robert protocol split time in 15 minutes units called <em>epochs</em>, use
+ * NTP timestamp at low level (epoch 1900-01-01), sometimes unix timestamps
+ * (epoch 1970-01-01).
+ * <p>
+ * This is a clock component aware of the service start time to help converting
+ * time to Robert <em>epochs</em>.
+ */
 @Component
 @RequiredArgsConstructor
 public class RobertClock {
 
-    @Getter
     private final long startNtpTimestamp;
 
     @Autowired
@@ -52,6 +62,19 @@ public class RobertClock {
         return at(Instant.now());
     }
 
+    /**
+     * A wrapper for {@link Instant} introducing Robert protocol <em>epoch</em>.
+     * Provides functions to convert time to différents representations:
+     * <ul>
+     * <li>{@link #asInstant()}: a regular {@link Instant}</li>
+     * <li>{@link #asNtpTimestamp()}: an amount of seconds relative to 1900-01-01
+     * </li>
+     * <li>{@link #asEpochId()}: a number of <em>robert epoch</em> units of 15
+     * minutes relative to the service start time</li>
+     * <li>{@link #asTime32()}: a 4 byte array containing the most significant bits
+     * of the NTP timestamp</li>
+     * </ul>
+     */
     @RequiredArgsConstructor
     @EqualsAndHashCode
     public class RobertInstant {
@@ -78,20 +101,12 @@ public class RobertClock {
             return Arrays.copyOfRange(unixTimestampByteArray, 4, 8);
         }
 
-        public RobertInstant plusEpochs(int numberOfEpochs) {
-            return RobertClock.this.at(time.plusSeconds((long) numberOfEpochs * EPOCH_DURATION_SECS));
-        }
-
-        public RobertInstant minusEpochs(int numberOfEpochs) {
-            return plusEpochs(-numberOfEpochs);
-        }
-
         public RobertInstant minus(final long amountToSubtract, final TemporalUnit unit) {
             return RobertClock.this.at(time.minus(amountToSubtract, unit));
         }
 
-        public RobertInstant plus(final long amountToSubtract, final TemporalUnit unit) {
-            return RobertClock.this.at(time.plus(amountToSubtract, unit));
+        public RobertInstant plus(final long amountToAdd, final TemporalUnit unit) {
+            return RobertClock.this.at(time.plus(amountToAdd, unit));
         }
 
         public RobertInstant truncatedTo(final TemporalUnit unit) {
@@ -124,9 +139,17 @@ public class RobertClock {
         }
     }
 
-    public final static TemporalUnit EPOCH = new Epoch();
+    /**
+     * The <em>Robert epoch</em> {@link TemporalUnit}. Can be used to add/subtract
+     * epochs from {@link Instant}s:
+     * <code>Instant.now().plus(2, ROBERT_EPOCH)</code>.
+     */
+    public final static TemporalUnit ROBERT_EPOCH = new RobertEpoch();
 
-    private static class Epoch implements TemporalUnit {
+    /**
+     * A {@link TemporalUnit} representing a Robert <em>epoch</em> of 15 minutes.
+     */
+    private static class RobertEpoch implements TemporalUnit {
 
         @Override
         public Duration getDuration() {
@@ -151,7 +174,7 @@ public class RobertClock {
         @Override
         public <R extends Temporal> R addTo(R temporal, long amount) {
             @SuppressWarnings("unchecked")
-            final var result = (R) temporal.plus(amount, this);
+            final var result = (R) temporal.plus(amount * getDuration().getSeconds(), SECONDS);
             return result;
         }
 
