@@ -2,6 +2,7 @@ package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
 import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
+import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
@@ -9,11 +10,12 @@ import fr.gouv.stopc.robert.server.common.service.RobertClock.RobertInstant;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -23,7 +25,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class BatchRegistrationServiceImpl implements BatchRegistrationService {
 
     private final ScoringStrategyService scoringStrategy;
@@ -33,6 +35,8 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
     private final RobertServerBatchProperties properties;
 
     private final RobertClock robertClock;
+
+    private final BatchStatisticsService batchStatisticsService;
 
     /**
      * Keep epochs within the contagious period
@@ -53,9 +57,12 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
     }
 
     @Override
-    public void updateRegistrationIfRisk(Registration registration,
+    public void updateRegistrationIfRisk(
+            Registration registration,
             long serviceTimeStart,
-            double riskThreshold) {
+            double riskThreshold,
+            Instant batchExecutionInstant) {
+
         int latestRiskEpoch = registration.getLatestRiskEpoch();
         List<EpochExposition> epochExpositions = registration.getExposedEpochs();
 
@@ -119,6 +126,8 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
             // notifications
             // It is up to the client to know if it should notify (new risk) or not given
             // the risk change or not.
+        } else if (totalRisk >= riskThreshold && !isExpositionInRiskExpositionPeriod(latestExpositionTime)) {
+            batchStatisticsService.incrementUsersAboveRiskThresholdButRetentionPeriodExpired(batchExecutionInstant);
         }
     }
 
