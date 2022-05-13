@@ -2,7 +2,7 @@ package fr.gouv.stopc.e2e.mobileapplication.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.stopc.robert.client.model.ExposureStatusResponse;
+import fr.gouv.stopc.openapi.client.robert.model.ExposureStatusResponse;
 import lombok.Value;
 
 import java.time.Instant;

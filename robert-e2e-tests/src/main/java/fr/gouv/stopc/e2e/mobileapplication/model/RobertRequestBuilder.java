@@ -5,12 +5,10 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoHMACSHA256;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.mobileapplication.EpochClock.RobertInstant;
-import fr.gouv.stopc.robert.client.model.AuthentifiedRequest;
-import fr.gouv.stopc.robert.client.model.AuthentifiedRequest.AuthentifiedRequestBuilder;
-import fr.gouv.stopc.robert.client.model.ExposureStatusRequest;
-import fr.gouv.stopc.robert.client.model.ExposureStatusRequest.ExposureStatusRequestBuilder;
-import fr.gouv.stopc.robert.client.model.UnregisterRequest;
-import fr.gouv.stopc.robert.client.model.UnregisterRequest.UnregisterRequestBuilder;
+import fr.gouv.stopc.openapi.client.robert.model.*;
+import fr.gouv.stopc.openapi.client.robert.model.AuthentifiedRequest.AuthentifiedRequestBuilder;
+import fr.gouv.stopc.openapi.client.robert.model.ExposureStatusRequest.ExposureStatusRequestBuilder;
+import fr.gouv.stopc.openapi.client.robert.model.UnregisterRequest.UnregisterRequestBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 

@@ -7,7 +7,7 @@ import fr.gouv.tac.mobile.emulator.api.model.RegisterOrderRequest;
 import fr.gouv.tac.mobile.emulator.api.model.ReportOrderRequest;
 import fr.gouv.tac.mobile.emulator.config.EmulatorProperties;
 import fr.gouv.tac.mobile.emulator.model.AppMobile;
-import fr.gouv.tac.mobile.emulator.robert.api.RobertLegacyApi;
+import fr.gouv.tac.mobile.emulator.robert.api.DefaultApi;
 import fr.gouv.tac.mobile.emulator.robert.api.model.AuthentifiedRequest;
 import fr.gouv.tac.mobile.emulator.robert.api.model.ExposureStatusRequest;
 import fr.gouv.tac.mobile.emulator.robert.api.model.ExposureStatusResponse;
@@ -35,9 +35,9 @@ public class EmulatorService {
 
     private final Map<String, AppMobile> appMobileMap;
 
-    private final RobertLegacyApi robertApiClient;
+    private final DefaultApi robertApiClient;
 
-    public EmulatorService(RobertLegacyApi robertApiClient, EmulatorProperties emulatorProperties) {
+    public EmulatorService(DefaultApi robertApiClient, EmulatorProperties emulatorProperties) {
         this.emulatorProperties = emulatorProperties;
         this.robertApiClient = robertApiClient;
         robertApiClient.getApiClient().setBasePath(emulatorProperties.getRobertWsUrl());

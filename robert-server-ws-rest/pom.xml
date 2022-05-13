@@ -152,8 +152,8 @@
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-client-java</artifactId>
-	    <version>${mockserver.version}</version>
-	    <scope>test</scope>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -168,9 +168,7 @@
                     <configOptions>
                         <skipDefaultInterface>true</skipDefaultInterface>
                         <annotationLibrary>none</annotationLibrary>
-                        <documentationProvider>
-                            none
-                        </documentationProvider>
+                        <documentationProvider>none</documentationProvider>
                         <openApiNullable>false</openApiNullable>
                         <interfaceOnly>true</interfaceOnly>
                         <useTags>true</useTags>
@@ -188,21 +186,97 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi-robert-internal-v1.yml</inputSpec>
-                            <apiPackage>fr.gouv.stopc.robertserver.ws.api</apiPackage>
-                            <modelPackage>fr.gouv.stopc.robertserver.ws.api.model</modelPackage>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi-robert-internal-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.robertserver.ws.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.robertserver.ws.api.model
+                            </modelPackage>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>generate-external-api</id>
+                        <id>generate-robert-api</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi-robert-server-v1.yml</inputSpec>
-                            <apiPackage>fr.gouv.stopc.robertserver.ws.api</apiPackage>
-                            <modelPackage>fr.gouv.stopc.robertserver.ws.api.model</modelPackage>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi-robert-server-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.robertserver.ws.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.robertserver.ws.api.model
+                            </modelPackage>
                         </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-captcha-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <generatorName>java</generatorName>
+                            <configOptions>
+                                <library>resttemplate</library>
+                                <dateLibrary>java8</dateLibrary>
+                                <useAbstractionForFiles>
+                                    true
+                                </useAbstractionForFiles>
+                                <openApiNullable>false</openApiNullable>
+                                <additionalModelTypeAnnotations>
+                                    @lombok.Builder
+                                    @lombok.AllArgsConstructor
+                                </additionalModelTypeAnnotations>
+                            </configOptions>
+                            <inputSpec>
+                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-captcha-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.openapi.client.captcha
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.openapi.client.captcha.model
+                            </modelPackage>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <version>1.5.3</version>
+                <configuration>
+                    <basedir>
+                        ${project.basedir}/target/generated-sources/openapi/src/main/java
+                    </basedir>
+                    <includes>
+                        <include>
+                            fr/gouv/stopc/openapi/client/captcha/model/*.java
+                        </include>
+                    </includes>
+                    <replacements>
+                        <replacement>
+                            <token>import io.swagger..*;</token>
+                            <value />
+                        </replacement>
+                        <replacement>
+                            <token>@ApiModel.*\)</token>
+                            <value />
+                        </replacement>
+                    </replacements>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>remove-swagger-imports</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

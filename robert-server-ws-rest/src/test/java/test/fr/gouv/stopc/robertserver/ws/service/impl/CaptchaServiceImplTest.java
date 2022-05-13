@@ -27,6 +27,7 @@ class CaptchaServiceImplTest {
     @BeforeEach
     void beforeEach() {
         final var propertyLoader = new PropertyLoader() {
+
             @Override
             public Boolean getDisableCaptcha() {
                 return false;
@@ -76,9 +77,11 @@ class CaptchaServiceImplTest {
 
         // Given
         mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
-                .andRespond(withSuccess()
-                        .body("{ \"result\": \"SUCCESS\" }")
-                        .contentType(APPLICATION_JSON));
+                .andRespond(
+                        withSuccess()
+                                .body("{ \"result\": \"SUCCESS\" }")
+                                .contentType(APPLICATION_JSON)
+                );
 
         // When
         boolean isVerified = captchaService.verifyCaptcha(registerVo);
@@ -92,9 +95,11 @@ class CaptchaServiceImplTest {
 
         // Given
         mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
-                .andRespond(withSuccess()
-                        .body("{ \"result\": \"FAILED\" }")
-                        .contentType(APPLICATION_JSON));
+                .andRespond(
+                        withSuccess()
+                                .body("{ \"result\": \"FAILED\" }")
+                                .contentType(APPLICATION_JSON)
+                );
 
         // When
         boolean isVerified = captchaService.verifyCaptcha(registerVo);
@@ -136,12 +141,16 @@ class CaptchaServiceImplTest {
 
         // Given
         mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
-                .andRespond(withStatus(NOT_FOUND)
-                        .body("{"
-                                + "    \"code\": \"0002\","
-                                + "    \"message\": \"The captcha does not exist\""
-                                + "}")
-                        .contentType(APPLICATION_JSON));
+                .andRespond(
+                        withStatus(NOT_FOUND)
+                                .body(
+                                        "{"
+                                                + "    \"code\": \"0002\","
+                                                + "    \"message\": \"The captcha does not exist\""
+                                                + "}"
+                                )
+                                .contentType(APPLICATION_JSON)
+                );
 
         // When
         boolean isVerified = captchaService.verifyCaptcha(registerVo);

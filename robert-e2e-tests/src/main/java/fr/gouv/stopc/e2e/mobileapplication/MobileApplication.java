@@ -6,35 +6,21 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
-import fr.gouv.stopc.e2e.mobileapplication.model.CaptchaSolution;
-import fr.gouv.stopc.e2e.mobileapplication.model.ClientKeys;
-import fr.gouv.stopc.e2e.mobileapplication.model.ContactTuple;
-import fr.gouv.stopc.e2e.mobileapplication.model.ExposureStatus;
-import fr.gouv.stopc.e2e.mobileapplication.model.HelloMessage;
-import fr.gouv.stopc.e2e.mobileapplication.model.RobertRequestBuilder;
+import fr.gouv.stopc.e2e.mobileapplication.model.*;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
-import fr.gouv.stopc.robert.client.api.CaptchaApi;
-import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
-import fr.gouv.stopc.robert.client.model.CaptchaGenerationRequest;
-import fr.gouv.stopc.robert.client.model.Contact;
-import fr.gouv.stopc.robert.client.model.HelloMessageDetail;
-import fr.gouv.stopc.robert.client.model.PushInfo;
-import fr.gouv.stopc.robert.client.model.RegisterRequest;
-import fr.gouv.stopc.robert.client.model.RegisterSuccessResponse;
-import fr.gouv.stopc.robert.client.model.ReportBatchRequest;
+import fr.gouv.stopc.openapi.client.captcha.CaptchaApi;
+import fr.gouv.stopc.openapi.client.captcha.model.CaptchaCreateRequest;
+import fr.gouv.stopc.openapi.client.robert.DefaultApi;
+import fr.gouv.stopc.openapi.client.robert.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
@@ -50,8 +36,6 @@ public class MobileApplication {
 
     private final String username;
 
-    private final ApplicationProperties applicationProperties;
-
     private final ClientKeys clientKeys;
 
     private final Map<Integer, ContactTuple> contactTupleByEpochId = new HashMap<>();
@@ -62,7 +46,7 @@ public class MobileApplication {
 
     private final CaptchaApi captchaApi;
 
-    private final RobertLegacyApi robertLegacyApi;
+    private final DefaultApi robertLegacyApi;
 
     private final String applicationId;
 
@@ -71,11 +55,10 @@ public class MobileApplication {
     public MobileApplication(final String username,
             final ApplicationProperties applicationProperties,
             final CaptchaApi captchaApi,
-            final RobertLegacyApi robertLegacyApi,
+            final DefaultApi robertLegacyApi,
             final ClientIdentifierRepository clientIdentifierRepository,
             final RegistrationRepository registrationRepository) {
         this.username = username;
-        this.applicationProperties = applicationProperties;
         this.registrationRepository = registrationRepository;
         this.captchaApi = captchaApi;
         this.robertLegacyApi = robertLegacyApi;
@@ -100,7 +83,7 @@ public class MobileApplication {
         // The mobile application ask a captcha id challenge from the captcha server
 
         final var captchaChallenge = captchaApi.captcha(
-                CaptchaGenerationRequest.builder()
+                CaptchaCreateRequest.builder()
                         .locale("fr")
                         .type("IMAGE")
                         .build()

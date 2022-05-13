@@ -11,96 +11,8 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 tags: []
 paths:
-  /captcha:
-    post:
-      tags: ["captcha"]
-      summary: Create a CAPTCHA
-      description: |-
-        Request the creation of a CAPTCHA challenge. A CAPTCHA Id is returned.
-
-
-        Both CAPTCHA Id and CAPTCHA resolution must be provided as input to the /register service.
-
-
-        A locale must be passed to localize the CAPTCHA.
-
-
-        A type must be passed to request visual/audio format.
-      operationId: captcha
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CaptchaGenerationRequest"
-      responses:
-        "201":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CaptchaGenerationSuccessResponse"
-        "400":
-          description: bad request
-      security: []
-  /captcha/{captchaId}/image:
-    get:
-      tags: ["captcha"]
-      summary: Get image CAPTCHA
-      description: Get image version of the CAPTCHA challenge
-      operationId: captchaChallengeImage
-      parameters:
-        - name: captchaId
-          in: path
-          description: CAPTCHA Id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: successful operation
-          content:
-            image/png:
-              schema:
-                type: string
-                format: binary
-        "400":
-          description: CAPTCHA Id not found
-        "404":
-          description: CAPTCHA Id not found, bad URL pattern
-        "410":
-          description: CAPTCHA Id already used
-      security: []
-  /captcha/{captchaId}/audio:
-    get:
-      tags: ["captcha"]
-      summary: Get audio CAPTCHA
-      description: Get audio version of the CAPTCHA challenge
-      operationId: captchaChallengeAudio
-      parameters:
-        - name: captchaId
-          in: path
-          description: CAPTCHA Id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: successful operation
-          content:
-            audio/wav:
-              schema:
-                type: string
-                format: binary
-        "400":
-          description: CAPTCHA Id not found
-        "404":
-          description: CAPTCHA Id not found, bad URL pattern
-        "410":
-          description: CAPTCHA Id already used
-      security: []
   /register:
     post:
-      tags: ["robert-legacy"]
       summary: Register app
       description: |-
         Register the app to the ROBERT service.
@@ -130,7 +42,6 @@ paths:
       security: []
   /status:
     post:
-      tags: ["robert-legacy"]
       summary: Exposure Status Request
       description: >-
         App requests if its user has been exposed
@@ -164,7 +75,6 @@ paths:
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /report:
     post:
-      tags: ["robert-legacy"]
       summary: Report contact history
       description: >-
         Report contacts from the last X days stored by the app once user has
@@ -195,7 +105,6 @@ paths:
       security: []
   /unregister:
     post:
-      tags: ["robert-legacy"]
       summary: Unregister app
       description: >-
         User wants to stop using the ROBERT service. Delete all data related to this user from the server
@@ -220,7 +129,6 @@ paths:
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /deleteExposureHistory:
     post:
-      tags: ["robert-legacy"]
       summary: Delete exposure history
       description: >-
         User wants to delete his exposure history from the back-end. User must still have a valid EBID
@@ -447,31 +355,6 @@ components:
         - tuples
         - config
         - timeStart
-    CaptchaGenerationRequest:
-      type: object
-      properties:
-        type:
-          type: string
-          description: IMAGE or AUDIO (provided for accessibility)
-        locale:
-          type: string
-          description: |-
-            The locale that will be used to generate the CAPTCHA as an image or an audio clip.
-
-            Supported locales for IMAGE: "ar" for arabic alphabet; defaults to latin characters
-
-            Supported locales for AUDIO: "en", "es", "ar", "pt", "de", "it", "fr"; defaults to "fr"
-      required:
-        - type
-        - locale
-    CaptchaGenerationSuccessResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The ID of the generated CAPTCHA
-      required:
-        - id
     ReportBatchRequest:
       type: object
       properties:

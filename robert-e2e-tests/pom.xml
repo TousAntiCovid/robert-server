@@ -110,19 +110,10 @@
                 <artifactId>openapi-generator-maven-plugin</artifactId>
                 <version>5.1.0</version>
                 <configuration>
-                    <inputSpec>
-                        ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-server-v1.yml
-                    </inputSpec>
                     <generatorName>java</generatorName>
-                    <apiPackage>fr.gouv.stopc.robert.client.api</apiPackage>
-                    <modelPackage>
-                        fr.gouv.stopc.robert.client.model
-                    </modelPackage>
-                    <typeMappings>
-                        <typeMapping>
-                            File=org.springframework.core.io.Resource
-                        </typeMapping>
-                    </typeMappings>
+                    <invokerPackage>
+                        fr.gouv.stopc.openapi.client
+                    </invokerPackage>
                     <configOptions>
                         <library>resttemplate</library>
                         <dateLibrary>java8</dateLibrary>
@@ -138,9 +129,43 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>generate-captcha-client</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-captcha-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.openapi.client.captcha
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.openapi.client.captcha.model
+                            </modelPackage>
+                            <typeMappings>
+                                <typeMapping>
+                                    File=org.springframework.core.io.Resource
+                                </typeMapping>
+                            </typeMappings>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-robert-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-server-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.openapi.client.robert
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.openapi.client.robert.model
+                            </modelPackage>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
