@@ -104,7 +104,21 @@ class CaptchaServiceImplTest {
     }
 
     @Test
-    void non_2xx_api_response_should_result_in_unverified_captcha() {
+    void status_400_api_response_should_result_in_unverified_captcha() {
+
+        // Given
+        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
+                .andRespond(withBadRequest());
+
+        // When
+        boolean isVerified = captchaService.verifyCaptcha(registerVo);
+
+        // Then
+        assertFalse(isVerified);
+    }
+
+    @Test
+    void status_500_api_response_should_result_in_unverified_captcha() {
 
         // Given
         mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
