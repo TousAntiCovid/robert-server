@@ -41,9 +41,6 @@ public class PropertyLoader {
     @Value("${robert.server.request-time-delta-tolerance}")
     private Integer requestTimeDeltaTolerance;
 
-    @Value("${robert.server.captcha-challenge-timestamp-tolerance}")
-    private Integer captchaChallengeTimestampTolerance;
-
     @Value("${controller.internal.path.prefix}")
     private String internalPathPrefix;
 
