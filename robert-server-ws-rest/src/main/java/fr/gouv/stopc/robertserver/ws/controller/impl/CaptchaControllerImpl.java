@@ -1,13 +1,12 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
+import fr.gouv.stopc.robertserver.ws.config.RobertWsProperties;
 import fr.gouv.stopc.robertserver.ws.controller.ICaptchaController;
 import fr.gouv.stopc.robertserver.ws.dto.CaptchaCreationDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
-import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.CaptchaCreationVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +23,11 @@ import java.util.HashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty("captcha.gateway.enabled")
 public class CaptchaControllerImpl implements ICaptchaController {
 
     private final RestTemplate restTemplate;
 
-    private final PropertyLoader propertyLoader;
+    private final RobertWsProperties robertWsProperties;
 
     @Override
     public ResponseEntity<CaptchaCreationDto> createCaptcha(
@@ -39,7 +37,7 @@ public class CaptchaControllerImpl implements ICaptchaController {
         try {
             response = restTemplate.postForEntity(
                     UriComponentsBuilder.fromHttpUrl(
-                            this.propertyLoader.getCaptchaHostname() + "/private/api/v1/captcha"
+                            robertWsProperties.getCaptcha().getPrivateBaseUrl() + "/captcha"
                     ).build().toUri(),
                     captchaCreationVo,
                     CaptchaCreationDto.class
@@ -74,7 +72,7 @@ public class CaptchaControllerImpl implements ICaptchaController {
 
         try {
             URI uri = UriComponentsBuilder.fromHttpUrl(
-                    this.propertyLoader.getCaptchaHostname() + "/public/api/v1/captcha/{captchaId}."
+                    robertWsProperties.getCaptcha().getPublicBaseUrl() + "/captcha/{captchaId}."
                             + (mediaType == "audio" ? "wav" : "png")
             )
                     .build(uriVariables);

@@ -1,8 +1,8 @@
 package fr.gouv.stopc.robertserver.ws.service.impl;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import fr.gouv.stopc.robertserver.ws.config.RobertWsProperties;
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
-import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import lombok.Builder;
 import lombok.Value;
@@ -21,15 +21,15 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     private final RestTemplate restTemplate;
 
-    private final String expectedSuccessResultValue;
+    private final String expectedSuccessResultCode;
 
-    public CaptchaServiceImpl(final RestTemplateBuilder restTemplateBuilder, final PropertyLoader propertyLoader) {
-        captchaIsDisabled = propertyLoader.getDisableCaptcha();
-        final var baseUrl = propertyLoader.getCaptchaVerificationUrl().replaceAll("/api/v1/.*", "");
+    public CaptchaServiceImpl(final RestTemplateBuilder restTemplateBuilder,
+            final RobertWsProperties robertWsProperties) {
+        captchaIsDisabled = !robertWsProperties.getCaptcha().isEnabled();
         restTemplate = restTemplateBuilder
-                .rootUri(baseUrl)
+                .rootUri(robertWsProperties.getCaptcha().getPrivateBaseUrl().toString())
                 .build();
-        expectedSuccessResultValue = propertyLoader.getCaptchaSuccessCode();
+        expectedSuccessResultCode = robertWsProperties.getCaptcha().getSuccessCode();
     }
 
     @Override
@@ -47,11 +47,11 @@ public class CaptchaServiceImpl implements CaptchaService {
         final var verificationRequest = new CaptchaVerificationRequest(registerVo.getCaptcha());
         try {
             final var verificationResponse = restTemplate.postForObject(
-                    "/api/v1/captcha/{captchaId}/checkAnswer",
+                    "/captcha/{captchaId}/checkAnswer",
                     verificationRequest, CaptchaVerificationResponse.class, registerVo.getCaptchaId()
             );
             if (null != verificationResponse) {
-                return expectedSuccessResultValue.equals(verificationResponse.getResult());
+                return expectedSuccessResultCode.equals(verificationResponse.getResult());
             }
         } catch (HttpClientErrorException e) {
             log.info(

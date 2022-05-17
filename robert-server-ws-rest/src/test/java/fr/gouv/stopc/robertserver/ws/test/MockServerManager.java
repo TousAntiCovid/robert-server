@@ -30,9 +30,8 @@ public class MockServerManager implements TestExecutionListener {
 
     private final static MockServerClient CAPTCHA = startMockServer(
             "captcha.json", container -> Map.of(
-                    "captcha.internal.hostname", container.getEndpoint(),
-                    "captcha.internal.verify.url",
-                    container.getEndpoint() + "/private/api/v1/captcha/{captchaId}/checkAnswer"
+                    "robert.captcha.public-base-url", container.getEndpoint() + "/public/api/v1",
+                    "robert.captcha.private-base-url", container.getEndpoint() + "/private/api/v1"
             )
     );
 
