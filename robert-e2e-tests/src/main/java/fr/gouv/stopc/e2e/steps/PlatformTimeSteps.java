@@ -3,13 +3,15 @@ package fr.gouv.stopc.e2e.steps;
 import fr.gouv.stopc.robert.client.api.RobertApi;
 import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Etantdonnéque;
-import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -24,26 +26,33 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.given;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PlatformTimeSteps {
 
     @Autowired
     private final RobertApi robertApi;
 
+    @Getter
+    private Instant platformTime = Instant.now();
+
     @Etantdonnéque("l'on est aujourd'hui")
     public void resetFakeTimeToNow() throws IOException, InterruptedException {
 
+        platformTime = Instant.now();
         execInContainer("ws-rest", "rm -f /etc/faketime.d/faketime");
         verifyServiceClock("ws-rest", ZERO);
         verifyServiceClock("crypto-server", ZERO);
+
     }
 
     @Etantdonnéque("l'on est il y a {duration}")
     public void changeSystemDateTo(final Duration durationAgo) throws IOException, InterruptedException {
 
+        platformTime = Instant.now().minus(durationAgo);
         execInContainer("ws-rest", format("echo -%d > /etc/faketime.d/faketime", durationAgo.toSeconds()));
         verifyServiceClock("ws-rest", durationAgo);
         verifyServiceClock("crypto-server", durationAgo);
+
     }
 
     @Alors("l'horloge de {word} est à il y a {duration}")
