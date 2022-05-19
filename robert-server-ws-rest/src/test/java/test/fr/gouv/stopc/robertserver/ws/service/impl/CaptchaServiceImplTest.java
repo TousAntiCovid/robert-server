@@ -1,13 +1,17 @@
 package test.fr.gouv.stopc.robertserver.ws.service.impl;
 
+import fr.gouv.stopc.robertserver.ws.config.RobertWsProperties;
+import fr.gouv.stopc.robertserver.ws.config.RobertWsProperties.Captcha;
 import fr.gouv.stopc.robertserver.ws.service.impl.CaptchaServiceImpl;
-import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.client.MockServerRestTemplateCustomizer;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.test.web.client.MockRestServiceServer;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,26 +29,14 @@ class CaptchaServiceImplTest {
     private MockRestServiceServer mockServer;
 
     @BeforeEach
-    void beforeEach() {
-        final var propertyLoader = new PropertyLoader() {
-            @Override
-            public Boolean getDisableCaptcha() {
-                return false;
-            }
-
-            @Override
-            public String getCaptchaVerificationUrl() {
-                return "http://localhost/api/v1/captcha/{captchaId}/checkAnswer";
-            }
-
-            @Override
-            public String getCaptchaSuccessCode() {
-                return "SUCCESS";
-            }
-        };
+    void beforeEach() throws MalformedURLException {
+        final var captchaConfig = new Captcha(
+                true, new URL("http://localhost/public/api/v1"), new URL("http://localhost/private/api/v1"), "SUCCESS"
+        );
+        final var config = new RobertWsProperties(captchaConfig);
 
         final var mockServerCustomizer = new MockServerRestTemplateCustomizer();
-        captchaService = new CaptchaServiceImpl(new RestTemplateBuilder(mockServerCustomizer), propertyLoader);
+        captchaService = new CaptchaServiceImpl(new RestTemplateBuilder(mockServerCustomizer), config);
         mockServer = mockServerCustomizer.getServer();
 
         registerVo = RegisterVo.builder().captcha("captcha").captchaId("captchaId").build();
@@ -65,7 +57,7 @@ class CaptchaServiceImplTest {
         registerVo.setCaptcha(null);
 
         // When
-        boolean isVerified = captchaService.verifyCaptcha(null);
+        boolean isVerified = captchaService.verifyCaptcha(registerVo);
 
         // Then
         assertFalse(isVerified);
@@ -75,10 +67,12 @@ class CaptchaServiceImplTest {
     void valid_captcha_challenge_response_should_result_in_successfully_verified_captcha() {
 
         // Given
-        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
-                .andRespond(withSuccess()
-                        .body("{ \"result\": \"SUCCESS\" }")
-                        .contentType(APPLICATION_JSON));
+        mockServer.expect(requestTo("/captcha/captchaId/checkAnswer"))
+                .andRespond(
+                        withSuccess()
+                                .body("{ \"result\": \"SUCCESS\" }")
+                                .contentType(APPLICATION_JSON)
+                );
 
         // When
         boolean isVerified = captchaService.verifyCaptcha(registerVo);
@@ -91,10 +85,12 @@ class CaptchaServiceImplTest {
     void incorrect_captcha_challenge_response_should_result_in_unverified_captcha() {
 
         // Given
-        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
-                .andRespond(withSuccess()
-                        .body("{ \"result\": \"FAILED\" }")
-                        .contentType(APPLICATION_JSON));
+        mockServer.expect(requestTo("/captcha/captchaId/checkAnswer"))
+                .andRespond(
+                        withSuccess()
+                                .body("{ \"result\": \"FAILED\" }")
+                                .contentType(APPLICATION_JSON)
+                );
 
         // When
         boolean isVerified = captchaService.verifyCaptcha(registerVo);
@@ -104,10 +100,24 @@ class CaptchaServiceImplTest {
     }
 
     @Test
-    void non_2xx_api_response_should_result_in_unverified_captcha() {
+    void status_400_api_response_should_result_in_unverified_captcha() {
 
         // Given
-        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
+        mockServer.expect(requestTo("/captcha/captchaId/checkAnswer"))
+                .andRespond(withBadRequest());
+
+        // When
+        boolean isVerified = captchaService.verifyCaptcha(registerVo);
+
+        // Then
+        assertFalse(isVerified);
+    }
+
+    @Test
+    void status_500_api_response_should_result_in_unverified_captcha() {
+
+        // Given
+        mockServer.expect(requestTo("/captcha/captchaId/checkAnswer"))
                 .andRespond(withServerError());
 
         // When
@@ -121,13 +131,17 @@ class CaptchaServiceImplTest {
     void unexisting_captcha_id_should_result_in_unverified_captcha() {
 
         // Given
-        mockServer.expect(requestTo("http://localhost/api/v1/captcha/captchaId/checkAnswer"))
-                .andRespond(withStatus(NOT_FOUND)
-                        .body("{"
-                                + "    \"code\": \"0002\","
-                                + "    \"message\": \"The captcha does not exist\""
-                                + "}")
-                        .contentType(APPLICATION_JSON));
+        mockServer.expect(requestTo("/captcha/captchaId/checkAnswer"))
+                .andRespond(
+                        withStatus(NOT_FOUND)
+                                .body(
+                                        "{"
+                                                + "    \"code\": \"0002\","
+                                                + "    \"message\": \"The captcha does not exist\""
+                                                + "}"
+                                )
+                                .contentType(APPLICATION_JSON)
+                );
 
         // When
         boolean isVerified = captchaService.verifyCaptcha(registerVo);

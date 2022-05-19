@@ -1,17 +1,12 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
-import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.lang.NonNull;
-
-import java.time.Instant;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -23,18 +18,6 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
 
     private final RobertClock robertClock;
 
-    private final BatchStatisticsService batchStatisticsService;
-
-    private Instant batchExecutionInstant;
-
-    @BeforeStep
-    void retrieveInterStepData(final StepExecution stepExecution) {
-        batchExecutionInstant = stepExecution
-                .getJobExecution()
-                .getStartTime()
-                .toInstant();
-    }
-
     @Override
     public Registration process(@NonNull final Registration registration) throws Exception {
 
@@ -44,7 +27,6 @@ public class RegistrationRiskLevelResetProcessor implements ItemProcessor<Regist
             }
             registration.setAtRisk(false);
             registration.setNotifiedForCurrentRisk(false);
-            batchStatisticsService.incrementUsersAboveRiskThresholdButRetentionPeriodExpired(batchExecutionInstant);
             return registration;
         }
         return null;

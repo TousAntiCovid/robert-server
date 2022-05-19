@@ -16,22 +16,6 @@ public class PropertyLoader {
     @Value("${robert.crypto.server.port}")
     private String cryptoServerPort;
 
-    /**
-     * @return the verification URL for the internal captcha service
-     */
-    @Value("${captcha.internal.verify.url}")
-    private String captchaVerificationUrl;
-
-    @Value("${captcha.internal.hostname}")
-    private String captchaHostname;
-
-    /**
-     * @return the successful code from the verification by the internal captcha
-     *         service
-     */
-    @Value("${captcha.internal.success.code}")
-    private String captchaSuccessCode;
-
     @Value("${submission.code.server.url}")
     private URI serverCodeUrl;
 
@@ -40,9 +24,6 @@ public class PropertyLoader {
 
     @Value("${robert.server.request-time-delta-tolerance}")
     private Integer requestTimeDeltaTolerance;
-
-    @Value("${robert.server.captcha-challenge-timestamp-tolerance}")
-    private Integer captchaChallengeTimestampTolerance;
 
     @Value("${controller.internal.path.prefix}")
     private String internalPathPrefix;
@@ -67,9 +48,6 @@ public class PropertyLoader {
 
     @Value("${robert.jwt.lifetime}")
     private int jwtLifeTime;
-
-    @Value("${robert.server.disable-check-captcha}")
-    private Boolean disableCaptcha;
 
     @Value("${robert.server.disable-check-token}")
     private Boolean disableCheckToken;

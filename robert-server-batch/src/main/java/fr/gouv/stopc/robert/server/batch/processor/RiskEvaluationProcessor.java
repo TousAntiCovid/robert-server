@@ -4,22 +4,35 @@ import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemProcessor;
 
+import java.time.Instant;
 import java.util.Objects;
 
 /**
  * Evaluates the risk according to scores already computed.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class RiskEvaluationProcessor implements ItemProcessor<Registration, Registration> {
 
-    private IServerConfigurationService serverConfigurationService;
+    private final IServerConfigurationService serverConfigurationService;
 
-    private PropertyLoader propertyLoader;
+    private final PropertyLoader propertyLoader;
 
-    private BatchRegistrationService registrationService;
+    private final BatchRegistrationService registrationService;
+
+    private Instant batchExecutionInstant;
+
+    @BeforeStep
+    void retrieveInterStepData(final StepExecution stepExecution) {
+        batchExecutionInstant = stepExecution
+                .getJobExecution()
+                .getStartTime()
+                .toInstant();
+    }
 
     @Override
     public Registration process(Registration registration) {
@@ -35,7 +48,8 @@ public class RiskEvaluationProcessor implements ItemProcessor<Registration, Regi
         registrationService.updateRegistrationIfRisk(
                 registration,
                 this.serverConfigurationService.getServiceTimeStart(),
-                this.propertyLoader.getRiskThreshold()
+                this.propertyLoader.getRiskThreshold(),
+                this.batchExecutionInstant
         );
 
         registration.setOutdatedRisk(false);

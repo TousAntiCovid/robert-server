@@ -25,7 +25,6 @@ import fr.gouv.stopc.robert.client.model.RegisterRequest;
 import fr.gouv.stopc.robert.client.model.RegisterSuccessResponse;
 import fr.gouv.stopc.robert.client.model.ReportBatchRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -90,15 +89,10 @@ public class MobileApplication {
     }
 
     private CaptchaSolution resolveMockedCaptchaChallenge() {
-        // We generate a fake Captcha id which we will be used to differentiate mobile
-        // applications
-        final var captchaId = RandomStringUtils.random(7, true, false);
-
         // We simulate the user visual captcha resolution and we call the robert
         // endpoint
 
         // The mobile application ask a captcha id challenge from the captcha server
-
         final var captchaChallenge = captchaApi.captcha(
                 CaptchaGenerationRequest.builder()
                         .locale("fr")
@@ -113,7 +107,7 @@ public class MobileApplication {
         assertThat("image content", response.getBody(), notNullValue());
 
         // The user reads the image content
-        return new CaptchaSolution(captchaId, "ABCD");
+        return new CaptchaSolution(captchaChallenge.getId(), "ABCD");
     }
 
     private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {

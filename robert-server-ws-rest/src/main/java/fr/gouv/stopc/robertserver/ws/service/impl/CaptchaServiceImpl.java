@@ -1,159 +1,80 @@
 package fr.gouv.stopc.robertserver.ws.service.impl;
 
-import fr.gouv.stopc.robertserver.ws.dto.CaptchaDto;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import fr.gouv.stopc.robertserver.ws.config.RobertWsProperties;
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService;
-import fr.gouv.stopc.robertserver.ws.service.impl.utils.CaptchaAccessException;
-import fr.gouv.stopc.robertserver.ws.service.impl.utils.CaptchaErrorHandler;
-import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
-import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
+import lombok.Builder;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.validation.constraints.NotNull;
-
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @Slf4j
 public class CaptchaServiceImpl implements CaptchaService {
 
+    private final boolean captchaIsDisabled;
+
     private final RestTemplate restTemplate;
 
-    private final PropertyLoader propertyLoader;
+    private final String expectedSuccessResultCode;
 
-    public CaptchaServiceImpl(RestTemplateBuilder restTemplateBuilder,
-            PropertyLoader propertyLoader) {
-        this.restTemplate = restTemplateBuilder
-                .errorHandler(new CaptchaErrorHandler())
+    public CaptchaServiceImpl(final RestTemplateBuilder restTemplateBuilder,
+            final RobertWsProperties robertWsProperties) {
+        captchaIsDisabled = !robertWsProperties.getCaptcha().isEnabled();
+        restTemplate = restTemplateBuilder
+                .rootUri(robertWsProperties.getCaptcha().getPrivateBaseUrl().toString())
                 .build();
-        this.propertyLoader = propertyLoader;
-    }
-
-    @AllArgsConstructor
-    @Data
-    protected class CaptchaServiceDto {
-
-        @NotNull
-        @ToString.Exclude
-        private String answer;
+        expectedSuccessResultCode = robertWsProperties.getCaptcha().getSuccessCode();
     }
 
     @Override
     public boolean verifyCaptcha(final RegisterVo registerVo) {
-        if (this.propertyLoader.getDisableCaptcha())
+        if (captchaIsDisabled) {
+            log.warn("Captcha verification is disabled");
             return true;
+        }
 
-        return Optional.ofNullable(registerVo).map(captcha -> {
+        if (null == registerVo || null == registerVo.getCaptcha() || null == registerVo.getCaptchaId()) {
+            log.info("Incomplete captcha verification informations");
+            return false;
+        }
 
-            HttpEntity<CaptchaServiceDto> request = new HttpEntity<CaptchaServiceDto>(
-                    new CaptchaServiceDto(captcha.getCaptcha()), initHttpHeaders()
+        final var verificationRequest = new CaptchaVerificationRequest(registerVo.getCaptcha());
+        try {
+            final var verificationResponse = restTemplate.postForObject(
+                    "/captcha/{captchaId}/checkAnswer",
+                    verificationRequest, CaptchaVerificationResponse.class, registerVo.getCaptchaId()
             );
-
-            ResponseEntity<CaptchaDto> response = null;
-            try {
-                response = this.restTemplate
-                        .postForEntity(constructUri(captcha.getCaptchaId()), request, CaptchaDto.class);
-            } catch (CaptchaAccessException e) {
-                // exception only related to restTemplate and produced by the errorHandler
-                boolean isUnvalid = Optional.ofNullable(e).map(CaptchaAccessException::getErrorMessage)
-                        .filter(
-                                error -> Objects.nonNull(error) && Objects.equals("0002", error.getCode())
-                                        && Objects.equals(HttpStatus.NOT_FOUND, e.getStatusCode())
-                        )
-                        .map(error -> {
-                            log.error(
-                                    "Captcha not validated => {} : {} ", MessageConstants.INVALID_DATA.getValue(),
-                                    e.getErrorMessage().getMessage()
-                            );
-                            return true;
-                        }).orElse(false);
-
-                boolean isUnauthorized = Optional.ofNullable(e).map(CaptchaAccessException::getErrorMessage)
-                        .filter(
-                                error -> Objects.nonNull(error) && ((Objects.equals("0001", error.getCode())
-                                        && Objects.equals(HttpStatus.NOT_FOUND, e.getStatusCode())))
-                                        || (Objects.equals(HttpStatus.GONE, e.getStatusCode()))
-                        )
-                        .map(error -> {
-                            log.error(
-                                    "Captcha not validated => {} : {}",
-                                    MessageConstants.UNAUTHORIZED_OPERATION.getValue(), e.getErrorMessage().getMessage()
-                            );
-                            return true;
-                        }).orElse(false);
-                // or else
-                if (!isUnvalid && !isUnauthorized) { // None of the above, but still an error
-                    log.error(
-                            "Captcha not validated => {} : {}", MessageConstants.ERROR_OCCURED.getValue(),
-                            e.getErrorMessage().getMessage()
-                    );
-                }
-                return false;
-            } catch (RestClientException e) {
-                // used only if errorHandler is disabled
-                log.error(
-                        "Captcha not validated => {} : {}", MessageConstants.ERROR_OCCURED.getValue(), e.getMessage()
-                );
-                return false;
+            if (null != verificationResponse) {
+                return expectedSuccessResultCode.equals(verificationResponse.getResult());
             }
-
-            boolean isSuccess = Optional.ofNullable(response)
-                    .map(ResponseEntity::getBody)
-                    .filter(
-                            captchaDto -> Objects.nonNull(captchaDto.getResult()) && Objects
-                                    .equals(captchaDto.getResult(), this.propertyLoader.getCaptchaSuccessCode())
-                    )
-                    .map(captchaDto -> {
-                        log.info("Captcha validated => {}", MessageConstants.SUCCESSFUL_OPERATION.getValue());
-                        return true; // Response 200 with SUCCESS
-                    }).orElse(false);
-
-            boolean hasFailed = Optional.ofNullable(response)
-                    .map(ResponseEntity::getBody)
-                    .filter(
-                            captchaDto -> Objects.nonNull(
-                                    captchaDto.getResult()
-                            ) && !Objects.equals(captchaDto.getResult(), this.propertyLoader.getCaptchaSuccessCode())
-                    )
-                    .map(captchaDto -> {
-                        log.info("Captcha not validated => {}", MessageConstants.UNSUCCESSFUL_OPERATION.getValue());
-                        return true; // Response 200 with FAILED
-                    }).orElse(false);
-
-            return isSuccess && !hasFailed;
-
-        }).orElse(false); // Empty validation request
+        } catch (HttpClientErrorException e) {
+            log.info(
+                    "Captcha endpoint returned a client error status code, this means the captcha validation request attributes are invalid",
+                    e
+            );
+        } catch (RestClientException e) {
+            log.error("Captcha endpoint returned a server error status code, check captcha service logs", e);
+        }
+        return false;
     }
 
-    private HttpHeaders initHttpHeaders() {
+    @Value
+    private static class CaptchaVerificationRequest {
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        return headers;
+        String answer;
     }
 
-    private URI constructUri(String captchaId) {
-        HashMap<String, String> uriVariables = new HashMap<String, String>();
-        uriVariables.put("captchaId", captchaId);
-        return UriComponentsBuilder.fromHttpUrl(this.propertyLoader.getCaptchaVerificationUrl())
-                .build(uriVariables);
-    }
+    @Value
+    @Builder(setterPrefix = "with")
+    @JsonDeserialize(builder = CaptchaVerificationResponse.CaptchaVerificationResponseBuilder.class)
+    private static class CaptchaVerificationResponse {
 
+        String result;
+    }
 }
