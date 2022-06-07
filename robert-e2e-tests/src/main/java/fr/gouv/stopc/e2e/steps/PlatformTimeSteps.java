@@ -52,7 +52,6 @@ public class PlatformTimeSteps {
         execInContainer("ws-rest", format("echo -%d > /etc/faketime.d/faketime", durationAgo.toSeconds()));
         verifyServiceClock("ws-rest", durationAgo);
         verifyServiceClock("crypto-server", durationAgo);
-
     }
 
     @Alors("l'horloge de {word} est à il y a {duration}")

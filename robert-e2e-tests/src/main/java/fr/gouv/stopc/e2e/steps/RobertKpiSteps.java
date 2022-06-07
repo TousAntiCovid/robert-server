@@ -1,21 +1,18 @@
 package fr.gouv.stopc.e2e.steps;
 
-import fr.gouv.stopc.e2e.kpis.repository.BatchStatisticsRepository;
-import fr.gouv.stopc.e2e.kpis.repository.WebserviceStatisticsRepository;
 import fr.gouv.stopc.robert.client.api.KpiApi;
 import fr.gouv.stopc.robert.client.model.RobertServerKpi;
 import io.cucumber.java.Before;
 import io.cucumber.java.fr.Alors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Map;
-import java.util.Optional;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
+import static java.time.Instant.*;
 import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,75 +22,134 @@ public class RobertKpiSteps {
 
     private final PlatformTimeSteps platformTimeSteps;
 
-    private final Map<LocalDate, RobertServerKpi> robertServerKpiHistory;
-
-    private final BatchStatisticsRepository batchStatisticsRepository;
-
-    private final WebserviceStatisticsRepository webserviceStatisticsRepository;
-
-    @Autowired
     private final KpiApi kpiApi;
 
-    @Before
-    public void deleteAllExistingKpis() {
-        batchStatisticsRepository.deleteAll();
-        webserviceStatisticsRepository.deleteAll();
+    private final List<RobertServerKpi> robertServerKpiHistory;
 
+    @Before
+    public void takeKpisSnapshot() {
+        takeKpisSnapshot(now().minus(30, ChronoUnit.DAYS), now());
     }
 
     @Alors("le kpi {word} est {long}")
-    public void checkKpiValue(final String kpiName,
-            final Long value) {
+    public void checkKpiValue(final String kpiName, final Long value) {
 
         final var robertServerKpi = getRobertServerKpiAt(platformTimeSteps.getPlatformTime());
-        robertServerKpi.ifPresentOrElse(kpi -> {
-            assertThat(kpi).hasFieldOrPropertyWithValue(kpiName, value);
-            robertServerKpiHistory.put(LocalDate.ofInstant(platformTimeSteps.getPlatformTime(), UTC), kpi);
-        }, () -> {
-            throw new RuntimeException("No KPI was found for " + kpiName);
-        });
+        assertThat(robertServerKpi).hasFieldOrPropertyWithValue(kpiName, value);
+
     }
 
-    @Alors("le kpi usersAboveRiskThresholdButRetentionPeriodExpired est incrémenté de {long} par rapport à il y a {duration}")
-    public void checkKpiValue(final Long increment,
-            final Duration durationAgo) {
+    @Alors("le kpi usersAboveRiskThresholdButRetentionPeriodExpired est incrémenté de {long}")
+    public void checkKpiIncrement(final Long increment) {
 
-        final var oldRobertServerKpi = robertServerKpiHistory
-                .get(LocalDate.ofInstant(platformTimeSteps.getPlatformTime().minus(durationAgo), UTC));
+        final var oldRobertServerKpi = getCurrentKpiFromSnapshot();
         final var todayRobertServerKpi = getRobertServerKpiAt(platformTimeSteps.getPlatformTime());
-        todayRobertServerKpi.ifPresent(
-                kpi -> assertThat(kpi.getUsersAboveRiskThresholdButRetentionPeriodExpired())
-                        .isEqualTo(oldRobertServerKpi.getUsersAboveRiskThresholdButRetentionPeriodExpired() + increment)
-        );
 
+        if (todayRobertServerKpi == null) {
+            throw new RuntimeException("No KPI to compare");
+        } else {
+            assertThat(todayRobertServerKpi.getUsersAboveRiskThresholdButRetentionPeriodExpired())
+                    .isEqualTo(oldRobertServerKpi.getUsersAboveRiskThresholdButRetentionPeriodExpired() + increment);
+        }
     }
 
-    @Alors("le kpi usersAboveRiskThresholdButRetentionPeriodExpired n'a pas changé par rapport à il y a {duration}")
-    public void checkKpiValue(final Duration durationAgo) {
+    @Alors("le kpi notifiedUsers est incrémenté de {long}")
+    public void checkNotifiedUsersIncrement(final Long increment) {
 
-        final var oldRobertServerKpi = robertServerKpiHistory
-                .get(LocalDate.ofInstant(platformTimeSteps.getPlatformTime().minus(durationAgo), UTC));
+        final var oldRobertServerKpi = getCurrentKpiFromSnapshot();
         final var todayRobertServerKpi = getRobertServerKpiAt(platformTimeSteps.getPlatformTime());
-        todayRobertServerKpi.ifPresent(
-                kpi -> assertThat(kpi.getUsersAboveRiskThresholdButRetentionPeriodExpired())
-                        .isEqualTo(oldRobertServerKpi.getUsersAboveRiskThresholdButRetentionPeriodExpired())
-        );
+
+        if (todayRobertServerKpi == null) {
+            throw new RuntimeException("No KPI to compare");
+        } else {
+            assertThat(todayRobertServerKpi.getNotifiedUsers())
+                    .isEqualTo(oldRobertServerKpi.getNotifiedUsers() + increment);
+        }
     }
 
-    public Optional<RobertServerKpi> getRobertServerKpiAt(Instant instant) {
-        final var robertServerKpi = kpiApi.kpi(
+    @Alors("le kpi usersAboveRiskThresholdButRetentionPeriodExpired n'a pas changé")
+    public void compareUsersAboveRiskThresholdButRetentionPeriodExpiredKpiValue() {
+
+        final var oldRobertServerKpi = getKpiFromHistory(platformTimeSteps.getPlatformTime());
+        final var todayRobertServerKpi = getRobertServerKpiAt(platformTimeSteps.getPlatformTime());
+
+        if (todayRobertServerKpi == null) {
+            throw new RuntimeException("No KPI to compare");
+        } else {
+            assertThat(todayRobertServerKpi.getUsersAboveRiskThresholdButRetentionPeriodExpired())
+                    .isEqualTo(oldRobertServerKpi.getUsersAboveRiskThresholdButRetentionPeriodExpired());
+        }
+
+    }
+
+    @Alors("le kpi notifiedUsers n'a pas changé")
+    public void compareNotifiedUsersKpiValue() {
+
+        final var oldRobertServerKpi = getKpiFromHistory(platformTimeSteps.getPlatformTime());
+        final var todayRobertServerKpi = getRobertServerKpiAt(platformTimeSteps.getPlatformTime());
+
+        if (todayRobertServerKpi == null) {
+            throw new RuntimeException("No KPI to compare");
+        } else {
+            assertThat(todayRobertServerKpi.getUsersAboveRiskThresholdButRetentionPeriodExpired())
+                    .isEqualTo(oldRobertServerKpi.getUsersAboveRiskThresholdButRetentionPeriodExpired());
+        }
+
+    }
+
+    public RobertServerKpi getRobertServerKpiAt(Instant instant) {
+
+        final var kpis = kpiApi.kpi(
                 LocalDate.ofInstant(instant, UTC),
                 LocalDate.ofInstant(instant, UTC)
-        )
-                .stream()
-                .findFirst();
+        );
+        if (kpis.size() != 1) {
+            throw new RuntimeException("expecting one kpi but got " + kpis.size());
+        }
+        return kpis.get(0);
 
-        robertServerKpi.ifPresent(this::addRobertServerKpiInHistory);
-        return robertServerKpi;
     }
 
-    public void addRobertServerKpiInHistory(RobertServerKpi robertServerKpiToSave) {
-        robertServerKpiHistory.put(robertServerKpiToSave.getDate(), robertServerKpiToSave);
+    private RobertServerKpi getCurrentKpiFromSnapshot() {
+        return robertServerKpiHistory.stream()
+                .filter(
+                        kpi -> kpi.getDate().equals(
+                                LocalDate.ofInstant(platformTimeSteps.getPlatformTime(), UTC)
+                        )
+                )
+                .findFirst()
+                .orElse(
+                        RobertServerKpi.builder()
+                                .date(LocalDate.ofInstant(platformTimeSteps.getPlatformTime(), UTC))
+                                .nbAlertedUsers(null)
+                                .nbExposedButNotAtRiskUsers(null)
+                                .nbInfectedUsersNotNotified(null)
+                                .nbNotifiedUsersScoredAgain(null)
+                                .notifiedUsers(0L)
+                                .usersAboveRiskThresholdButRetentionPeriodExpired(0L)
+                                .build()
+                );
+    }
+
+    private RobertServerKpi getKpiFromHistory(Instant instant) {
+        return robertServerKpiHistory.stream()
+                .filter(kpi -> kpi.getDate().equals(LocalDate.ofInstant(instant, UTC)))
+                .findFirst()
+                .orElseThrow(() -> {
+                    throw new RuntimeException("No kpi found in history, probably an early call or bad initialization");
+                });
+    }
+
+    private void takeKpisSnapshot(
+            final Instant from,
+            final Instant to) {
+
+        robertServerKpiHistory.clear();
+        final var robertServerKpis = kpiApi.kpi(
+                LocalDate.ofInstant(from, UTC),
+                LocalDate.ofInstant(to, UTC)
+        );
+        robertServerKpiHistory.addAll(robertServerKpis);
     }
 
 }
