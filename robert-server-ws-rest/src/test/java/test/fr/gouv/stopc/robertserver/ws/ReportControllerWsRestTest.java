@@ -123,53 +123,6 @@ public class ReportControllerWsRestTest {
     }
 
     @Test
-    public void testReportShouldNotAcceptInvalidTokenSizeSmall() {
-        this.reportBatchRequestVo.setToken("1");
-        try {
-            // Given
-            this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
-
-            // When
-            when(this.propertyLoader.getDisableCheckToken()).thenReturn(this.disableCheckToken);
-            ResponseEntity<ApiError> response = this.testRestTemplate
-                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
-
-            // Then
-            assertNotNull(response);
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            assertNotNull(response.getBody());
-            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_DATA.getValue()));
-
-            verify(this.contactDtoService, never()).saveContacts(any());
-        } catch (RobertServerException e) {
-            fail(EXCEPTION_FAIL_MESSAGE);
-        }
-    }
-
-    @Test
-    public void testReportShouldNotAcceptInvalidTokenSizeLarge() {
-        this.reportBatchRequestVo.setToken("23DC4B32-7552-44C1-B98A-DDE5F75B1729" + "1");
-        try {
-            // Given
-            this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
-
-            // When
-            ResponseEntity<ApiError> response = this.testRestTemplate
-                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
-
-            // Then
-            assertNotNull(response);
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            assertNotNull(response.getBody());
-            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_DATA.getValue()));
-
-            verify(this.contactDtoService, never()).saveContacts(any());
-        } catch (RobertServerException e) {
-            fail(EXCEPTION_FAIL_MESSAGE);
-        }
-    }
-
-    @Test
     public void should_produce_log_for_short_token_at_info_level() {
         this.reportBatchRequestVo.setToken(SHORT_CODE);
         try {
