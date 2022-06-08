@@ -1,11 +1,12 @@
 package fr.gouv.stopc.robertserver.ws.test;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.GeneratedMessageV3;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+import lombok.SneakyThrows;
+import org.mockito.Mockito;
 import org.springframework.lang.NonNull;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
@@ -15,10 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+
 public class GrpcMockManager implements TestExecutionListener {
 
+    private static final CryptoGrpcStub CRYPTO_GRPC_STUB = Mockito.spy(new CryptoGrpcStub());
+
     private static final Server GRPC_MOCK = ServerBuilder.forPort(0)
-            .addService(new CryptoGrpcStub())
+            .addService(CRYPTO_GRPC_STUB)
             .build();
 
     static {
@@ -32,8 +38,19 @@ public class GrpcMockManager implements TestExecutionListener {
     }
 
     @Override
-    public void beforeTestMethod(@NonNull TestContext testContext) throws Exception {
+    @SneakyThrows
+    public void beforeTestMethod(@NonNull TestContext testContext) {
+        Mockito.reset(CRYPTO_GRPC_STUB);
         CryptoGrpcStub.reset();
+    }
+
+    @SneakyThrows
+    public static void givenCryptoServerIsOffline() {
+        final var error = new RuntimeException("Crypto server is offline");
+        doThrow(error).when(CRYPTO_GRPC_STUB).createRegistration(any(), any());
+        doThrow(error).when(CRYPTO_GRPC_STUB).getIdFromAuth(any(), any());
+        doThrow(error).when(CRYPTO_GRPC_STUB).getIdFromStatus(any(), any());
+        doThrow(error).when(CRYPTO_GRPC_STUB).deleteId(any(), any());
     }
 
     public static void givenCryptoServerRaiseError430ForEbid(String ebid) {
@@ -42,6 +59,10 @@ public class GrpcMockManager implements TestExecutionListener {
 
     public static void givenCryptoServerRaiseErrorForMacStartingWith(String mac) {
         CryptoGrpcStub.INVALID_MAC.add(mac);
+    }
+
+    public static void verifyNoInteractionsWithCryptoServer() {
+        Mockito.verifyNoInteractions(CRYPTO_GRPC_STUB);
     }
 
     private static class CryptoGrpcStub extends CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase {
@@ -73,13 +94,6 @@ public class GrpcMockManager implements TestExecutionListener {
             } else {
                 return Optional.empty();
             }
-        }
-
-        private <T extends GeneratedMessageV3> void handle(ByteString requestEbid, ByteString requestMac,
-                T defaultResponse,
-                StreamObserver<T> responseObserver) {
-
-            responseObserver.onCompleted();
         }
 
         @Override

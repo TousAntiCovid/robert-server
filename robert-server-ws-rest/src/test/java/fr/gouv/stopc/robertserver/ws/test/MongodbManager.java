@@ -7,8 +7,7 @@ import fr.gouv.stopc.robertserver.database.model.Registration.RegistrationBuilde
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.assertj.core.api.ListAssert;
-import org.assertj.core.api.ObjectAssert;
+import org.assertj.core.api.*;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.lang.NonNull;
@@ -100,7 +99,14 @@ public class MongodbManager implements TestExecutionListener {
         return assertThatRegistrations()
                 .filteredOn(r -> user.equals(new String(r.getPermanentIdentifier())))
                 .hasSize(1)
-                .first();
+                .first()
+                .as("Registration for user %s", user);
+    }
+
+    public static AbstractLongAssert<?> assertThatRegistrationTimeDriftForUser(final String user) {
+        return assertThatRegistrationForUser(user)
+                .extracting(Registration::getLastTimestampDrift, InstanceOfAssertFactories.LONG)
+                .as("%s registration's last device time drift in seconds", user);
     }
 
     public static ListAssert<Contact> assertThatContactsToProcess() {

@@ -20,10 +20,12 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners(listeners = {
         JwtKeysManager.class,
+        LogbackManager.class,
         RestAssuredManager.class,
         MongodbManager.class,
         MockServerManager.class,
-        GrpcMockManager.class
+        GrpcMockManager.class,
+        StatisticsManager.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {
