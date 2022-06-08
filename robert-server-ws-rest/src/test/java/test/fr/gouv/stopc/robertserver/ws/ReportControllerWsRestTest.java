@@ -123,83 +123,6 @@ public class ReportControllerWsRestTest {
     }
 
     @Test
-    public void testReportShouldNotAcceptInvalidTokenSizeSmall() {
-        this.reportBatchRequestVo.setToken("1");
-        try {
-            // Given
-            this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
-
-            // When
-            when(this.propertyLoader.getDisableCheckToken()).thenReturn(this.disableCheckToken);
-            ResponseEntity<ApiError> response = this.testRestTemplate
-                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
-
-            // Then
-            assertNotNull(response);
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            assertNotNull(response.getBody());
-            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_DATA.getValue()));
-
-            verify(this.contactDtoService, never()).saveContacts(any());
-        } catch (RobertServerException e) {
-            fail(EXCEPTION_FAIL_MESSAGE);
-        }
-    }
-
-    @Test
-    public void testReportShouldNotAcceptInvalidTokenSizeLarge() {
-        this.reportBatchRequestVo.setToken("23DC4B32-7552-44C1-B98A-DDE5F75B1729" + "1");
-        try {
-            // Given
-            this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
-
-            // When
-            ResponseEntity<ApiError> response = this.testRestTemplate
-                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
-
-            // Then
-            assertNotNull(response);
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            assertNotNull(response.getBody());
-            assertEquals(response.getBody(), buildApiError(MessageConstants.INVALID_DATA.getValue()));
-
-            verify(this.contactDtoService, never()).saveContacts(any());
-        } catch (RobertServerException e) {
-            fail(EXCEPTION_FAIL_MESSAGE);
-        }
-    }
-
-    @Test
-    public void testReportShouldNotAcceptInvalidTokenSizeIntermediate() {
-        this.reportBatchRequestVo.setToken("23DC4B32-7552-44C1-B98A-DDE5F75B172");
-        try {
-            // Given
-            this.requestEntity = new HttpEntity<>(this.reportBatchRequestVo, this.headers);
-
-            // When
-            ResponseEntity<ApiError> response = this.testRestTemplate
-                    .exchange(targetUrl, HttpMethod.POST, this.requestEntity, ApiError.class);
-
-            // Then
-            assertNotNull(response);
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            assertNotNull(response.getBody());
-            assertEquals(
-                    buildApiError(
-                            MessageConstants.INVALID_DATA.getValue() +
-                                    " Unrecognized token length: " +
-                                    this.reportBatchRequestVo.getToken().length()
-                    ),
-                    response.getBody()
-            );
-
-            verify(this.contactDtoService, never()).saveContacts(any());
-        } catch (RobertServerException e) {
-            fail(EXCEPTION_FAIL_MESSAGE);
-        }
-    }
-
-    @Test
     public void should_produce_log_for_short_token_at_info_level() {
         this.reportBatchRequestVo.setToken(SHORT_CODE);
         try {
@@ -221,7 +144,6 @@ public class ReportControllerWsRestTest {
                     buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
             );
 
-            assertThat(logCaptorDelegate.getInfoLogs()).contains("Verifying the token failed for short report code");
             assertThat(logCaptorExceptionHandler.getWarnLogs())
                     .contains(String.format("Unrecognized token of length: %d", SHORT_CODE.length()));
 
@@ -253,7 +175,6 @@ public class ReportControllerWsRestTest {
                     buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
             );
 
-            assertThat(logCaptorDelegate.getInfoLogs()).contains("Verifying the token failed for test report code");
             assertThat(logCaptorExceptionHandler.getWarnLogs())
                     .contains(String.format("Unrecognized token of length: %d", TEST_CODE.length()));
 
@@ -285,7 +206,6 @@ public class ReportControllerWsRestTest {
                     buildApiError("Unrecognized token of length: " + reportBatchRequestVo.getToken().length())
             );
 
-            assertThat(logCaptorDelegate.getWarnLogs()).contains("Verifying the token failed for long report code");
             assertThat(logCaptorExceptionHandler.getWarnLogs())
                     .contains(String.format("Unrecognized token of length: %d", LONG_CODE.length()));
 

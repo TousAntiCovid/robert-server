@@ -1,15 +1,14 @@
 package fr.gouv.stopc.robertserver.ws.vo;
 
-import java.util.List;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
+import javax.validation.constraints.NotNull;
+
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,13 +16,12 @@ import lombok.ToString;
 @Builder
 public class ReportBatchRequestVo {
 
-	@NotNull
-	@Size(min = 6, max = 36)
-	@ToString.Exclude
-	private String token;
+    @NotNull
+    @ToString.Exclude
+    private String token;
 
-	private List<ContactVo> contacts;
+    private List<ContactVo> contacts;
 
-	private String contactsAsBinary;
+    private String contactsAsBinary;
 
 }
