@@ -12,12 +12,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static java.lang.String.format;
 import static java.time.Duration.ZERO;
 import static java.time.Instant.now;
+import static java.time.ZoneOffset.UTC;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.stream.Collectors.joining;
@@ -89,5 +91,9 @@ public class PlatformTimeSteps {
             return reader.lines()
                     .collect(joining());
         }
+    }
+
+    public LocalDate getPlatformDate() {
+        return LocalDate.ofInstant(platformTime, UTC);
     }
 }
