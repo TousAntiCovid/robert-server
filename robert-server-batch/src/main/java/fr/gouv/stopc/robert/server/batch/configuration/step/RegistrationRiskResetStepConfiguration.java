@@ -1,8 +1,9 @@
-package fr.gouv.stopc.robert.server.batch.configuration;
+package fr.gouv.stopc.robert.server.batch.configuration.step;
 
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.configuration.StepConfigurationBase;
+import fr.gouv.stopc.robert.server.batch.enums.StepNameEnum;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationRiskLevelResetProcessor;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.utils.StepNameUtils;
 import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
@@ -42,9 +43,9 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
 
     @Bean
     public Step registrationRiskResetStep(Step registrationRiskResetWorkerStep) {
-        return this.stepBuilderFactory.get(StepNameUtils.REGISTRATION_RISK_RESET_STEP_NAME)
+        return this.stepBuilderFactory.get(StepNameEnum.REGISTRATION_RISK_RESET_STEP_NAME)
                 .listener(this.registrationRiskResetStepListener())
-                .partitioner(StepNameUtils.REGISTRATION_RISK_RESET_PARTITIONER_STEP_NAME, this.partitioner())
+                .partitioner(StepNameEnum.REGISTRATION_RISK_RESET_PARTITIONER_STEP_NAME, this.partitioner())
                 .partitionHandler(this.partitionHandler(registrationRiskResetWorkerStep, this.asyncTaskExecutor()))
                 .build();
     }
@@ -53,7 +54,7 @@ public class RegistrationRiskResetStepConfiguration extends StepConfigurationBas
     public Step registrationRiskResetWorkerStep(MongoItemReader<Registration> mongoRegistrationItemReader,
             ItemProcessor<Registration, Registration> registrationRiskResetProcessor,
             ItemWriter<Registration> registrationItemWriterForRiskReset) {
-        return this.stepBuilderFactory.get(StepNameUtils.REGISTRATION_RISK_RESET_WORKER_STEP_NAME)
+        return this.stepBuilderFactory.get(StepNameEnum.REGISTRATION_RISK_RESET_WORKER_STEP_NAME)
                 .<Registration, Registration>chunk(CHUNK_SIZE)
                 .reader(mongoRegistrationItemReader)
                 .processor(registrationRiskResetProcessor)

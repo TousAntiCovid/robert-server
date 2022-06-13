@@ -1,25 +1,12 @@
 package fr.gouv.stopc.robert.server.batch.scoring;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.configuration.ScoringAlgorithmConfiguration;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyV2ServiceImpl;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
@@ -31,11 +18,24 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 public class ScoringAlgorithmV2Test {
 
-    //class under test
+    // class under test
     @InjectMocks
     private ScoringStrategyV2ServiceImpl serviceScoring;
 
@@ -53,7 +53,8 @@ public class ScoringAlgorithmV2Test {
 
         when(serverConfigurationService.getEpochDurationSecs()).thenReturn(900);
 
-        when(scoringAlgorithmConfiguration.getDeltas()).thenReturn(new String[]{"39.0", "27.0", "23.0", "21.0", "20.0", "15.0"});
+        when(scoringAlgorithmConfiguration.getDeltas())
+                .thenReturn(new String[] { "39.0", "27.0", "23.0", "21.0", "20.0", "15.0" });
         when(scoringAlgorithmConfiguration.getRssiMax()).thenReturn(-35);
         when(scoringAlgorithmConfiguration.getP0()).thenReturn(-66.0);
         when(scoringAlgorithmConfiguration.getSoftMaxA()).thenReturn(4.342);
@@ -63,7 +64,6 @@ public class ScoringAlgorithmV2Test {
         when(propertyLoader.getR0ScoringAlgorithm()).thenReturn(0.0071);
 
     }
-
 
     @Test
     public void test_C4_20_A() {
@@ -130,7 +130,7 @@ public class ScoringAlgorithmV2Test {
         expectedOutput.add(ScoringResult.builder().rssiScore(1.0).duration(8).nbContacts(9).build());
 
         for (ScoringResult scoringResult : expectedOutput) {
-            double rssiScore= scoringResult.getRssiScore() * scoringResult.getDuration();
+            double rssiScore = scoringResult.getRssiScore() * scoringResult.getDuration();
             log.info("rssi score: {}", rssiScore);
             scoringResult.setRssiScore(rssiScore);
         }
@@ -141,7 +141,8 @@ public class ScoringAlgorithmV2Test {
     private List<Contact> retrieveContacts(String dir) throws URISyntaxException, IOException, CsvException {
         List<Contact> contacts = new ArrayList<>();
         File[] files = new File(getClass().getClassLoader().getResource(dir).toURI()).listFiles();
-        List<File> sortedFiles2 = Arrays.asList(files).stream().sorted(Comparator.comparing(File::getName)).collect(Collectors.toList());
+        List<File> sortedFiles2 = Arrays.asList(files).stream().sorted(Comparator.comparing(File::getName))
+                .collect(Collectors.toList());
         for (File input : sortedFiles2) {
             // Read the current file corresponding to a contact
             CSVReader reader = new CSVReader(new FileReader(input));
@@ -150,9 +151,11 @@ public class ScoringAlgorithmV2Test {
             List<String[]> lines = reader.readAll();
             // Each line is a HelloMessageDetail
             List<HelloMessageDetail> hellos = lines.stream()
-                    .map(line -> HelloMessageDetail.builder().timeCollectedOnDevice(Long.parseLong(line[1].trim()))
-                            .timeFromHelloMessage(Integer.parseInt(line[2].trim()))
-                            .rssiCalibrated(Integer.parseInt(line[3].trim())).build())
+                    .map(
+                            line -> HelloMessageDetail.builder().timeCollectedOnDevice(Long.parseLong(line[1].trim()))
+                                    .timeFromHelloMessage(Integer.parseInt(line[2].trim()))
+                                    .rssiCalibrated(Integer.parseInt(line[3].trim())).build()
+                    )
                     .collect(Collectors.toList());
             // Add the contact
             contacts.add(Contact.builder().messageDetails(hellos).build());
@@ -246,8 +249,8 @@ public class ScoringAlgorithmV2Test {
     }
 
     private void launchTestsOnDirectoryAndExpectOutput(String directory,
-                                                       List<ScoringResult> expectedOutput,
-                                                       double expectedFinalRisk) {
+            List<ScoringResult> expectedOutput,
+            double expectedFinalRisk) {
         log.info("Launching test on directory {}", directory);
 
         try {
@@ -261,17 +264,23 @@ public class ScoringAlgorithmV2Test {
             }).collect(Collectors.toList());
 
             for (int i = 0; i < risks.size(); i++) {
-                if (! risks.get(i).equals(expectedOutput.get(i))) {
-                    log.error("Values at index [{}] differ; expected={}; found={}", i, expectedOutput.get(i), risks.get(i));
+                if (!risks.get(i).equals(expectedOutput.get(i))) {
+                    log.error(
+                            "Values at index [{}] differ; expected={}; found={}", i, expectedOutput.get(i), risks.get(i)
+                    );
                 }
             }
 
             assertTrue(Arrays.equals(expectedOutput.toArray(), risks.toArray()));
-            assertEquals(expectedFinalRisk,
-                    this.serviceScoring.aggregate(risks
-                            .stream()
-                            .map(a -> a.getRssiScore())
-                            .collect(Collectors.toList())));
+            assertEquals(
+                    expectedFinalRisk,
+                    this.serviceScoring.aggregate(
+                            risks
+                                    .stream()
+                                    .map(a -> a.getRssiScore())
+                                    .collect(Collectors.toList())
+                    )
+            );
         } catch (URISyntaxException | IllegalStateException | IOException | CsvException e) {
             fail(e);
         }

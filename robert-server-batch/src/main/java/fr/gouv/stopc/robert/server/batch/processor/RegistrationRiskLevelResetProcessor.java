@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.RequiredArgsConstructor;

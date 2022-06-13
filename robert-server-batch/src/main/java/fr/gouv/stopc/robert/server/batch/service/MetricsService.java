@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robert.server.batch.utils;
+package fr.gouv.stopc.robert.server.batch.service;
 
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import io.micrometer.core.instrument.DistributionSummary;

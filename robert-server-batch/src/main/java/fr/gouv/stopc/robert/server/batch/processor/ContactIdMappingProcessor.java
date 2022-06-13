@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
-import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
-import fr.gouv.stopc.robert.server.batch.utils.MetricsService;
+import fr.gouv.stopc.robert.server.batch.model.ItemProcessingCounterUtils;
+import fr.gouv.stopc.robert.server.batch.service.MetricsService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import lombok.RequiredArgsConstructor;

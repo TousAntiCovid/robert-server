@@ -1,10 +1,10 @@
 package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.service.RobertClock.RobertInstant;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;

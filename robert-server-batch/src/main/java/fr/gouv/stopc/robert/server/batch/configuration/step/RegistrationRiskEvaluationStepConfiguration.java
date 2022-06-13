@@ -1,7 +1,17 @@
-package fr.gouv.stopc.robert.server.batch.configuration;
+package fr.gouv.stopc.robert.server.batch.configuration.step;
 
-import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.*;
-
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.configuration.StepConfigurationBase;
+import fr.gouv.stopc.robert.server.batch.configuration.job.RiskEvaluationJobConfiguration;
+import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
+import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
+import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
+import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
@@ -13,31 +23,23 @@ import org.springframework.batch.item.data.MongoItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import fr.gouv.stopc.robert.server.batch.processor.RiskEvaluationProcessor;
-import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
-import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.writer.RegistrationItemWriter;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
-import lombok.extern.slf4j.Slf4j;
+import static fr.gouv.stopc.robert.server.batch.enums.StepNameEnum.*;
 
 @Slf4j
 @Configuration
 public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurationBase {
 
     private final IRegistrationService registrationService;
+
     private final BatchRegistrationService batchRegistrationService;
 
     public RegistrationRiskEvaluationStepConfiguration(PropertyLoader propertyLoader,
-                                                       StepBuilderFactory stepBuilderFactory,
-                                                       IServerConfigurationService serverConfigurationService,
-                                                       ScoringStrategyService scoringStrategyService,
-                                                       IRegistrationService registrationService,
-                                                       BatchRegistrationService batchRegistrationService,
-                                                       ItemIdMappingService itemIdMappingService) {
+            StepBuilderFactory stepBuilderFactory,
+            IServerConfigurationService serverConfigurationService,
+            ScoringStrategyService scoringStrategyService,
+            IRegistrationService registrationService,
+            BatchRegistrationService batchRegistrationService,
+            ItemIdMappingService itemIdMappingService) {
         super(propertyLoader, stepBuilderFactory, serverConfigurationService, itemIdMappingService);
         this.registrationService = registrationService;
         this.batchRegistrationService = batchRegistrationService;
@@ -70,22 +72,27 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
         return new RiskEvaluationProcessor(
                 this.serverConfigurationService,
                 this.propertyLoader,
-                this.batchRegistrationService);
+                this.batchRegistrationService
+        );
     }
-    
+
     @Bean
     public ItemWriter<Registration> registrationItemWriter() {
-        return new RegistrationItemWriter(this.registrationService, RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY);
+        return new RegistrationItemWriter(
+                this.registrationService, RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY
+        );
     }
-    
+
     public StepExecutionListener riskEvaluationStepListener() {
         return new StepExecutionListener() {
+
             @Override
             public void beforeStep(StepExecution stepExecution) {
                 log.info("START : Risk Evaluation");
 
                 long totalItemCount = registrationService.count().longValue();
-                stepExecution.getJobExecution().getExecutionContext().putLong(RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY, totalItemCount);
+                stepExecution.getJobExecution().getExecutionContext()
+                        .putLong(RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY, totalItemCount);
             }
 
             @Override
@@ -95,5 +102,5 @@ public class RegistrationRiskEvaluationStepConfiguration extends StepConfigurati
             }
         };
     }
-    
+
 }

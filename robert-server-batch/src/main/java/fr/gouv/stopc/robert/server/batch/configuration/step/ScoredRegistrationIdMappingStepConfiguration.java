@@ -1,8 +1,9 @@
-package fr.gouv.stopc.robert.server.batch.configuration;
+package fr.gouv.stopc.robert.server.batch.configuration.step;
 
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.configuration.StepConfigurationBase;
 import fr.gouv.stopc.robert.server.batch.listener.ResetIdMappingTableListener;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationIdMappingProcessor;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.POPULATE_REGISTRATION_WITH_SCORE_STEP_NAME;
+import static fr.gouv.stopc.robert.server.batch.enums.StepNameEnum.POPULATE_REGISTRATION_WITH_SCORE_STEP_NAME;
 
 @Configuration
 public class ScoredRegistrationIdMappingStepConfiguration extends StepConfigurationBase {

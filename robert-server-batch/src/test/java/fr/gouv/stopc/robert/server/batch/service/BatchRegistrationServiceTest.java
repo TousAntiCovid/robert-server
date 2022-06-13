@@ -2,8 +2,8 @@ package fr.gouv.stopc.robert.server.batch.service;
 
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties.RiskThreshold;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;

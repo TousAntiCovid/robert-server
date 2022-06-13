@@ -1,11 +1,11 @@
-package fr.gouv.stopc.robert.server.batch.utils;
-
-import java.util.Map;
+package fr.gouv.stopc.robert.server.batch.reader;
 
 import org.springframework.batch.item.data.MongoItemReader;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+
+import java.util.Map;
 
 public class MongoItemReaderFactory<T> {
 
@@ -16,8 +16,8 @@ public class MongoItemReaderFactory<T> {
     }
 
     public MongoItemReader<T> getMongoItemReader(MongoTemplate mongoTemplate,
-                                                   Query query,
-                                                   int pageSize){
+            Query query,
+            int pageSize) {
         MongoItemReader<T> reader = new MongoItemReader<>();
         reader.setTemplate(mongoTemplate);
         reader.setTargetType(type);
@@ -28,9 +28,9 @@ public class MongoItemReaderFactory<T> {
     }
 
     public MongoItemReader<T> getMongoItemReader(MongoTemplate mongoTemplate,
-                                                   String queryAsString,
-                                                   Map<String, Sort.Direction> sorts,
-                                                   int pageSize){
+            String queryAsString,
+            Map<String, Sort.Direction> sorts,
+            int pageSize) {
         MongoItemReader<T> reader = new MongoItemReader<>();
         reader.setTemplate(mongoTemplate);
         reader.setTargetType(type);

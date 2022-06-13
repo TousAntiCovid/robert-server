@@ -1,20 +1,19 @@
 package fr.gouv.stopc.robert.server.batch.writer;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-
+import fr.gouv.stopc.robert.server.batch.configuration.job.ScoringAndRiskEvaluationJobConfiguration;
+import fr.gouv.stopc.robert.server.batch.model.ItemProcessingCounterUtils;
+import fr.gouv.stopc.robertserver.database.model.Contact;
+import fr.gouv.stopc.robertserver.database.service.ContactService;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
 
-import fr.gouv.stopc.robert.server.batch.configuration.ScoringAndRiskEvaluationJobConfiguration;
-import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
-import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.database.service.ContactService;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @AllArgsConstructor
@@ -24,7 +23,7 @@ public class ContactItemWriter implements ItemWriter<Contact> {
 
     private Long totalContactCount;
 
-    public ContactItemWriter(ContactService contactService){
+    public ContactItemWriter(ContactService contactService) {
         this.contactService = contactService;
     }
 
@@ -34,7 +33,7 @@ public class ContactItemWriter implements ItemWriter<Contact> {
         if (!CollectionUtils.isEmpty(items)) {
             log.info("== Start the delete of contact list ==");
 
-            deleteContactList((List<Contact>)items);
+            deleteContactList((List<Contact>) items);
 
             log.info("== End of the delete of contact list ==");
         } else {
@@ -47,7 +46,7 @@ public class ContactItemWriter implements ItemWriter<Contact> {
      *
      * @param contactList
      */
-    private void deleteContactList(List<Contact> contactList){
+    private void deleteContactList(List<Contact> contactList) {
         Instant startTime = Instant.now();
 
         log.info("{} Contact(s) to remove.", contactList.size());
@@ -58,14 +57,17 @@ public class ContactItemWriter implements ItemWriter<Contact> {
                 .addNumberOfProcessedContacts(contactList.size());
 
         log.info("Execution duration of the update/delete of data : {} second(s).", timeElapsed);
-        log.info("Total number of processed contacts/Total contact count : {}/{}", processedContactCount, totalContactCount);
+        log.info(
+                "Total number of processed contacts/Total contact count : {}/{}", processedContactCount,
+                totalContactCount
+        );
     }
 
     @BeforeStep
     public void beforeStep(StepExecution stepExecution) {
 
-            totalContactCount = stepExecution.getJobExecution().getExecutionContext().
-                    getLong(ScoringAndRiskEvaluationJobConfiguration.TOTAL_CONTACT_COUNT_KEY);
+        totalContactCount = stepExecution.getJobExecution().getExecutionContext()
+                .getLong(ScoringAndRiskEvaluationJobConfiguration.TOTAL_CONTACT_COUNT_KEY);
 
     }
 }
