@@ -43,11 +43,6 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
         }
     }
 
-    /**
-     * Update Registrations
-     *
-     * @param registrationList
-     */
     private void updateRegistrationList(List<Registration> registrationList) {
         Instant startTime = Instant.now();
 

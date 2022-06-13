@@ -36,7 +36,6 @@ public class RangePartitioner implements Partitioner {
                 from = 0;
                 to = 0;
             }
-            ;
             ExecutionContext value = new ExecutionContext();
             value.putLong(START_KEY, from);
             value.putLong(END_KEY, to);

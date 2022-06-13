@@ -41,11 +41,6 @@ public class ContactItemWriter implements ItemWriter<Contact> {
         }
     }
 
-    /**
-     * Delete Contacts
-     *
-     * @param contactList
-     */
     private void deleteContactList(List<Contact> contactList) {
         Instant startTime = Instant.now();
 
