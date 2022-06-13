@@ -35,12 +35,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { RobertServerBatchApplication.class })
-@TestPropertySource(locations = "classpath:application.properties", properties = {
+@TestPropertySource(locations = "classpath:application-legacy.properties", properties = {
         "robert.scoring.algo-version=2",
         "robert.scoring.batch-mode=FULL_REGISTRATION_SCAN_COMPUTE_RISK",
         "robert.server.time-start=20210101"
 })
-public class RiskEvaluationProcessorTest {
+class RiskEvaluationProcessorTest {
 
     private RiskEvaluationProcessor riskEvaluationProcessor;
 
@@ -91,12 +91,12 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testShouldReturnNullIfProvidedRegistrationIsNull() {
+    void testShouldReturnNullIfProvidedRegistrationIsNull() {
         assertThat(riskEvaluationProcessor.process(null)).isNull();
     }
 
     @Test
-    public void testWhenNoScoreThenNoRiskDetected() {
+    void testWhenNoScoreThenNoRiskDetected() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertThat(this.registration).isPresent();
 
@@ -106,7 +106,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testWhenScoresNotAtRiskThenNoRiskDetected() {
+    void testWhenScoresNotAtRiskThenNoRiskDetected() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         ArrayList<EpochExposition> expositions = this.expositions(new Double[] { 1.0 }, new Double[] { 12.5 });
@@ -117,13 +117,13 @@ public class RiskEvaluationProcessorTest {
 
         this.assertThatNoRiskDetected(returnedRegistration);
         assertThat(this.registration.get().isAtRisk()).isFalse();
-        assertThat(this.registration.get().getLastContactTimestamp()).isEqualTo(0);
-        assertThat(this.registration.get().getLatestRiskEpoch()).isEqualTo(0);
+        assertThat(this.registration.get().getLastContactTimestamp()).isZero();
+        assertThat(this.registration.get().getLatestRiskEpoch()).isZero();
         assertThatRegistrationHasExactExpositions(this.registration.get(), expositions);
     }
 
     @Test
-    public void testWhenScoresAtRiskThenRiskDetected() {
+    void testWhenScoresAtRiskThenRiskDetected() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         ArrayList<EpochExposition> expositions = this.expositions(new Double[] { 1.0 }, new Double[] { 14.5 });
@@ -133,6 +133,7 @@ public class RiskEvaluationProcessorTest {
         Registration returnedRegistration = this.riskEvaluationProcessor.process(this.registration.get());
 
         this.assertThatRiskDetected(returnedRegistration);
+        assertThat(returnedRegistration).isNotNull();
         assertThat(returnedRegistration.getLatestRiskEpoch()).isEqualTo(this.currentEpoch);
         assertThat(returnedRegistration.getLastContactTimestamp())
                 .isCloseTo(expectedLastContactDate, Offset.offset(expectedLastContactDateOffet));
@@ -140,7 +141,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testWhenManyExpositionsGivingScoreAtRiskThenGetLastAtRiskExpositionDate() {
+    void testWhenManyExpositionsGivingScoreAtRiskThenGetLastAtRiskExpositionDate() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         ArrayList<EpochExposition> expositions = new ArrayList<>();
@@ -199,7 +200,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testWhenScoresAtRiskForASingleEpochThenRiskDetected() {
+    void testWhenScoresAtRiskForASingleEpochThenRiskDetected() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
@@ -217,7 +218,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testWhenNotifiedIsTrueAndRiskDetectedThenNotifiedRemainsTrue() {
+    void testWhenNotifiedIsTrueAndRiskDetectedThenNotifiedRemainsTrue() {
         ArrayList<EpochExposition> expositions = this.expositionsAtRisk();
         this.setNewRegistration(true, expositions);
 
@@ -232,7 +233,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testWhenNotifiedIsTrueAndRiskNotDetectedThenNotifiedRemainsTrue() {
+    void testWhenNotifiedIsTrueAndRiskNotDetectedThenNotifiedRemainsTrue() {
         ArrayList<EpochExposition> expositions = this.expositionsNotAtRisk();
         this.setNewRegistration(true, expositions);
 
@@ -241,13 +242,13 @@ public class RiskEvaluationProcessorTest {
         this.assertThatNoRiskDetected(returnedRegistration);
         assertThat(this.registration.get().isAtRisk()).isFalse();
         assertThat(this.registration.get().isNotified()).isTrue();
-        assertThat(this.registration.get().getLatestRiskEpoch()).isEqualTo(0);
-        assertThat(this.registration.get().getLastContactTimestamp()).isEqualTo(0);
+        assertThat(this.registration.get().getLatestRiskEpoch()).isZero();
+        assertThat(this.registration.get().getLastContactTimestamp()).isZero();
         assertThatRegistrationHasExactExpositions(this.registration.get(), expositions);
     }
 
     @Test
-    public void testWhenNotifiedIsFalseAndRiskDetectedThenNotifiedRemainsFalse() {
+    void testWhenNotifiedIsFalseAndRiskDetectedThenNotifiedRemainsFalse() {
         ArrayList<EpochExposition> expositions = this.expositionsAtRisk();
         this.setNewRegistration(false, expositions);
 
@@ -262,7 +263,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testWhenNotifiedIsFalseAndRiskNotDetectedThenNotifiedRemainsFalse() {
+    void testWhenNotifiedIsFalseAndRiskNotDetectedThenNotifiedRemainsFalse() {
         ArrayList<EpochExposition> expositions = this.expositionsNotAtRisk();
         this.setNewRegistration(false, expositions);
 
@@ -277,7 +278,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testWhenAlreadyAtRiskAndNewContactAtRiskWithDateGreaterThanCurrentLastContactDateThenLastContactDateIsUpdated() {
+    void testWhenAlreadyAtRiskAndNewContactAtRiskWithDateGreaterThanCurrentLastContactDateThenLastContactDateIsUpdated() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         this.registration.get().setAtRisk(true);
@@ -293,7 +294,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testWhenAlreadyAtRiskAndNewContactAtRiskWithDateLessThanCurrentLastContactDateThenLastContactDateIsNotUpdated() {
+    void testWhenAlreadyAtRiskAndNewContactAtRiskWithDateLessThanCurrentLastContactDateThenLastContactDateIsNotUpdated() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         this.registration.get().setAtRisk(true);
@@ -311,7 +312,7 @@ public class RiskEvaluationProcessorTest {
     }
 
     @Test
-    public void testShouldNotReturnALastContactDateInTheFutureWhenAtRisk() {
+    void testShouldNotReturnALastContactDateInTheFutureWhenAtRisk() {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
         ArrayList<EpochExposition> expositions = new ArrayList<>();

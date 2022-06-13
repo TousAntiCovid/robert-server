@@ -1,26 +1,20 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.IntegrationLegacyTest;
 import fr.gouv.stopc.robert.server.batch.service.MetricsService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.security.SecureRandom;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { RobertServerBatchApplication.class })
-@TestPropertySource(locations = "classpath:application.properties", properties = "robert.scoring.algo-version=0")
-public class ItemIdProcessorTest {
+@IntegrationLegacyTest
+class ItemIdProcessorTest {
 
     private ContactIdMappingProcessor contactIdMappingProcessor;
 
@@ -36,7 +30,7 @@ public class ItemIdProcessorTest {
     }
 
     @Test
-    public void testBuilContactEntryForIdMapping() {
+    void testBuilContactEntryForIdMapping() {
         // Given
         final var contact1 = Contact.builder().id("a971").build();
         final var contact2 = Contact.builder().id("a972").build();
@@ -58,7 +52,7 @@ public class ItemIdProcessorTest {
     }
 
     @Test
-    public void testBuilRegistrationEntryForIdMapping() {
+    void testBuilRegistrationEntryForIdMapping() {
         // Given
         final var sr = new SecureRandom();
         byte[] rndBytes1 = new byte[5];

@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class ScoringAlgorithmV2Test {
+class ScoringAlgorithmV2Test {
 
     // class under test
     @InjectMocks
@@ -66,7 +66,7 @@ public class ScoringAlgorithmV2Test {
     }
 
     @Test
-    public void test_C4_20_A() {
+    void test_C4_20_A() {
         String directory = "input_v2/C4_20_A";
 
         List<ScoringResult> expectedOutput = new ArrayList<>();
@@ -166,7 +166,7 @@ public class ScoringAlgorithmV2Test {
     }
 
     @Test
-    public void test_R1_AA() {
+    void test_R1_AA() {
         String directory = "input_v2/R1_AA";
 
         List<ScoringResult> expectedOutput = new ArrayList<>();

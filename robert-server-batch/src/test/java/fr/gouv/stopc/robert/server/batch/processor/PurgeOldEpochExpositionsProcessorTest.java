@@ -25,7 +25,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PurgeOldEpochExpositionsProcessorTest {
+class PurgeOldEpochExpositionsProcessorTest {
 
     @InjectMocks
     private PurgeOldEpochExpositionsProcessor purgeOldEpochExpositionsProcessor;
@@ -40,7 +40,7 @@ public class PurgeOldEpochExpositionsProcessorTest {
     private PropertyLoader propertyLoader;
 
     @Test
-    public void shouldReturnAnEmptyExposedEpochListInCaseProvidedExposedEpochsIsEmpty() {
+    void shouldReturnAnEmptyExposedEpochListInCaseProvidedExposedEpochsIsEmpty() {
         // Given
         Registration registration = Registration.builder().permanentIdentifier(ProcessorTestUtils.generateIdA())
                 .build();
@@ -49,12 +49,13 @@ public class PurgeOldEpochExpositionsProcessorTest {
         Registration returnedRegistration = this.purgeOldEpochExpositionsProcessor.process(registration);
 
         // Then
+        assertNotNull(returnedRegistration);
         assertNotNull(returnedRegistration.getExposedEpochs());
         assertTrue(returnedRegistration.getExposedEpochs().isEmpty());
     }
 
     @Test
-    public void shouldReturnAnEmptyExposedEpochListInCaseProvidedExposedEpochsIsNull() {
+    void shouldReturnAnEmptyExposedEpochListInCaseProvidedExposedEpochsIsNull() {
         // Given
         Registration registration = Registration.builder().permanentIdentifier(ProcessorTestUtils.generateIdA())
                 .build();
@@ -64,12 +65,13 @@ public class PurgeOldEpochExpositionsProcessorTest {
         Registration returnedRegistration = this.purgeOldEpochExpositionsProcessor.process(registration);
 
         // Then
+        assertNotNull(returnedRegistration);
         assertNotNull(returnedRegistration.getExposedEpochs());
         assertTrue(returnedRegistration.getExposedEpochs().isEmpty());
     }
 
     @Test
-    public void shouldReturnTheFilteredExposedEpochs() {
+    void shouldReturnTheFilteredExposedEpochs() {
         // Given
         Registration registration = Registration.builder().permanentIdentifier(ProcessorTestUtils.generateIdA())
                 .build();
@@ -104,7 +106,8 @@ public class PurgeOldEpochExpositionsProcessorTest {
         Registration returnedRegistration = this.purgeOldEpochExpositionsProcessor.process(registration);
 
         // Then
+        assertNotNull(returnedRegistration);
         assertNotNull(returnedRegistration.getExposedEpochs());
-        assertThat(returnedRegistration.getExposedEpochs().size()).isEqualTo(1);
+        assertThat(returnedRegistration.getExposedEpochs()).hasSize(1);
     }
 }

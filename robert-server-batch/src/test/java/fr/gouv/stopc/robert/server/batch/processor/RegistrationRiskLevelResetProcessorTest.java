@@ -33,7 +33,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @MockitoSettings(strictness = LENIENT)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class RegistrationRiskLevelResetProcessorTest {
+class RegistrationRiskLevelResetProcessorTest {
 
     @Mock
     private PropertyLoader propertyLoader;
@@ -60,7 +60,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     }
 
     @Test
-    public void testRegistrationShouldNotBeUpdatedWhenNotAtRiskAndNotNotified() throws Exception {
+    void testRegistrationShouldNotBeUpdatedWhenNotAtRiskAndNotNotified() throws Exception {
         // Given
         Registration registration = Registration.builder().atRisk(false).isNotified(false).build();
         // When
@@ -70,7 +70,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     }
 
     @Test
-    public void testRiskLevelShouldNotBeResetWhenNotAtRiskAndNotified() throws Exception {
+    void testRiskLevelShouldNotBeResetWhenNotAtRiskAndNotified() throws Exception {
         // Given
         Registration registration = Registration.builder().atRisk(false).isNotified(true).build();
         // When
@@ -80,7 +80,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     }
 
     @Test
-    public void risk_level_should_not_be_reset_when_at_risk_and_notified_but_last_contact_date_is_under_7_days_ago()
+    void risk_level_should_not_be_reset_when_at_risk_and_notified_but_last_contact_date_is_under_7_days_ago()
             throws Exception {
 
         // Given
@@ -102,11 +102,11 @@ public class RegistrationRiskLevelResetProcessorTest {
         Registration processedRegistration = this.processor.process(registration);
         // Then
         assertThat(processedRegistration).isNull();
-        assertThat(batchStatisticsRepository.count()).isEqualTo(0L);
+        assertThat(batchStatisticsRepository.count()).isZero();
     }
 
     @Test
-    public void risk_level_should_be_reset_when_at_risk_and_notified_and_last_contact_date_is_above_7_days_ago()
+    void risk_level_should_be_reset_when_at_risk_and_notified_and_last_contact_date_is_above_7_days_ago()
             throws Exception {
 
         // Given
@@ -134,7 +134,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     }
 
     @Test
-    public void testRiskLevelShouldBeResetWhenAtRiskAndNotNotifiedAndEpochMinimunIsReached() throws Exception {
+    void testRiskLevelShouldBeResetWhenAtRiskAndNotNotifiedAndEpochMinimunIsReached() throws Exception {
         // Given
         this.setUpLogHandler();
         Registration registration = Registration.builder().atRisk(true).isNotified(false).latestRiskEpoch(4808).build();
@@ -149,7 +149,7 @@ public class RegistrationRiskLevelResetProcessorTest {
     }
 
     protected void assertUserAtRiskButNotNotifiedIsLogged() {
-        assertThat(this.processorLoggerAppender.list.size()).isEqualTo(1);
+        assertThat(this.processorLoggerAppender.list).hasSize(1);
         ILoggingEvent log = this.processorLoggerAppender.list.get(0);
         assertThat(log.getMessage()).contains("Resetting risk level of a user never notified!");
         assertThat(log.getLevel()).isEqualTo(Level.INFO);

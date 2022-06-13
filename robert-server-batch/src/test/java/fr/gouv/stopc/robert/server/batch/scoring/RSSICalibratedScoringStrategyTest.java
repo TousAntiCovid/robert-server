@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.scoring;
 
+import fr.gouv.stopc.robert.server.batch.IntegrationLegacyTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyServiceImpl;
@@ -10,12 +11,9 @@ import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -31,9 +29,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@ExtendWith(SpringExtension.class)
-@TestPropertySource(value = "classpath:application.properties", properties = "robert.scoring.algo-version=0")
-public class RSSICalibratedScoringStrategyTest {
+@IntegrationLegacyTest
+class RSSICalibratedScoringStrategyTest {
 
     private final static String FAIL_EXCEPTION = "Should not fail";
 
@@ -67,7 +64,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testDateDiff() {
+    void testDateDiff() {
         final LocalDateTime ldt = LocalDateTime.of(2020, 6, 1, 00, 00);
         final ZonedDateTime zdt = ldt.atZone(ZoneId.of("Europe/Paris"));
         log.info("{}", TimeUtils.convertUnixMillistoNtpSeconds(zdt.toInstant().toEpochMilli()));
@@ -78,7 +75,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRisk1minEncounterNotAtRisk() {
+    void testScoreRisk1minEncounterNotAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder().timeCollectedOnDevice(this.randomReferenceEpochStartTime + 178L)
@@ -114,7 +111,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRisk10minEncounterAtRisk() {
+    void testScoreRisk10minEncounterAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder().timeCollectedOnDevice(this.randomReferenceEpochStartTime + 178L)
@@ -190,7 +187,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRisk5secEncounterNotAtRisk() {
+    void testScoreRisk5secEncounterNotAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder().timeCollectedOnDevice(this.randomReferenceEpochStartTime + 178L)
@@ -216,7 +213,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRiskSpottyEncounterAtRisk() {
+    void testScoreRiskSpottyEncounterAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder().timeCollectedOnDevice(this.randomReferenceEpochStartTime + 15L)
@@ -252,7 +249,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRiskOneEarlyOneLateNotAtRisk() {
+    void testScoreRiskOneEarlyOneLateNotAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder().timeCollectedOnDevice(this.randomReferenceEpochStartTime + 5L)
@@ -279,7 +276,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRiskOneMessageEarlyNotAtRisk() {
+    void testScoreRiskOneMessageEarlyNotAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder().timeCollectedOnDevice(this.randomReferenceEpochStartTime + 5L)
@@ -300,7 +297,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRiskOneMessageLateNotAtRisk() {
+    void testScoreRiskOneMessageLateNotAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder()
@@ -322,7 +319,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRiskOneMessageJustAfterHalfNotAtRisk() {
+    void testScoreRiskOneMessageJustAfterHalfNotAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder()
@@ -344,7 +341,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRiskOneMessageJustBeforeHalfNotAtRisk() {
+    void testScoreRiskOneMessageJustBeforeHalfNotAtRisk() {
         List<HelloMessageDetail> messages = new ArrayList<>();
         messages.add(
                 HelloMessageDetail.builder()
@@ -366,7 +363,7 @@ public class RSSICalibratedScoringStrategyTest {
     }
 
     @Test
-    public void testScoreRiskNoMessagesFail() {
+    void testScoreRiskNoMessagesFail() {
         Contact contact = Contact.builder().messageDetails(new ArrayList<>()).build();
 
         RobertScoringException thrown = assertThrows(
