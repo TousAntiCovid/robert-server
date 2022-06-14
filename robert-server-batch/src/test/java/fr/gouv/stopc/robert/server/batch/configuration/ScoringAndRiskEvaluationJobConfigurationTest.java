@@ -5,9 +5,9 @@ import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcC
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.configuration.job.ScoringAndRiskEvaluationJobConfiguration;
 import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
@@ -61,7 +61,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { ScoringAndRiskEvaluationJobConfigurationTest.BatchTestConfig.class,
         RobertServerBatchApplication.class })
-@TestPropertySource(locations = "classpath:application.properties", properties = { "robert.scoring.algo-version=2",
+@TestPropertySource(locations = "classpath:application-legacy.properties", properties = {
+        "robert.scoring.algo-version=2",
         "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK" })
 public class ScoringAndRiskEvaluationJobConfigurationTest {
 
@@ -110,7 +111,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testScoreAndProcessRisksWithABadEncryptedCountryCodeShouldNotUpdateRegistration() throws Exception {
+    void testScoreAndProcessRisksWithABadEncryptedCountryCodeShouldNotUpdateRegistration() throws Exception {
 
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -162,7 +163,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testScoreAndProcessRisksWhenRegistrationDoesNotExist() throws Exception {
+    void testScoreAndProcessRisksWhenRegistrationDoesNotExist() throws Exception {
 
         // Given
 
@@ -228,7 +229,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testScoreAndProcessRisksWhenContactIsValid() throws Exception {
+    void testScoreAndProcessRisksWhenContactIsValid() throws Exception {
 
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -301,7 +302,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testScoreAndProcessRisksWhenTheRegistrationHasTooOldExposedEpochsShouldRemoveTooOldExposedEpochs()
+    void testScoreAndProcessRisksWhenTheRegistrationHasTooOldExposedEpochsShouldRemoveTooOldExposedEpochs()
             throws Exception {
 
         // Given
@@ -373,7 +374,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testScoreAndProcessRiskskWhenScoresEqualsZeroldShouldNotBeAtRisk() throws Exception {
+    void testScoreAndProcessRiskskWhenScoresEqualsZeroldShouldNotBeAtRisk() throws Exception {
 
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -419,7 +420,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testScoreAndProcessRisksWhenRecentExposedEpochScoreGreaterThanRiskThresholdShouldBeAtRisk()
+    void testScoreAndProcessRisksWhenRecentExposedEpochScoreGreaterThanRiskThresholdShouldBeAtRisk()
             throws Exception {
 
         // Given
@@ -466,7 +467,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testScoreAndProcessRisksWhenEpochScoresLessThanRiskThresholdShouldNotBeAtRisk() throws Exception {
+    void testScoreAndProcessRisksWhenEpochScoresLessThanRiskThresholdShouldNotBeAtRisk() throws Exception {
 
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -513,7 +514,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void testResetAtRisk() throws Exception {
+    void testResetAtRisk() throws Exception {
 
         // Given
         final var robertClock = new RobertClock(serverConfigurationService.getServiceTimeStart());
@@ -555,7 +556,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     }
 
     @Test
-    public void can_log_how_many_hello_messages_will_processed() throws Exception {
+    void can_log_how_many_hello_messages_will_processed() throws Exception {
         final var tpstStart = this.serverConfigurationService.getServiceTimeStart();
         final var currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
         final var currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);

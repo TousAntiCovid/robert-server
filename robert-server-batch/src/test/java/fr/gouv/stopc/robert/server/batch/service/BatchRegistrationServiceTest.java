@@ -1,22 +1,21 @@
 package fr.gouv.stopc.robert.server.batch.service;
 
+import fr.gouv.stopc.robert.server.batch.IntegrationLegacyTest;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties.RiskThreshold;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -34,9 +33,8 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayNameGeneration(ReplaceUnderscores.class)
-@SpringBootTest
-public class BatchRegistrationServiceTest {
+@IntegrationLegacyTest
+class BatchRegistrationServiceTest {
 
     BatchRegistrationService batchRegistrationService;
 
@@ -68,7 +66,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_remove_too_old_exposed_epochs() {
+    void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_remove_too_old_exposed_epochs() {
 
         final var currentEpoch = 26543;
 
@@ -100,7 +98,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_return_empty_list_when_it_receives_an_empty_list() {
+    void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_return_empty_list_when_it_receives_an_empty_list() {
 
         // WHEN
         final var filteredEpochExpositions = batchRegistrationService
@@ -111,7 +109,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_return_empty_list_when_it_receives_too_old_epochs() {
+    void getExposedEpochsWithoutEpochsOlderThanContagiousPeriod_should_return_empty_list_when_it_receives_too_old_epochs() {
 
         final var currentEpoch = 26543;
 
@@ -133,7 +131,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void updateRegistrationIfRisk_should_set_registration_at_risk() {
+    void updateRegistrationIfRisk_should_set_registration_at_risk() {
 
         // GIVEN
         final var currentEpoch = robertClock.now().asEpochId();
@@ -166,7 +164,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void updateRegistrationIfRisk_should_filter_out_scores_before_last_risk_epoch() {
+    void updateRegistrationIfRisk_should_filter_out_scores_before_last_risk_epoch() {
 
         // GIVEN
         final var currentEpoch = robertClock.now().asEpochId();
@@ -213,7 +211,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void updateRegistrationIfRisk_should_ignore_randomized_last_contact_date_if_it_is_before_registration_lastContactDate() {
+    void updateRegistrationIfRisk_should_ignore_randomized_last_contact_date_if_it_is_before_registration_lastContactDate() {
         // GIVEN
         final var currentEpoch = robertClock.now().asEpochId();
         final var lastContactDateFromExposedEpoch = currentEpoch;
@@ -258,7 +256,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void updateRegistrationIfRisk_should_ignore_risk_when_last_contact_occurred_before_riskThresholdLastContactDelay() {
+    void updateRegistrationIfRisk_should_ignore_risk_when_last_contact_occurred_before_riskThresholdLastContactDelay() {
         // GIVEN
         final var expositionEpoch = robertClock.now()
                 .minus(11, DAYS)
@@ -291,7 +289,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat() {
+    void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat() {
         final var nowMinus12Days = robertClock.now()
                 .truncatedTo(DAYS)
                 .minus(12, DAYS);
@@ -347,7 +345,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void should_not_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat() {
+    void should_not_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat() {
         final var nowMinus6Days = robertClock.now()
                 .truncatedTo(DAYS)
                 .minus(6, DAYS);
@@ -395,7 +393,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat_at_threshold() {
+    void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat_at_threshold() {
         final var nowMinus11Days = robertClock.now()
                 .truncatedTo(DAYS)
                 .minus(11, DAYS);
@@ -451,7 +449,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat_same_day_under_threshold() {
+    void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat_same_day_under_threshold() {
         final var nowMinus11DaysAnd1Minutes = robertClock.now()
                 .truncatedTo(DAYS)
                 .minus(11, DAYS)
@@ -512,7 +510,7 @@ public class BatchRegistrationServiceTest {
     }
 
     @Test
-    public void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat_same_day_above_threshold() {
+    void should_increment_usersAboveRiskThresholdButRetentionPeriodExpired_stat_same_day_above_threshold() {
         final var nowMinus11DaysAnd59Minutes = robertClock.now()
                 .truncatedTo(DAYS)
                 .minus(11, DAYS)

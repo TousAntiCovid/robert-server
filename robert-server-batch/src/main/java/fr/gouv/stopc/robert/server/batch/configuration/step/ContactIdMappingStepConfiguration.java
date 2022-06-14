@@ -1,9 +1,10 @@
-package fr.gouv.stopc.robert.server.batch.configuration;
+package fr.gouv.stopc.robert.server.batch.configuration.step;
 
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.configuration.StepConfigurationBase;
 import fr.gouv.stopc.robert.server.batch.listener.ResetIdMappingTableListener;
 import fr.gouv.stopc.robert.server.batch.processor.ContactIdMappingProcessor;
-import fr.gouv.stopc.robert.server.batch.utils.MetricsService;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.service.MetricsService;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
@@ -19,7 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import static fr.gouv.stopc.robert.server.batch.utils.StepNameUtils.POPULATE_CONTACT_ID_MAPPING_STEP_NAME;
+import static fr.gouv.stopc.robert.server.batch.enums.StepNameEnum.POPULATE_CONTACT_ID_MAPPING_STEP_NAME;
 
 @Slf4j
 @Configuration

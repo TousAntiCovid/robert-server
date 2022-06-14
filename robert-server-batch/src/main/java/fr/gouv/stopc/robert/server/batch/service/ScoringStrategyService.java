@@ -7,10 +7,9 @@ import fr.gouv.stopc.robertserver.database.model.Contact;
 import java.util.List;
 
 public interface ScoringStrategyService {
+
     /**
      * Compute a risk score based on the nature of the contact
-     *
-     * @param contact
      */
     ScoringResult execute(Contact contact) throws RobertScoringException;
 

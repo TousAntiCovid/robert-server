@@ -3,12 +3,12 @@ package fr.gouv.stopc.robert.server.batch.processor;
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.IntegrationLegacyTest;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.writer.ContactItemWriter;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
@@ -28,12 +28,9 @@ import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.CollectionUtils;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -58,10 +55,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { RobertServerBatchApplication.class })
-@TestPropertySource(locations = "classpath:application.properties", properties = "robert.scoring.algo-version=0")
-public class ContactProcessorTest {
+@TestPropertySource(properties = "robert.scoring.algo-version=0")
+@IntegrationLegacyTest
+class ContactProcessorTest {
 
     @Autowired
     private ContactService contactService;
@@ -130,7 +126,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactWithABadEncryptedCountryCodeFails() throws Exception {
+    void testProcessContactWithABadEncryptedCountryCodeFails() throws Exception {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
@@ -178,7 +174,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactWitNoMessagesFails() throws RobertServerCryptoException, RobertScoringException {
+    void testProcessContactWitNoMessagesFails() throws RobertServerCryptoException, RobertScoringException {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
@@ -210,7 +206,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactWhenRegistrationDoesNotExistFails() throws Exception {
+    void testProcessContactWhenRegistrationDoesNotExistFails() throws Exception {
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
@@ -278,7 +274,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessTwoContactsWithAggregatedScoreAboveThresholdYieldsRiskSucceeds() throws Exception {
+    void testProcessTwoContactsWithAggregatedScoreAboveThresholdYieldsRiskSucceeds() throws Exception {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
@@ -366,7 +362,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessTwoContactsWithAggregatedScoreBelowThresholdDoesNotYieldRiskSucceeds() throws Exception {
+    void testProcessTwoContactsWithAggregatedScoreBelowThresholdDoesNotYieldRiskSucceeds() throws Exception {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
@@ -453,7 +449,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactWhenHelloMessageTimestampIsExceededFails()
+    void testProcessContactWhenHelloMessageTimestampIsExceededFails()
             throws RobertServerCryptoException, RobertScoringException {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -552,7 +548,7 @@ public class ContactProcessorTest {
      * one accompanying the HELLO message (timestamp when received on device)
      */
     @Test
-    public void testProcessContactWhenTheEpochsAreDifferentFails()
+    void testProcessContactWhenTheEpochsAreDifferentFails()
             throws RobertServerCryptoException, RobertScoringException {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -644,7 +640,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactWhenOneHelloMessageHasADifferentEpochShouldBeSuccessfullProcessed()
+    void testProcessContactWhenOneHelloMessageHasADifferentEpochShouldBeSuccessfullProcessed()
             throws RobertServerCryptoException, RobertScoringException {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -761,7 +757,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactWhenTheMacIsInvalidFails()
+    void testProcessContactWhenTheMacIsInvalidFails()
             throws RobertServerCryptoException, RobertScoringException {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -854,7 +850,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactWhenTheContactIsValidSucceeds()
+    void testProcessContactWhenTheContactIsValidSucceeds()
             throws RobertServerCryptoException, RobertScoringException {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -975,7 +971,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactSucceedsWhenHasAtLeastOneHelloMessageValid()
+    void testProcessContactSucceedsWhenHasAtLeastOneHelloMessageValid()
             throws RobertServerCryptoException, RobertScoringException {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
@@ -1090,7 +1086,7 @@ public class ContactProcessorTest {
     }
 
     @Test
-    public void testProcessContactWhenTheRegistrationHasTooOldExposedEpochsFails()
+    void testProcessContactWhenTheRegistrationHasTooOldExposedEpochsFails()
             throws RobertServerCryptoException, RobertScoringException {
         // Given
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
