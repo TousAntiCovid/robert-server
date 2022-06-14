@@ -1,20 +1,18 @@
 package fr.gouv.stopc.robert.server.batch;
 
 import org.junit.jupiter.api.DisplayNameGeneration;
-import org.junit.jupiter.api.DisplayNameGenerator;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.lang.annotation.Retention;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+@ActiveProfiles("legacy")
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 @Retention(RUNTIME)
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { RobertServerBatchApplication.class })
-@TestPropertySource(locations = "classpath:application-legacy.properties", properties = "robert.scoring.algo-version=0")
-@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+@DisplayNameGeneration(ReplaceUnderscores.class)
 public @interface IntegrationLegacyTest {
 }

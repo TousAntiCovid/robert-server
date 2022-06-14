@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.service;
 
+import fr.gouv.stopc.robert.server.batch.IntegrationLegacyTest;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties.RiskThreshold;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
@@ -9,14 +10,12 @@ import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -34,8 +33,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayNameGeneration(ReplaceUnderscores.class)
-@SpringBootTest
+@IntegrationLegacyTest
 class BatchRegistrationServiceTest {
 
     BatchRegistrationService batchRegistrationService;

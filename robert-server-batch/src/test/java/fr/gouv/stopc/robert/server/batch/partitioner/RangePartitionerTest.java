@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RangePartitionerTest {
+class RangePartitionerTest {
 
     @BeforeEach
     public void setUp() {
@@ -18,7 +18,7 @@ public class RangePartitionerTest {
     }
 
     @Test
-    public void testPartitionerReturnsExpectedNumberOfPartitions() {
+    void testPartitionerReturnsExpectedNumberOfPartitions() {
         int nbPartitions = 5;
         RangePartitioner partioner = new RangePartitioner();
 
@@ -28,7 +28,7 @@ public class RangePartitionerTest {
     }
 
     @Test
-    public void testPartitionerIndexesWhenNbItemsIsAMultipleOfNbPartitions() {
+    void testPartitionerIndexesWhenNbItemsIsAMultipleOfNbPartitions() {
         int nbPartitions = 2,
                 nbItems = 10;
         ItemProcessingCounterUtils counter = ItemProcessingCounterUtils.getInstance();
@@ -46,7 +46,7 @@ public class RangePartitionerTest {
     }
 
     @Test
-    public void testPartitionerIndexesWhenNbItemsIsNotAMultipleOfNbPartitions() {
+    void testPartitionerIndexesWhenNbItemsIsNotAMultipleOfNbPartitions() {
         int nbPartitions = 3,
                 nbItems = 20;
         ItemProcessingCounterUtils counter = ItemProcessingCounterUtils.getInstance();
@@ -67,7 +67,7 @@ public class RangePartitionerTest {
     }
 
     @Test
-    public void testPartitionerIndexesWhenNbItemsIsNotEnougItemsForNbPartitions() {
+    void testPartitionerIndexesWhenNbItemsIsNotEnougItemsForNbPartitions() {
         int nbPartitions = 6,
                 nbItems = 3;
         ItemProcessingCounterUtils counter = ItemProcessingCounterUtils.getInstance();
@@ -93,7 +93,7 @@ public class RangePartitionerTest {
     }
 
     @Test
-    public void testPartitionerWhenNoElementToProcess() {
+    void testPartitionerWhenNoElementToProcess() {
         int nbPartitions = 2;
 
         Map<String, ExecutionContext> partitions = new RangePartitioner().partition(nbPartitions);

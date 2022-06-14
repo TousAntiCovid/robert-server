@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.processor;
 
-import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
+import fr.gouv.stopc.robert.server.batch.IntegrationLegacyTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.configuration.RobertServerBatchConfiguration;
 import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -34,8 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { RobertServerBatchApplication.class })
-@TestPropertySource(locations = "classpath:application-legacy.properties", properties = {
+@IntegrationLegacyTest
+@TestPropertySource(properties = {
         "robert.scoring.algo-version=2",
         "robert.scoring.batch-mode=FULL_REGISTRATION_SCAN_COMPUTE_RISK",
         "robert.server.time-start=20210101"
