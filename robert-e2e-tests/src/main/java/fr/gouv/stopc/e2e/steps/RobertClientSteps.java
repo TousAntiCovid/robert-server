@@ -28,8 +28,6 @@ public class RobertClientSteps {
 
     private final MobilePhonesEmulator mobilePhonesEmulator;
 
-    private final RobertBatchSteps robertBatchSteps;
-
     private final PlatformTimeSteps platformTimeSteps;
 
     @Etantdonnéque("l'application robert ws rest est démarrée")
@@ -50,7 +48,7 @@ public class RobertClientSteps {
         users.forEach(mobilePhonesEmulator::createMobileApplication);
     }
 
-    @Etantdonnéque("{wordList} sont à proximité {duration}")
+    @Etantdonnéque("{wordList} sont/étaient à proximité {duration}")
     public void generateContactsBetweenTwoUsersWithDuration(final List<String> users,
             final Duration durationOfExchange) {
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
@@ -58,15 +56,6 @@ public class RobertClientSteps {
                 platformTimeSteps.getPlatformTime(),
                 durationOfExchange
         );
-    }
-
-    @Etantdonnéque("{wordList} étaient à proximité {duration} il y a {duration} et que {word} s'est déclaré/déclarée malade")
-    public void fakePastContactAndReport(final List<String> users, final Duration proximityExpositionDuration,
-            final Duration durationBackInTime, final String userNameReporter) {
-        generateContactsBetweenTwoUsersWithDuration(users, proximityExpositionDuration);
-        reportContacts(userNameReporter);
-        robertBatchSteps.launchBatch();
-        users.forEach(user -> mobilePhonesEmulator.getMobileApplication(user).fakeExposedEpochs(durationBackInTime));
     }
 
     @Etantdonnéque("{word} se déclare malade")
