@@ -37,7 +37,7 @@ public class KpiService {
 
     private final BatchStatisticsRepository batchStatisticsRepository;
 
-    private Instant lastKpiComputationInstant = Instant.now();
+    private Instant lastKpiComputationInstant = Instant.ofEpochSecond(0);
 
     private final Gauge lastKpiComputationAgeGauge;
 
