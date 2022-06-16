@@ -1,9 +1,9 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
-import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
+import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
-import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
+import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,11 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping(path = "${controller.path.prefix}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-public interface IStatusController {
+@RequestMapping(value = { "${controller.path.prefix}"
+        + UriConstants.API_V6 }, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+public interface IReportController {
 
-    @PostMapping(path = UriConstants.API_V6 + UriConstants.STATUS)
-    ResponseEntity<StatusResponseDto> getStatus(@Valid @RequestBody StatusVo statusVo)
+    @PostMapping(value = UriConstants.REPORT)
+    ResponseEntity<ReportBatchResponseDto> reportContactHistory(
+            @Valid @RequestBody ReportBatchRequestVo reportBatchRequestVo)
             throws RobertServerException;
-
 }

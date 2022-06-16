@@ -19,9 +19,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @LegacyIntegrationTest
-public class StatusControllerWsRestV5ErrorsTest {
+public class StatusControllerWsRestErrorsTest {
 
-    @Value("${controller.path.prefix}" + UriConstants.API_V5)
+    @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefixV5;
 
     @Autowired
@@ -50,7 +50,7 @@ public class StatusControllerWsRestV5ErrorsTest {
     }
 
     @Test
-    public void testWhenGetStatusReturnsBadRequestThenGetStatusV5ReturnsBadRequest() {
+    public void testWhenGetStatusReturnsBadRequestThenGetStatusReturnsBadRequest() {
         when(statusController.getStatus(any())).thenReturn(ResponseEntity.badRequest().build());
 
         ResponseEntity<String> response = this.restTemplate.exchange(
@@ -62,7 +62,7 @@ public class StatusControllerWsRestV5ErrorsTest {
     }
 
     @Test
-    public void testWhenGetStatusReturnsInternalServerErrorThenGetStatusV5ReturnsInternalServerError() {
+    public void testWhenGetStatusReturnsInternalServerErrorThenGetStatusReturnsInternalServerError() {
         when(statusController.getStatus(any()))
                 .thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
 
@@ -75,7 +75,7 @@ public class StatusControllerWsRestV5ErrorsTest {
     }
 
     @Test
-    public void testWhenGetStatusReturnsNotFoundThenGetStatusV5ReturnsNotFound() {
+    public void testWhenGetStatusReturnsNotFoundThenGetStatusReturnsNotFound() {
         when(statusController.getStatus(any())).thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
 
         ResponseEntity<String> response = this.restTemplate.exchange(
@@ -87,19 +87,7 @@ public class StatusControllerWsRestV5ErrorsTest {
     }
 
     @Test
-    public void testWhenGetStatusReturnsNullThenGetStatusV5ReturnsInternalServerError() {
-        when(statusController.getStatus(any())).thenReturn(null);
-
-        ResponseEntity<String> response = this.restTemplate.exchange(
-                this.targetUrl, HttpMethod.POST,
-                this.requestEntity, String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @Test
-    void whenGetStatusReturns430ThenGetStatusV5Returns430WithNoBody() {
+    void whenGetStatusReturns430ThenGetStatusReturns430WithNoBody() {
         when(statusController.getStatus(any())).thenReturn(ResponseEntity.status(430).build());
 
         ResponseEntity<String> response = this.restTemplate.exchange(

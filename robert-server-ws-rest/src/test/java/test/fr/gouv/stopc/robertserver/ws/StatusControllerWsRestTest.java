@@ -19,8 +19,6 @@ import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.RobertServerWsConfiguration;
 import fr.gouv.stopc.robertserver.ws.dto.RiskLevel;
 import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDto;
-import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV1ToV4;
-import fr.gouv.stopc.robertserver.ws.dto.StatusResponseDtoV5;
 import fr.gouv.stopc.robertserver.ws.test.JwtKeysManager;
 import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.utils.UriConstants;
@@ -61,21 +59,6 @@ import static org.springframework.data.domain.Range.Bound.inclusive;
 
 @LegacyIntegrationTest
 public class StatusControllerWsRestTest {
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V1)
-    private String pathPrefixV1;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V2)
-    private String pathPrefixV2;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V3)
-    private String pathPrefixV3;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V4)
-    private String pathPrefixV4;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V5)
-    private String pathPrefixV5;
 
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
@@ -640,56 +623,6 @@ public class StatusControllerWsRestTest {
     }
 
     /**
-     * Test the access for API V1, should not be used since API V2
-     */
-    @Test
-    public void testAccessV1() {
-        statusRequestAtRiskSucceedsV1ToV4(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV1).path(UriConstants.STATUS).build().encode().toUri()
-        );
-    }
-
-    /**
-     * Test the access for API V2, should not be used since API V3
-     */
-    @Test
-    public void testAccessV2() {
-        statusRequestAtRiskSucceedsV1ToV4(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.STATUS).build().encode().toUri()
-        );
-    }
-
-    /**
-     * Test the access for API V3, should not be used since API V4
-     */
-    @Test
-    public void testAccessV3() {
-        statusRequestAtRiskSucceedsV1ToV4(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.STATUS).build().encode().toUri()
-        );
-    }
-
-    /**
-     * Test the access for API V4, should not be used since API V5
-     */
-    @Test
-    public void testAccessV4() {
-        statusRequestAtRiskSucceedsV1ToV4(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.STATUS).build().encode().toUri()
-        );
-    }
-
-    /**
-     * Test the access for API V5, should not be used since API V6
-     */
-    @Test
-    public void testAccessV5() {
-        statusRequestAtRiskSucceedsV5(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.STATUS).build().encode().toUri()
-        );
-    }
-
-    /**
      * {@link #statusRequestAtRiskSucceeds(URI)} and shortcut to test for API V6
      * exposure
      */
@@ -735,53 +668,6 @@ public class StatusControllerWsRestTest {
 
         this.requestEntity = new HttpEntity<>(this.statusBody, this.headers);
         return reg;
-    }
-
-    protected void statusRequestAtRiskSucceedsV1ToV4(URI targetUrl) {
-        // Given
-        byte[] idA = this.generateKey(5);
-        Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
-
-        // When
-        ResponseEntity<StatusResponseDtoV1ToV4> response = this.restTemplate.exchange(
-                targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, StatusResponseDtoV1ToV4.class
-        );
-
-        // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().isAtRisk());
-        assertNotNull(response.getBody().getTuples());
-        assertTrue(reg.isNotified());
-        assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
-        verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
-        verifyNoInteractionsWithPushNotifServer();
-    }
-
-    protected void statusRequestAtRiskSucceedsV5(URI targetUrl) {
-        // Given
-        byte[] idA = this.generateKey(5);
-        Registration reg = this.statusRequestAtRiskSucceedsSetUp(targetUrl, idA);
-
-        // When
-        ResponseEntity<StatusResponseDtoV5> response = this.restTemplate.exchange(
-                targetUrl.toString(),
-                HttpMethod.POST, this.requestEntity, StatusResponseDtoV5.class
-        );
-
-        // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(RiskLevel.HIGH, response.getBody().getRiskLevel());
-        assertNotNull(response.getBody().getTuples());
-        assertEquals(Long.toString(reg.getLastContactTimestamp()), response.getBody().getLastContactDate());
-        assertNotNull(response.getBody().getLastRiskScoringDate());
-        assertTrue(Long.parseLong(response.getBody().getLastRiskScoringDate()) > 0);
-        assertTrue(reg.isNotified());
-        assertTrue(currentEpoch - 3 < reg.getLastStatusRequestEpoch());
-        verify(this.registrationService, times(2)).findById(idA);
-        verify(this.registrationService, times(2)).saveRegistration(reg);
-        verifyNoInteractionsWithPushNotifServer();
     }
 
     protected void statusRequestAtRiskSucceeds(URI targetUrl) {

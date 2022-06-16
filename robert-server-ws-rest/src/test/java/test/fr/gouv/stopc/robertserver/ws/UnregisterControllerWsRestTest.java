@@ -47,18 +47,6 @@ import static org.mockito.Mockito.*;
 @LegacyIntegrationTest
 public class UnregisterControllerWsRestTest {
 
-    @Value("${controller.path.prefix}" + UriConstants.API_V2)
-    private String pathPrefixV2;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V3)
-    private String pathPrefixV3;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V4)
-    private String pathPrefixV4;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V5)
-    private String pathPrefixV5;
-
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
@@ -143,44 +131,6 @@ public class UnregisterControllerWsRestTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(this.registrationService, never()).findById(ArgumentMatchers.any());
         verify(this.registrationService, never()).delete(ArgumentMatchers.any());
-    }
-
-    /** Test the access for API V2, should not be used since API V3 */
-    @Test
-    public void testAccessV2() {
-        acceptOldEBIDValueEpochSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.UNREGISTER).build().encode()
-                        .toUri()
-        );
-    }
-
-    /** Test the access for API V3, should not be used since API V4 */
-    @Test
-    public void testAccessV3() {
-        acceptOldEBIDValueEpochSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.UNREGISTER).build().encode()
-                        .toUri()
-        );
-    }
-
-    /** Test the access for API V4, should not be used since API V5 */
-    @Test
-    public void testAccessV4() {
-        acceptOldEBIDValueEpochSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.UNREGISTER).build().encode()
-                        .toUri()
-        );
-    }
-
-    /**
-     * Test the access for API V5, should not be used since API V6
-     */
-    @Test
-    public void testAccessV5() {
-        acceptOldEBIDValueEpochSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.UNREGISTER).build().encode()
-                        .toUri()
-        );
     }
 
     /**

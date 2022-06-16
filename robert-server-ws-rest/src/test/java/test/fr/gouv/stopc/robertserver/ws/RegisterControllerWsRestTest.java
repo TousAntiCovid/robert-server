@@ -39,18 +39,6 @@ import static org.mockito.Mockito.*;
 @LegacyIntegrationTest
 public class RegisterControllerWsRestTest {
 
-    @Value("${controller.path.prefix}" + UriConstants.API_V2)
-    private String pathPrefixV2;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V3)
-    private String pathPrefixV3;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V4)
-    private String pathPrefixV4;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V5)
-    private String pathPrefixV5;
-
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
@@ -285,38 +273,6 @@ public class RegisterControllerWsRestTest {
         verify(this.cryptoServerClient).createRegistration(any());
         verify(this.registrationService).saveRegistration(any());
         verifyNoInteractionsWithPushNotifServer();
-    }
-
-    @Test
-    public void testSuccessV2() {
-        testRegisterSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.REGISTER).build().toUri()
-                        .toString()
-        );
-    }
-
-    @Test
-    public void testSuccessV3() {
-        testRegisterSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.REGISTER).build().toUri()
-                        .toString()
-        );
-    }
-
-    @Test
-    public void testSuccessV4() {
-        testRegisterSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.REGISTER).build().toUri()
-                        .toString()
-        );
-    }
-
-    @Test
-    public void testSuccessV5() {
-        testRegisterSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.REGISTER).build().toUri()
-                        .toString()
-        );
     }
 
     @Test

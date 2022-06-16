@@ -45,18 +45,6 @@ import static org.mockito.Mockito.*;
 @LegacyIntegrationTest
 public class DeleteHistoryControllerWsRestTest {
 
-    @Value("${controller.path.prefix}" + UriConstants.API_V2)
-    private String pathPrefixV2;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V3)
-    private String pathPrefixV3;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V4)
-    private String pathPrefixV4;
-
-    @Value("${controller.path.prefix}" + UriConstants.API_V5)
-    private String pathPrefixV5;
-
     @Value("${controller.path.prefix}" + UriConstants.API_V6)
     private String pathPrefix;
 
@@ -219,55 +207,6 @@ public class DeleteHistoryControllerWsRestTest {
         );
         // THEN
         assertEquals(430, response.getStatusCodeValue());
-    }
-
-    /**
-     * Test the access for API V2, should not be used since API V4
-     */
-    @Test
-    public void testAccessV2() {
-        deleteHistoryWithExposedEpochsSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV2).path(UriConstants.DELETE_HISTORY).build().encode()
-                        .toUri()
-        );
-    }
-
-    /** Test the access for API V3, should not be used since API V4 */
-    @Test
-    public void testAccessV3() {
-        deleteHistoryWithExposedEpochsSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV3).path(UriConstants.DELETE_HISTORY).build().encode()
-                        .toUri()
-        );
-    }
-
-    /** Test the access for API V4, should not be used since API V5 */
-    @Test
-    public void testAccessV4() {
-        deleteHistoryWithExposedEpochsSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV4).path(UriConstants.DELETE_HISTORY).build().encode()
-                        .toUri()
-        );
-    }
-
-    /**
-     * Test the access for API V5, should not be used since API V6
-     */
-    @Test
-    public void testAccessV5() {
-        deleteHistoryWithExposedEpochsSucceeds(
-                UriComponentsBuilder.fromUriString(this.pathPrefixV5).path(UriConstants.DELETE_HISTORY).build().encode()
-                        .toUri()
-        );
-    }
-
-    /**
-     * {@link #deleteHistoryWithExposedEpochsSucceeds(URI)} and shortcut to test for
-     * API V2 exposure
-     */
-    @Test
-    public void testDeleteHistoryWithExposedEpochsSucceedsV3() {
-        deleteHistoryWithExposedEpochsSucceeds(this.targetUrl);
     }
 
     protected void deleteHistoryWithExposedEpochsSucceeds(URI targetUrl) {

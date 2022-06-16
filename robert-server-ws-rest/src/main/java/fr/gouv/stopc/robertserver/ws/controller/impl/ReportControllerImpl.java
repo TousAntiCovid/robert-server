@@ -1,8 +1,8 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
-import fr.gouv.stopc.robertserver.ws.controller.IReportControllerV4;
-import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseV4Dto;
+import fr.gouv.stopc.robertserver.ws.controller.IReportController;
+import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
@@ -26,7 +26,7 @@ import java.util.Date;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ReportControllerV4Impl implements IReportControllerV4 {
+public class ReportControllerImpl implements IReportController {
 
     public static final SignatureAlgorithm signatureAlgo = SignatureAlgorithm.RS256;
 
@@ -41,7 +41,7 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
     private PrivateKey jwtPrivateKey;
 
     @Override
-    public ResponseEntity<ReportBatchResponseV4Dto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo)
+    public ResponseEntity<ReportBatchResponseDto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo)
             throws RobertServerException {
 
         if (!delegate.isReportRequestValid(reportBatchRequestVo)) {
@@ -52,30 +52,29 @@ public class ReportControllerV4Impl implements IReportControllerV4 {
 
         contactDtoService.saveContacts(reportBatchRequestVo.getContacts());
 
-        String token = generateJWT(reportBatchRequestVo);
+        String token = generateJWT();
 
-        ReportBatchResponseV4Dto reportBatchResponseDto = ReportBatchResponseV4Dto.builder()
+        ReportBatchResponseDto reportBatchResponseDto = ReportBatchResponseDto.builder()
                 .message(MessageConstants.SUCCESSFUL_OPERATION.getValue())
-                .reportValidationToken(token)
+                .token(token)
                 .success(Boolean.TRUE)
                 .build();
 
         return ResponseEntity.ok(reportBatchResponseDto);
     }
 
-    private String generateJWT(ReportBatchRequestVo reportBatchRequestVo) throws RobertServerException {
+    private String generateJWT() {
         try {
             Date now = new Date();
             Date expiration = new Date(now.getTime() + this.wsServerConfiguration.getJwtLifeTime() * 60000);
 
-            String token = Jwts.builder()
+            return Jwts.builder()
                     .setHeaderParam("type", "JWT")
                     .setIssuedAt(now)
                     .setExpiration(expiration)
                     .signWith(this.getJwtPrivateKey(), signatureAlgo)
                     .compact();
 
-            return token;
         } catch (Exception e) {
             log.error("JWT token generation failed!", e);
             // Avoid to send an HTTP Error code to the client if only the report validation
