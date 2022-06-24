@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
+import fr.gouv.stopc.robert.server.batch.ReassessRiskLineRunner;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
 import fr.gouv.stopc.robert.server.batch.configuration.job.ScoringAndRiskEvaluationJobConfiguration;
 import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
@@ -34,6 +35,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -63,7 +65,9 @@ import static org.mockito.Mockito.*;
         RobertServerBatchApplication.class })
 @TestPropertySource(locations = "classpath:application-legacy.properties", properties = {
         "robert.scoring.algo-version=2",
-        "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK" })
+        "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK",
+        "spring.commandLineRunner.reassesRisk=on"
+})
 public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     @Autowired
@@ -83,6 +87,9 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     @Autowired
     private IRegistrationService registrationService;
+
+    @Autowired
+    private ApplicationContext context;
 
     @MockBean
     private ICryptoServerGrpcClient cryptoServerClient;
@@ -536,7 +543,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         registrationService.saveRegistration(registrationAtRiskThatMustNotBeReset);
 
         // When
-        this.jobLauncherTestUtils.launchJob();
+        var lineRunner = context.getBean(ReassessRiskLineRunner.class);
+        lineRunner.run("");
 
         // Then
         final var actualRegistrationThatMustBeReset = this.registrationService

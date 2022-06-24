@@ -40,8 +40,6 @@ public class ScoringAndRiskEvaluationJobConfiguration {
                 .listener(logHelloMessageCountToProcessJobExecutionListener)
                 .start(populateRegistrationIdMappingForEpochPurgeStep)
                 .next(purgeOldEpochExpositionsStep)
-                .next(populateIdMappingForRegistrationRiskResetStep)
-                .next(registrationRiskResetStep)
                 .next(populateContactIdMappingStep)
                 .next(contactProcessingStep)
                 .next(populateIdMappingWithScoredRegistrationStep)

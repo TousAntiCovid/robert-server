@@ -41,7 +41,7 @@ public class MetricsManager implements TestExecutionListener {
     }
 
     public static AbstractDoubleAssert<?> assertThatCounterMetricIncrement(String metricLabel) {
-        var newMetricValue = registry.counter(metricLabel).count();
+        var newMetricValue = registry.find(metricLabel).counter().count();
         var increment = newMetricValue - metrics.get(metricLabel);
         return assertThat(increment).as("Increment between before test method and now");
     }

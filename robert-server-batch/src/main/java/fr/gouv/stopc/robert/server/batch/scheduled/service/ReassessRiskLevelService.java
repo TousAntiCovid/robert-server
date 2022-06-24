@@ -1,8 +1,8 @@
 package fr.gouv.stopc.robert.server.batch.scheduled.service;
 
 import com.mongodb.MongoException;
-import fr.gouv.stopc.robert.server.batch.utils.MetricsService;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
+import fr.gouv.stopc.robert.server.batch.service.MetricsService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
@@ -34,6 +34,7 @@ public class ReassessRiskLevelService {
     private final MetricsService metricsService;
 
     public void process() {
+        log.info("START ReassessRiskLevel");
         final var query = new Query();
         query.addCriteria(Criteria.where("atRisk").is(true));
 
@@ -42,6 +43,7 @@ public class ReassessRiskLevelService {
                 "idTable",
                 new ReassessRiskRowCallbackHandler()
         );
+        log.info("END ReassessRiskLevel");
     }
 
     private boolean riskRetentionThresholdHasExpired(final Registration registration) {
@@ -53,7 +55,7 @@ public class ReassessRiskLevelService {
     public Registration updateWhenAtRiskAndRetentionPeriodHasExpired(Registration registration) {
         if (registration.isAtRisk() && riskRetentionThresholdHasExpired(registration)) {
             if (!registration.isNotified()) {
-                metricsService.addRessettingAlert();
+                metricsService.incrementResettingRiskLevelOfNeverNotifiedUserCounter();
             }
             registration.setAtRisk(false);
             registration.setNotifiedForCurrentRisk(false);

@@ -2,12 +2,13 @@ package fr.gouv.stopc.robert.server.batch.task;
 
 import fr.gouv.stopc.robert.server.batch.manager.MetricsManager;
 import fr.gouv.stopc.robert.server.batch.scheduled.service.ReassessRiskLevelService;
-import fr.gouv.stopc.robert.server.batch.utils.MetricsService;
+import fr.gouv.stopc.robert.server.batch.service.MetricsService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestExecutionListeners;
 
 import java.time.Instant;
@@ -22,6 +23,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
         MetricsManager.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@ActiveProfiles({ "legacy", "test" })
 class ReassessRiskLevelServiceTest {
 
     @Autowired
@@ -137,11 +139,11 @@ class ReassessRiskLevelServiceTest {
 
     @Test
     void metric_should_not_be_updated_when_notified_and_risk_level_is_reset() {
-        final var nowMinus8DaysNtpTimestamp = robertClock.at(
-                Instant.now()
-                        .truncatedTo(DAYS)
-                        .minus(8, DAYS)
-        ).asNtpTimestamp();
+
+        final var nowMinus8DaysNtpTimestamp = robertClock.now()
+                .truncatedTo(DAYS)
+                .minus(8, DAYS)
+                .asNtpTimestamp();
 
         final var registration = Registration.builder()
                 .atRisk(true)

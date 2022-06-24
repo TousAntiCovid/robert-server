@@ -42,7 +42,7 @@ Fonctionnalité: Covid-19 positive declaration
     Alors Sarah n'est pas à risque
     Et Paul n'est pas à risque
 
-  Plan du Scénario: On passe à risque lorsque notre dernier contact date d'il y a 7 jours ou moins (exemple avec il y a <jours>)
+  Plan du Scénario: On passe à risque lorsque notre dernier contact date d'il y a 7 jours ou moins (exemple avec il y a <jours> jours)
     Etant donné que John et Sarah étaient à proximité 60 minutes il y a <jours> jours et que Sarah s'est déclarée malade
     Lorsque le batch robert est exécuté
     Alors John est à risque
@@ -56,7 +56,7 @@ Fonctionnalité: Covid-19 positive declaration
       | 6     |
       | 7     |
 
-  Plan du Scénario: Pas d'alerte si le dernier contact date d'il y a plus de 7 jours (exemple avec il y a <jours>)
+  Plan du Scénario: Pas d'alerte si le dernier contact date d'il y a plus de 7 jours (exemple avec il y a <jours> jours)
     Etant donné que John et Sarah étaient à proximité 60 minutes il y a <jours> jours et que Sarah s'est déclarée malade
     Lorsque le batch robert est exécuté
     Alors John n'est pas à risque

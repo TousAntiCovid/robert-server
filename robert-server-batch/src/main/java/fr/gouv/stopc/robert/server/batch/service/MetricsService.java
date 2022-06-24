@@ -29,7 +29,7 @@ public class MetricsService {
                 .register(meterRegistry);
     }
 
-    public void addRessettingAlert() {
+    public void incrementResettingRiskLevelOfNeverNotifiedUserCounter() {
         robertBatchReserRiskLevelOfNeverNotifiedUser.increment();
     }
 
