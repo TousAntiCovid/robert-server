@@ -25,7 +25,7 @@ public class MetricsService {
 
         robertBatchReserRiskLevelOfNeverNotifiedUser = Counter
                 .builder("robert.batch.registration.risk.reset.but.not.notified")
-                .description("The number of risk levels reseted of users never notified")
+                .description("The number of risk level resets of users never notified")
                 .register(meterRegistry);
     }
 
