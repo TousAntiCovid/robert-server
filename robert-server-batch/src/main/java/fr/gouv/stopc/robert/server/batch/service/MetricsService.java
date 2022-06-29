@@ -15,6 +15,8 @@ public class MetricsService {
 
     private final Counter robertBatchResetRiskLevelOfUsersAlreadyNotified;
 
+    private final Counter robertBatchRiskLevelReset;
+
     public MetricsService(final MeterRegistry meterRegistry) {
 
         robertBatchHelloMessageTotal = DistributionSummary.builder("robert.batch.contact.hellomessage")
@@ -36,6 +38,14 @@ public class MetricsService {
                 .tag("notified", "true")
                 .description("The number of risk levels reseted of users already notified")
                 .register(meterRegistry);
+
+        robertBatchRiskLevelReset = Counter.builder("robert.batch.risk.reset.step.count")
+                .description("The number of risk level rested count")
+                .register(meterRegistry);
+    }
+
+    public void setRobertBatchRiskLevelReset(double amount) {
+        robertBatchRiskLevelReset.increment(amount);
     }
 
     public void incrementResettingRiskLevelOfNeverNotifiedUserCounter() {

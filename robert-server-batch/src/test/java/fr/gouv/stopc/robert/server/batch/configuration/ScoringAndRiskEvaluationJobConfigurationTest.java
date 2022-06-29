@@ -4,10 +4,9 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetInfoFromHelloMessageResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
-import fr.gouv.stopc.robert.server.batch.ReassessRiskLineRunner;
+import fr.gouv.stopc.robert.server.batch.RobertCommandLineRunner;
+import fr.gouv.stopc.robert.server.batch.RobertCommandLineRunnerTest;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchApplication;
-import fr.gouv.stopc.robert.server.batch.configuration.job.ScoringAndRiskEvaluationJobConfiguration;
-import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
@@ -26,19 +25,14 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
-import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.batch.core.Job;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
@@ -61,7 +55,7 @@ import static org.mockito.Mockito.*;
 @Slf4j
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { ScoringAndRiskEvaluationJobConfigurationTest.BatchTestConfig.class,
+@ContextConfiguration(classes = { RobertCommandLineRunnerTest.BatchTestConfig.class,
         RobertServerBatchApplication.class })
 @TestPropertySource(locations = "classpath:application-legacy.properties", properties = {
         "robert.scoring.algo-version=2",
@@ -111,7 +105,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     @BeforeEach
     public void before() {
-
         this.serverKey = this.generateKey(24);
         this.federationKey = new SecretKeySpec(this.generateKey(32), CryptoAES.AES_ENCRYPTION_KEY_SCHEME);
         this.countryCode = this.serverConfigurationService.getServerCountryCode();
@@ -360,6 +353,9 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
                 );
 
         // When
+        var lineRunner = context.getBean(RobertCommandLineRunner.class);
+        lineRunner.run("");
+        // TODO : remove this line in the future
         this.jobLauncherTestUtils.launchJob();
 
         // Then
@@ -543,7 +539,7 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         registrationService.saveRegistration(registrationAtRiskThatMustNotBeReset);
 
         // When
-        var lineRunner = context.getBean(ReassessRiskLineRunner.class);
+        var lineRunner = context.getBean(RobertCommandLineRunner.class);
         lineRunner.run("");
 
         // Then
@@ -561,54 +557,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertThat(actualRegistrationThatMustNotBeReset.isAtRisk())
                 .as("risk level of registration that must not be reset")
                 .isTrue();
-    }
-
-    @Test
-    void can_log_how_many_hello_messages_will_processed() throws Exception {
-        final var tpstStart = this.serverConfigurationService.getServiceTimeStart();
-        final var currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
-        final var currentEpochId = TimeUtils.getNumberOfEpochsBetween(tpstStart, currentTime);
-
-        this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
-
-        // contacts 1 and 2 have 1 hello message each
-        // contact 3 has 2 hello messages
-        final var contact1 = this.generateContact(currentEpochId, currentTime);
-        final var contact2 = this.generateContact(currentEpochId, currentTime);
-        final var contact3 = this.generateContact(currentEpochId, currentTime);
-        contact3.setMessageDetails(
-                List.of(
-                        contact3.getMessageDetails().get(0),
-                        contact3.getMessageDetails().get(0)
-                )
-        );
-        this.contactService.saveContacts(Arrays.asList(contact1, contact2, contact3));
-
-        try (final var logCaptor = LogCaptor.forClass(LogHelloMessageCountToProcessJobExecutionListener.class)) {
-            jobLauncherTestUtils.launchJob();
-
-            assertThat(logCaptor.getInfoLogs())
-                    .contains("4 hello messages waiting for process", "0 hello messages remaining after process");
-        }
-    }
-
-    @Configuration
-    @Import({ ScoringAndRiskEvaluationJobConfiguration.class })
-    public static class BatchTestConfig {
-
-        private Job scoreAndProcessRisks;
-
-        @Bean
-        JobLauncherTestUtils jobLauncherTestUtils(Job scoreAndProcessRisks) {
-
-            this.scoreAndProcessRisks = scoreAndProcessRisks;
-
-            JobLauncherTestUtils jobLauncherTestUtils = new JobLauncherTestUtils();
-            jobLauncherTestUtils.setJob(this.scoreAndProcessRisks);
-
-            return jobLauncherTestUtils;
-        }
-
     }
 
     @AfterEach

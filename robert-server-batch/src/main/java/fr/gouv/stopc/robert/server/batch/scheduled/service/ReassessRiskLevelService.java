@@ -6,6 +6,7 @@ import fr.gouv.stopc.robert.server.batch.service.MetricsService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
+import io.micrometer.core.annotation.Counted;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -33,8 +34,18 @@ public class ReassessRiskLevelService {
 
     private final MetricsService metricsService;
 
-    public void process() {
-        log.info("START ReassessRiskLevel");
+    // @Timed(value = "robert.batch", extraTags = { "operation",
+    // "REGISTRATION_RISK_RESET_STEP" })
+    public void performs() {
+        log.info(
+                "START : Reset risk level of registrations when retention time > {}.",
+                propertyLoader.getRiskLevelRetentionPeriodInDays()
+        );
+        // Count number of registrations that'll be used
+        long totalItemCount = registrationService.countNbUsersAtRisk().longValue();
+        metricsService.setRobertBatchRiskLevelReset(totalItemCount); // old :
+                                                                     // TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY
+
         final var query = new Query().addCriteria(Criteria.where("atRisk").is(true));
 
         mongoTemplate.executeQuery(
@@ -42,12 +53,13 @@ public class ReassessRiskLevelService {
                 "idTable",
                 new ReassessRiskRowCallbackHandler()
         );
-        log.info("END ReassessRiskLevel");
+        log.info("END : Reset risk level of registrations.");
     }
 
     private class ReassessRiskRowCallbackHandler implements DocumentCallbackHandler {
 
         @Override
+        @Counted(value = "REGISTRATION_RISK_RESET_STEP_PROCEEDED_REGISTRATIONS")
         public void processDocument(Document document) throws MongoException, DataAccessException {
             final var registration = mongoTemplate.getConverter().read(Registration.class, document);
             if (registration.isAtRisk() && riskRetentionThresholdHasExpired(registration)) {

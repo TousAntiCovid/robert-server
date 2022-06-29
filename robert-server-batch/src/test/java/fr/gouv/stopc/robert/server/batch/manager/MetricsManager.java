@@ -3,6 +3,7 @@ package fr.gouv.stopc.robert.server.batch.manager;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.assertj.core.api.AbstractDoubleAssert;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
@@ -30,6 +31,8 @@ public class MetricsManager implements TestExecutionListener {
     private Double meterValue(Meter meter) {
         if (meter instanceof Counter) {
             return ((Counter) meter).count();
+        } else if (meter instanceof Timer) {
+            return Double.valueOf(((Timer) meter).count());
         } else {
             return -1.0;
         }
@@ -40,6 +43,13 @@ public class MetricsManager implements TestExecutionListener {
         final var increment = counter.count() - metrics.getOrDefault(counter.getId(), 0.0);
         return assertThat(increment)
                 .as("Counter value increment for %s %s ", label, String.join(",", tags));
+    }
+
+    public static AbstractDoubleAssert<?> assertThatTimerMetricIncrement(String label, String... tags) {
+        final var timer = registry.find(label).tags(tags).timer();
+        final var increment = timer.count() - metrics.getOrDefault(timer.getId(), 0.0);
+        return assertThat(increment)
+                .as("Timer number of entries incremented for %s %s ", label, String.join(",", tags));
     }
 
 }

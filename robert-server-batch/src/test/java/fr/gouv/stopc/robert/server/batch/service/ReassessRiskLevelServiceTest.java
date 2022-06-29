@@ -1,11 +1,13 @@
 package fr.gouv.stopc.robert.server.batch.service;
 
 import fr.gouv.stopc.robert.server.batch.IntegrationTest;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.scheduled.service.ReassessRiskLevelService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
+import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,22 @@ class ReassessRiskLevelServiceTest {
 
     private final RegistrationRepository registrationRepository;
 
+    private final PropertyLoader propertyLoader;
+
+    @Test
+    void can_log_start_and_end_of_purge_process() {
+        try (final var logCaptor = LogCaptor.forClass(ReassessRiskLevelService.class)) {
+            reassessRiskLevelService.performs();
+
+            assertThat(logCaptor.getInfoLogs())
+                    .contains(
+                            "START : Reset risk level of registrations when retention time > "
+                                    + propertyLoader.getRiskLevelRetentionPeriodInDays() + ".",
+                            "END : Reset risk level of registrations."
+                    );
+        }
+    }
+
     @Test
     void risk_level_should_not_be_reset_when_not_at_risk_and_not_notified() {
         // Given
@@ -40,7 +58,7 @@ class ReassessRiskLevelServiceTest {
         registrationRepository.save(registration);
 
         // When
-        reassessRiskLevelService.process();
+        reassessRiskLevelService.performs();
 
         // Then
         Registration updatedRegistration = registrationRepository.findById(rndBytes).orElse(null);
@@ -49,6 +67,8 @@ class ReassessRiskLevelServiceTest {
         assertThat(updatedRegistration).as("Object has not been updated").isEqualTo(registration);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "false").isEqualTo(0L);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "true").isEqualTo(0L);
+        // assertThatTimerMetricIncrement("robert.batch", "operation",
+        // "REGISTRATION_RISK_RESET_STEP").isEqualTo(1L);
     }
 
     @Test
@@ -64,7 +84,7 @@ class ReassessRiskLevelServiceTest {
         registrationRepository.save(registration);
 
         // When
-        reassessRiskLevelService.process();
+        reassessRiskLevelService.performs();
 
         // Then
         Registration updatedRegistration = registrationRepository.findById(rndBytes).orElse(null);
@@ -97,7 +117,7 @@ class ReassessRiskLevelServiceTest {
         registrationRepository.save(registration);
 
         // When
-        reassessRiskLevelService.process();
+        reassessRiskLevelService.performs();
 
         // Then
         Registration updatedRegistration = registrationRepository.findById(rndBytes).orElse(null);
@@ -129,7 +149,7 @@ class ReassessRiskLevelServiceTest {
         );
 
         // When
-        reassessRiskLevelService.process();
+        reassessRiskLevelService.performs();
 
         // Then
         Registration processedRegistration = registrationRepository.findById(rndBytes).orElse(null);
@@ -158,7 +178,7 @@ class ReassessRiskLevelServiceTest {
         );
 
         // When
-        reassessRiskLevelService.process();
+        reassessRiskLevelService.performs();
         Registration processedRegistration = registrationRepository.findById(rndBytes).orElse(null);
 
         // Then

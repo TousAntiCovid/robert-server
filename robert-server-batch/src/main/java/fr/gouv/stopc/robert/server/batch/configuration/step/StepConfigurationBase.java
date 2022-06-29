@@ -1,5 +1,6 @@
-package fr.gouv.stopc.robert.server.batch.configuration;
+package fr.gouv.stopc.robert.server.batch.configuration.step;
 
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
 import fr.gouv.stopc.robert.server.batch.reader.MongoItemReaderFactory;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;

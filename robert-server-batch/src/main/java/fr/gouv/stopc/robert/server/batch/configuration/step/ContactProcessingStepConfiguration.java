@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.batch.configuration.step;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.configuration.StepConfigurationBase;
 import fr.gouv.stopc.robert.server.batch.configuration.job.ScoringAndRiskEvaluationJobConfiguration;
 import fr.gouv.stopc.robert.server.batch.processor.ContactProcessor;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
