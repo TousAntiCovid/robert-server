@@ -19,8 +19,7 @@ public class MetricsManager implements TestExecutionListener {
     private static Map<Meter.Id, Double> metrics;
 
     @Override
-    public void beforeTestMethod(TestContext testContext) throws Exception {
-        TestExecutionListener.super.beforeTestMethod(testContext);
+    public void beforeTestMethod(TestContext testContext) {
         registry = testContext.getApplicationContext().getBean(MeterRegistry.class);
 
         metrics = registry.getMeters()

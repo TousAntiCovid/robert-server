@@ -35,8 +35,7 @@ public class ReassessRiskLevelService {
 
     public void process() {
         log.info("START ReassessRiskLevel");
-        final var query = new Query();
-        query.addCriteria(Criteria.where("atRisk").is(true));
+        final var query = new Query().addCriteria(Criteria.where("atRisk").is(true));
 
         mongoTemplate.executeQuery(
                 query,
@@ -46,33 +45,27 @@ public class ReassessRiskLevelService {
         log.info("END ReassessRiskLevel");
     }
 
-    private boolean riskRetentionThresholdHasExpired(final Registration registration) {
-        final var today = robertClock.now().truncatedTo(DAYS);
-        final var lastContactTime = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
-        return lastContactTime.until(today).toDays() > propertyLoader.getRiskLevelRetentionPeriodInDays();
-    }
-
-    public Registration updateWhenAtRiskAndRetentionPeriodHasExpired(Registration registration) {
-        if (registration.isAtRisk() && riskRetentionThresholdHasExpired(registration)) {
-            if (!registration.isNotified()) {
-                metricsService.incrementResettingRiskLevelOfNeverNotifiedUserCounter();
-            }
-            registration.setAtRisk(false);
-            registration.setNotifiedForCurrentRisk(false);
-            return registration;
-        }
-        return null;
-    }
-
     private class ReassessRiskRowCallbackHandler implements DocumentCallbackHandler {
 
         @Override
         public void processDocument(Document document) throws MongoException, DataAccessException {
             final var registration = mongoTemplate.getConverter().read(Registration.class, document);
-            final var updatedRegistration = updateWhenAtRiskAndRetentionPeriodHasExpired(registration);
-            if (null != updatedRegistration) {
-                registrationService.saveRegistration(updatedRegistration);
+            if (registration.isAtRisk() && riskRetentionThresholdHasExpired(registration)) {
+                if (!registration.isNotified()) {
+                    metricsService.incrementResettingRiskLevelOfNeverNotifiedUserCounter();
+                } else {
+                    metricsService.incrementResettingRiskLevelOfUsersAlreadyNotifiedCounter();
+                }
+                registration.setAtRisk(false);
+                registration.setNotifiedForCurrentRisk(false);
+                registrationService.saveRegistration(registration);
             }
+        }
+
+        private boolean riskRetentionThresholdHasExpired(final Registration registration) {
+            final var today = robertClock.now().truncatedTo(DAYS);
+            final var lastContactTime = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
+            return lastContactTime.until(today).toDays() > propertyLoader.getRiskLevelRetentionPeriodInDays();
         }
     }
 }

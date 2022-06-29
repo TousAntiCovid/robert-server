@@ -66,7 +66,7 @@ import static org.mockito.Mockito.*;
 @TestPropertySource(locations = "classpath:application-legacy.properties", properties = {
         "robert.scoring.algo-version=2",
         "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK",
-        "spring.commandLineRunner.reassesRisk=on"
+        "robert-batch.command-line-runner.reasses-risk.enabled=true"
 })
 public class ScoringAndRiskEvaluationJobConfigurationTest {
 
