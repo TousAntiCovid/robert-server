@@ -56,7 +56,7 @@ public class ReportControllerImpl implements IReportController {
 
         ReportBatchResponseDto reportBatchResponseDto = ReportBatchResponseDto.builder()
                 .message(MessageConstants.SUCCESSFUL_OPERATION.getValue())
-                .token(token)
+                .reportValidationToken(token)
                 .success(Boolean.TRUE)
                 .build();
 
