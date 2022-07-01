@@ -27,8 +27,8 @@ import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.*;
 import static fr.gouv.stopc.robertserver.ws.test.StatisticsManager.assertThatTodayStatistic;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.isBase64Encoded;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64;
+import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.isUnixTimestampNear;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.ntpTimestamp;
-import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.unixTimestampNear;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.JwtMatcher.isJwtSignedBy;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
@@ -112,9 +112,9 @@ class StatusControllerTest {
                 .body("declarationToken", nullValue())
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", unixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
                                 .withClaim(
-                                        "exp", unixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
+                                        "exp", isUnixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
@@ -170,7 +170,7 @@ class StatusControllerTest {
                 .body(
                         "declarationToken", isJwtSignedBy(JWT_KEYS_DECLARATION)
                                 .withClaim("jti", matchesRegex("\\w{64}"))
-                                .withClaim("iat", unixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
                                 .withClaim("iss", equalTo("tac"))
                                 .withClaim(
                                         "notificationDateTimestamp",
@@ -180,9 +180,9 @@ class StatusControllerTest {
                 )
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", unixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
                                 .withClaim(
-                                        "exp", unixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
+                                        "exp", isUnixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );

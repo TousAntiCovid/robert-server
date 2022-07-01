@@ -23,7 +23,7 @@ public class DateTimeMatcher {
         return new TimestampNear(TimestampNear.UNIX_EPOCH, instant, Duration.ZERO);
     }
 
-    public static Matcher<Object> unixTimestampNear(final Instant instant, final Duration acceptableDifference) {
+    public static Matcher<Object> isUnixTimestampNear(final Instant instant, final Duration acceptableDifference) {
         return new TimestampNear(TimestampNear.UNIX_EPOCH, instant, acceptableDifference);
     }
 
