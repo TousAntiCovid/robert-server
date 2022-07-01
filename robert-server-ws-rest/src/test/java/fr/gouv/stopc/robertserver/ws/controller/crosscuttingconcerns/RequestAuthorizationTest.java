@@ -108,7 +108,7 @@ class RequestAuthorizationTest {
                         matching(
                                 startsWith(
                                         format(
-                                                "Validation failed for argument [0] in public org.springframework.http.ResponseEntity<fr.gouv.stopc.robertserver.ws.dto.DeleteHistoryResponseDto> fr.gouv.stopc.robertserver.ws.controller.impl.DeleteHistoryControllerImpl.deleteHistory(fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo) throws fr.gouv.stopc.robertserver.ws.exception.RobertServerException: [Field error in object 'deleteHistoryRequestVo' on field '%s':",
+                                                "Validation failed for argument [0] in public org.springframework.http.ResponseEntity<fr.gouv.stopc.robertserver.ws.dto.DeleteHistoryResponseDto> fr.gouv.stopc.robertserver.ws.controller.impl.DeleteHistoryControllerImpl.deleteHistory(fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo): [Field error in object 'deleteHistoryRequestVo' on field '%s':",
                                                 field
                                         )
                                 )

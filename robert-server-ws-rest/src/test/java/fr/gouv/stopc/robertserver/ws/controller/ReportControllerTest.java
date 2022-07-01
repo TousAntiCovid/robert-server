@@ -7,7 +7,6 @@ import fr.gouv.stopc.robertserver.ws.vo.ContactVo;
 import fr.gouv.stopc.robertserver.ws.vo.HelloMessageDetailVo;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
