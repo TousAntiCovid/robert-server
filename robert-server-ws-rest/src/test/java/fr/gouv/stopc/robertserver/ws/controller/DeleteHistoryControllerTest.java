@@ -2,9 +2,12 @@ package fr.gouv.stopc.robertserver.ws.controller;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -27,8 +30,9 @@ class DeleteHistoryControllerTest {
     @Autowired
     private RobertClock clock;
 
-    @Test
-    void can_delete_history() {
+    @ParameterizedTest
+    @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
+    void can_delete_history(AuthRequestData auth) {
         givenRegistrationExistsForUser(
                 "user___1", r -> r.exposedEpochs(
                         List.of(
@@ -45,9 +49,9 @@ class DeleteHistoryControllerTest {
                 .body(
                         DeleteHistoryRequestVo.builder()
                                 .ebid(toBase64("user___1"))
-                                .epochId(clock.now().asEpochId())
-                                .time(toBase64(clock.now().asTime32()))
-                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
                                 .build()
                 )
 
@@ -64,8 +68,9 @@ class DeleteHistoryControllerTest {
                 .is(matching(hasProperty("exposedEpochs", emptyIterable())));
     }
 
-    @Test
-    void can_delete_empty_history() {
+    @ParameterizedTest
+    @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
+    void can_delete_empty_history(AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1", r -> r.exposedEpochs(emptyList()));
 
         given()
@@ -73,9 +78,9 @@ class DeleteHistoryControllerTest {
                 .body(
                         DeleteHistoryRequestVo.builder()
                                 .ebid(toBase64("user___1"))
-                                .epochId(clock.now().asEpochId())
-                                .time(toBase64(clock.now().asTime32()))
-                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
                                 .build()
                 )
 
@@ -90,6 +95,30 @@ class DeleteHistoryControllerTest {
         assertThatRegistrationForUser("user___1")
                 .as("exposed epochs for 'user___1' is empty")
                 .is(matching(hasProperty("exposedEpochs", emptyIterable())));
+    }
+
+    @ParameterizedTest
+    @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#unacceptableAuthParameters")
+    void cant_delete_history_with_too_much_time_drift(AuthRequestData auth) {
+        givenRegistrationExistsForUser("user___1");
+
+        given()
+                .contentType(JSON)
+                .body(
+                        DeleteHistoryRequestVo.builder()
+                                .ebid(toBase64("user___1"))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
+                                .build()
+                )
+
+                .when()
+                .post("/api/v6/deleteExposureHistory")
+
+                .then()
+                .statusCode(BAD_REQUEST.value())
+                .body(emptyString());
     }
 
     @Test
@@ -111,7 +140,9 @@ class DeleteHistoryControllerTest {
                 .post("/api/v6/deleteExposureHistory")
 
                 .then()
-                .statusCode(430);
+                .statusCode(430)
+                .body(emptyString());
+        ;
     }
 
     @Test
@@ -134,7 +165,9 @@ class DeleteHistoryControllerTest {
                 .post("/api/v6/deleteExposureHistory")
 
                 .then()
-                .statusCode(BAD_REQUEST.value());
+                .statusCode(BAD_REQUEST.value())
+                .body(emptyString());
+        ;
     }
 
     @Test
@@ -154,6 +187,8 @@ class DeleteHistoryControllerTest {
                 .post("/api/v6/deleteExposureHistory")
 
                 .then()
-                .statusCode(NOT_FOUND.value());
+                .statusCode(NOT_FOUND.value())
+                .body(emptyString());
+        ;
     }
 }

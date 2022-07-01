@@ -1,6 +1,8 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.ws.test.AuthDataManager;
+import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
@@ -12,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
@@ -34,7 +35,6 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.HOURS;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.HamcrestCondition.matching;
 import static org.assertj.core.data.Offset.offset;
 import static org.hamcrest.Matchers.*;
@@ -46,45 +46,22 @@ class StatusControllerTest {
     @Autowired
     private RobertClock clock;
 
-    static Stream<Duration> unacceptable_time_drift() {
-        return Stream.of(
-                Duration.ofMinutes(-5),
-                Duration.ofMinutes(-2),
-                Duration.ofMinutes(-1).minusSeconds(5),
-                Duration.ofMinutes(1).plusSeconds(5),
-                Duration.ofMinutes(2),
-                Duration.ofMinutes(5)
-        );
-    }
-
     static Stream<Arguments> acceptable_epoch_and_time_drift() {
-        final var withOrWithoutPushInfo = asList(
-                null,
-                PushInfoVo.builder()
-                        .token("PushToken")
-                        .locale("fr-FR")
-                        .timezone("Europe/Paris")
-                        .build()
-        );
-        final var acceptableEpochDrift = List.of(-50, -2, -1, 0, 1, 2, 50);
-        final var acceptableTimeDrift = List.of(
-                Duration.ofSeconds(-55 /* limit is 60s but test execution may produce latency */),
-                Duration.ofSeconds(-30),
-                Duration.ofSeconds(30),
-                Duration.ofSeconds(60)
-        );
-        return withOrWithoutPushInfo.stream().flatMap(
-                pushInfo -> acceptableEpochDrift.stream().flatMap(
-                        epochDrift -> acceptableTimeDrift.stream().flatMap(
-                                timeDrift -> Stream.of(Arguments.of(pushInfo, epochDrift, timeDrift))
-                        )
+        return AuthDataManager.acceptableAuthParametersForEach(
+                Stream.of(
+                        null,
+                        PushInfoVo.builder()
+                                .token("PushToken")
+                                .locale("fr-FR")
+                                .timezone("Europe/Paris")
+                                .build()
                 )
         );
     }
 
     @ParameterizedTest
     @MethodSource("acceptable_epoch_and_time_drift")
-    void can_request_exposure_status_no_risk(PushInfoVo pushInfo, int epochDrift, Duration timeDrift) {
+    void can_request_exposure_status_no_risk(PushInfoVo pushInfo, AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1");
 
         given()
@@ -92,9 +69,9 @@ class StatusControllerTest {
                 .body(
                         StatusVo.builder()
                                 .ebid(toBase64("user___1"))
-                                .epochId(clock.now().asEpochId() + epochDrift)
-                                .time(toBase64(clock.now().plus(timeDrift).asTime32()))
-                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
                                 .pushInfo(pushInfo)
                                 .build()
                 )
@@ -112,9 +89,9 @@ class StatusControllerTest {
                 .body("declarationToken", nullValue())
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(61)))
                                 .withClaim(
-                                        "exp", isUnixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
+                                        "exp", isUnixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(61))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
@@ -123,7 +100,7 @@ class StatusControllerTest {
                 .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", clock.now().asEpochId());
 
         assertThatRegistrationTimeDriftForUser("user___1")
-                .isCloseTo(-timeDrift.getSeconds(), offset(2L));
+                .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));
 
         if (null == pushInfo) {
             verifyNoInteractionsWithPushNotifServer();
@@ -137,7 +114,7 @@ class StatusControllerTest {
 
     @ParameterizedTest
     @MethodSource("acceptable_epoch_and_time_drift")
-    void can_request_exposure_status_at_risk(PushInfoVo pushInfo, int epochDrift, Duration timeDrift) {
+    void can_request_exposure_status_at_risk(PushInfoVo pushInfo, AuthRequestData auth) {
         givenRegistrationExistsForUser(
                 "user___1", r -> r
                         .atRisk(true)
@@ -150,9 +127,9 @@ class StatusControllerTest {
                 .body(
                         StatusVo.builder()
                                 .ebid(toBase64("user___1"))
-                                .epochId(clock.now().asEpochId() + epochDrift)
-                                .time(toBase64(clock.now().plus(timeDrift).asTime32()))
-                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
                                 .pushInfo(pushInfo)
                                 .build()
                 )
@@ -192,7 +169,7 @@ class StatusControllerTest {
                 .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", clock.now().asEpochId());
 
         assertThatRegistrationTimeDriftForUser("user___1")
-                .isCloseTo(-timeDrift.getSeconds(), offset(2L));
+                .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));
 
         if (null == pushInfo) {
             verifyNoInteractionsWithPushNotifServer();
@@ -204,8 +181,8 @@ class StatusControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("unacceptable_time_drift")
-    void cant_request_exposure_status_with_too_much_time_drift(Duration timeDrift) {
+    @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#unacceptableAuthParameters")
+    void cant_request_exposure_status_with_too_much_time_drift(AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1");
 
         given()
@@ -213,9 +190,9 @@ class StatusControllerTest {
                 .body(
                         StatusVo.builder()
                                 .ebid(toBase64("user___1"))
-                                .epochId(clock.now().asEpochId())
-                                .time(toBase64(clock.now().plus(timeDrift).asTime32()))
-                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
                                 .build()
                 )
 
@@ -229,7 +206,7 @@ class StatusControllerTest {
         verifyNoInteractionsWithPushNotifServer();
 
         assertThatRegistrationTimeDriftForUser("user___1")
-                .isCloseTo(-timeDrift.getSeconds(), offset(2L));
+                .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));
 
         assertThatInfoLogs()
                 .containsOnlyOnce(
@@ -293,15 +270,15 @@ class StatusControllerTest {
 
     @ParameterizedTest
     @MethodSource("acceptable_epoch_and_time_drift")
-    void http_404_on_missing_registration(PushInfoVo pushInfo, int epochDrift, Duration timeDrift) {
+    void http_404_on_missing_registration(PushInfoVo pushInfo, AuthRequestData auth) {
         given()
                 .contentType(JSON)
                 .body(
                         StatusVo.builder()
                                 .ebid(toBase64("user___1"))
-                                .epochId(clock.now().asEpochId() + epochDrift)
-                                .time(toBase64(clock.now().plus(timeDrift).asTime32()))
-                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
                                 .pushInfo(pushInfo)
                                 .build()
                 )
@@ -315,11 +292,15 @@ class StatusControllerTest {
 
         assertThatInfoLogs()
                 .containsOnlyOnce("Discarding status request because id unknown (fake or was deleted)");
+
+        if (pushInfo != null) {
+            verifyNoInteractionsWithPushNotifServer();
+        }
     }
 
     @ParameterizedTest
     @MethodSource("acceptable_epoch_and_time_drift")
-    void http_430_on_unknown_key(PushInfoVo pushInfo, int epochDrift, Duration timeDrift) {
+    void http_430_on_unknown_key(PushInfoVo pushInfo, AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1");
         givenCryptoServerRaiseError430ForEbid("user___1");
 
@@ -328,9 +309,9 @@ class StatusControllerTest {
                 .body(
                         StatusVo.builder()
                                 .ebid(toBase64("user___1"))
-                                .epochId(clock.now().asEpochId() + epochDrift)
-                                .time(toBase64(clock.now().plus(timeDrift).asTime32()))
-                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
                                 .pushInfo(pushInfo)
                                 .build()
                 )
@@ -341,6 +322,10 @@ class StatusControllerTest {
                 .then()
                 .statusCode(430)
                 .body(emptyString());
+
+        if (pushInfo != null) {
+            verifyNoInteractionsWithPushNotifServer();
+        }
     }
 
 }

@@ -19,6 +19,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @ActiveProfiles({ "dev", "test" })
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners(listeners = {
+        AuthDataManager.class,
         JwtKeysManager.class,
         LogbackManager.class,
         RestAssuredManager.class,
