@@ -29,15 +29,13 @@ class DateTimeMatcherTest {
 
     @Test
     void can_match_unix_timestamp() {
-        assertThat("an Integer unix timestamp", UNIX_TIMESTAMP, unixTimestamp(EXPECTED_INSTANT));
-        assertThat("a Long unix timestamp", (long) UNIX_TIMESTAMP, unixTimestamp(EXPECTED_INSTANT));
         assertThat("a String unix timestamp", String.valueOf(UNIX_TIMESTAMP), unixTimestamp(EXPECTED_INSTANT));
     }
 
     @Test
     void can_match_ntp_timestamp() {
-        assertThat("a Long ntp timestamp", NTP_TIMESTAMP, ntpTimestamp(EXPECTED_INSTANT));
-        assertThat("a String ntp timestamp", String.valueOf(NTP_TIMESTAMP), ntpTimestamp(EXPECTED_INSTANT));
+        assertThat("a Long ntp timestamp", NTP_TIMESTAMP, isNtpTimestamp(EXPECTED_INSTANT));
+        assertThat("a String ntp timestamp", String.valueOf(NTP_TIMESTAMP), isNtpTimestamp(EXPECTED_INSTANT));
     }
 
     @ParameterizedTest
@@ -64,7 +62,7 @@ class DateTimeMatcherTest {
     @Test
     void can_detect_unix_timestamp_mismatch() {
         final var error = assertThrows(
-                AssertionError.class, () -> assertThat(UNIX_TIMESTAMP, unixTimestamp(EXPECTED_INSTANT.plusSeconds(1)))
+                AssertionError.class, () -> assertThat(UNIX_TIMESTAMP, isUnixTimestamp(EXPECTED_INSTANT.plusSeconds(1)))
         );
         assertThat(
                 error.getMessage().replace("\r", ""), equalTo(
@@ -78,7 +76,7 @@ class DateTimeMatcherTest {
     @Test
     void can_detect_ntp_timestamp_mismatch() {
         final var error = assertThrows(
-                AssertionError.class, () -> assertThat(NTP_TIMESTAMP, ntpTimestamp(EXPECTED_INSTANT.plusSeconds(1)))
+                AssertionError.class, () -> assertThat(NTP_TIMESTAMP, isNtpTimestamp(EXPECTED_INSTANT.plusSeconds(1)))
         );
         assertThat(
                 error.getMessage().replace("\r", ""), equalTo(
