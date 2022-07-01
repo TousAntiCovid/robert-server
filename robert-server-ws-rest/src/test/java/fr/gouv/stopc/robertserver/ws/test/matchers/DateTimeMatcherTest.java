@@ -29,7 +29,9 @@ class DateTimeMatcherTest {
 
     @Test
     void can_match_unix_timestamp() {
-        assertThat("a String unix timestamp", String.valueOf(UNIX_TIMESTAMP), unixTimestamp(EXPECTED_INSTANT));
+        assertThat("an Integer unix timestamp", UNIX_TIMESTAMP, isUnixTimestamp(EXPECTED_INSTANT));
+        assertThat("a Long unix timestamp", (long) UNIX_TIMESTAMP, isUnixTimestamp(EXPECTED_INSTANT));
+        assertThat("a String unix timestamp", String.valueOf(UNIX_TIMESTAMP), isUnixTimestamp(EXPECTED_INSTANT));
     }
 
     @Test

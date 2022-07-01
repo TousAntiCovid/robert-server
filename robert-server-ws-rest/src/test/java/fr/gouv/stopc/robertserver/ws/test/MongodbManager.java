@@ -110,7 +110,8 @@ public class MongodbManager implements TestExecutionListener {
     }
 
     public static ListAssert<Contact> assertThatContactsToProcess() {
-        return assertThat(mongoOperations.find(new Query(), Contact.class));
+        return assertThat(mongoOperations.find(new Query(), Contact.class))
+                .as("Mongodb contact_to_process collection");
     }
 
     public static List<HelloMessage> helloMessages(final Contact contact) {

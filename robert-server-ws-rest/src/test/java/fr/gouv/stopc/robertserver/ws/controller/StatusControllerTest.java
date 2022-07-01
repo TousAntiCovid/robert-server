@@ -27,8 +27,8 @@ import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.*;
 import static fr.gouv.stopc.robertserver.ws.test.StatisticsManager.assertThatTodayStatistic;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.isBase64Encoded;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64;
+import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.isNtpTimestamp;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.isUnixTimestampNear;
-import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.ntpTimestamp;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.JwtMatcher.isJwtSignedBy;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
@@ -166,7 +166,7 @@ class StatusControllerTest {
                 .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for user___1")))
                 .body("config.size()", equalTo(0))
                 .body("lastContactDate", equalTo("888"))
-                .body("lastRiskScoringDate", ntpTimestamp(clock.atEpoch(999).asInstant()))
+                .body("lastRiskScoringDate", isNtpTimestamp(clock.atEpoch(999).asInstant()))
                 .body(
                         "declarationToken", isJwtSignedBy(JWT_KEYS_DECLARATION)
                                 .withClaim("jti", matchesRegex("\\w{64}"))
@@ -174,7 +174,7 @@ class StatusControllerTest {
                                 .withClaim("iss", equalTo("tac"))
                                 .withClaim(
                                         "notificationDateTimestamp",
-                                        ntpTimestamp(clock.now().truncatedTo(ROBERT_EPOCH).asInstant())
+                                        isNtpTimestamp(clock.now().truncatedTo(ROBERT_EPOCH).asInstant())
                                 )
                                 .withClaim("lastContactDateTimestamp", equalTo(888))
                 )

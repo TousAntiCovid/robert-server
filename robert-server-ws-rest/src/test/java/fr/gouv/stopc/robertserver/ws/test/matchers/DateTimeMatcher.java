@@ -15,11 +15,11 @@ public class DateTimeMatcher {
         return new IsoDateTimeMatcher(instant, acceptableDifference);
     }
 
-    public static Matcher<Object> ntpTimestamp(final Instant instant) {
+    public static Matcher<Object> isNtpTimestamp(final Instant instant) {
         return new TimestampNear(TimestampNear.NTP_EPOCH, instant, Duration.ZERO);
     }
 
-    public static Matcher<Object> unixTimestamp(final Instant instant) {
+    public static Matcher<Object> isUnixTimestamp(final Instant instant) {
         return new TimestampNear(TimestampNear.UNIX_EPOCH, instant, Duration.ZERO);
     }
 
