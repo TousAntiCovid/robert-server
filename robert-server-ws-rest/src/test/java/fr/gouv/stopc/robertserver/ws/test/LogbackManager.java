@@ -32,6 +32,10 @@ public class LogbackManager implements TestExecutionListener {
         return assertThatLogs(Level.WARN);
     }
 
+    public static ListAssert<String> assertThatErrorLogs() {
+        return assertThatLogs(Level.ERROR);
+    }
+
     private static ListAssert<String> assertThatLogs(final Level level) {
         final var infoLogEvents = LOG_EVENTS.list.stream()
                 .filter(event -> level.equals(event.getLevel()))
