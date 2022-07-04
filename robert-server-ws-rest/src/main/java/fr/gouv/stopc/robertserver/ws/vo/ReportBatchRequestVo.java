@@ -22,6 +22,4 @@ public class ReportBatchRequestVo {
 
     private List<ContactVo> contacts;
 
-    private String contactsAsBinary;
-
 }
