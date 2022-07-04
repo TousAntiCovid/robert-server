@@ -1,20 +1,25 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.ws.vo.UnregisterRequestVo;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseError430ForEbid;
 import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseErrorForMacStartingWith;
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithPushNotifServer;
+import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyPushNotifServerReceivedUnregisterForToken;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.assertThatRegistrations;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.givenRegistrationExistsForUser;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.http.HttpStatus.*;
 
 @IntegrationTest
@@ -23,8 +28,9 @@ class UnregisterControllerTest {
     @Autowired
     private RobertClock clock;
 
-    @Test
-    void can_unregister() {
+    @ParameterizedTest
+    @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
+    void can_unregister(AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1");
 
         given()
@@ -32,9 +38,9 @@ class UnregisterControllerTest {
                 .body(
                         UnregisterRequestVo.builder()
                                 .ebid(toBase64("user___1"))
-                                .epochId(clock.now().asEpochId())
-                                .time(toBase64(clock.now().asTime32()))
-                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
                                 .build()
                 )
 
@@ -46,8 +52,71 @@ class UnregisterControllerTest {
                 .body("success", equalTo(true))
                 .body("message", nullValue());
 
+        verifyNoInteractionsWithPushNotifServer();
+
         assertThatRegistrations()
                 .isEmpty();
+    }
+
+    @ParameterizedTest
+    @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
+    void can_unregister_apple_device(AuthRequestData auth) {
+        givenRegistrationExistsForUser("user___1");
+
+        given()
+                .contentType(JSON)
+                .body(
+                        UnregisterRequestVo.builder()
+                                .ebid(toBase64("user___1"))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
+                                .pushToken("push-token-user___1")
+                                .build()
+                )
+
+                .when()
+                .post("/api/v6/unregister")
+
+                .then()
+                .statusCode(OK.value())
+                .body("success", equalTo(true))
+                .body("message", nullValue());
+
+        verifyPushNotifServerReceivedUnregisterForToken("push-token-user___1");
+
+        assertThatRegistrations()
+                .isEmpty();
+    }
+
+    @ParameterizedTest
+    @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#unacceptableAuthParameters")
+    void cant_unregister_with_too_much_time_drift(AuthRequestData auth) {
+        givenRegistrationExistsForUser("user___1");
+
+        given()
+                .contentType(JSON)
+                .body(
+                        UnregisterRequestVo.builder()
+                                .ebid(toBase64("user___1"))
+                                .epochId(auth.epochId())
+                                .time(auth.base64Time32())
+                                .mac(auth.base64Mac())
+                                .build()
+                )
+
+                .when()
+                .post("/api/v6/unregister")
+
+                .then()
+                .statusCode(BAD_REQUEST.value())
+                .body(emptyString());
+
+        verifyNoInteractionsWithPushNotifServer();
+
+        assertThatRegistrations()
+                .extracting(Registration::getPermanentIdentifier)
+                .containsExactly("user___1".getBytes());
     }
 
     @Test
@@ -69,7 +138,8 @@ class UnregisterControllerTest {
                 .post("/api/v6/unregister")
 
                 .then()
-                .statusCode(430);
+                .statusCode(430)
+                .body(emptyString());
     }
 
     @Test
@@ -92,7 +162,12 @@ class UnregisterControllerTest {
                 .post("/api/v6/unregister")
 
                 .then()
-                .statusCode(BAD_REQUEST.value());
+                .statusCode(BAD_REQUEST.value())
+                .body(emptyString());
+
+        assertThatRegistrations()
+                .extracting(Registration::getPermanentIdentifier)
+                .containsExactly("user___1".getBytes());
     }
 
     @Test
@@ -112,7 +187,8 @@ class UnregisterControllerTest {
                 .post("/api/v6/unregister")
 
                 .then()
-                .statusCode(NOT_FOUND.value());
+                .statusCode(NOT_FOUND.value())
+                .body(emptyString());
     }
 
 }
