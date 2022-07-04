@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS;
+import static fr.gouv.stopc.robertserver.ws.test.LogbackManager.assertThatWarnLogs;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.assertThatContactsToProcess;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.JwtMatcher.isJwtSignedBy;
@@ -353,5 +354,8 @@ class ReportControllerTest {
                 .then()
                 .statusCode(UNAUTHORIZED.value())
                 .body("message", equalTo("Unrecognized token of length: " + invalidToken.length()));
+
+        assertThatWarnLogs()
+                .containsOnlyOnce("Unrecognized token of length: " + invalidToken.length());
     }
 }
