@@ -66,6 +66,8 @@ class StatusControllerTest {
     void can_request_exposure_status_no_risk(PushInfoVo pushInfo, AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1");
 
+        final var now = Instant.now();
+
         given()
                 .contentType(JSON)
                 .body(
@@ -91,9 +93,9 @@ class StatusControllerTest {
                 .body("declarationToken", nullValue())
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(61)))
+                                .withClaim("iat", isUnixTimestampNear(now, Duration.ofSeconds(60)))
                                 .withClaim(
-                                        "exp", isUnixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(61))
+                                        "exp", isUnixTimestampNear(now.plus(6, HOURS), Duration.ofSeconds(60))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
@@ -124,6 +126,8 @@ class StatusControllerTest {
                         .latestRiskEpoch(999)
         );
 
+        final var now = Instant.now();
+
         given()
                 .contentType(JSON)
                 .body(
@@ -149,7 +153,7 @@ class StatusControllerTest {
                 .body(
                         "declarationToken", isJwtSignedBy(JWT_KEYS_DECLARATION)
                                 .withClaim("jti", matchesRegex("\\w{64}"))
-                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(now, Duration.ofSeconds(60)))
                                 .withClaim("iss", equalTo("tac"))
                                 .withClaim(
                                         "notificationDateTimestamp",
@@ -159,9 +163,9 @@ class StatusControllerTest {
                 )
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", isUnixTimestampNear(Instant.now(), Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(now, Duration.ofSeconds(60)))
                                 .withClaim(
-                                        "exp", isUnixTimestampNear(Instant.now().plus(6, HOURS), Duration.ofSeconds(60))
+                                        "exp", isUnixTimestampNear(now.plus(6, HOURS), Duration.ofSeconds(60))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
