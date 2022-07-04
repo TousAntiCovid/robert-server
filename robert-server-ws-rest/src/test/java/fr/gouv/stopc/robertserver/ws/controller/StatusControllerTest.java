@@ -6,11 +6,13 @@ import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -328,4 +330,56 @@ class StatusControllerTest {
         }
     }
 
+    @IntegrationTest
+    @TestPropertySource(properties = "robert.esr.limit=0")
+    public static class StatisticsTest {
+
+        @Autowired
+        private RobertClock clock;
+
+        @Test
+        void dont_increment_notifiedUsers_statistics_when_already_notified() {
+            // given user___1 is "at risk"
+            givenRegistrationExistsForUser(
+                    "user___1", r -> r
+                            .atRisk(true)
+                            .lastContactTimestamp(888)
+                            .latestRiskEpoch(999)
+            );
+
+            // and user___1 successfully requested ESR
+            // so user___1 has been notified
+            given()
+                    .contentType(JSON)
+                    .body(
+                            StatusVo.builder()
+                                    .ebid(toBase64("user___1"))
+                                    .epochId(clock.now().asEpochId())
+                                    .time(toBase64(clock.now().asTime32()))
+                                    .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                    .build()
+                    )
+                    .post("/api/v6/status");
+
+            // when user___1 successfully requests another ESR
+            given()
+                    .contentType(JSON)
+                    .body(
+                            StatusVo.builder()
+                                    .ebid(toBase64("user___1"))
+                                    .epochId(clock.now().asEpochId())
+                                    .time(toBase64(clock.now().asTime32()))
+                                    .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                    .build()
+                    )
+                    .when()
+                    .post("/api/v6/status")
+                    .then()
+                    .statusCode(OK.value());
+
+            // then statistics count 1 single new notified user
+            assertThatTodayStatistic("notifiedUsers")
+                    .isEqualTo(1);
+        }
+    }
 }
