@@ -454,8 +454,8 @@ public class ReportControllerWsRestTest {
     protected void assertResponseBodyIsSuccess(ReportBatchResponseDto response) {
         assertEquals(MessageConstants.SUCCESSFUL_OPERATION.getValue(), response.getMessage());
         assertEquals(true, response.getSuccess());
-        assertNotNull(response.getToken());
-        assertThat(response.getToken().length()).isGreaterThan(400);
+        assertNotNull(response.getReportValidationToken());
+        assertThat(response.getReportValidationToken().length()).isGreaterThan(400);
     }
 
     private ApiError buildApiError(String message) {
