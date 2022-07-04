@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
-import fr.gouv.stopc.robertserver.ws.test.GrpcMockManager;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.ws.vo.PushInfoVo;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
@@ -8,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerIsOffline;
 import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.verifyNoInteractionsWithCryptoServer;
 import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithPushNotifServer;
 import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyPushNotifServerReceivedRegisterForToken;
@@ -44,6 +44,8 @@ class RegisterControllerTest {
                 .body("message", nullValue())
                 .body("config.size()", equalTo(0))
                 .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for fake public key")));
+
+        verifyNoInteractionsWithPushNotifServer();
     }
 
     @Test
@@ -183,7 +185,7 @@ class RegisterControllerTest {
 
     @Test
     void cant_register_when_crypto_server_is_offline() {
-        GrpcMockManager.givenCryptoServerIsOffline();
+        givenCryptoServerIsOffline();
 
         given()
                 .contentType(JSON)

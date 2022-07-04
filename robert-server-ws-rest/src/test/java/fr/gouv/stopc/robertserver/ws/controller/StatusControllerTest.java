@@ -53,7 +53,7 @@ class StatusControllerTest {
                 Stream.of(
                         null,
                         PushInfoVo.builder()
-                                .token("PushToken")
+                                .token("valid-token")
                                 .locale("fr-FR")
                                 .timezone("Europe/Paris")
                                 .build()
@@ -66,7 +66,7 @@ class StatusControllerTest {
     void can_request_exposure_status_no_risk(PushInfoVo pushInfo, AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1");
 
-        final var now = Instant.now();
+        final var now = clock.now();
 
         given()
                 .contentType(JSON)
@@ -93,15 +93,16 @@ class StatusControllerTest {
                 .body("declarationToken", nullValue())
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", isUnixTimestampNear(now, Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(now.asInstant(), Duration.ofSeconds(60)))
                                 .withClaim(
-                                        "exp", isUnixTimestampNear(now.plus(6, HOURS), Duration.ofSeconds(60))
+                                        "exp",
+                                        isUnixTimestampNear(now.asInstant().plus(6, HOURS), Duration.ofSeconds(60))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
 
         assertThatRegistrationForUser("user___1")
-                .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", clock.now().asEpochId());
+                .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", now.asEpochId());
 
         assertThatRegistrationTimeDriftForUser("user___1")
                 .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));

@@ -71,7 +71,7 @@ class UnregisterControllerTest {
                                 .epochId(auth.epochId())
                                 .time(auth.base64Time32())
                                 .mac(auth.base64Mac())
-                                .pushToken("push-token-user___1")
+                                .pushToken("valid-token-user___1")
                                 .build()
                 )
 
@@ -83,7 +83,7 @@ class UnregisterControllerTest {
                 .body("success", equalTo(true))
                 .body("message", nullValue());
 
-        verifyPushNotifServerReceivedUnregisterForToken("push-token-user___1");
+        verifyPushNotifServerReceivedUnregisterForToken("valid-token-user___1");
 
         assertThatRegistrations()
                 .isEmpty();
