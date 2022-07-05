@@ -113,7 +113,7 @@ public class MobileApplication {
         assertThat("image content", response.getBody(), notNullValue());
 
         // The user reads the image content
-        return new CaptchaSolution(captchaChallenge.getId(), "ABCD");
+        return new CaptchaSolution(captchaChallenge.getId(), "valid challenge answer");
     }
 
     private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {

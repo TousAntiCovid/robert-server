@@ -6,6 +6,8 @@ include:
 e2e-tests-docker:
   script:
     - until curl -s http://ws-rest:8086/actuator/health | grep -q UP; do sleep 0.5; done;
+    - until curl -s http://crypto-server:8081/actuator/health | grep -q UP; do sleep 0.5; done;
+    - docker-compose ps
     - java -jar robert-e2e-tests/target/robert-e2e-tests-*.jar
 
 deploy-int:

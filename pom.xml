@@ -1,123 +1,126 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
 >
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<licenses>
-		<license>
-			<name>Mozilla Public License, Version 2.0</name>
-			<url>https://www.mozilla.org/en-US/MPL/2.0/</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+    <licenses>
+        <license>
+            <name>Mozilla Public License, Version 2.0</name>
+            <url>https://www.mozilla.org/en-US/MPL/2.0/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.13.RELEASE</version>
-		<relativePath />
-	</parent>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.2.13.RELEASE</version>
+        <relativePath />
+    </parent>
 
-	<groupId>fr.gouv.stopc</groupId>
-	<artifactId>robert-server</artifactId>
-	<version>0-SNAPSHOT</version>
-	<name>robert-server</name>
-	<packaging>pom</packaging>
-	<description>Projet principal</description>
+    <groupId>fr.gouv.stopc</groupId>
+    <artifactId>robert-server</artifactId>
+    <version>0-SNAPSHOT</version>
+    <name>robert-server</name>
+    <packaging>pom</packaging>
+    <description>Projet principal</description>
 
-	<modules>
-		<module>robert-server-ws-rest</module>
-		<module>robert-server-batch</module>
-		<module>robert-server-database</module>
-		<module>robert-server-crypto</module>
-		<module>robert-server-common</module>
-		<module>robert-crypto-grpc-server</module>
-		<module>robert-crypto-grpc-server-messaging</module>
-		<module>robert-crypto-grpc-server-storage</module>
-		<module>robert-server-mobile-app-emulator</module>
-		<module>robert-e2e-tests</module>
-		<module>robert-server-dataset-injector</module>
-	</modules>
+    <modules>
+        <module>robert-server-ws-rest</module>
+        <module>robert-server-batch</module>
+        <module>robert-server-database</module>
+        <module>robert-server-crypto</module>
+        <module>robert-server-common</module>
+        <module>robert-crypto-grpc-server</module>
+        <module>robert-crypto-grpc-server-messaging</module>
+        <module>robert-crypto-grpc-server-storage</module>
+        <module>robert-server-mobile-app-emulator</module>
+        <module>robert-e2e-tests</module>
+        <module>robert-server-dataset-injector</module>
+    </modules>
 
-	<properties>
-		<java.version>11</java.version>
-		<grpc.version>1.29.0</grpc.version>
-		<protobuf.version>3.11.0</protobuf.version>
-		<error_prone_annotations.version>2.3.4</error_prone_annotations.version>
-		<postgresql.version>42.2.12</postgresql.version>
-		<bountycastle.version>1.65</bountycastle.version>
-		<spring-framework.version>5.2.20.RELEASE</spring-framework.version>
-		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
-		<jjwt.version>0.11.2</jjwt.version>
-		<junit-jupiter.version>5.7.1</junit-jupiter.version>
-		<log4j2.version>2.17.0</log4j2.version>
-		<logcaptor.version>2.6.1</logcaptor.version>
-		<mockito.version>3.7.0</mockito.version>
-		<mockserver.version>5.13.2</mockserver.version>
-		<prometheus-pushgateway.version>0.9.0</prometheus-pushgateway.version>
-		<testcontainers.version>1.17.1</testcontainers.version>
-	</properties>
+    <properties>
+        <java.version>11</java.version>
+        <assertj.version>3.19.0</assertj.version>
+        <grpc.version>1.29.0</grpc.version>
+        <protobuf.version>3.11.0</protobuf.version>
+        <error_prone_annotations.version>2.3.4</error_prone_annotations.version>
+        <postgresql.version>42.2.12</postgresql.version>
+        <bountycastle.version>1.65</bountycastle.version>
+        <spring-framework.version>5.2.20.RELEASE</spring-framework.version>
+        <spring-cloud.version>Hoxton.SR5</spring-cloud.version>
+        <grpcmock.version>0.7.6</grpcmock.version>
+        <jjwt.version>0.11.2</jjwt.version>
+        <junit-jupiter.version>5.7.1</junit-jupiter.version>
+        <log4j2.version>2.17.0</log4j2.version>
+        <logcaptor.version>2.6.1</logcaptor.version>
+        <mockito.version>3.7.0</mockito.version>
+        <mockserver.version>5.13.2</mockserver.version>
+        <prometheus-pushgateway.version>0.9.0</prometheus-pushgateway.version>
+        <rest-assured.version>5.0.1</rest-assured.version>
+        <testcontainers.version>1.17.1</testcontainers.version>
+    </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
-	</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>javax.validation</groupId>
-				<artifactId>validation-api</artifactId>
-				<version>2.0.1.Final</version>
-			</dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>2.0.1.Final</version>
+            </dependency>
 
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>grpc-bom</artifactId>
-				<version>${grpc.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-bom</artifactId>
+                <version>${grpc.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>com.google.protobuf</groupId>
-				<artifactId>protobuf-java-util</artifactId>
-				<version>${protobuf.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java-util</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
 
-			<dependency>
-				<groupId>com.google.errorprone</groupId>
-				<artifactId>error_prone_annotations</artifactId>
-				<version>${error_prone_annotations.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>${error_prone_annotations.version}</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.postgresql</groupId>
-				<artifactId>postgresql</artifactId>
-				<version>${postgresql.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.bouncycastle</groupId>
-				<artifactId>bcpkix-jdk15on</artifactId>
-				<version>${bountycastle.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <version>${bountycastle.version}</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 	<build>
 		<pluginManagement>
@@ -220,56 +223,60 @@
 		</plugins>
 	</build>
 
-	<profiles>
-		<profile>
-			<id>release</id>
-			<activation>
-				<property>
-					<name>git.tag</name>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-enforcer-plugin</artifactId>
-						<configuration>
-							<fail>true</fail>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>git.tag</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <configuration>
+                            <fail>true</fail>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
-	<repositories>
-		<repository>
-			<id>gitlab-maven</id>
-			<url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>gitlab-maven</id>
+            <url>
+                https://gitlab.inria.fr/api/v4/projects/20766/packages/maven
+            </url>
+        </repository>
+    </repositories>
 
     <distributionManagement>
         <repository>
             <id>gitlab-maven</id>
-	    	<url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
+            <url>
+                https://gitlab.inria.fr/api/v4/projects/20766/packages/maven
+            </url>
         </repository>
         <snapshotRepository>
             <id>gitlab-maven</id>
-	    	<url>https://gitlab.inria.fr/api/v4/projects/20766/packages/maven</url>
+            <url>
+                https://gitlab.inria.fr/api/v4/projects/20766/packages/maven
+            </url>
         </snapshotRepository>
     </distributionManagement>
 
-
-	<scm>
-		<connection>
-			scm:git:git@gitlab.inria.fr:stopcovid19/robert-server.git
-		</connection>
-		<developerConnection>
-			scm:git:git@gitlab.inria.fr:stopcovid19/robert-server.git
-		</developerConnection>
-		<url>https://gitlab.inria.fr/stopcovid19/robert-server</url>
-		<tag>HEAD</tag>
-	</scm>
-
+    <scm>
+        <connection>
+            scm:git:git@gitlab.inria.fr:stopcovid19/robert-server.git
+        </connection>
+        <developerConnection>
+            scm:git:git@gitlab.inria.fr:stopcovid19/robert-server.git
+        </developerConnection>
+        <url>https://gitlab.inria.fr/stopcovid19/robert-server</url>
+        <tag>HEAD</tag>
+    </scm>
 </project>
