@@ -37,6 +37,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.HamcrestCondition.matching;
 import static org.assertj.core.data.Offset.offset;
 import static org.hamcrest.Matchers.*;
@@ -96,7 +97,9 @@ class StatusControllerTest {
                                 .withClaim("iat", isUnixTimestampNear(now.asInstant(), Duration.ofSeconds(60)))
                                 .withClaim(
                                         "exp",
-                                        isUnixTimestampNear(now.asInstant().plus(6, HOURS), Duration.ofSeconds(60))
+                                        isUnixTimestampNear(
+                                                now.asInstant().plus(6, HOURS).plus(1, MINUTES), Duration.ofSeconds(60)
+                                        )
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
@@ -166,7 +169,8 @@ class StatusControllerTest {
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
                                 .withClaim("iat", isUnixTimestampNear(now, Duration.ofSeconds(60)))
                                 .withClaim(
-                                        "exp", isUnixTimestampNear(now.plus(6, HOURS), Duration.ofSeconds(60))
+                                        "exp",
+                                        isUnixTimestampNear(now.plus(6, HOURS).plus(1, MINUTES), Duration.ofSeconds(60))
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
