@@ -89,6 +89,20 @@ public class KpiService {
         }
     }
 
+    private static WebserviceStatistics emptyWebserviceStatistic() {
+        return new WebserviceStatistics(null, null, null, null, null, null, 0L, 0L);
+    }
+
+    private long aggregateUsersAboveThresholdButRetentionPeriodExpired(final List<BatchStatistics> stats) {
+        return stats.stream()
+                .mapToLong(BatchStatistics::getUsersAboveRiskThresholdButRetentionPeriodExpired)
+                .sum();
+    }
+
+    private static RobertServerKpi emptyRobertServerKpi() {
+        return new RobertServerKpi(null, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+    }
+
     public List<RobertServerKpi> getKpis(final LocalDate fromDate, final LocalDate toDate) {
 
         final var range = Range
@@ -129,29 +143,36 @@ public class KpiService {
                             .usersAboveRiskThresholdButRetentionPeriodExpired(
                                     batchStat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
                             )
+                            .reportsCount(wsStat.getReportsCount())
                             .build();
                 })
                 .collect(toList());
 
     }
 
-    private long aggregateUsersAboveThresholdButRetentionPeriodExpired(final List<BatchStatistics> stats) {
-        return stats.stream()
-                .mapToLong(BatchStatistics::getUsersAboveRiskThresholdButRetentionPeriodExpired)
-                .sum();
-    }
-
-    public void updateWebserviceStatistics(final Registration registration) {
+    public void incrementNotifiedUsersCount(final Registration registration) {
         if (!registration.isNotifiedForCurrentRisk() && registration.isAtRisk()) {
+            createWebserviceStatisticIfNotExist();
             webserviceStatisticsRepository.incrementNotifiedUsers(now().truncatedTo(DAYS));
         }
     }
 
-    private static WebserviceStatistics emptyWebserviceStatistic() {
-        return new WebserviceStatistics(null, null, null, null, null, null, 0L);
+    public void incrementReportsCount() {
+        webserviceStatisticsRepository.incrementReportsCount(now().truncatedTo(DAYS));
     }
 
-    private static RobertServerKpi emptyRobertServerKpi() {
-        return new RobertServerKpi(null, 0L, 0L, 0L, 0L, 0L, 0L);
+    private void createWebserviceStatisticIfNotExist() {
+        final var result = webserviceStatisticsRepository.findByDate(now().truncatedTo(DAYS));
+        if (result.isEmpty()) {
+            final var notifiedUsersTotal = webserviceStatisticsRepository.getAllNotifiedUsersCount();
+            final var reportsCountTotal = webserviceStatisticsRepository.getAllReportsCount();
+            webserviceStatisticsRepository.save(
+                    WebserviceStatistics.builder()
+                            .date(now().truncatedTo(DAYS))
+                            .notifiedUsers(notifiedUsersTotal)
+                            .reportsCount(reportsCountTotal)
+                            .build()
+            );
+        }
     }
 }

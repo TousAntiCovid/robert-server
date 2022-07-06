@@ -32,4 +32,6 @@ public class WebserviceStatistics {
     private Long totalNotifiedUsersScoredAgain;
 
     private Long notifiedUsers;
+
+    private Long reportsCount;
 }

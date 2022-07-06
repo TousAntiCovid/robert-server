@@ -10,6 +10,8 @@ import org.springframework.data.mongodb.core.query.Update;
 
 import java.time.Instant;
 
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
+
 @RequiredArgsConstructor
 public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStatisticsCustomRepository {
 
@@ -24,4 +26,15 @@ public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStati
                 .returnNew(true);
         mongoOperations.findAndModify(query, update, options, WebserviceStatistics.class);
     }
+
+    @Override
+    public void incrementReportsCount(Instant date) {
+        final var query = new Query().addCriteria(Criteria.where("date").is(date));
+        final var update = new Update().inc("reportsCount", 1);
+        final var options = FindAndModifyOptions.options()
+                .upsert(true)
+                .returnNew(true);
+        mongoOperations.findAndModify(query, update, options, WebserviceStatistics.class);
+    }
+
 }

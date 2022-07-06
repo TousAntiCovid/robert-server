@@ -19,6 +19,7 @@ import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS;
 import static fr.gouv.stopc.robertserver.ws.test.LogbackManager.assertThatWarnLogs;
 import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithSubmissionCodeServer;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.assertThatContactsToProcess;
+import static fr.gouv.stopc.robertserver.ws.test.StatisticsManager.assertThatTodayStatistic;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.JwtMatcher.isJwtSignedBy;
 import static io.restassured.RestAssured.given;
@@ -363,4 +364,32 @@ class ReportControllerTest {
         assertThatWarnLogs()
                 .containsOnlyOnce("Unrecognized token of length: " + invalidToken.length());
     }
+
+    @IntegrationTest
+    static class StatisticsTest {
+
+        @Test
+        void increment_reportsCount_stat_when_report() {
+            given()
+                    .contentType(JSON)
+                    .body(
+                            ReportBatchRequestVo.builder()
+                                    .token("validZ")
+                                    .contacts(emptyList())
+                                    .build()
+                    )
+
+                    .when()
+                    .post("/api/v6/report")
+
+                    .then()
+                    .statusCode(OK.value())
+                    .body("success", equalTo(true))
+                    .body("message", equalTo("Successful operation"));
+
+            assertThatTodayStatistic("reportsCount")
+                    .isEqualTo(1);
+        }
+    }
+
 }

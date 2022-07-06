@@ -5,6 +5,7 @@ import fr.gouv.stopc.robertserver.ws.controller.IReportController;
 import fr.gouv.stopc.robertserver.ws.dto.ReportBatchResponseDto;
 import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.ContactDtoService;
+import fr.gouv.stopc.robertserver.ws.service.KpiService;
 import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.utils.MetricsService;
 import fr.gouv.stopc.robertserver.ws.vo.ReportBatchRequestVo;
@@ -40,6 +41,8 @@ public class ReportControllerImpl implements IReportController {
 
     private PrivateKey jwtPrivateKey;
 
+    private final KpiService kpiService;
+
     @Override
     public ResponseEntity<ReportBatchResponseDto> reportContactHistory(ReportBatchRequestVo reportBatchRequestVo)
             throws RobertServerException {
@@ -59,6 +62,8 @@ public class ReportControllerImpl implements IReportController {
                 .reportValidationToken(token)
                 .success(Boolean.TRUE)
                 .build();
+
+        kpiService.incrementReportsCount();
 
         return ResponseEntity.ok(reportBatchResponseDto);
     }

@@ -87,6 +87,9 @@ components:
         usersAboveRiskThresholdButRetentionPeriodExpired:
           type: integer
           format: int64
+        reportsCount:
+          type: integer
+          format: int64
       required:
         - date
         - nbAlertedUsers
@@ -95,3 +98,4 @@ components:
         - nbNotifiedUsersScoredAgain
         - notifiedUsers
         - usersAboveRiskThresholdButRetentionPeriodExpired
+        - reportsCount
