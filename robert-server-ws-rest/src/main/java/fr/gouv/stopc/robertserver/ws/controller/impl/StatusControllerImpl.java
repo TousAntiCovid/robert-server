@@ -238,7 +238,7 @@ public class StatusControllerImpl implements IStatusController {
         log.debug("analytics token generated : {}", analyticsToken);
 
         // update statistics about user being notified of its risk status
-        kpiService.updateWebserviceStatistics(record);
+        kpiService.incrementNotifiedUsersCount(record);
         record.setNotifiedForCurrentRisk(true);
 
         // Save changes to the record

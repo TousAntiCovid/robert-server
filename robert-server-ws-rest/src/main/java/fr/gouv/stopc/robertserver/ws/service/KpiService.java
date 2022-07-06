@@ -158,21 +158,35 @@ public class KpiService {
     }
 
     public void incrementReportsCount() {
+        createWebserviceStatisticIfNotExist();
         webserviceStatisticsRepository.incrementReportsCount(now().truncatedTo(DAYS));
     }
 
     private void createWebserviceStatisticIfNotExist() {
         final var result = webserviceStatisticsRepository.findByDate(now().truncatedTo(DAYS));
         if (result.isEmpty()) {
-            final var notifiedUsersTotal = webserviceStatisticsRepository.getAllNotifiedUsersCount();
-            final var reportsCountTotal = webserviceStatisticsRepository.getAllReportsCount();
-            webserviceStatisticsRepository.save(
-                    WebserviceStatistics.builder()
-                            .date(now().truncatedTo(DAYS))
-                            .notifiedUsers(notifiedUsersTotal)
-                            .reportsCount(reportsCountTotal)
-                            .build()
-            );
+
+            if (webserviceStatisticsRepository.count() == 0) {
+                webserviceStatisticsRepository.save(
+                        WebserviceStatistics.builder()
+                                .date(now().truncatedTo(DAYS))
+                                .notifiedUsers(0L)
+                                .reportsCount(0L)
+                                .build()
+                );
+            } else {
+                final var notifiedUsersTotal = webserviceStatisticsRepository.getAllNotifiedUsersCount().orElse(0L);
+                final var reportsCountTotal = webserviceStatisticsRepository.getAllReportsCount().orElse(0L);
+
+                webserviceStatisticsRepository.save(
+                        WebserviceStatistics.builder()
+                                .date(now().truncatedTo(DAYS))
+                                .notifiedUsers(notifiedUsersTotal)
+                                .reportsCount(reportsCountTotal)
+                                .build()
+                );
+            }
+
         }
     }
 }
