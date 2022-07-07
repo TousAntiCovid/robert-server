@@ -10,8 +10,6 @@ import org.springframework.data.mongodb.core.query.Update;
 
 import java.time.Instant;
 
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
-
 @RequiredArgsConstructor
 public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStatisticsCustomRepository {
 
