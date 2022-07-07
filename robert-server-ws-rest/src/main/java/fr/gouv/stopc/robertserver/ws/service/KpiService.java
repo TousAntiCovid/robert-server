@@ -150,6 +150,30 @@ public class KpiService {
 
     }
 
+    public RobertServerKpi getKpis() {
+
+        final var range = Range
+                .from(inclusive(LocalDate.now().atStartOfDay().toInstant(UTC)))
+                .to(exclusive(Instant.now()));
+        final var wsStats = webserviceStatisticsRepository.findByDate(Instant.now().truncatedTo(DAYS));
+        final var batchStats = batchStatisticsRepository.findByJobStartInstantBetween(range);
+
+        final var totalUsersAboveRiskThresholdButRetentionPeriodExpired = batchStats.stream()
+                .mapToLong(BatchStatistics::getUsersAboveRiskThresholdButRetentionPeriodExpired).sum();
+
+        final var wsStat = wsStats.orElseGet(KpiService::emptyWebserviceStatistic);
+        return RobertServerKpi.builder()
+                .date(LocalDate.now())
+                .nbAlertedUsers(wsStat.getTotalAlertedUsers())
+                .nbExposedButNotAtRiskUsers(wsStat.getTotalExposedButNotAtRiskUsers())
+                .nbInfectedUsersNotNotified(wsStat.getTotalInfectedUsersNotNotified())
+                .nbNotifiedUsersScoredAgain(wsStat.getTotalNotifiedUsersScoredAgain())
+                .notifiedUsers(wsStat.getNotifiedUsers())
+                .usersAboveRiskThresholdButRetentionPeriodExpired(totalUsersAboveRiskThresholdButRetentionPeriodExpired)
+                .reportsCount(wsStat.getReportsCount())
+                .build();
+    }
+
     public void incrementNotifiedUsersCount(final Registration registration) {
         if (!registration.isNotifiedForCurrentRisk() && registration.isAtRisk()) {
             createWebserviceStatisticIfNotExist();
@@ -163,11 +187,11 @@ public class KpiService {
     }
 
     private void createWebserviceStatisticIfNotExist() {
+
         final var result = webserviceStatisticsRepository.findByDate(now().truncatedTo(DAYS));
         if (result.isEmpty()) {
-
             if (webserviceStatisticsRepository.count() == 0) {
-                webserviceStatisticsRepository.save(
+                webserviceStatisticsRepository.insert(
                         WebserviceStatistics.builder()
                                 .date(now().truncatedTo(DAYS))
                                 .notifiedUsers(0L)

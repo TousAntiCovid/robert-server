@@ -15,7 +15,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "/internal/api/v1")
+@RequestMapping(value = "/internal/api")
 @RequiredArgsConstructor
 public class KpiController implements KpiApi {
 
@@ -23,15 +23,24 @@ public class KpiController implements KpiApi {
 
     private final KpiService kpiService;
 
+    // TODO : Remove this when switch to v2
     @Override
+    @RequestMapping(value = "/v1/kpi")
     public ResponseEntity<List<RobertServerKpi>> kpi(LocalDate fromDate, LocalDate toDate) {
         return ResponseEntity.ok(kpiService.getKpis(fromDate, toDate));
     }
 
+    // TODO : Remove this when switch to v2
     @Override
+    @RequestMapping(value = "/v1/tasks/compute-daily-kpis")
     public ResponseEntity<Void> computeKpis() {
         log.info("queuing a KPI compute task");
         kpiExecutor.execute(kpiService::computeDailyKpis);
         return ResponseEntity.accepted().build();
+    }
+
+    @RequestMapping(value = "/v2/kpis")
+    public ResponseEntity<RobertServerKpi> kpis() {
+        return ResponseEntity.ok(kpiService.getKpis());
     }
 }
