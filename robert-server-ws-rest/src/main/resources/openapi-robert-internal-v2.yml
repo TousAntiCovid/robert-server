@@ -1,0 +1,78 @@
+openapi: 3.0.0
+info:
+  description: "#STOPCOVID, Robert Proximity Tracing Client API"
+  version: 3.0.0
+  title: "#STOPCOVID, Robert Proximity Tracing"
+  termsOfService: https://github.com/ROBERT-proximity-tracing/
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /kpis:
+    get:
+      tags:
+        - KPI
+      summary: Get KPIs
+      description: >-
+        Get yesterdays KPIs
+
+        NOTE: This API must be protected and used only by a trusted back-end server over a secure private connection.
+      operationId: kpis
+      responses:
+        "200":
+          description: Returns the KPI list for date range
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KpisResponse"
+        "400":
+          description: bad request
+externalDocs:
+  description: Find out more about ROBERT
+  url: https://github.com/ROBERT-proximity-tracing/
+servers:
+  - url: http://localhost:8080/internal/api/v2
+components:
+  schemas:
+    KpisResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/RobertServerKpi"
+    RobertServerKpi:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        nbAlertedUsers:
+          type: integer
+          format: int64
+        nbExposedButNotAtRiskUsers:
+          type: integer
+          format: int64
+        nbInfectedUsersNotNotified:
+          type: integer
+          format: int64
+        nbNotifiedUsersScoredAgain:
+          type: integer
+          format: int64
+        notifiedUsers:
+          type: integer
+          format: int64
+        usersAboveRiskThresholdButRetentionPeriodExpired:
+          type: integer
+          format: int64
+        reportsCount:
+          type: integer
+          format: int64
+      required:
+        - date
+        - nbAlertedUsers
+        - nbExposedButNotAtRiskUsers
+        - nbInfectedUsersNotNotified
+        - nbNotifiedUsersScoredAgain
+        - notifiedUsers
+        - usersAboveRiskThresholdButRetentionPeriodExpired
+        - reportsCount
