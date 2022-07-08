@@ -13,6 +13,8 @@ public class RobertWsProperties {
 
     Captcha captcha;
 
+    Integer epochBundleDurationInDays;
+
     @Value
     public static class Captcha {
 

@@ -14,9 +14,6 @@ import org.springframework.stereotype.Component;
 @RefreshScope
 public class WsServerConfiguration {
 
-    @Value("${robert.epoch-bundle-duration-in-days}")
-    private Integer epochBundleDurationInDays;
-
     @Value("${robert.server.status-request-minimum-epoch-gap}")
     private Integer statusRequestMinimumEpochGap;
 

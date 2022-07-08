@@ -9,7 +9,7 @@ import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
+import fr.gouv.stopc.robertserver.ws.config.RobertWsProperties;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.vo.AuthRequestVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
@@ -38,7 +38,7 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
     private final IRegistrationService registrationService;
 
-    private final WsServerConfiguration wsServerConfiguration;
+    private final RobertWsProperties robertWsProperties;
 
     private ResponseEntity createErrorValidationFailed() {
         log.info("Discarding authenticated request because validation failed");
@@ -175,7 +175,7 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
                     .setFromEpochId(
                             TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart())
                     )
-                    .setNumberOfDaysForEpochBundles(this.wsServerConfiguration.getEpochBundleDurationInDays())
+                    .setNumberOfDaysForEpochBundles(robertWsProperties.getEpochBundleDurationInDays())
                     .setServerCountryCode(
                             ByteString.copyFrom(new byte[] { this.serverConfigurationService.getServerCountryCode() })
                     )

@@ -10,7 +10,7 @@ import fr.gouv.stopc.robertserver.database.model.ApplicationConfigurationModel;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IApplicationConfigService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
+import fr.gouv.stopc.robertserver.ws.config.RobertWsProperties;
 import fr.gouv.stopc.robertserver.ws.controller.IRegisterController;
 import fr.gouv.stopc.robertserver.ws.dto.ClientConfigDto;
 import fr.gouv.stopc.robertserver.ws.dto.RegisterResponseDto;
@@ -49,7 +49,7 @@ public class RegisterControllerImpl implements IRegisterController {
 
     private final IRestApiService restApiService;
 
-    private final WsServerConfiguration wsServerConfiguration;
+    private final RobertWsProperties robertWsProperties;
 
     private final CaptchaService captchaService;
 
@@ -72,7 +72,7 @@ public class RegisterControllerImpl implements IRegisterController {
 
         CreateRegistrationRequest request = CreateRegistrationRequest.newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(clientPublicECDHKey))
-                .setNumberOfDaysForEpochBundles(this.wsServerConfiguration.getEpochBundleDurationInDays())
+                .setNumberOfDaysForEpochBundles(robertWsProperties.getEpochBundleDurationInDays())
                 .setServerCountryCode(ByteString.copyFrom(serverCountryCode))
                 .setFromEpochId(TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart()))
                 .build();
