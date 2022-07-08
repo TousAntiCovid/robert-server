@@ -61,7 +61,7 @@ public class RobertClientSteps {
     }
 
     @Etantdonnéque("{wordList} étaient à proximité {duration} il y a {duration} et que {word} s'est déclaré/déclarée malade")
-    public void fakePastContactAndReport(final List<String> users, final Duration proximityExpositionDuration,
+    public void pastContactAndReport(final List<String> users, final Duration proximityExpositionDuration,
             final Duration durationBackInTime, final String userNameReporter) {
         generateContactsBetweenTwoUsersWithDuration(users, proximityExpositionDuration);
         reportContacts(userNameReporter);

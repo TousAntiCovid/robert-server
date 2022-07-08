@@ -202,7 +202,7 @@ public class MobileApplication {
     }
 
     public ExposureStatus requestStatus() {
-        final var now = clock.at(platformTime.getPlatformTime());
+        final var now = clock.at(platformTime.getPlatformTime().toInstant());
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
         final var exposureStatusResponse = robertLegacyApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
