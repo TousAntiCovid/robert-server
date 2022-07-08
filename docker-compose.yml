@@ -61,7 +61,7 @@ services:
   postgres:
     image: postgres:9.6
     healthcheck:
-      test: pg_isready -U robert
+      test: psql -U robert -c "select id from identity limit 0"
     ports:
       - "5432:5432"
     environment:

@@ -9,11 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 import java.util.List;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
-import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
-import static org.hamcrest.Matchers.is;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 @SpringBootApplication
@@ -21,27 +16,12 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 public class RobertEnd2EndTestsApplication {
 
     public static void main(String[] args) {
-        var exitCode = 1;
-        try {
-            await("Robert platform is ready")
-                    .atMost(3, MINUTES)
-                    .pollInterval(fibonacci(SECONDS))
-                    .until(() -> runCucumberTestClass(SmokeTests.class), is(0));
-
-            exitCode = runCucumberTestClass(CucumberTest.class);
-        } finally {
-            System.exit(exitCode);
-        }
-    }
-
-    private static <T> int runCucumberTestClass(Class<T> classToRun) {
-
-        var launcherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectClass(classToRun))
+        final var launcherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
+                .selectors(selectClass(CucumberTest.class))
                 .build();
 
-        var launcher = LauncherFactory.create();
-        var summaryGeneratingListener = new SummaryGeneratingListener();
+        final var launcher = LauncherFactory.create();
+        final var summaryGeneratingListener = new SummaryGeneratingListener();
 
         launcher.registerTestExecutionListeners(summaryGeneratingListener);
         launcher.execute(launcherDiscoveryRequest);
@@ -50,6 +30,6 @@ public class RobertEnd2EndTestsApplication {
 
         List<TestExecutionSummary.Failure> failures = summary.getFailures();
 
-        return failures.size() > 0 ? 1 : 0;
+        System.exit(failures.size() > 0 ? 1 : 0);
     }
 }
