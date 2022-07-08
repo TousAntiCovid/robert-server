@@ -3,7 +3,7 @@ package fr.gouv.stopc.e2e.steps;
 import ch.qos.logback.classic.Level;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import io.cucumber.java.en.Then;
-import io.cucumber.java.fr.Etantdonnéque;
+import io.cucumber.java.fr.Lorsque;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class RobertBatchSteps {
 
     private final List<String> processLogs = new ArrayList<>();
 
-    @Etantdonnéque("le batch robert est exécuté")
+    @Lorsque("le batch robert est exécuté")
     @SneakyThrows
     public void launchBatch() {
         processLogs.clear();

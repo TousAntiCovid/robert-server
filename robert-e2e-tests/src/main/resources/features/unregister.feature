@@ -6,8 +6,7 @@ Fonctionnalité: Désinscription
   Dans le but de ne plus utiliser l'application
 
   Contexte:
-    Etant donné que l'on est aujourd'hui
-    Et que John, Sarah et Paul ont l'application TAC
+    Etant donné que John, Sarah et Paul ont l'application TAC
 
   Scénario: Un signalement contient une personne qui s'est désinscrite
     Etant donné que Paul et Sarah sont à proximité 60 minutes

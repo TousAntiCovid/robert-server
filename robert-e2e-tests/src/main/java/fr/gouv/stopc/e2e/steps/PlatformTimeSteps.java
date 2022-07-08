@@ -1,6 +1,7 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.robert.client.api.RobertApi;
+import io.cucumber.java.Before;
 import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Etantdonnéqu;
 import io.cucumber.java.fr.Etantdonnéque;
@@ -40,7 +41,6 @@ public class PlatformTimeSteps {
     }
 
     @Etantdonnéqu("l'on est aujourd'hui")
-    @Etantdonnéqu("on est aujourd'hui")
     public void resetFakeTimeToNow() {
         changeSystemTimeTo(ZERO);
     }
@@ -52,18 +52,17 @@ public class PlatformTimeSteps {
         verifyServiceClock("crypto-server", durationAgo);
     }
 
-    @Alors("l'horloge de {word} est à il y a {duration}")
-    public void verifyServiceClock(final String containerName, final Duration duration) {
+    private void verifyServiceClock(final String containerName, final Duration duration) {
 
         final var expectedFakedInstant = now().minus(duration);
         given()
                 .await("Wait for faked time to be set in service " + containerName)
                 .atMost(1, MINUTES)
-                .with()
                 .pollInterval(fibonacci(MILLISECONDS))
                 .and()
                 .untilAsserted(
                         () -> assertThat(robertApi.clock().getTime().toInstant())
+                                .as("%s clock", containerName)
                                 .isCloseTo(expectedFakedInstant, within(1, ChronoUnit.MINUTES))
                 );
 
