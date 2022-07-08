@@ -1,8 +1,6 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.robert.client.api.RobertApi;
-import io.cucumber.java.Before;
-import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Etantdonnéqu;
 import io.cucumber.java.fr.Etantdonnéque;
 import lombok.RequiredArgsConstructor;
