@@ -2,24 +2,22 @@ package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.robert.client.api.RobertApi;
 import io.cucumber.java.fr.Alors;
+import io.cucumber.java.fr.Etantdonnéqu;
 import io.cucumber.java.fr.Etantdonnéque;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.SneakyThrows;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static java.lang.String.format;
 import static java.time.Duration.ZERO;
 import static java.time.Instant.now;
-import static java.time.ZoneOffset.UTC;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.stream.Collectors.joining;
@@ -31,34 +29,31 @@ import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 @RequiredArgsConstructor
 public class PlatformTimeSteps {
 
-    @Autowired
     private final RobertApi robertApi;
 
-    @Getter
-    private Instant platformTime = Instant.now();
+    public ZonedDateTime getPlatformTime() {
+        return ZonedDateTime.parse(execInContainer("ws-rest", "date --iso-8601=seconds -u"));
+    }
 
-    @Etantdonnéque("l'on est aujourd'hui")
-    public void resetFakeTimeToNow() throws IOException, InterruptedException {
+    public LocalDate getPlatformDate() {
+        return getPlatformTime().toLocalDate();
+    }
 
-        platformTime = Instant.now();
-        execInContainer("ws-rest", "rm -f /etc/faketime.d/faketime");
-        verifyServiceClock("ws-rest", ZERO);
-        verifyServiceClock("crypto-server", ZERO);
-
+    @Etantdonnéqu("l'on est aujourd'hui")
+    @Etantdonnéqu("on est aujourd'hui")
+    public void resetFakeTimeToNow() {
+        changeSystemTimeTo(ZERO);
     }
 
     @Etantdonnéque("l'on est il y a {duration}")
-    public void changeSystemDateTo(final Duration durationAgo) throws IOException, InterruptedException {
-
-        platformTime = Instant.now().minus(durationAgo);
+    public void changeSystemTimeTo(final Duration durationAgo) {
         execInContainer("ws-rest", format("echo -%d > /etc/faketime.d/faketime", durationAgo.toSeconds()));
         verifyServiceClock("ws-rest", durationAgo);
         verifyServiceClock("crypto-server", durationAgo);
     }
 
     @Alors("l'horloge de {word} est à il y a {duration}")
-    public void verifyServiceClock(final String containerName,
-            final Duration duration) {
+    public void verifyServiceClock(final String containerName, final Duration duration) {
 
         final var expectedFakedInstant = now().minus(duration);
         given()
@@ -74,9 +69,8 @@ public class PlatformTimeSteps {
 
     }
 
-    private String execInContainer(
-            final String containerName,
-            final String command) throws IOException, InterruptedException {
+    @SneakyThrows
+    private String execInContainer(final String containerName, final String command) {
 
         final var dockerExecCommand = List
                 .of("docker-compose", "exec", "-T", containerName, "bash", "-c", command);
@@ -91,9 +85,5 @@ public class PlatformTimeSteps {
             return reader.lines()
                     .collect(joining());
         }
-    }
-
-    public LocalDate getPlatformDate() {
-        return LocalDate.ofInstant(platformTime, UTC);
     }
 }
