@@ -34,7 +34,7 @@ import static org.testcontainers.shaded.org.awaitility.pollinterval.FibonacciPol
 
 @IntegrationTest
 @ExtendWith(OutputCaptureExtension.class)
-class KpiControllerTest {
+class KpiControllerV1Test {
 
     @Autowired
     private RegistrationRepository registrationRepository;

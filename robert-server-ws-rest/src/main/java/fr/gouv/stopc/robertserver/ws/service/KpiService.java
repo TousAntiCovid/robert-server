@@ -6,7 +6,8 @@ import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
 import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
-import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
+import fr.gouv.stopc.robertserver.ws.api.v1.model.RobertServerKpiV1;
+import fr.gouv.stopc.robertserver.ws.api.v2.model.RobertServerKpiV2;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -99,11 +100,11 @@ public class KpiService {
                 .sum();
     }
 
-    private static RobertServerKpi emptyRobertServerKpi() {
-        return new RobertServerKpi(null, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+    private static RobertServerKpiV1 emptyRobertServerKpi() {
+        return new RobertServerKpiV1(null, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
     }
 
-    public List<RobertServerKpi> getKpis(final LocalDate fromDate, final LocalDate toDate) {
+    public List<RobertServerKpiV1> getKpis(final LocalDate fromDate, final LocalDate toDate) {
 
         final var range = Range
                 .from(inclusive(fromDate.atStartOfDay().toInstant(UTC)))
@@ -120,7 +121,7 @@ public class KpiService {
                 .stream()
                 .collect(
                         toMap(
-                                Entry::getKey, e -> RobertServerKpi.builder()
+                                Entry::getKey, e -> RobertServerKpiV1.builder()
                                         .date(e.getKey())
                                         .usersAboveRiskThresholdButRetentionPeriodExpired(
                                                 aggregateUsersAboveThresholdButRetentionPeriodExpired(e.getValue())
@@ -133,7 +134,7 @@ public class KpiService {
                 .map(date -> {
                     final var wsStat = wsStatsByDate.getOrDefault(date, emptyWebserviceStatistic());
                     final var batchStat = batchStatsByDate.getOrDefault(date, emptyRobertServerKpi());
-                    return RobertServerKpi.builder()
+                    return RobertServerKpiV1.builder()
                             .date(date)
                             .nbAlertedUsers(wsStat.getTotalAlertedUsers())
                             .nbExposedButNotAtRiskUsers(wsStat.getTotalExposedButNotAtRiskUsers())
@@ -150,7 +151,7 @@ public class KpiService {
 
     }
 
-    public RobertServerKpi getKpis() {
+    public RobertServerKpiV2 getKpis() {
 
         final var range = Range
                 .from(inclusive(LocalDate.now().atStartOfDay().toInstant(UTC)))
@@ -162,7 +163,7 @@ public class KpiService {
                 .mapToLong(BatchStatistics::getUsersAboveRiskThresholdButRetentionPeriodExpired).sum();
 
         final var wsStat = wsStats.orElseGet(KpiService::emptyWebserviceStatistic);
-        return RobertServerKpi.builder()
+        return RobertServerKpiV2.builder()
                 .date(LocalDate.now())
                 .nbAlertedUsers(wsStat.getTotalAlertedUsers())
                 .nbExposedButNotAtRiskUsers(wsStat.getTotalExposedButNotAtRiskUsers())

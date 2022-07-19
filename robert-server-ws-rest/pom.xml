@@ -189,7 +189,7 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>generate-internal-api</id>
+                        <id>generate-internal-api-v1</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -198,10 +198,27 @@
                                 ${project.basedir}/src/main/resources/openapi-robert-internal-v1.yml
                             </inputSpec>
                             <apiPackage>
-                                fr.gouv.stopc.robertserver.ws.api
+                                fr.gouv.stopc.robertserver.ws.api.v1
                             </apiPackage>
                             <modelPackage>
-                                fr.gouv.stopc.robertserver.ws.api.model
+                                fr.gouv.stopc.robertserver.ws.api.v1.model
+                            </modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-internal-api-v2</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi-robert-internal-v2.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.robertserver.ws.api.v2
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.robertserver.ws.api.v2.model
                             </modelPackage>
                         </configuration>
                     </execution>

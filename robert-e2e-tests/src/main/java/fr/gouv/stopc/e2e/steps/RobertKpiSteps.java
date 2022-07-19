@@ -1,7 +1,7 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.robert.client.api.KpiApi;
-import fr.gouv.stopc.robert.client.model.RobertServerKpi;
+import fr.gouv.stopc.robert.client.model.RobertServerKpiV1;
 import io.cucumber.java.Before;
 import io.cucumber.java.fr.Alors;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class RobertKpiSteps {
 
     private final KpiApi kpiApi;
 
-    private final List<RobertServerKpi> robertServerKpiHistory;
+    private final List<RobertServerKpiV1> robertServerKpiHistory;
 
     @Before
     public void takeKpisSnapshot() {
@@ -82,7 +82,7 @@ public class RobertKpiSteps {
 
     }
 
-    public RobertServerKpi getRobertServerKpiAt(LocalDate localDate) {
+    public RobertServerKpiV1 getRobertServerKpiAt(LocalDate localDate) {
 
         final var kpis = kpiApi.kpi(localDate, localDate);
         assertThat(kpis.size()).isEqualTo(1);
@@ -90,7 +90,7 @@ public class RobertKpiSteps {
 
     }
 
-    private RobertServerKpi getCurrentKpiFromSnapshot() {
+    private RobertServerKpiV1 getCurrentKpiFromSnapshot() {
         return robertServerKpiHistory.stream()
                 .filter(
                         kpi -> kpi.getDate().equals(
@@ -101,7 +101,7 @@ public class RobertKpiSteps {
                 .get();
     }
 
-    private RobertServerKpi getKpiFromHistory(LocalDate localDate) {
+    private RobertServerKpiV1 getKpiFromHistory(LocalDate localDate) {
         return robertServerKpiHistory.stream()
                 .filter(kpi -> kpi.getDate().equals(localDate))
                 .findAny()

@@ -26,7 +26,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/KpisResponse"
+                $ref: "#/components/schemas/RobertServerKpiV2"
         "400":
           description: bad request
 externalDocs:
@@ -36,11 +36,7 @@ servers:
   - url: http://localhost:8080/internal/api/v2
 components:
   schemas:
-    KpisResponse:
-      type: array
-      items:
-        $ref: "#/components/schemas/RobertServerKpi"
-    RobertServerKpi:
+    RobertServerKpiV2:
       type: object
       properties:
         date:

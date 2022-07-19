@@ -62,8 +62,8 @@ components:
     KpisResponse:
       type: array
       items:
-        $ref: "#/components/schemas/RobertServerKpi"
-    RobertServerKpi:
+        $ref: "#/components/schemas/RobertServerKpiV1"
+    RobertServerKpiV1:
       type: object
       properties:
         date:
