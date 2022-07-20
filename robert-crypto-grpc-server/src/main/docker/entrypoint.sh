@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 function generate_aes_key() {
   local size=$1
@@ -10,9 +10,7 @@ function generate_aes_key() {
 generate_aes_key 256 federation-key
 generate_aes_key 256 key-encryption-key
 for i in {-15..10} ; do
-  generate_aes_key 192 "server-key-$(date --date="$i days" +%Y%m%d)"
+  generate_aes_key 192 "server-key-$(date --date "$i days" +%Y%m%d)"
 done
-
-wait
 
 exec "$@"

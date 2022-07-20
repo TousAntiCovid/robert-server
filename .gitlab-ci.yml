@@ -5,8 +5,10 @@ include:
 
 e2e-tests-docker:
   script:
-    - until curl -s http://ws-rest:8086/actuator/health | grep -q UP; do sleep 0.5; done;
     - java -jar robert-e2e-tests/target/robert-e2e-tests-*.jar
+  tags:
+    - ci.inria.fr
+    - medium
 
 deploy-int:
   stage: deploy

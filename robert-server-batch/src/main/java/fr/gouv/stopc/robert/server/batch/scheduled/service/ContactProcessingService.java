@@ -288,23 +288,5 @@ public class ContactProcessingService {
             registrationRecord.setOutdatedRisk(true);
 
         }
-
-        // private void deleteContact(Contact contact) {
-        // Instant startTime = Instant.now();
-        //
-        // contactService.delete(contact);
-        //
-        // long timeElapsed = Duration.between(startTime, Instant.now()).getSeconds();
-        // int processedContactCount = ItemProcessingCounterUtils.getInstance()
-        // .addNumberOfProcessedContacts(contactList.size());
-        //
-        // log.info("Execution duration of the update/delete of data : {} second(s).",
-        // timeElapsed);
-        //// log.info(
-        //// "Total number of processed contacts/Total contact count : {}/{}",
-        // processedContactCount,
-        //// totalContactCount
-        //// );
-        // }
     }
 }

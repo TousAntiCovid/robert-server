@@ -8,7 +8,7 @@ import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import nl.altindag.log.LogCaptor;
-import org.assertj.core.api.ListAssert;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +113,7 @@ class ContactProcessingServiceTest {
 
             // Then : Check that there is one bad contact and that the final registration
             // contains one exposed epoch for the computation of the good ones
-            assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), TIME_TOLERANCE_REGEX).hasSize(1);
+            assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), TIME_TOLERANCE_REGEX, 1);
         }
         Optional<Registration> expectedRegistration = registrationService
                 .findById(registration.getPermanentIdentifier());
@@ -218,7 +218,7 @@ class ContactProcessingServiceTest {
         try (final var logCaptor = LogCaptor.forClass(ContactProcessingService.class)) {
             contactProcessingService.performs();
 
-            assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), TIME_TOLERANCE_REGEX).hasSize(1);
+            assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), TIME_TOLERANCE_REGEX, 1);
 
             assertThat(logCaptor.getInfoLogs())
                     .contains("Contact did not contain any valid messages; discarding contact");
@@ -243,7 +243,7 @@ class ContactProcessingServiceTest {
             contactProcessingService.performs();
 
             // Then
-            assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), DIVERGENT_EPOCHIDS).hasSize(1);
+            assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), DIVERGENT_EPOCHIDS, 1);
             assertThat(logCaptor.getInfoLogs())
                     .contains("Contact did not contain any valid messages; discarding contact");
             assertThat(this.contactService.findAll()).isEmpty();
@@ -255,7 +255,7 @@ class ContactProcessingServiceTest {
     }
 
     @Test
-    void process_contact_succeds_and_when_some_of_the_epochs_are_different_logs_and_discard() throws Exception {
+    void process_contact_succeeds_and_when_some_of_the_epochs_are_different_logs_and_discard() throws Exception {
         // Given
         var registration = this.testContext.acceptableRegistration();
         var contact = this.testContext.acceptableContactWithoutHelloMessage(registration);
@@ -269,7 +269,7 @@ class ContactProcessingServiceTest {
             contactProcessingService.performs();
 
             // Then
-            assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), DIVERGENT_EPOCHIDS).hasSize(1);
+            assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), DIVERGENT_EPOCHIDS, 1);
             assertThat(this.contactService.findAll()).isEmpty();
             Optional<Registration> expectedRegistration = registrationService
                     .findById(registration.getPermanentIdentifier());
@@ -280,8 +280,8 @@ class ContactProcessingServiceTest {
         }
     }
 
-    private ListAssert<String> assertThatLogsMatchingRegex(List<String> logs, String regex) {
-        var contains = logs.stream().filter(row -> row.matches(regex));
-        return assertThat(contains).as("Number of logs matching the following regular expression : " + regex);
+    private void assertThatLogsMatchingRegex(List<String> logs, String regex, int times) {
+        final Condition<String> rowMatchingRegex = new Condition<String>(value -> value.matches(regex), regex);
+        assertThat(logs).as("Number of logs matching the regular expression").haveExactly(times, rowMatchingRegex);
     }
 }
