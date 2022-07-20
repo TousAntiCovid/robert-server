@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.batch.service;
 
 import fr.gouv.stopc.robert.server.batch.IntegrationTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.scheduled.service.ReassessRiskLevelService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.RegistrationRepository;
@@ -16,6 +15,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 
 import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatCounterMetricIncrement;
+import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatTimerMetricIncrement;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,6 +46,12 @@ class ReassessRiskLevelServiceTest {
     }
 
     @Test
+    void metricIsIncrementedWhenProcessPerformed() {
+        reassessRiskLevelService.performs();
+        assertThatTimerMetricIncrement("robert.batch", "operation", "REGISTRATION_RISK_RESET_STEP").isEqualTo(1L);
+    }
+
+    @Test
     void risk_level_should_not_be_reset_when_not_at_risk_and_not_notified() {
         // Given
         byte[] rndBytes = getRandomId();
@@ -67,8 +73,6 @@ class ReassessRiskLevelServiceTest {
         assertThat(updatedRegistration).as("Object has not been updated").isEqualTo(registration);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "false").isEqualTo(0L);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "true").isEqualTo(0L);
-        // assertThatTimerMetricIncrement("robert.batch", "operation",
-        // "REGISTRATION_RISK_RESET_STEP").isEqualTo(1L);
     }
 
     @Test

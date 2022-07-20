@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.batch.scoring;
 
 import fr.gouv.stopc.robert.server.batch.IntegrationLegacyTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyServiceImpl;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -23,10 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -104,7 +100,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -180,7 +176,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -206,7 +202,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -242,7 +238,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -269,7 +265,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -290,7 +286,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -312,7 +308,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -334,7 +330,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -356,7 +352,7 @@ class RSSICalibratedScoringStrategyTest {
         Double score = null;
         try {
             score = this.scoringStrategyService.execute(contact).getRssiScore();
-        } catch (RobertScoringException e) {
+        } catch (Exception e) {
             fail(FAIL_EXCEPTION);
         }
 
@@ -368,8 +364,8 @@ class RSSICalibratedScoringStrategyTest {
     void testScoreRiskNoMessagesFail() {
         Contact contact = Contact.builder().messageDetails(new ArrayList<>()).build();
 
-        RobertScoringException thrown = assertThrows(
-                RobertScoringException.class,
+        Exception thrown = assertThrows(
+                Exception.class,
                 () -> this.scoringStrategyService.execute(contact),
                 "Expected scoring function to throw, but it didn't"
         );

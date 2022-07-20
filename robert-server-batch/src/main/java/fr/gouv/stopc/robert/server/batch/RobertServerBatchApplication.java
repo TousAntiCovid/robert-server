@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robert.server.batch;
 
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,13 +18,13 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @ComponentScan(basePackages = "fr.gouv.stopc")
 @EnableMongoRepositories(basePackages = "fr.gouv.stopc")
 @EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class })
-@EnableBatchProcessing
 @SpringBootApplication
 @EnableConfigurationProperties(RobertServerBatchProperties.class)
 public class RobertServerBatchApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(RobertServerBatchApplication.class, args);
+        System.exit(0);
     }
 
 }

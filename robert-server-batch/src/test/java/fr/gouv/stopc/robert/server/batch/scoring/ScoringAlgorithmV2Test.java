@@ -4,7 +4,6 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.configuration.ScoringAlgorithmConfiguration;
-import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyV2ServiceImpl;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -258,7 +257,7 @@ class ScoringAlgorithmV2Test {
             List<ScoringResult> risks = contacts.stream().map(contact -> {
                 try {
                     return serviceScoring.execute(contact);
-                } catch (RobertScoringException e) {
+                } catch (Exception e) {
                     return null;
                 }
             }).collect(Collectors.toList());

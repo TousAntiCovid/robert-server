@@ -1,7 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -52,7 +51,7 @@ public class ScoringStrategyServiceImpl implements ScoringStrategyService {
     }
 
     @Override
-    public ScoringResult execute(Contact contact) throws RobertScoringException {
+    public ScoringResult execute(Contact contact) throws Exception {
         List<HelloMessageDetail> messageDetails = contact.getMessageDetails();
 
         final int alpha = initAlpha();
@@ -80,7 +79,7 @@ public class ScoringStrategyServiceImpl implements ScoringStrategyService {
         } else {
             String errorMessage = "Cannot score contact with no HELLO messages";
             log.error(errorMessage);
-            throw new RobertScoringException(errorMessage);
+            throw new Exception(errorMessage);
         }
 
         return ScoringResult.builder().rssiScore(0 - acc).build();

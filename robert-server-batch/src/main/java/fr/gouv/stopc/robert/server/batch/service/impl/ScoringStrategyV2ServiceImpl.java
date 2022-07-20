@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.configuration.ScoringAlgorithmConfiguration;
-import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
@@ -82,7 +81,7 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
      * c {@inheritDoc}
      */
     @Override
-    public ScoringResult execute(Contact contact) throws RobertScoringException {
+    public ScoringResult execute(Contact contact) throws Exception {
 
         final int epochDurationInMinutes = this.serverConfigurationService.getEpochDurationSecs() / 60;
 
@@ -99,7 +98,7 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
         if (messageDetails.size() == 0) {
             String errorMessage = "Cannot score contact with no HELLO messages";
             log.error(errorMessage);
-            throw new RobertScoringException(errorMessage);
+            throw new Exception(errorMessage);
         }
 
         // Phase 1 : fading compensation

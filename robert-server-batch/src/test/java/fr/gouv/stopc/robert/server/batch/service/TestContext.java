@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robert.server.batch.scheduled.service;
+package fr.gouv.stopc.robert.server.batch.service;
 
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
@@ -89,6 +89,58 @@ public class TestContext {
         byte[] data = new byte[sizeInBytes];
         new SecureRandom().nextBytes(data);
         return data;
+    }
+
+    public Registration acceptableRegistrationWithExistingScoreAboveThreshold() {
+        var registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+        assertTrue(registration.isPresent());
+
+        // Setup id with an existing score below threshold
+        var registrationWithEE = registration.get();
+        registrationWithEE.setExposedEpochs(
+                Arrays.asList(
+                        EpochExposition.builder()
+                                .epochId(previousEpoch)
+                                .expositionScores(Arrays.asList(20.0))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(currentEpochId)
+                                .expositionScores(Arrays.asList(2.0))
+                                .build()
+                )
+        );
+
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
+        this.registrationService.saveRegistration(registrationWithEE);
+        return registrationWithEE;
+    }
+
+    public Registration acceptableRegistrationWithExistingScoreEqualToZero() {
+        var registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
+        assertTrue(registration.isPresent());
+
+        // Setup id with an existing score below threshold
+        var registrationWithEE = registration.get();
+        registrationWithEE.setExposedEpochs(
+                Arrays.asList(
+                        EpochExposition.builder()
+                                .epochId(previousEpoch)
+                                .expositionScores(Arrays.asList(0.0))
+                                .build(),
+                        EpochExposition.builder()
+                                .epochId(currentEpochId)
+                                .expositionScores(Arrays.asList(0.0))
+                                .build()
+                )
+        );
+
+        // Simulate new exposed epochs
+        registrationWithEE.setOutdatedRisk(true);
+
+        this.registrationService.saveRegistration(registrationWithEE);
+        return registrationWithEE;
     }
 
     public Registration acceptableRegistrationWithExistingScoreBelowThreshold() {
@@ -386,7 +438,7 @@ public class TestContext {
         return contact;
     }
 
-    public Contact acceptableContact(Registration registration) throws Exception {
+    public Contact generateAcceptableContactForRegistration(Registration registration) throws Exception {
         byte[] ebid = this.cryptoService.generateEBID(
                 new CryptoSkinny64(serverKey),
                 currentEpochId,

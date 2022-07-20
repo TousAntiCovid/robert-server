@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robert.server.batch.scheduled.service;
+package fr.gouv.stopc.robert.server.batch.service;
 
 public class CastUtils {
 

@@ -1,14 +1,14 @@
-package fr.gouv.stopc.robert.server.batch.scheduled.service;
+package fr.gouv.stopc.robert.server.batch.service;
 
 import com.mongodb.MongoException;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import io.micrometer.core.annotation.Counted;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -46,8 +46,7 @@ public class PurgeOldEpochExpositionsService {
         return minEpochId;
     }
 
-    // @Timed(value = "robert.batch", extraTags = { "operation",
-    // "PURGE_OLD_EXPOSITIONS_STEP" })
+    @Timed(value = "robert.batch", extraTags = { "operation", "PURGE_OLD_EXPOSITIONS_STEP" })
     public void performs() {
         log.info("START : Purge Old Epoch Expositions.");
 

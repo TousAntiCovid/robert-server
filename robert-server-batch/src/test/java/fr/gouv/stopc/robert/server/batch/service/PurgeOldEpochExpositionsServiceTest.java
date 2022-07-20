@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.server.batch.service;
 
 import fr.gouv.stopc.robert.server.batch.IntegrationTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.scheduled.service.PurgeOldEpochExpositionsService;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -19,11 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatTimerMetricIncrement;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-public class PurgeOldEpochExpositionsServiceTest {
+class PurgeOldEpochExpositionsServiceTest {
 
     private final PurgeOldEpochExpositionsService purgeOldEpochExpositionsService;
 
@@ -90,8 +90,7 @@ public class PurgeOldEpochExpositionsServiceTest {
         assertThat(updatedRegistration).as("Registration is null").isNotNull();
         assertThat(updatedRegistration.getExposedEpochs()).as("Exposed epochs is null").isNotNull();
         assertThat(updatedRegistration.getExposedEpochs()).hasSize(1);
-        // assertThatTimerMetricIncrement("robert.batch", "operation",
-        // "PURGE_OLD_EXPOSITIONS_STEP").isEqualTo(1L);
+        assertThatTimerMetricIncrement("robert.batch", "operation", "PURGE_OLD_EXPOSITIONS_STEP").isEqualTo(1L);
     }
 
     @ParameterizedTest
