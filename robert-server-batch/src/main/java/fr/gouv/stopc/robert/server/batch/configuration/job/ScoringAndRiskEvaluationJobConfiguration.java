@@ -28,16 +28,13 @@ public class ScoringAndRiskEvaluationJobConfiguration {
     }
 
     @Bean
-    public Job scoreAndProcessRisks(Step contactProcessingStep,
-            Step populateContactIdMappingStep,
+    public Job scoreAndProcessRisks(
             Step populateIdMappingWithScoredRegistrationStep,
             Step processRegistrationRiskStep) {
 
         log.info("Building contact batch (Old expositions purge, Contact scoring, Risk computation)");
         return this.jobBuilderFactory.get("SCORE_CONTACTS_AND_COMPUTE_RISK")
-                .start(populateContactIdMappingStep)
-                .next(contactProcessingStep)
-                .next(populateIdMappingWithScoredRegistrationStep)
+                .start(populateIdMappingWithScoredRegistrationStep)
                 .next(processRegistrationRiskStep)
                 .build();
     }

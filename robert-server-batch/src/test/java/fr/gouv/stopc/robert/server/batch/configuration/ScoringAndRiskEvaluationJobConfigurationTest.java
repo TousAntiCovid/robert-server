@@ -147,6 +147,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertEquals(1, this.contactService.findAll().size());
 
         // When
+        var lineRunner = context.getBean(RobertCommandLineRunner.class);
+        lineRunner.run("");
         this.jobLauncherTestUtils.launchJob();
 
         // Then
@@ -166,7 +168,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
     void testScoreAndProcessRisksWhenRegistrationDoesNotExist() throws Exception {
 
         // Given
-
         this.registration = this.registrationService.createRegistration(ProcessorTestUtils.generateIdA());
         assertTrue(this.registration.isPresent());
 
@@ -221,6 +222,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertEquals(1, this.contactService.findAll().size());
 
         // When
+        var lineRunner = context.getBean(RobertCommandLineRunner.class);
+        lineRunner.run("");
         this.jobLauncherTestUtils.launchJob();
 
         // Then
@@ -287,6 +290,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         assertEquals(1, this.contactService.findAll().size());
 
         // When
+        var lineRunner = context.getBean(RobertCommandLineRunner.class);
+        lineRunner.run("");
         this.jobLauncherTestUtils.launchJob();
 
         // Then
@@ -355,8 +360,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
         // When
         var lineRunner = context.getBean(RobertCommandLineRunner.class);
         lineRunner.run("");
-        // TODO : remove this line in the future
-        this.jobLauncherTestUtils.launchJob();
 
         // Then
         Optional<Registration> expectedRegistration = this.registrationService

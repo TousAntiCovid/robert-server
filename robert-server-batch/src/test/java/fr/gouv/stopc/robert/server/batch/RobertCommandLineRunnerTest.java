@@ -133,7 +133,7 @@ public class RobertCommandLineRunnerTest {
             lineRunner.run("");
 
             assertThat(logCaptor.getInfoLogs())
-                    .contains("4 hello messages waiting for process", "4 hello messages remaining after process");
+                    .contains("4 hello messages waiting for process", "0 hello messages remaining after process");
         }
     }
 
