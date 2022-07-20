@@ -9,6 +9,7 @@ import fr.gouv.stopc.robertserver.database.service.impl.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Condition;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,12 @@ class ContactProcessingServiceTest {
     public void before(@Autowired TestContext testContext) {
         this.testContext = testContext;
         givenCryptoServerEpochId(this.testContext.currentEpochId);
+    }
+
+    @AfterEach
+    public void afterAll() {
+        this.contactService.deleteAll();
+        this.registrationService.deleteAll();
     }
 
     @Test
@@ -101,7 +108,7 @@ class ContactProcessingServiceTest {
     @Test
     void process_contact_succeeds_when_has_at_least_one_hello_message_valid() throws Exception {
         var registration = this.testContext.acceptableRegistration();
-        var contact = this.testContext.acceptableContact(registration);
+        var contact = this.testContext.generateAcceptableContactForRegistration(registration);
         contact = this.testContext
                 .addBadHelloMessageWithExcedeedTimeToleranceToContact(contact, registration.getPermanentIdentifier());
 
@@ -127,7 +134,7 @@ class ContactProcessingServiceTest {
     @Test
     void process_contact_when_the_contact_is_valid_succeeds() throws Exception {
         var registration = this.testContext.acceptableRegistrationWithExistingScoreBelowThreshold();
-        var contact = this.testContext.acceptableContact(registration);
+        var contact = this.testContext.generateAcceptableContactForRegistration(registration);
         contact = this.testContext.addValidHelloMessage(contact, registration.getPermanentIdentifier());
 
         givenCryptoServerIdA(ByteString.copyFrom(registration.getPermanentIdentifier()));
@@ -188,7 +195,7 @@ class ContactProcessingServiceTest {
     void process_contact_with_non_existent_registration_fails() throws Exception {
         // Given
         var registration = this.testContext.acceptableRegistration();
-        var contact = this.testContext.acceptableContact(registration);
+        var contact = this.testContext.generateAcceptableContactForRegistration(registration);
 
         givenCryptoServerIdA(ByteString.copyFrom(registration.getPermanentIdentifier()));
 

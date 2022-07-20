@@ -1,8 +1,7 @@
-package fr.gouv.stopc.robert.server.batch.service;
+package fr.gouv.stopc.robert.server.batch.scheduled.service;
 
 import fr.gouv.stopc.robert.server.batch.IntegrationTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.scheduled.service.PurgeOldEpochExpositionsService;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;

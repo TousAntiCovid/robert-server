@@ -1,8 +1,7 @@
-package fr.gouv.stopc.robert.server.batch.service;
+package fr.gouv.stopc.robert.server.batch.scheduled.service;
 
 import fr.gouv.stopc.robert.server.batch.IntegrationTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.scheduled.service.ReassessRiskLevelService;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.RegistrationRepository;

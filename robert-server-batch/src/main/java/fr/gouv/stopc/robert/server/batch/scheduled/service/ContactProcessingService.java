@@ -2,8 +2,9 @@ package fr.gouv.stopc.robert.server.batch.scheduled.service;
 
 import com.google.protobuf.ByteString;
 import com.mongodb.MongoException;
-import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactRequest;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
@@ -16,6 +17,7 @@ import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
+import io.grpc.StatusRuntimeException;
 import io.micrometer.core.annotation.Counted;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +40,7 @@ public class ContactProcessingService {
 
     private final MongoTemplate mongoTemplate;
 
-    private final ICryptoServerGrpcClient cryptoServerClient;
+    private final CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplBlockingStub cryptoGrpcClient;
 
     private final PropertyLoader propertyLoader;
 
@@ -101,6 +103,7 @@ public class ContactProcessingService {
         @Override
         @Counted(value = "CONTACT_SCORING_STEP_PROCEEDED_REGISTRATIONS")
         public void processDocument(Document document) throws MongoException, DataAccessException {
+
             final var contact = mongoTemplate.getConverter().read(Contact.class, document);
 
             if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
@@ -109,18 +112,24 @@ public class ContactProcessingService {
                 return;
             }
 
-            final var response = cryptoServerClient.validateContact(
-                    ValidateContactRequest.newBuilder()
-                            .setEbid(ByteString.copyFrom(contact.getEbid()))
-                            .setEcc(ByteString.copyFrom(contact.getEcc()))
-                            .setServerCountryCode(ByteString.copyFrom(serverCountryCode))
-                            .addAllHelloMessageDetails(
-                                    contact.getMessageDetails().stream()
-                                            .map(this::toGrpcHelloMessageDetail)
-                                            .collect(toList())
-                            )
-                            .build()
-            );
+            ValidateContactResponse grpcResponse = null;
+            try {
+                grpcResponse = cryptoGrpcClient.validateContact(
+                        ValidateContactRequest.newBuilder()
+                                .setEbid(ByteString.copyFrom(contact.getEbid()))
+                                .setEcc(ByteString.copyFrom(contact.getEcc()))
+                                .setServerCountryCode(ByteString.copyFrom(serverCountryCode))
+                                .addAllHelloMessageDetails(
+                                        contact.getMessageDetails().stream()
+                                                .map(this::toGrpcHelloMessageDetail)
+                                                .collect(toList())
+                                )
+                                .build()
+                );
+            } catch (StatusRuntimeException ex) {
+                log.error("RPC failed: {}", ex.getMessage());
+            }
+            final var response = grpcResponse;
 
             if (null == response) {
                 log.info("The contact could not be validated. Discarding all its hello messages");
@@ -241,7 +250,7 @@ public class ContactProcessingService {
          * Robert Spec Step #6
          */
         private boolean step6CheckTimeACorrespondsToEpochiA(int epochId, long timeFromDevice) {
-            long epochIdFromMessage = TimeUtils.getNumberOfEpochsBetween(tpstStartNTPsec, timeFromDevice);
+            final long epochIdFromMessage = TimeUtils.getNumberOfEpochsBetween(tpstStartNTPsec, timeFromDevice);
 
             // Check if epochs match with a limited tolerance
             if (Math.abs(epochIdFromMessage - epochId) > 1) {
@@ -279,7 +288,7 @@ public class ContactProcessingService {
             } else {
                 exposedEpochs.add(
                         EpochExposition.builder()
-                                .expositionScores(Arrays.asList(scoredRisk.getRssiScore()))
+                                .expositionScores(Collections.singletonList(scoredRisk.getRssiScore()))
                                 .epochId(epochIdFromEBID)
                                 .build()
                 );

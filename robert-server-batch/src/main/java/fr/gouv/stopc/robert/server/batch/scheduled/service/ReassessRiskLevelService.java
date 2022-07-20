@@ -42,8 +42,8 @@ public class ReassessRiskLevelService {
                 propertyLoader.getRiskLevelRetentionPeriodInDays()
         );
         // Count number of registrations that'll be used
-        long totalItemCount = registrationService.countNbUsersAtRisk().longValue();
-        metricsService.setRobertBatchRiskLevelReset(totalItemCount); // old :
+        final long totalItemCount = registrationService.countNbUsersAtRisk();
+        metricsService.setRobertBatchRiskLevelReset(totalItemCount); // TODO : old :
                                                                      // TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY
 
         final var query = new Query().addCriteria(Criteria.where("atRisk").is(true));
