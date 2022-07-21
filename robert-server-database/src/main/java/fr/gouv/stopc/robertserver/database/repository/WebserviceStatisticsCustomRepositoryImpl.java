@@ -22,6 +22,18 @@ public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStati
         final var options = FindAndModifyOptions.options()
                 .upsert(true)
                 .returnNew(true);
+
         mongoOperations.findAndModify(query, update, options, WebserviceStatistics.class);
     }
+
+    @Override
+    public void incrementReportsCount(Instant date) {
+        final var query = new Query().addCriteria(Criteria.where("date").is(date));
+        final var update = new Update().inc("reportsCount", 1);
+        final var options = FindAndModifyOptions.options()
+                .upsert(true)
+                .returnNew(true);
+        mongoOperations.findAndModify(query, update, options, WebserviceStatistics.class);
+    }
+
 }

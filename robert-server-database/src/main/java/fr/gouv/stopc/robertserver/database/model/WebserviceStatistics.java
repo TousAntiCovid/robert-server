@@ -20,7 +20,7 @@ public class WebserviceStatistics {
     @Id
     private String id;
 
-    @Indexed
+    @Indexed(unique = true)
     private Instant date;
 
     private Long totalAlertedUsers;
@@ -32,4 +32,6 @@ public class WebserviceStatistics {
     private Long totalNotifiedUsersScoredAgain;
 
     private Long notifiedUsers;
+
+    private Long reportsCount;
 }

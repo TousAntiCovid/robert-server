@@ -1,7 +1,7 @@
-package fr.gouv.stopc.robertserver.ws.controller;
+package fr.gouv.stopc.robertserver.ws.controller.internal.v1;
 
-import fr.gouv.stopc.robertserver.ws.api.KpiApi;
-import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
+import fr.gouv.stopc.robertserver.ws.api.v1.KpiApi;
+import fr.gouv.stopc.robertserver.ws.api.v1.model.RobertServerKpiV1;
 import fr.gouv.stopc.robertserver.ws.service.KpiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,14 +17,14 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/internal/api/v1")
 @RequiredArgsConstructor
-public class KpiController implements KpiApi {
+public class KpiControllerV1 implements KpiApi {
 
     private final TaskExecutor kpiExecutor;
 
     private final KpiService kpiService;
 
     @Override
-    public ResponseEntity<List<RobertServerKpi>> kpi(LocalDate fromDate, LocalDate toDate) {
+    public ResponseEntity<List<RobertServerKpiV1>> kpi(LocalDate fromDate, LocalDate toDate) {
         return ResponseEntity.ok(kpiService.getKpis(fromDate, toDate));
     }
 
