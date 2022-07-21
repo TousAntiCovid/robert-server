@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# 👇 this ensures libfaketime is not active while generating keys
+export LD_PRELOAD=""
+date --iso-8601=seconds -u
+
 function generate_aes_key() {
   local size=$1
   local alias=$2
