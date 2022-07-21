@@ -42,16 +42,16 @@ components:
         date:
           type: string
           format: date
-        nbAlertedUsers:
+        alertedUsers:
           type: integer
           format: int64
-        nbExposedButNotAtRiskUsers:
+        exposedButNotAtRiskUsers:
           type: integer
           format: int64
-        nbInfectedUsersNotNotified:
+        infectedUsersNotNotified:
           type: integer
           format: int64
-        nbNotifiedUsersScoredAgain:
+        notifiedUsersScoredAgain:
           type: integer
           format: int64
         notifiedUsers:
@@ -65,10 +65,10 @@ components:
           format: int64
       required:
         - date
-        - nbAlertedUsers
-        - nbExposedButNotAtRiskUsers
-        - nbInfectedUsersNotNotified
-        - nbNotifiedUsersScoredAgain
+        - alertedUsers
+        - exposedButNotAtRiskUsers
+        - infectedUsersNotNotified
+        - notifiedUsersScoredAgain
         - notifiedUsers
         - usersAboveRiskThresholdButRetentionPeriodExpired
         - reportsCount
