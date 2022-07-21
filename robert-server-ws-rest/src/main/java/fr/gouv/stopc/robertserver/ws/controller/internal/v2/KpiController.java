@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/internal/api/v2")
 @RequiredArgsConstructor
-public class KpiControllerV2 implements KpiApi {
+public class KpiController implements KpiApi {
 
     private final KpiService kpiService;
 
     @Override
     public ResponseEntity<RobertServerKpiV2> kpis() {
+
         return ResponseEntity.ok(kpiService.getKpis());
     }
 

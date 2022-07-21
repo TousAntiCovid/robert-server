@@ -4,11 +4,8 @@ import fr.gouv.stopc.robertserver.database.model.WebserviceStatistics;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-
-import java.time.Instant;
 
 @RequiredArgsConstructor
 public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStatisticsCustomRepository {
@@ -16,8 +13,8 @@ public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStati
     private final MongoOperations mongoOperations;
 
     @Override
-    public void incrementNotifiedUsers(Instant date) {
-        final var query = new Query().addCriteria(Criteria.where("date").is(date));
+    public void incrementNotifiedUsers() {
+        final var query = new Query();
         final var update = new Update().inc("notifiedUsers", 1);
         final var options = FindAndModifyOptions.options()
                 .upsert(true)
@@ -27,8 +24,8 @@ public class WebserviceStatisticsCustomRepositoryImpl implements WebserviceStati
     }
 
     @Override
-    public void incrementReportsCount(Instant date) {
-        final var query = new Query().addCriteria(Criteria.where("date").is(date));
+    public void incrementReportsCount() {
+        final var query = new Query();
         final var update = new Update().inc("reportsCount", 1);
         final var options = FindAndModifyOptions.options()
                 .upsert(true)
