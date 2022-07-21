@@ -34,7 +34,7 @@ public class ParameterTypes {
         return Level.valueOf(logLevel);
     }
 
-    @ParameterType(".*")
+    @ParameterType("\\d+ \\w+")
     public Duration duration(final String durationExpression) {
         final var matcher = Pattern.compile("(\\d+) (jours?|heures?|minutes?)")
                 .matcher(durationExpression);
