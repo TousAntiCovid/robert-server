@@ -75,6 +75,14 @@ public class RobertClientSteps {
         robertBatchSteps.launchBatch();
     }
 
+    @Etantdonnéque("{wordList} étaient à proximité {duration} il y a {duration} {duration} {duration} et que {word} s'est déclaré/déclarée malade")
+    public void pastContactAndReport(final List<String> users, final Duration proximityExpositionDuration,
+            final Duration daysBackInTime, final Duration hoursBackInTime, final Duration minutesBackInTime,
+            final String userNameReporter) {
+        final var durationBackInTime = daysBackInTime.plus(hoursBackInTime).plus(minutesBackInTime);
+        pastContactAndReport(users, proximityExpositionDuration, durationBackInTime, userNameReporter);
+    }
+
     @Etantdonnéque("{word} se déclare malade")
     public void reportContacts(final String userName) {
         mobilePhonesEmulator.getMobileApplication(userName).reportContacts();

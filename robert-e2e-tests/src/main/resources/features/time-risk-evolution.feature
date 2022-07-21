@@ -15,11 +15,18 @@ Fonctionnalité: Evolution du risque au fil du temps
     Alors Sarah n'est pas à risque
     Exemples:
       | jours |
+      | 7     |
       | 8     |
       | 10    |
       | 15    |
 
-  Plan du Scénario: On est toujours à risque <jours> après le dernier contact
+  Scénario: On est toujours à risque 6 jours 23 heures et 45 minutes après le dernier contact
+    Etant donné que Sarah et John étaient à proximité 60 minutes il y a 6 jours 23 heures 45 minutes et que John s'est déclaré malade
+    Lorsque l'on est aujourd'hui
+    Et que le batch robert est exécuté
+    Alors Sarah est à risque
+
+  Plan du Scénario: On est toujours à risque <jours> jours après le dernier contact
     Etant donné que Sarah et John étaient à proximité 60 minutes il y a <jours> jours et que John s'est déclaré malade
     Lorsque l'on est aujourd'hui
     Et que le batch robert est exécuté
@@ -29,5 +36,4 @@ Fonctionnalité: Evolution du risque au fil du temps
       | 1     |
       | 2     |
       | 6     |
-      | 7     |
 
