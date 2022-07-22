@@ -1,7 +1,6 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.robert.client.api.RobertApi;
-import io.cucumber.java.fr.Etantdonnéqu;
 import io.cucumber.java.fr.Etantdonnéque;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -9,6 +8,7 @@ import lombok.SneakyThrows;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -38,13 +38,12 @@ public class PlatformTimeSteps {
         return getPlatformTime().toLocalDate();
     }
 
-    @Etantdonnéqu("l'on est aujourd'hui")
-    public void resetFakeTimeToNow() {
-        changeSystemTimeTo(ZERO);
-    }
-
-    @Etantdonnéque("l'on est il y a {duration}")
-    public void changeSystemTimeTo(final Duration durationAgo) {
+    @Etantdonnéque("l'on est {relativeTime}")
+    public void setSystemTime(final Instant instant) {
+        var durationAgo = Duration.between(instant, Instant.now());
+        if (durationAgo.toSeconds() < 5) {
+            durationAgo = ZERO;
+        }
         execInContainer("ws-rest", format("echo -%d > /etc/faketime.d/faketime", durationAgo.toSeconds()));
         verifyServiceClock("ws-rest", durationAgo);
         verifyServiceClock("crypto-server", durationAgo);
