@@ -5,6 +5,8 @@ include:
 
 e2e-tests-docker:
   script:
+    # wait for services to be healthy but exclude 'flyway' and 'batch' which are short-lived services and may lead --wait option to deadlock
+    - docker-compose up --wait $(docker-compose ps --services | grep -v flyway | grep -v batch)
     - java -jar robert-e2e-tests/target/robert-e2e-tests-*.jar
   tags:
     - ci.inria.fr
