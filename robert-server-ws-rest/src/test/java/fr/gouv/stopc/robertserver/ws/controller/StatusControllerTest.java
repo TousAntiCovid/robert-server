@@ -104,10 +104,10 @@ class StatusControllerTest {
                                 .withClaim("iss", equalTo("robert-server"))
                 );
 
-        assertThatRegistrationForUser("user___1")
+        assertThatRegistrationForUser("idA for user___1")
                 .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", now.asEpochId());
 
-        assertThatRegistrationTimeDriftForUser("user___1")
+        assertThatRegistrationTimeDriftForUser("idA for user___1")
                 .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));
 
         if (null == pushInfo) {
@@ -175,11 +175,11 @@ class StatusControllerTest {
                                 .withClaim("iss", equalTo("robert-server"))
                 );
 
-        assertThatRegistrationForUser("user___1")
+        assertThatRegistrationForUser("idA for user___1")
                 .hasFieldOrPropertyWithValue("isNotified", true)
                 .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", clock.now().asEpochId());
 
-        assertThatRegistrationTimeDriftForUser("user___1")
+        assertThatRegistrationTimeDriftForUser("idA for user___1")
                 .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));
 
         if (null == pushInfo) {
@@ -216,7 +216,7 @@ class StatusControllerTest {
 
         verifyNoInteractionsWithPushNotifServer();
 
-        assertThatRegistrationTimeDriftForUser("user___1")
+        assertThatRegistrationTimeDriftForUser("idA for user___1")
                 .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));
 
         assertThatInfoLogs()
@@ -268,7 +268,7 @@ class StatusControllerTest {
                         )
                 );
 
-        assertThatRegistrationForUser("user___1")
+        assertThatRegistrationForUser("idA for user___1")
                 .hasFieldOrPropertyWithValue("lastFailedStatusRequestEpoch", clock.now().asEpochId())
                 .hasFieldOrPropertyWithValue(
                         "lastFailedStatusRequestMessage",

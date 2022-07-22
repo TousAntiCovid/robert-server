@@ -58,7 +58,7 @@ public class MongodbManager implements TestExecutionListener {
     public static void givenRegistrationExistsForUser(final String user,
             final Function<RegistrationBuilder, RegistrationBuilder> transformer) {
         final var registration = Registration.builder()
-                .permanentIdentifier(user.getBytes());
+                .permanentIdentifier(("idA for " + user).getBytes());
         mongoOperations.save(transformer.apply(registration).build());
     }
 

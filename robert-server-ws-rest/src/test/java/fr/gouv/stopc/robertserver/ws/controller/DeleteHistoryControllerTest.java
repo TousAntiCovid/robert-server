@@ -63,7 +63,7 @@ class DeleteHistoryControllerTest {
                 .body("success", equalTo(true))
                 .body("message", nullValue());
 
-        assertThatRegistrationForUser("user___1")
+        assertThatRegistrationForUser("idA for user___1")
                 .as("exposed epochs for 'user___1' is empty")
                 .is(matching(hasProperty("exposedEpochs", emptyIterable())));
     }
@@ -92,7 +92,7 @@ class DeleteHistoryControllerTest {
                 .body("success", equalTo(true))
                 .body("message", nullValue());
 
-        assertThatRegistrationForUser("user___1")
+        assertThatRegistrationForUser("idA for user___1")
                 .as("exposed epochs for 'user___1' is empty")
                 .is(matching(hasProperty("exposedEpochs", emptyIterable())));
     }

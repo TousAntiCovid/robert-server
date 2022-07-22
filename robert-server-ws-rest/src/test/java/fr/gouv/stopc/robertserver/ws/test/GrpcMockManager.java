@@ -102,7 +102,7 @@ public class GrpcMockManager implements TestExecutionListener {
             final var clientPublicKey = request.getClientPublicKey().toStringUtf8();
             responseObserver.onNext(
                     CreateRegistrationResponse.newBuilder()
-                            .setIdA(ByteString.copyFromUtf8("fake idA for " + clientPublicKey))
+                            .setIdA(ByteString.copyFromUtf8("idA for " + clientPublicKey.replace(" public key", "")))
                             .setTuples(ByteString.copyFromUtf8("fake encrypted tuples for " + clientPublicKey))
                             .build()
             );
@@ -121,7 +121,7 @@ public class GrpcMockManager implements TestExecutionListener {
                     .orElse(
                             GetIdFromAuthResponse.newBuilder()
                                     .setEpochId(request.getEpochId())
-                                    .setIdA(request.getEbid())
+                                    .setIdA(ByteString.copyFromUtf8("idA for " + request.getEbid().toStringUtf8()))
                                     .build()
                     );
             responseObserver.onNext(response);
@@ -140,7 +140,7 @@ public class GrpcMockManager implements TestExecutionListener {
                     .orElse(
                             GetIdFromStatusResponse.newBuilder()
                                     .setEpochId(request.getEpochId())
-                                    .setIdA(request.getEbid())
+                                    .setIdA(ByteString.copyFromUtf8("idA for " + request.getEbid().toStringUtf8()))
                                     .setTuples(
                                             ByteString.copyFromUtf8(
                                                     "fake encrypted tuples for " + request.getEbid().toStringUtf8()
@@ -162,7 +162,7 @@ public class GrpcMockManager implements TestExecutionListener {
                     )
                     .orElse(
                             DeleteIdResponse.newBuilder()
-                                    .setIdA(request.getEbid())
+                                    .setIdA(ByteString.copyFromUtf8("idA for " + request.getEbid().toStringUtf8()))
                                     .build()
                     );
             responseObserver.onNext(response);

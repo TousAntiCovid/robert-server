@@ -116,7 +116,7 @@ class UnregisterControllerTest {
 
         assertThatRegistrations()
                 .extracting(Registration::getPermanentIdentifier)
-                .containsExactly("user___1".getBytes());
+                .containsExactly("idA for user___1".getBytes());
     }
 
     @Test
@@ -167,7 +167,7 @@ class UnregisterControllerTest {
 
         assertThatRegistrations()
                 .extracting(Registration::getPermanentIdentifier)
-                .containsExactly("user___1".getBytes());
+                .containsExactly("idA for user___1".getBytes());
     }
 
     @Test
