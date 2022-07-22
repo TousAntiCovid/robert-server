@@ -9,12 +9,13 @@ Fonctionnalité: Suppression de l'historique d'exposition
     Etant donné que John, Sarah et Paul ont l'application TAC depuis 15 jours
 
   Scénario: Une personne supprime son historique d'exposition
-    Etant donné que Paul et Sarah sont à proximité 15 minutes
-    Et que Paul se déclare malade
+    Etant donné que Paul et Sarah étaient à proximité 15 minutes il y a 1 heure
+    Et que Paul se déclare malade maintenant
     Et que le batch robert est exécuté
     Lorsque Sarah supprime son historique d'exposition
-    Alors les données de Sarah n'existent plus
+    Alors les données d'exposition de Sarah n'existent plus
 
   Scénario: Une personne sans historique demande la suppression de son historique
+    Etant donné que l'on est aujourd'hui
     Lorsque Sarah supprime son historique d'exposition
-    Alors les données de Sarah n'existent plus
+    Alors les données d'exposition de Sarah n'existent plus

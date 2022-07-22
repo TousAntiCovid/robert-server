@@ -12,4 +12,4 @@ Fonctionnalité: Respect des conditions générales sur l'usage des données
     Etant donné que Sarah et John étaient à proximité 60 minutes il y a 15 jours et que John s'est déclaré malade
     Lorsque l'on est aujourd'hui
     Et que le batch robert est exécuté
-    Alors les données de Sarah n'existent plus
+    Alors les données d'exposition de Sarah n'existent plus

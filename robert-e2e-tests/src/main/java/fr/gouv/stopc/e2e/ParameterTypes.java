@@ -5,6 +5,7 @@ import io.cucumber.java.ParameterType;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 import java.util.List;
@@ -15,9 +16,9 @@ import static java.time.temporal.ChronoUnit.*;
 
 public class ParameterTypes {
 
-    @ParameterType("(maintenant|dans .*|il y a .*)")
+    @ParameterType("(maintenant|aujourd'hui|dans .*|il y a .*)")
     public Instant relativeTime(final String timeExpression) {
-        if ("maintenant".equals(timeExpression)) {
+        if ("maintenant".equals(timeExpression) || "aujourd'hui".equals(timeExpression)) {
             return Instant.now();
         } else if (timeExpression.startsWith("il y a ")) {
             final var delta = duration(timeExpression);
@@ -34,7 +35,27 @@ public class ParameterTypes {
         return Level.valueOf(logLevel);
     }
 
-    @ParameterType("\\d+ \\w+")
+    @ParameterType("(\\d+ \\w+( \\d+ \\w+)*( à \\d+:\\d{2})?)")
+    public Instant instant(final String instantExpression) {
+        final var durationExpression = instantExpression.replaceAll(" à .*", "");
+        final var duration = duration(durationExpression);
+        if (instantExpression.contains(" à ")) {
+            final var timeExpression = instantExpression
+                    .replaceAll(".* à ", "")
+                    .replaceAll("^(\\d):", "0$1:");
+            final var time = LocalTime.parse(timeExpression);
+            return Instant.now()
+                    .minus(duration)
+                    .truncatedTo(DAYS)
+                    .plus(time.getHour(), HOURS)
+                    .plus(time.getMinute(), MINUTES);
+        } else {
+            return Instant.now()
+                    .minus(duration);
+        }
+    }
+
+    @ParameterType("(\\d+ \\w+( \\d+ \\w+)*)")
     public Duration duration(final String durationExpression) {
         final var matcher = Pattern.compile("(\\d+) (jours?|heures?|minutes?)")
                 .matcher(durationExpression);
