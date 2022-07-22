@@ -4,11 +4,14 @@ import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
+import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import fr.gouv.stopc.robertserver.ws.vo.UnregisterRequestVo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.temporal.ChronoUnit;
 
 import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseError430ForEbid;
 import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseErrorForMacStartingWith;
@@ -191,4 +194,69 @@ class UnregisterControllerTest {
                 .body(emptyString());
     }
 
+    @Test
+    void can_unregister_after_a_failed_attempt_due_to_invalid_time() {
+        given()
+                .contentType(JSON)
+                .body(
+                        RegisterVo.builder()
+                                .captcha("valid challenge answer")
+                                .captchaId("captcha-id")
+                                .clientPublicECDHKey(toBase64("user___1 public key"))
+                                .build()
+                )
+
+                .when()
+                .post("/api/v6/register")
+
+                .then()
+                .statusCode(CREATED.value());
+
+        assertThatRegistrations()
+                .extracting(Registration::getPermanentIdentifier)
+                .extracting(String::new)
+                .containsExactly("idA for user___1");
+
+        given()
+                .contentType(JSON)
+                .body(
+                        UnregisterRequestVo.builder()
+                                .ebid(toBase64("user___1"))
+                                .epochId(clock.now().asEpochId())
+                                .time(toBase64(clock.now().minus(5, ChronoUnit.HOURS).asTime32()))
+                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .build()
+                )
+
+                .when()
+                .post("/api/v6/unregister")
+
+                .then()
+                .statusCode(BAD_REQUEST.value());
+
+        assertThatRegistrations()
+                .extracting(Registration::getPermanentIdentifier)
+                .extracting(String::new)
+                .containsExactly("idA for user___1");
+
+        given()
+                .contentType(JSON)
+                .body(
+                        UnregisterRequestVo.builder()
+                                .ebid(toBase64("user___1"))
+                                .epochId(clock.now().asEpochId())
+                                .time(toBase64(clock.now().asTime32()))
+                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
+                                .build()
+                )
+
+                .when()
+                .post("/api/v6/unregister")
+
+                .then()
+                .statusCode(OK.value());
+
+        assertThatRegistrations()
+                .isEmpty();
+    }
 }
