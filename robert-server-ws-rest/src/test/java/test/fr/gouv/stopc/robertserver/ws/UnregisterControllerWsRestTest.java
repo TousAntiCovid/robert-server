@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthResponse;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
@@ -218,6 +219,15 @@ public class UnregisterControllerWsRestTest {
 
         doReturn(
                 Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
+
+        doReturn(
+                Optional.of(
                         DeleteIdResponse.newBuilder()
                                 .setIdA(ByteString.copyFrom(idA))
                                 .build()
@@ -243,7 +253,7 @@ public class UnregisterControllerWsRestTest {
         // Given
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
-        verify(this.registrationService, times(2)).findById(ArgumentMatchers.any());
+        verify(this.registrationService, times(3)).findById(ArgumentMatchers.any());
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
     }
 
@@ -379,7 +389,7 @@ public class UnregisterControllerWsRestTest {
         doReturn(Optional.of(reg)).when(this.registrationService).findById(idA);
 
         doReturn(Optional.empty())
-                .when(this.cryptoServerClient).deleteId(any());
+                .when(this.cryptoServerClient).getIdFromAuth(any());
 
         requestBody = UnregisterRequestVo.builder()
                 .ebid(Base64.encode(reqContent[0]))
@@ -397,7 +407,8 @@ public class UnregisterControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
+        verify(this.cryptoServerClient, times(1)).getIdFromAuth(ArgumentMatchers.any());
+        verify(this.cryptoServerClient, never()).deleteId(ArgumentMatchers.any());
         verify(this.registrationService, never()).findById(ArgumentMatchers.any());
         verify(this.registrationService, never()).delete(ArgumentMatchers.any());
     }
@@ -507,6 +518,15 @@ public class UnregisterControllerWsRestTest {
 
         doReturn(
                 Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
+
+        doReturn(
+                Optional.of(
                         DeleteIdResponse.newBuilder()
                                 .setIdA(ByteString.copyFrom(idA))
                                 .build()
@@ -530,7 +550,7 @@ public class UnregisterControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().getSuccess());
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
-        verify(this.registrationService, times(2)).findById(idA);
+        verify(this.registrationService, times(3)).findById(idA);
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
 
     }
@@ -572,7 +592,7 @@ public class UnregisterControllerWsRestTest {
 
         doReturn(
                 Optional.of(
-                        DeleteIdResponse.newBuilder()
+                        GetIdFromAuthResponse.newBuilder()
                                 .setError(
                                         ErrorMessage.newBuilder()
                                                 .setCode(430)
@@ -582,7 +602,7 @@ public class UnregisterControllerWsRestTest {
                                 .build()
                 )
         )
-                .when(this.cryptoServerClient).deleteId(any());
+                .when(this.cryptoServerClient).getIdFromAuth(any());
 
         ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
                 this.targetUrl.toString(),
@@ -604,6 +624,15 @@ public class UnregisterControllerWsRestTest {
         byte[] decryptedEbid = new byte[8];
         System.arraycopy(idA, 0, decryptedEbid, 3, idA.length);
         System.arraycopy(ByteUtils.intToBytes(currentEpoch), 1, decryptedEbid, 0, decryptedEbid.length - idA.length);
+
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
 
         doReturn(
                 Optional.of(
@@ -632,7 +661,8 @@ public class UnregisterControllerWsRestTest {
 
         // Then
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
+        verify(this.cryptoServerClient, times(1)).getIdFromAuth(ArgumentMatchers.any());
+        verify(this.cryptoServerClient, never()).deleteId(ArgumentMatchers.any());
         verify(this.registrationService, times(2)).findById(ArgumentMatchers.any());
         verify(this.registrationService, never()).delete(ArgumentMatchers.any());
     }
@@ -645,6 +675,15 @@ public class UnregisterControllerWsRestTest {
         String pushToken = "pushToken";
         generateSuccessPayload(idA, pushToken);
 
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
+
         // When
         ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
                 this.targetUrl.toString(),
@@ -655,7 +694,7 @@ public class UnregisterControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().getSuccess());
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
-        verify(this.registrationService, times(2)).findById(idA);
+        verify(this.registrationService, times(3)).findById(idA);
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
         verifyPushNotifServerReceivedUnregisterForToken(pushToken);
     }
@@ -668,6 +707,15 @@ public class UnregisterControllerWsRestTest {
         String pushToken = "";
         generateSuccessPayload(idA, pushToken);
 
+        doReturn(
+                Optional.of(
+                        GetIdFromAuthResponse.newBuilder()
+                                .setIdA(ByteString.copyFrom(idA))
+                                .build()
+                )
+        )
+                .when(this.cryptoServerClient).getIdFromAuth(any());
+
         // When
         ResponseEntity<UnregisterResponseDto> response = this.restTemplate.exchange(
                 this.targetUrl.toString(),
@@ -678,7 +726,7 @@ public class UnregisterControllerWsRestTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().getSuccess());
         verify(this.cryptoServerClient, times(1)).deleteId(ArgumentMatchers.any());
-        verify(this.registrationService, times(2)).findById(idA);
+        verify(this.registrationService, times(3)).findById(idA);
         verify(this.registrationService, times(1)).delete(ArgumentMatchers.any());
         verifyNoInteractionsWithPushNotifServer();
     }
