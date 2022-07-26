@@ -122,7 +122,7 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
     }
 
     @Override
-    public ValidationResult<DeleteIdResponse> validateRequestForUnregister(AuthRequestVo authRequestVo) {
+    public ValidationResult<DeleteIdResponse> deleteId(AuthRequestVo authRequestVo) {
         Optional<ResponseEntity> validationError = validateCommonAuth(authRequestVo);
 
         if (validationError.isPresent()) {

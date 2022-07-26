@@ -1,7 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.controller.impl;
 
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdResponse;
-import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.controller.IUnregisterController;
 import fr.gouv.stopc.robertserver.ws.dto.UnregisterResponseDto;
@@ -15,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -30,8 +28,8 @@ public class UnregisterControllerImpl implements IUnregisterController {
 
     @Override
     public ResponseEntity<UnregisterResponseDto> unregister(UnregisterRequestVo unregisterRequestVo) {
-        AuthRequestValidationService.ValidationResult<DeleteIdResponse> validationResult = authRequestValidationService
-                .validateRequestForUnregister(unregisterRequestVo);
+        final var validationResult = authRequestValidationService
+                .validateRequestForAuth(unregisterRequestVo, DigestSaltEnum.UNREGISTER);
 
         if (Objects.nonNull(validationResult.getResponse()) &&
                 validationResult.getResponse().getError().getCode() == 430) {
@@ -43,18 +41,19 @@ public class UnregisterControllerImpl implements IUnregisterController {
             return ResponseEntity.badRequest().build();
         }
 
-        DeleteIdResponse authResponse = validationResult.getResponse();
+        final var authResponse = validationResult.getResponse();
 
-        Optional<Registration> registrationRecord = this.registrationService
+        final var registrationRecord = this.registrationService
                 .findById(authResponse.getIdA().toByteArray());
 
         if (registrationRecord.isPresent()) {
-            Registration record = registrationRecord.get();
+            final var record = registrationRecord.get();
 
             // Unregister by deleting
             this.registrationService.delete(record);
+            authRequestValidationService.deleteId(unregisterRequestVo);
 
-            UnregisterResponseDto response = UnregisterResponseDto.builder().success(true).build();
+            final var response = UnregisterResponseDto.builder().success(true).build();
 
             if (StringUtils.isNotBlank(unregisterRequestVo.getPushToken())) {
                 this.restApiService.unregisterPushNotif(unregisterRequestVo.getPushToken());
