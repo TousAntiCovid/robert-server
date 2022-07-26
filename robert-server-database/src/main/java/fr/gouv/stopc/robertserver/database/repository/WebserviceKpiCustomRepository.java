@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.database.repository;
 
-public interface WebserviceStatisticsCustomRepository {
+public interface WebserviceKpiCustomRepository {
 
     void incrementNotifiedUsers();
 
