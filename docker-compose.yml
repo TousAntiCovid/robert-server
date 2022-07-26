@@ -28,7 +28,7 @@ services:
       - PUSH_SERVER_HOST=mock-push-notif-server
       - PUSH_SERVER_PORT=1080
       - ESR_LIMIT=0
-      - ROBERT_EPOCHBUNDLEDURATIONINDAYS=4
+      - ROBERT_EPOCHBUNDLEDURATIONINDAYS=20
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
     ports:
       - "8086:8086"
@@ -61,7 +61,7 @@ services:
   postgres:
     image: postgres:9.6
     healthcheck:
-      test: pg_isready -U robert
+      test: psql -U robert -c "select id from identity limit 0"
     ports:
       - "5432:5432"
     environment:

@@ -33,7 +33,7 @@ class CaptchaServiceImplTest {
         final var captchaConfig = new Captcha(
                 true, new URL("http://localhost/public/api/v1"), new URL("http://localhost/private/api/v1"), "SUCCESS"
         );
-        final var config = new RobertWsProperties(captchaConfig);
+        final var config = new RobertWsProperties(captchaConfig, 5);
 
         final var mockServerCustomizer = new MockServerRestTemplateCustomizer();
         captchaService = new CaptchaServiceImpl(new RestTemplateBuilder(mockServerCustomizer), config);

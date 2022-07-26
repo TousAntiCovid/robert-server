@@ -20,14 +20,14 @@ public class ClockControllerTest {
     @Test
     public void clock_endpoint_returns_service_start_time_current_time_and_expected_epoch_number() {
 
-        final var secondsSinceServiceStartTime = (int) SECONDS.between(Instant.parse("2020-06-01T00:00:00Z"), now());
+        final var secondsSinceServiceStartTime = (int) Instant.parse("2020-06-01T00:00:00Z").until(now(), SECONDS);
 
         when()
                 .get("/api/v6/clock")
                 .then()
                 .statusCode(OK.value())
                 .body("serviceStartDate", equalTo("2020-06-01"))
-                .body("time", isoDateTimeNear(Instant.now(), Duration.ofSeconds(2)))
+                .body("time", isoDateTimeNear(Instant.now(), Duration.ofSeconds(5)))
                 .body("epoch", equalTo(secondsSinceServiceStartTime / EPOCH_DURATION_SECS));
     }
 }

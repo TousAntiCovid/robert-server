@@ -11,7 +11,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
@@ -92,20 +91,16 @@ public class RobertKpiSteps {
 
     private RobertServerKpiV1 getCurrentKpiFromSnapshot() {
         return robertServerKpiHistory.stream()
-                .filter(
-                        kpi -> kpi.getDate().equals(
-                                LocalDate.ofInstant(platformTimeSteps.getPlatformTime(), UTC)
-                        )
-                )
+                .filter(kpi -> kpi.getDate().equals(platformTimeSteps.getPlatformDate()))
                 .findAny()
-                .get();
+                .orElseThrow();
     }
 
     private RobertServerKpiV1 getKpiFromHistory(LocalDate localDate) {
         return robertServerKpiHistory.stream()
                 .filter(kpi -> kpi.getDate().equals(localDate))
                 .findAny()
-                .get();
+                .orElseThrow();
     }
 
 }

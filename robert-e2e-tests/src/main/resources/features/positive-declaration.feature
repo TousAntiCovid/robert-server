@@ -6,8 +6,7 @@ Fonctionnalité: Covid-19 positive declaration
   Dans le but de limiter la propagation du Covid19
 
   Contexte:
-    Etant donné que l'on est aujourd'hui
-    Et que John, Sarah et Paul ont l'application TAC
+    Etant donné que John, Sarah et Paul ont l'application TAC depuis 18 jours
 
   Scénario: Une personne est prévenue si un de ses contacts se déclare malade
     Etant donné que John et Sarah sont à proximité 60 minutes
@@ -44,7 +43,8 @@ Fonctionnalité: Covid-19 positive declaration
 
   Plan du Scénario: On passe à risque lorsque notre dernier contact date d'il y a 7 jours ou moins (exemple avec il y a <jours>)
     Etant donné que John et Sarah étaient à proximité 60 minutes il y a <jours> jours et que Sarah s'est déclarée malade
-    Lorsque le batch robert est exécuté
+    Lorsque l'on est aujourd'hui
+    Et que le batch robert est exécuté
     Alors John est à risque
     Exemples:
       | jours |
@@ -58,7 +58,8 @@ Fonctionnalité: Covid-19 positive declaration
 
   Plan du Scénario: Pas d'alerte si le dernier contact date d'il y a plus de 7 jours (exemple avec il y a <jours>)
     Etant donné que John et Sarah étaient à proximité 60 minutes il y a <jours> jours et que Sarah s'est déclarée malade
-    Lorsque le batch robert est exécuté
+    Lorsque l'on est aujourd'hui
+    Et que le batch robert est exécuté
     Alors John n'est pas à risque
     Exemples:
       | jours |
