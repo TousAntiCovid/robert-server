@@ -71,3 +71,11 @@ Fonctionnalité: Gestion des statistiques
     Et que le batch robert est exécuté
     Et que Hugo est à risque
     Alors le kpi notifiedUsers n'a pas changé
+
+  Scénario: 1 utilisateur se déclare malade, le kpi reportsCount est incrémenté de 1
+    Etant donné que l'on est aujourd'hui
+    Et que Sarah et Paul ont l'application TAC
+    Et que Sarah et Paul sont à proximité 60 minutes
+    Lorsque Paul se déclare malade
+    Et que le batch robert est exécuté
+    Alors le kpi reportsCount est incrémenté de 1

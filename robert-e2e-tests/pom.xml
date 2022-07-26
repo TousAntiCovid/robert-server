@@ -154,7 +154,7 @@
                         </goals>
                         <configuration>
                             <inputSpec>
-                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-internal-v1.yml
+                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-internal-v2.yml
                             </inputSpec>
                             <apiPackage>
                                 fr.gouv.stopc.robert.client.api
