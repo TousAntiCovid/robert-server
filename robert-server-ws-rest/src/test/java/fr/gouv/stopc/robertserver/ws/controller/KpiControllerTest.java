@@ -3,7 +3,7 @@ package fr.gouv.stopc.robertserver.ws.controller;
 import fr.gouv.stopc.robertserver.database.model.*;
 import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
 import fr.gouv.stopc.robertserver.database.repository.RegistrationRepository;
-import fr.gouv.stopc.robertserver.database.repository.WebserviceStatisticsRepository;
+import fr.gouv.stopc.robertserver.database.repository.WebserviceKpiRepository;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class KpiControllerTest {
     private BatchStatisticsRepository batchStatisticsRepository;
 
     @Autowired
-    private WebserviceStatisticsRepository webserviceStatisticsRepository;
+    private WebserviceKpiRepository webserviceKpiRepository;
 
     @BeforeEach
     void initialize_some_registrations_to_produce_total_statistics() {
@@ -120,24 +120,21 @@ class KpiControllerTest {
 
     @BeforeEach
     void initialize_webservice_statistics() {
-        webserviceStatisticsRepository.deleteAll();
-        webserviceStatisticsRepository.save(
-                WebserviceStatistics.builder()
-                        .statistics(
-                                List.of(
-                                        WebserviceKpi.builder().name("alertedUsers").value(10L).build(),
-                                        WebserviceKpi.builder().name("exposedButNotAtRiskUsers").value(5L).build(),
-                                        WebserviceKpi.builder().name("infectedUsersNotNotified").value(3L).build(),
-                                        WebserviceKpi.builder().name("notifiedUsersScoredAgain").value(2L).build(),
-                                        WebserviceKpi.builder().name("notifiedUsers").value(1L).build(),
-                                        WebserviceKpi.builder().name("reportsCount").value(7L).build()
-                                )
-                        ).build()
+        webserviceKpiRepository.deleteAll();
+        webserviceKpiRepository.saveAll(
+                List.of(
+                        WebserviceKpi.builder().name("alertedUsers").value(10L).build(),
+                        WebserviceKpi.builder().name("exposedButNotAtRiskUsers").value(5L).build(),
+                        WebserviceKpi.builder().name("infectedUsersNotNotified").value(3L).build(),
+                        WebserviceKpi.builder().name("notifiedUsersScoredAgain").value(2L).build(),
+                        WebserviceKpi.builder().name("notifiedUsers").value(1L).build(),
+                        WebserviceKpi.builder().name("reportsCount").value(7L).build()
+                )
         );
     }
 
     @Test
-    void can_fetch_statistics_for_a_single_day() {
+    void can_fetch_kpis() {
         given()
                 .when()
                 .get("/internal/api/v2/kpis")
@@ -156,9 +153,9 @@ class KpiControllerTest {
     }
 
     @Test
-    void can_fetch_statistics_for_a_single_day_no_ws_stats() {
+    void can_fetch_kpis_no_ws_stats() {
 
-        webserviceStatisticsRepository.deleteAll();
+        webserviceKpiRepository.deleteAll();
 
         given()
                 .when()
@@ -178,7 +175,7 @@ class KpiControllerTest {
     }
 
     @Test
-    void can_fetch_statistics_for_a_single_day_no_batch_stats() {
+    void can_fetch_kpis_no_batch_stats() {
 
         batchStatisticsRepository.deleteAll();
 

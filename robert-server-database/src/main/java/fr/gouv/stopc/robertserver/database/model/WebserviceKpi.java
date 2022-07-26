@@ -18,4 +18,5 @@ public class WebserviceKpi {
     private String name;
 
     private Long value;
+
 }
