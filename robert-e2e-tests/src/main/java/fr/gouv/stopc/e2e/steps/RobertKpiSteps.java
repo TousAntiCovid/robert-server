@@ -92,7 +92,7 @@ public class RobertKpiSteps {
 
     private RobertServerKpiV2 getCurrentKpiFromSnapshot() {
         return robertServerKpiHistory.stream()
-                .filter(kpi -> kpi.getDate().equals(platformTimeSteps.getPlatformDate()))
+                .filter(kpi -> kpi.getDate().toLocalDate().equals(platformTimeSteps.getPlatformDate()))
                 .findAny()
                 .orElseThrow();
     }

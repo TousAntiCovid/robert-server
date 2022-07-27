@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Slf4j
@@ -45,7 +45,7 @@ public class KpiService {
         final var notifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
 
         return RobertServerKpiV2.builder()
-                .date(LocalDate.now())
+                .date(OffsetDateTime.now())
                 .alertedUsers(
                         kpis
                                 .stream()

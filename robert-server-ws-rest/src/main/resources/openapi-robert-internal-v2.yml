@@ -41,7 +41,7 @@ components:
       properties:
         date:
           type: string
-          format: date
+          format: date-time
         alertedUsers:
           type: integer
           format: int64

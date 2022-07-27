@@ -1,19 +1,23 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
-import fr.gouv.stopc.robertserver.database.model.*;
+import fr.gouv.stopc.robertserver.database.model.Kpi;
 import fr.gouv.stopc.robertserver.database.repository.KpiRepository;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
+import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.http.HttpStatus.OK;
 
 @IntegrationTest
@@ -41,12 +45,11 @@ class KpiControllerTest {
 
     @Test
     void can_fetch_kpis() {
-        given()
+        ValidatableResponse response = given()
                 .when()
                 .get("/internal/api/v2/kpis")
                 .then()
                 .statusCode(OK.value())
-                .body("date", equalTo(LocalDate.now().toString()))
                 .body("alertedUsers", equalTo(10))
                 .body("exposedButNotAtRiskUsers", equalTo(5))
                 .body("infectedUsersNotNotified", equalTo(3))
@@ -56,6 +59,9 @@ class KpiControllerTest {
                 .body("reportsCount", equalTo(7))
                 .body("size()", equalTo(8));
 
+        final var date = response.extract().path("date");
+        assertThat(OffsetDateTime.parse(date.toString()))
+                .isCloseTo(OffsetDateTime.now(), within(1, ChronoUnit.SECONDS));
     }
 
 }
