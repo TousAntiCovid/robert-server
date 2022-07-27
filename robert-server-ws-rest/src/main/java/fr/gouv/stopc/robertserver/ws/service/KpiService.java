@@ -1,125 +1,123 @@
 package fr.gouv.stopc.robertserver.ws.service;
 
-import fr.gouv.stopc.robertserver.database.model.BatchStatistics;
+import fr.gouv.stopc.robertserver.database.model.Kpi;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.model.WebserviceKpi;
-import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
-import fr.gouv.stopc.robertserver.database.repository.WebserviceKpiRepository;
+import fr.gouv.stopc.robertserver.database.repository.KpiRepository;
+import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.api.v2.model.RobertServerKpiV2;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Range;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-import static java.time.ZoneOffset.UTC;
-import static org.springframework.data.domain.Range.Bound.exclusive;
-import static org.springframework.data.domain.Range.Bound.inclusive;
-
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class KpiService {
 
-    private final WebserviceKpiRepository webserviceKpiRepository;
+    private final KpiRepository kpiRepository;
 
-    private final BatchStatisticsRepository batchStatisticsRepository;
+    private final IRegistrationService registrationDbService;
 
-    public KpiService(
-            final WebserviceKpiRepository webserviceKpiRepository,
-            final BatchStatisticsRepository batchStatisticsRepository) {
-        this.webserviceKpiRepository = webserviceKpiRepository;
-        this.batchStatisticsRepository = batchStatisticsRepository;
-    }
-
-    private static List<WebserviceKpi> emptyWebserviceKpis() {
+    private static List<Kpi> emptyKpis() {
         return List.of(
-                WebserviceKpi.builder().name("alertedUsers").value(0L).build(),
-                WebserviceKpi.builder().name("exposedButNotAtRiskUsers").value(0L).build(),
-                WebserviceKpi.builder().name("infectedUsersNotNotified").value(0L).build(),
-                WebserviceKpi.builder().name("notifiedUsersScoredAgain").value(0L).build(),
-                WebserviceKpi.builder().name("notifiedUsers").value(0L).build(),
-                WebserviceKpi.builder().name("reportsCount").value(0L).build()
+                Kpi.builder().name("alertedUsers").value(0L).build(),
+                Kpi.builder().name("exposedButNotAtRiskUsers").value(0L).build(),
+                Kpi.builder().name("infectedUsersNotNotified").value(0L).build(),
+                Kpi.builder().name("notifiedUsersScoredAgain").value(0L).build(),
+                Kpi.builder().name("notifiedUsers").value(0L).build(),
+                Kpi.builder().name("reportsCount").value(0L).build()
         );
     }
 
     public RobertServerKpiV2 getKpis() {
 
-        final var range = Range
-                .from(inclusive(LocalDate.now().atStartOfDay().toInstant(UTC)))
-                .to(exclusive(Instant.now()));
-        final var webserviceKpis = webserviceKpiRepository.findAll();
-        if (webserviceKpis.isEmpty()) {
-            webserviceKpiRepository.saveAll(emptyWebserviceKpis());
+        final var kpis = kpiRepository.findAll();
+        if (kpis.isEmpty()) {
+            kpiRepository.saveAll(emptyKpis());
         }
 
-        final var batchStats = batchStatisticsRepository.findByJobStartInstantBetween(range);
-
-        final var totalUsersAboveRiskThresholdButRetentionPeriodExpired = batchStats.stream()
-                .mapToLong(BatchStatistics::getUsersAboveRiskThresholdButRetentionPeriodExpired).sum();
+        final var alertedUsers = registrationDbService.countNbUsersNotified();
+        final var exposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
+        final var infectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
+        final var notifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
 
         return RobertServerKpiV2.builder()
                 .date(LocalDate.now())
                 .alertedUsers(
-                        webserviceKpis.stream()
-                                .filter(webserviceKpi -> webserviceKpi.getName().equals("alertedUsers"))
+                        kpis
+                                .stream()
+                                .filter(kpi -> kpi.getName().equals("alertedUsers"))
                                 .findAny()
-                                .orElseGet(() -> emptyWebserviceKpi("alertedUsers"))
+                                .orElseGet(() -> emptyKpi("alertedUsers"))
                                 .getValue()
 
                 )
                 .exposedButNotAtRiskUsers(
-                        webserviceKpis.stream()
-                                .filter(webserviceKpi -> webserviceKpi.getName().equals("exposedButNotAtRiskUsers"))
+                        kpis
+                                .stream()
+                                .filter(kpi -> kpi.getName().equals("exposedButNotAtRiskUsers"))
                                 .findAny()
-                                .orElseGet(() -> emptyWebserviceKpi("exposedButNotAtRiskUsers"))
+                                .orElseGet(() -> emptyKpi("exposedButNotAtRiskUsers"))
                                 .getValue()
                 )
                 .infectedUsersNotNotified(
-                        webserviceKpis.stream()
-                                .filter(webserviceKpi -> webserviceKpi.getName().equals("infectedUsersNotNotified"))
+                        kpis
+                                .stream()
+                                .filter(kpi -> kpi.getName().equals("infectedUsersNotNotified"))
                                 .findAny()
-                                .orElseGet(() -> emptyWebserviceKpi("infectedUsersNotNotified"))
+                                .orElseGet(() -> emptyKpi("infectedUsersNotNotified"))
                                 .getValue()
                 )
                 .notifiedUsersScoredAgain(
-                        webserviceKpis.stream()
-                                .filter(webserviceKpi -> webserviceKpi.getName().equals("notifiedUsersScoredAgain"))
+                        kpis
+                                .stream()
+                                .filter(kpi -> kpi.getName().equals("notifiedUsersScoredAgain"))
                                 .findAny()
-                                .orElseGet(() -> emptyWebserviceKpi("notifiedUsersScoredAgain"))
+                                .orElseGet(() -> emptyKpi("notifiedUsersScoredAgain"))
                                 .getValue()
                 )
                 .notifiedUsers(
-                        webserviceKpis.stream()
-                                .filter(webserviceKpi -> webserviceKpi.getName().equals("notifiedUsers"))
+                        kpis
+                                .stream()
+                                .filter(kpi -> kpi.getName().equals("notifiedUsers"))
                                 .findAny()
-                                .orElseGet(() -> emptyWebserviceKpi("notifiedUsers"))
+                                .orElseGet(() -> emptyKpi("notifiedUsers"))
                                 .getValue()
                 )
                 .reportsCount(
-                        webserviceKpis.stream()
-                                .filter(webserviceKpi -> webserviceKpi.getName().equals("reportsCount"))
+                        kpis
+                                .stream()
+                                .filter(kpi -> kpi.getName().equals("reportsCount"))
                                 .findAny()
-                                .orElseGet(() -> emptyWebserviceKpi("reportsCount"))
+                                .orElseGet(() -> emptyKpi("reportsCount"))
                                 .getValue()
                 )
-                .usersAboveRiskThresholdButRetentionPeriodExpired(totalUsersAboveRiskThresholdButRetentionPeriodExpired)
+                .usersAboveRiskThresholdButRetentionPeriodExpired(
+                        kpis
+                                .stream()
+                                .filter(kpi -> kpi.getName().equals("usersAboveRiskThresholdButRetentionPeriodExpired"))
+                                .findAny()
+                                .orElseGet(() -> emptyKpi("usersAboveRiskThresholdButRetentionPeriodExpired"))
+                                .getValue()
+                )
                 .build();
     }
 
     public void incrementNotifiedUsersCount(final Registration registration) {
         if (!registration.isNotifiedForCurrentRisk() && registration.isAtRisk()) {
-            webserviceKpiRepository.incrementNotifiedUsers();
+            kpiRepository.incrementNotifiedUsers();
         }
     }
 
     public void incrementReportsCount() {
-        webserviceKpiRepository.incrementReportsCount();
+        kpiRepository.incrementReportsCount();
     }
 
-    private WebserviceKpi emptyWebserviceKpi(final String name) {
-        return WebserviceKpi.builder().name(name).value(0L).build();
+    private Kpi emptyKpi(final String name) {
+        return Kpi.builder().name(name).value(0L).build();
     }
 
 }
