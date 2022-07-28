@@ -199,6 +199,7 @@ public class StatusControllerImpl implements IStatusController {
         // The status atRisk will be reinitialized by the batch
         if (riskLevel != RiskLevel.NONE) {
             record.setNotified(true);
+            kpiService.incrementAlertedUsers();
 
             // Include lastContactDate only if any and if user is evaluated at risk
             if (record.getLastContactTimestamp() > 0) {

@@ -3,7 +3,6 @@ package fr.gouv.stopc.robertserver.ws.service;
 import fr.gouv.stopc.robertserver.database.model.Kpi;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.KpiRepository;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.api.v2.model.RobertServerKpiV2;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +17,6 @@ import java.util.List;
 public class KpiService {
 
     private final KpiRepository kpiRepository;
-
-    private final IRegistrationService registrationDbService;
 
     private static List<Kpi> emptyKpis() {
         return List.of(
@@ -38,11 +35,6 @@ public class KpiService {
         if (kpis.isEmpty()) {
             kpiRepository.saveAll(emptyKpis());
         }
-
-        final var alertedUsers = registrationDbService.countNbUsersNotified();
-        final var exposedUsersNotAtRisk = registrationDbService.countNbExposedUsersButNotAtRisk();
-        final var infectedUsersNotNotified = registrationDbService.countNbUsersAtRiskAndNotNotified();
-        final var notifiedUsersScoredAgain = registrationDbService.countNbNotifiedUsersScoredAgain();
 
         return RobertServerKpiV2.builder()
                 .date(OffsetDateTime.now())
@@ -108,12 +100,16 @@ public class KpiService {
 
     public void incrementNotifiedUsersCount(final Registration registration) {
         if (!registration.isNotifiedForCurrentRisk() && registration.isAtRisk()) {
-            kpiRepository.incrementNotifiedUsers();
+            kpiRepository.incrementKpi("notifiedUsers");
         }
     }
 
     public void incrementReportsCount() {
-        kpiRepository.incrementReportsCount();
+        kpiRepository.incrementKpi("reportsCount");
+    }
+
+    public void incrementAlertedUsers() {
+        kpiRepository.incrementKpi("alertedUsers");
     }
 
     private Kpi emptyKpi(final String name) {

@@ -125,7 +125,20 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
             // It is up to the client to know if it should notify (new risk) or not given
             // the risk change or not.
         } else if (totalRisk >= riskThreshold && !isExpositionInRiskExpositionPeriod(latestExpositionTime)) {
-            kpiRepository.incrementUsersAboveRiskThresholdButRetentionPeriodExpired();
+            kpiRepository.incrementKpi("usersAboveRiskThresholdButRetentionPeriodExpired");
+        }
+
+        incrementScoringKpis(registration);
+    }
+
+    private void incrementScoringKpis(Registration registration) {
+        if (!registration.isAtRisk() && !registration.isNotified() && !registration.getExposedEpochs().isEmpty()) {
+            kpiRepository.incrementKpi("exposedUsersNotAtRisk");
+        } else if (registration.isAtRisk() && !registration.isNotified()) {
+            kpiRepository.incrementKpi("infectedUsersNotNotified");
+        } else if (!registration.isAtRisk() && registration.isNotified()
+                && !registration.getExposedEpochs().isEmpty()) {
+            kpiRepository.incrementKpi("notifiedUsersScoredAgain");
         }
     }
 

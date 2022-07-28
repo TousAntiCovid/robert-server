@@ -68,46 +68,6 @@ public class RegistrationService implements IRegistrationService {
         return this.registrationRepository.countNbUsersAtRisk();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Long countNbUsersAtRiskAndNotified() {
-        return this.registrationRepository.countNbUsersAtRiskAndNotified();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Long countNbUsersAtRiskAndNotNotified() {
-        return this.registrationRepository.countNbUsersAtRiskAndNotNotified();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Long countNbUsersNotified() {
-        return this.registrationRepository.countNbUsersNotified();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Long countNbExposedUsersButNotAtRisk() {
-        return this.registrationRepository.countNbExposedUsersButNotAtRisk();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Long countNbNotifiedUsersScoredAgain() {
-        return this.registrationRepository.countNbNotifiedUsersScoredAgain();
-    }
-
     @Override
     public Long count() {
         return this.registrationRepository.count();

@@ -29,14 +29,6 @@ public class RobertKpiSteps {
         robertServerKpiHistory.add(robertServerKpi);
     }
 
-    @Alors("le kpi {word} est {long}")
-    public void checkKpiValue(final String kpiName, final Long value) {
-
-        final var robertServerKpi = kpiApi.kpis();
-        assertThat(robertServerKpi).hasFieldOrPropertyWithValue(kpiName, value);
-
-    }
-
     @Alors("le kpi usersAboveRiskThresholdButRetentionPeriodExpired est incrémenté de {long}")
     public void checkKpiIncrement(final Long increment) {
 
@@ -92,14 +84,17 @@ public class RobertKpiSteps {
 
     private RobertServerKpiV2 getCurrentKpiFromSnapshot() {
         return robertServerKpiHistory.stream()
-                .filter(kpi -> kpi.getDate().toLocalDate().equals(platformTimeSteps.getPlatformDate()))
+                .filter(
+                        kpi -> kpi.getDate().toLocalDate().atStartOfDay()
+                                .equals(platformTimeSteps.getPlatformDate().atStartOfDay())
+                )
                 .findAny()
                 .orElseThrow();
     }
 
     private RobertServerKpiV2 getKpiFromHistory(LocalDate localDate) {
         return robertServerKpiHistory.stream()
-                .filter(kpi -> kpi.getDate().equals(localDate))
+                .filter(kpi -> kpi.getDate().toLocalDate().atStartOfDay().equals(localDate.atStartOfDay()))
                 .findAny()
                 .orElseThrow();
     }

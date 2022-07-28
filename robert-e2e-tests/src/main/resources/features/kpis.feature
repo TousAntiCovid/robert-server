@@ -10,7 +10,6 @@ Fonctionnalité: Gestion des statistiques
     Et que Sarah et Paul ont l'application TAC
     Et que Sarah et Paul sont à proximité 60 minutes
     Et que le batch robert est exécuté
-    Et que le kpi usersAboveRiskThresholdButRetentionPeriodExpired est 0
     Lorsque l'on est aujourd'hui
     Et que Paul se déclare malade
     Et que le batch robert est exécuté
@@ -21,7 +20,6 @@ Fonctionnalité: Gestion des statistiques
     Et que Sarah et Paul ont l'application TAC
     Et que Sarah et Paul sont à proximité 60 minutes
     Et que le batch robert est exécuté
-    Et que le kpi usersAboveRiskThresholdButRetentionPeriodExpired est 0
     Lorsque l'on est aujourd'hui
     Et que Paul se déclare malade
     Et que le batch robert est exécuté
@@ -32,7 +30,6 @@ Fonctionnalité: Gestion des statistiques
     Et que Inès, Hugo, Sarah et Paul ont l'application TAC
     Et que Inès, Hugo, Sarah et Paul sont à proximité 60 minutes
     Et que le batch robert est exécuté
-    Et que le kpi usersAboveRiskThresholdButRetentionPeriodExpired est 0
     Lorsque l'on est aujourd'hui
     Et que Paul se déclare malade
     Et que le batch robert est exécuté
@@ -43,7 +40,6 @@ Fonctionnalité: Gestion des statistiques
     Et que Inès, Hugo, Sarah et Paul ont l'application TAC
     Et que Inès, Hugo, Sarah et Paul sont à proximité 60 minutes
     Et que le batch robert est exécuté
-    Et que le kpi usersAboveRiskThresholdButRetentionPeriodExpired est 0
     Lorsque l'on est aujourd'hui
     Et que Paul se déclare malade
     Et que le batch robert est exécuté
