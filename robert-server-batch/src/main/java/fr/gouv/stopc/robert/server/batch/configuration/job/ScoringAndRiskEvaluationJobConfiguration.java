@@ -33,7 +33,8 @@ public class ScoringAndRiskEvaluationJobConfiguration {
             Step populateContactIdMappingStep, Step populateRegistrationIdMappingForEpochPurgeStep,
             Step populateIdMappingWithScoredRegistrationStep, Step processRegistrationRiskStep,
             Step populateIdMappingForRegistrationRiskResetStep, Step registrationRiskResetStep,
-            JobExecutionListener logHelloMessageCountToProcessJobExecutionListener) {
+            JobExecutionListener logHelloMessageCountToProcessJobExecutionListener,
+            Step saveKpisStep) {
 
         log.info("Building contact batch (Old expositions purge, Contact scoring, Risk computation)");
         return this.jobBuilderFactory.get("SCORE_CONTACTS_AND_COMPUTE_RISK")
@@ -46,6 +47,7 @@ public class ScoringAndRiskEvaluationJobConfiguration {
                 .next(contactProcessingStep)
                 .next(populateIdMappingWithScoredRegistrationStep)
                 .next(processRegistrationRiskStep)
+                .next(saveKpisStep)
                 .build();
     }
 }

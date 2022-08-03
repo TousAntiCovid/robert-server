@@ -10,13 +10,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.isoDateTimeNear;
 import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -28,7 +28,7 @@ class KpiControllerTest {
     private KpiRepository kpiRepository;
 
     @BeforeEach
-    void initialize_webservice_statistics() {
+    void initialize_kpis() {
         kpiRepository.deleteAll();
         kpiRepository.saveAll(
                 List.of(
@@ -59,9 +59,9 @@ class KpiControllerTest {
                 .body("reportsCount", equalTo(7))
                 .body("size()", equalTo(8));
 
-        final var date = response.extract().path("date");
-        assertThat(OffsetDateTime.parse(date.toString()))
-                .isCloseTo(OffsetDateTime.now(), within(1, ChronoUnit.SECONDS));
+        final var fetchingDate = response.extract().path("date");
+        final var fetchingDateAsInstant = OffsetDateTime.parse(fetchingDate.toString()).toInstant();
+        assertThat(fetchingDateAsInstant.toString(), isoDateTimeNear(fetchingDateAsInstant, Duration.ofSeconds(1)));
     }
 
 }

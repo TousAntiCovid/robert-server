@@ -3,7 +3,7 @@ package fr.gouv.stopc.robertserver.ws.service;
 import fr.gouv.stopc.robertserver.database.model.Kpi;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.KpiRepository;
-import fr.gouv.stopc.robertserver.ws.api.v2.model.RobertServerKpiV2;
+import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,14 +29,14 @@ public class KpiService {
         );
     }
 
-    public RobertServerKpiV2 getKpis() {
+    public RobertServerKpi getKpis() {
 
         final var kpis = kpiRepository.findAll();
         if (kpis.isEmpty()) {
             kpiRepository.saveAll(emptyKpis());
         }
 
-        return RobertServerKpiV2.builder()
+        return RobertServerKpi.builder()
                 .date(OffsetDateTime.now())
                 .alertedUsers(
                         kpis

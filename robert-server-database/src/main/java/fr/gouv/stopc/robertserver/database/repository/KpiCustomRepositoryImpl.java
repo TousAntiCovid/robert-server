@@ -24,4 +24,15 @@ public class KpiCustomRepositoryImpl implements KpiCustomRepository {
         mongoOperations.findAndModify(query, update, options, Kpi.class);
     }
 
+    @Override
+    public void upsert(String name, Long value) {
+        final var query = new Query().addCriteria(Criteria.where("name").is(name));
+        final var update = new Update().set("value", value);
+        final var options = FindAndModifyOptions.options()
+                .upsert(true)
+                .returnNew(true);
+
+        mongoOperations.findAndModify(query, update, options, Kpi.class);
+    }
+
 }

@@ -128,18 +128,6 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
             kpiRepository.incrementKpi("usersAboveRiskThresholdButRetentionPeriodExpired");
         }
 
-        incrementScoringKpis(registration);
-    }
-
-    private void incrementScoringKpis(Registration registration) {
-        if (!registration.isAtRisk() && !registration.isNotified() && !registration.getExposedEpochs().isEmpty()) {
-            kpiRepository.incrementKpi("exposedUsersNotAtRisk");
-        } else if (registration.isAtRisk() && !registration.isNotified()) {
-            kpiRepository.incrementKpi("infectedUsersNotNotified");
-        } else if (!registration.isAtRisk() && registration.isNotified()
-                && !registration.getExposedEpochs().isEmpty()) {
-            kpiRepository.incrementKpi("notifiedUsersScoredAgain");
-        }
     }
 
     private boolean isExpositionInRiskExpositionPeriod(RobertInstant expositionTime) {

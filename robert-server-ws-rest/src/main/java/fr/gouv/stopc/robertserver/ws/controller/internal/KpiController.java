@@ -1,7 +1,7 @@
-package fr.gouv.stopc.robertserver.ws.controller.internal.v2;
+package fr.gouv.stopc.robertserver.ws.controller.internal;
 
-import fr.gouv.stopc.robertserver.ws.api.v2.KpiApi;
-import fr.gouv.stopc.robertserver.ws.api.v2.model.RobertServerKpiV2;
+import fr.gouv.stopc.robertserver.ws.api.KpiApi;
+import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi;
 import fr.gouv.stopc.robertserver.ws.service.KpiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ public class KpiController implements KpiApi {
     private final KpiService kpiService;
 
     @Override
-    public ResponseEntity<RobertServerKpiV2> kpis() {
+    public ResponseEntity<RobertServerKpi> kpis() {
 
         return ResponseEntity.ok(kpiService.getKpis());
     }

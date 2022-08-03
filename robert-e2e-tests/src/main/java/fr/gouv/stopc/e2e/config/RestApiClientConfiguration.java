@@ -24,7 +24,7 @@ public class RestApiClientConfiguration {
     @Bean
     public ApiClient kpiClient() {
         return new ApiClient()
-                .setBasePath(applicationProperties.getWsRestBaseUrl() + "/internal/api/v2");
+                .setBasePath(applicationProperties.getWsRestBaseUrl() + "/internal/api/v2/");
     }
 
     @Bean
