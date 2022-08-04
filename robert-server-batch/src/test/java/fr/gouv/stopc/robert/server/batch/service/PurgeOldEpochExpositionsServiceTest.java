@@ -2,9 +2,9 @@ package fr.gouv.stopc.robert.server.batch.service;
 
 import fr.gouv.stopc.robert.server.batch.IntegrationTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
-import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robert.server.batch.manager.MetricsManager;
+import fr.gouv.stopc.robert.server.batch.manager.MongodbManager;
+import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.RegistrationRepository;
@@ -14,14 +14,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestExecutionListeners;
 
-import java.util.ArrayList;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.List;
 
 import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatTimerMetricIncrement;
+import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.assertThatRegistrationForUser;
+import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenRegistrationExistsForUser;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
 @IntegrationTest
+@TestExecutionListeners(listeners = {
+        MetricsManager.class,
+        MongodbManager.class
+}, mergeMode = MERGE_WITH_DEFAULTS)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class PurgeOldEpochExpositionsServiceTest {
 
@@ -29,9 +38,9 @@ class PurgeOldEpochExpositionsServiceTest {
 
     private final RegistrationRepository registrationRepository;
 
-    private final IServerConfigurationService serverConfigurationService;
-
     private final PropertyLoader propertyLoader;
+
+    private final RobertClock clock;
 
     @Test
     void contagious_period_is_forteen_days() {
@@ -54,42 +63,33 @@ class PurgeOldEpochExpositionsServiceTest {
 
     @Test
     void epochs_expositions_are_deleted_when_epochs_are_before_contagious_period() {
-        // Given
-        byte[] rndBytes = ProcessorTestUtils.generateIdA();
-        final int currentEpochId = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
         final int contagiousPeriodPlusOneDay = propertyLoader.getContagiousPeriod() + 1;
-        final int epochsByDay = 96;
-        final int notContagiousEpochId = currentEpochId - contagiousPeriodPlusOneDay * epochsByDay;
+        var beforeStartOfContagiousPeriod = clock.now().minus(contagiousPeriodPlusOneDay, ChronoUnit.DAYS);
 
-        Registration registration = Registration.builder().permanentIdentifier(rndBytes)
-                .build();
+        givenRegistrationExistsForUser(
+                "user___1", r -> r
+                        .exposedEpochs(
+                                List.of(
+                                        EpochExposition.builder()
+                                                .epochId(clock.now().asEpochId())
+                                                .expositionScores(Arrays.asList(1.0))
+                                                .build(),
+                                        EpochExposition.builder()
+                                                .epochId(beforeStartOfContagiousPeriod.asEpochId())
+                                                .expositionScores(Arrays.asList(1.0))
+                                                .build()
 
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-
-        Double[] expositionScore = new Double[] { 1.0 };
-        expositions.add(
-                EpochExposition.builder()
-                        .epochId(currentEpochId)
-                        .expositionScores(Arrays.asList(expositionScore))
-                        .build()
+                                )
+                        )
         );
-        expositions.add(
-                EpochExposition.builder()
-                        .epochId(notContagiousEpochId)
-                        .expositionScores(Arrays.asList(expositionScore))
-                        .build()
-        );
-        registration.setExposedEpochs(expositions);
-        registrationRepository.save(registration);
 
         // When
         purgeOldEpochExpositionsService.performs();
 
         // Then
-        Registration updatedRegistration = registrationRepository.findById(rndBytes).orElse(null);
-        assertThat(updatedRegistration).as("Registration is null").isNotNull();
-        assertThat(updatedRegistration.getExposedEpochs()).as("Exposed epochs is null").isNotNull();
-        assertThat(updatedRegistration.getExposedEpochs()).hasSize(1);
+        assertThatRegistrationForUser("user___1");
+        Registration updatedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
+        assertThat(updatedRegistration.getExposedEpochs()).isNotNull().hasSize(1);
         assertThatTimerMetricIncrement("robert.batch", "operation", "PURGE_OLD_EXPOSITIONS_STEP").isEqualTo(1L);
     }
 
@@ -97,38 +97,30 @@ class PurgeOldEpochExpositionsServiceTest {
     @ValueSource(ints = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 })
     void epochs_expositions_are_not_deleted_when_epochs_are_not_before_contagious_period(int inContagiousPeriod) {
         // Given
-        byte[] rndBytes = ProcessorTestUtils.generateIdA();
-        final int currentEpochId = TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
-        final int epochsByDay = 96;
-        final int inContagiousPeriodEpochId = currentEpochId - inContagiousPeriod * epochsByDay;
+        var beforeStartOfContagiousPeriod = clock.now().minus(inContagiousPeriod, ChronoUnit.DAYS);
+        var registration = givenRegistrationExistsForUser(
+                "user___1", r -> r
+                        .exposedEpochs(
+                                List.of(
+                                        EpochExposition.builder()
+                                                .epochId(clock.now().asEpochId())
+                                                .expositionScores(Arrays.asList(1.0))
+                                                .build(),
+                                        EpochExposition.builder()
+                                                .epochId(beforeStartOfContagiousPeriod.asEpochId())
+                                                .expositionScores(Arrays.asList(1.0))
+                                                .build()
 
-        Registration registration = Registration.builder().permanentIdentifier(rndBytes)
-                .build();
-
-        ArrayList<EpochExposition> expositions = new ArrayList<>();
-
-        Double[] expositionScore = new Double[] { 1.0 };
-        expositions.add(
-                EpochExposition.builder()
-                        .epochId(currentEpochId)
-                        .expositionScores(Arrays.asList(expositionScore))
-                        .build()
+                                )
+                        )
         );
-
-        expositions.add(
-                EpochExposition.builder()
-                        .epochId(inContagiousPeriodEpochId)
-                        .expositionScores(Arrays.asList(expositionScore))
-                        .build()
-        );
-        registration.setExposedEpochs(expositions);
-        registrationRepository.save(registration);
 
         // When
         purgeOldEpochExpositionsService.performs();
 
         // Then
-        Registration updatedRegistration = registrationRepository.findById(rndBytes).orElse(null);
+        assertThatRegistrationForUser("user___1");
+        Registration updatedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
         assertThat(updatedRegistration).as("Registration is null").isNotNull();
         assertThat(updatedRegistration).as("Object has not been updated").isEqualTo(registration);
         assertThat(updatedRegistration.getExposedEpochs()).as("Exposed epochs is null").isNotNull();

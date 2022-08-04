@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robert.server.common.service;
 
+import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
+import java.util.Arrays;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
@@ -66,6 +68,33 @@ public class RobertClock {
         public int asEpochId() {
             final var numberEpochs = (asNtpTimestamp() - startNtpTimestamp) / EPOCH_DURATION_SECS;
             return (int) numberEpochs;
+        }
+
+        /**
+         * Quote from Robert specification :
+         * 
+         * <pre>
+         * "16-bit timestamp (to encode the ne-grain emission time). It contains the 16 less signicant bits of the
+         * current NTP "Seconds" timestamp of AppA (which represents, for era 0, the number of seconds since 0h
+         * January 1st, 1900 UTC). Since it is truncated to 16 bits, it covers a bit more than 18 hours, what is much
+         * larger than the epoch duration."
+         * </pre>
+         */
+        public int as16LessSignificantBits() {
+            byte[] timeHelloB = new byte[4];
+            System.arraycopy(ByteUtils.longToBytes(asNtpTimestamp()), 4, timeHelloB, 0, 4);
+
+            // Clear out the first two bytes
+            timeHelloB[0] = (byte) (timeHelloB[0] & 0x00);
+            timeHelloB[1] = (byte) (timeHelloB[1] & 0x00);
+
+            int timeHello = ByteUtils.bytesToInt(timeHelloB);
+            return timeHello;
+        }
+
+        public byte[] asTime32() {
+            final var unixTimestampByteArray = ByteUtils.longToBytes(asNtpTimestamp());
+            return Arrays.copyOfRange(unixTimestampByteArray, 4, 8);
         }
 
         public RobertInstant plusEpochs(int numberOfEpochs) {

@@ -19,9 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-
 @Slf4j
 public class GrpcMockManager implements TestExecutionListener {
 
@@ -47,12 +44,6 @@ public class GrpcMockManager implements TestExecutionListener {
     public void beforeTestMethod(@NonNull TestContext testContext) {
         Mockito.reset(CRYPTO_GRPC_STUB);
         CryptoGrpcStub.reset();
-    }
-
-    @SneakyThrows
-    public static void givenCryptoServerIsOffline() {
-        final var error = new RuntimeException("Crypto server is offline");
-        doThrow(error).when(CRYPTO_GRPC_STUB).validateContact(any(), any());
     }
 
     public static void givenCryptoServerRaiseErrorForMacStartingWith(String mac) {
@@ -130,7 +121,7 @@ public class GrpcMockManager implements TestExecutionListener {
             } else if (EBID.contains(request.getEbid())) {
                 return null;
             } else {
-                // TODO : return good answer
+                // Return good answer
                 return ValidateContactResponse
                         .newBuilder()
                         .setIdA(idA)

@@ -101,101 +101,98 @@ public class ContactProcessingService {
         @Override
         @Counted(value = "CONTACT_SCORING_STEP_PROCEEDED_REGISTRATIONS")
         public void processDocument(Document document) throws MongoException, DataAccessException {
-
             final var contact = mongoTemplate.getConverter().read(Contact.class, document);
 
-            if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
-                log.info("No messages in contact, discarding contact");
-                contactService.delete(contact);
-                return;
-            }
-
-            ValidateContactResponse grpcResponse = null;
             try {
-                grpcResponse = cryptoGrpcClient.validateContact(
-                        ValidateContactRequest.newBuilder()
-                                .setEbid(ByteString.copyFrom(contact.getEbid()))
-                                .setEcc(ByteString.copyFrom(contact.getEcc()))
-                                .setServerCountryCode(ByteString.copyFrom(serverCountryCode))
-                                .addAllHelloMessageDetails(
-                                        contact.getMessageDetails().stream()
-                                                .map(this::toGrpcHelloMessageDetail)
-                                                .collect(toList())
-                                )
-                                .build()
-                );
-            } catch (StatusRuntimeException ex) {
-                log.error("RPC failed: {}", ex.getMessage());
-            }
-            final var response = grpcResponse;
+                if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
+                    log.info("No messages in contact, discarding contact");
+                    return;
+                }
 
-            if (null == response) {
-                log.info("The contact could not be validated. Discarding all its hello messages");
-                contactService.delete(contact);
-                return;
-            }
-
-            // Remove invalid HelloMessageDetails
-            if (!response.getInvalidHelloMessageDetailsList().isEmpty()) {
-                log.info("Removing {} invalid HelloMessageDetails", response.getInvalidHelloMessageDetailsCount());
-                contact.getMessageDetails()
-                        .removeIf(
-                                helloMessageDetail -> matchesInvalidHelloMessageDetails(
-                                        response.getInvalidHelloMessageDetailsList(), helloMessageDetail
-                                )
-                        );
-            }
-
-            if (contact.getMessageDetails().isEmpty()) {
-                log.info("All hello messages have been rejected");
-                contactService.delete(contact);
-                return;
-            }
-
-            // Check step #2: is contact managed by this server ?
-            if (!Arrays.equals(response.getCountryCode().toByteArray(), serverCountryCode)) {
-                log.info(
-                        "Country code {} is not managed by this server ({})", response.getCountryCode().toByteArray(),
-                        serverCountryCode
-                );
-                contactService.delete(contact);
-                return;
-            }
-
-            // Call db to get registration
-            final var idA = response.getIdA().toByteArray();
-            final Optional<Registration> registrationRecord = registrationService.findById(idA);
-
-            if (registrationRecord.isEmpty()) {
-                log.info("No identity exists for id_A {} extracted from ebid, discarding contact", idA);
-                contactService.delete(contact);
-                return;
-            }
-            final var registration = registrationRecord.get();
-
-            contact.setMessageDetails(
-                    contact.getMessageDetails().stream()
-                            .filter(this::step5CheckDeltaTaAndTimeABelowThreshold)
-                            .filter(
-                                    helloMessage -> step6CheckTimeACorrespondsToEpochiA(
-                                            response.getEpochId(), helloMessage.getTimeCollectedOnDevice()
+                ValidateContactResponse grpcResponse = null;
+                try {
+                    grpcResponse = cryptoGrpcClient.validateContact(
+                            ValidateContactRequest.newBuilder()
+                                    .setEbid(ByteString.copyFrom(contact.getEbid()))
+                                    .setEcc(ByteString.copyFrom(contact.getEcc()))
+                                    .setServerCountryCode(ByteString.copyFrom(serverCountryCode))
+                                    .addAllHelloMessageDetails(
+                                            contact.getMessageDetails().stream()
+                                                    .map(this::toGrpcHelloMessageDetail)
+                                                    .collect(toList())
                                     )
-                            )
-                            .collect(toList())
-            );
+                                    .build()
+                    );
+                } catch (StatusRuntimeException ex) {
+                    log.error("RPC failed: {}", ex.getMessage());
+                }
+                final var response = grpcResponse;
 
-            if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
-                log.info("Contact did not contain any valid messages; discarding contact");
-                contactService.delete(contact);
-                return;
-            }
+                if (null == response) {
+                    log.info("The contact could not be validated. Discarding all its hello messages");
+                    return;
+                }
 
-            try {
-                step9ScoreAndAddContactInListOfExposedEpochs(contact, response.getEpochId(), registration);
-                this.registrationService.saveRegistration(registration);
+                // Remove invalid HelloMessageDetails
+                if (!response.getInvalidHelloMessageDetailsList().isEmpty()) {
+                    log.info("Removing {} invalid HelloMessageDetails", response.getInvalidHelloMessageDetailsCount());
+                    contact.getMessageDetails()
+                            .removeIf(
+                                    helloMessageDetail -> matchesInvalidHelloMessageDetails(
+                                            response.getInvalidHelloMessageDetailsList(), helloMessageDetail
+                                    )
+                            );
+                }
+
+                if (contact.getMessageDetails().isEmpty()) {
+                    log.info("All hello messages have been rejected");
+                    return;
+                }
+
+                // Check step #2: is contact managed by this server ?
+                if (!Arrays.equals(response.getCountryCode().toByteArray(), serverCountryCode)) {
+                    log.info(
+                            "Country code {} is not managed by this server ({})",
+                            response.getCountryCode().toByteArray(),
+                            serverCountryCode
+                    );
+                    return;
+                }
+
+                // Call db to get registration
+                final var idA = response.getIdA().toByteArray();
+                final Optional<Registration> registrationRecord = registrationService.findById(idA);
+
+                if (registrationRecord.isEmpty()) {
+                    log.info("No identity exists for id_A {} extracted from ebid, discarding contact", idA);
+                    return;
+                }
+                final var registration = registrationRecord.get();
+
+                contact.setMessageDetails(
+                        contact.getMessageDetails().stream()
+                                .filter(this::step5CheckDeltaTaAndTimeABelowThreshold)
+                                .filter(
+                                        helloMessage -> step6CheckTimeACorrespondsToEpochiA(
+                                                response.getEpochId(), helloMessage.getTimeCollectedOnDevice()
+                                        )
+                                )
+                                .collect(toList())
+                );
+
+                if (CollectionUtils.isEmpty(contact.getMessageDetails())) {
+                    log.info("Contact did not contain any valid messages; discarding contact");
+                    return;
+                }
+
+                try {
+                    step9ScoreAndAddContactInListOfExposedEpochs(contact, response.getEpochId(), registration);
+                    this.registrationService.saveRegistration(registration);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } finally {
                 contactService.delete(contact);
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
 

@@ -4,25 +4,33 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.server.batch.IntegrationTest;
 import fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager;
 import fr.gouv.stopc.robert.server.batch.manager.MetricsManager;
+import fr.gouv.stopc.robert.server.batch.manager.MongodbManager;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
+import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.RequiredArgsConstructor;
 import nl.altindag.log.LogCaptor;
-import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.util.CollectionUtils;
 
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager.*;
+import static fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager.givenCryptoServerCountryCode;
+import static fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager.givenCryptoServerIdA;
+import static fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory.generateHelloMessagesStartingAndDuringSeconds;
+import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatLogsMatchingRegex;
 import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatTimerMetricIncrement;
+import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenContactExistForUser;
+import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenRegistrationExistsForUser;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,6 +39,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @IntegrationTest
 @TestExecutionListeners(listeners = {
         GrpcMockManager.class,
+        MongodbManager.class,
         MetricsManager.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -44,15 +53,9 @@ class RiskEvaluationServiceTest {
 
     private final RiskEvaluationService riskEvaluationService;
 
-    private TestContext testContext;
+    private final RobertClock clock;
 
     private final String RISK_DETECTED = "Risk detected\\. Aggregated risk since [\\d]{0,}: [\\d]{0,}\\.[\\d]{0,} greater than threshold [\\d]{0,}\\.[\\d]{0,}";
-
-    @BeforeEach
-    public void before(@Autowired TestContext testContext) {
-        this.testContext = testContext;
-        givenCryptoServerEpochId(this.testContext.currentEpochId);
-    }
 
     @AfterEach
     public void afterAll() {
@@ -67,13 +70,15 @@ class RiskEvaluationServiceTest {
     }
 
     @Test
-    void testScoreAndProcessRisksWithABadEncryptedCountryCodeShouldNotUpdateRegistration() throws Exception {
+    void testScoreAndProcessRisksWithABadEncryptedCountryCodeShouldNotUpdateRegistration() {
+        var now = clock.now();
 
         // Given
-        var registration = this.testContext.acceptableRegistration();
-        this.testContext.generateAcceptableContactForRegistration(registration);
-
-        givenCryptoServerIdA(ByteString.copyFrom(registration.getPermanentIdentifier()));
+        givenRegistrationExistsForUser("user___1");
+        givenContactExistForUser(
+                "user___1", c -> c.messageDetails(generateHelloMessagesStartingAndDuringSeconds(now, 120))
+        );
+        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
         // set bad country code
         givenCryptoServerCountryCode(ByteString.copyFrom(new byte[] { (byte) 0xff }));
 
@@ -85,7 +90,7 @@ class RiskEvaluationServiceTest {
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
 
         Optional<Registration> expectedRegistration = this.registrationService
-                .findById(registration.getPermanentIdentifier());
+                .findById("user___1".getBytes());
 
         assertTrue(expectedRegistration.isPresent());
 
@@ -94,19 +99,35 @@ class RiskEvaluationServiceTest {
     }
 
     @Test
-    void testScoreAndProcessRiskskWhenScoresEqualsZeroldShouldNotBeAtRisk() {
+    void testScoreAndProcessRiskWhenScoresEqualsZerShouldNotBeAtRisk() {
+        var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
+        var fiveDaysAgo = clock.now().minus(5, ChronoUnit.DAYS);
 
-        var registration = this.testContext.acceptableRegistrationWithExistingScoreEqualToZero();
+        givenRegistrationExistsForUser(
+                "user___1", r -> r
+                        .exposedEpochs(
+                                List.of(
+                                        EpochExposition.builder()
+                                                .epochId(twoDaysAgo.asEpochId())
+                                                .expositionScores(Arrays.asList(0.0))
+                                                .build(),
+                                        EpochExposition.builder()
+                                                .epochId(fiveDaysAgo.asEpochId())
+                                                .expositionScores(Arrays.asList(0.0))
+                                                .build()
+                                )
+                        )
+                        .outdatedRisk(true)
+        );
 
-        givenCryptoServerIdA(ByteString.copyFrom(registration.getPermanentIdentifier()));
+        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
 
         // When
         riskEvaluationService.performs();
 
         // Then
         assertThat(this.contactService.findAll()).isEmpty();
-        Optional<Registration> expectedRegistration = this.registrationService
-                .findById(registration.getPermanentIdentifier());
+        Optional<Registration> expectedRegistration = registrationService.findById("user___1".getBytes());
         assertThat(expectedRegistration).isPresent();
         assertThat(expectedRegistration.get().isAtRisk())
                 .as("Registration risk")
@@ -116,10 +137,24 @@ class RiskEvaluationServiceTest {
     @Test
     void testScoreAndProcessRisksWhenRecentExposedEpochScoreGreaterThanRiskThresholdShouldBeAtRisk() {
 
-        // Given
-        var registration = this.testContext.acceptableRegistrationWithExistingScoreAboveThreshold();
+        // Given Registration With Existing Score Above Threshold
+        var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
 
-        givenCryptoServerIdA(ByteString.copyFrom(registration.getPermanentIdentifier()));
+        givenRegistrationExistsForUser(
+                "user___1", r -> r
+                        .exposedEpochs(
+                                List.of(
+                                        EpochExposition.builder()
+                                                .epochId(twoDaysAgo.asEpochId())
+                                                .expositionScores(Arrays.asList(20.0))
+                                                .build()
+
+                                )
+                        )
+                        .outdatedRisk(true)
+        );
+
+        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
 
         // When
         try (final var logCaptor = LogCaptor.forClass(BatchRegistrationServiceImpl.class)) {
@@ -128,7 +163,7 @@ class RiskEvaluationServiceTest {
             // Then
             assertThat(this.contactService.findAll()).isEmpty();
             Optional<Registration> expectedRegistration = this.registrationService
-                    .findById(registration.getPermanentIdentifier());
+                    .findById("user___1".getBytes());
             assertThat(expectedRegistration).isPresent();
             assertThat(expectedRegistration.get().isAtRisk())
                     .as("Registration risk")
@@ -139,11 +174,28 @@ class RiskEvaluationServiceTest {
 
     @Test
     void testScoreAndProcessRisksWhenEpochScoresLessThanRiskThresholdShouldNotBeAtRisk() {
+        // Given Registration With Existing Score Below Threshold
+        var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
 
-        // Given
-        var registration = this.testContext.acceptableRegistrationWithExistingScoreBelowThreshold();
+        givenRegistrationExistsForUser(
+                "user___1", r -> r
+                        .exposedEpochs(
+                                List.of(
+                                        EpochExposition.builder()
+                                                .epochId(twoDaysAgo.asEpochId())
+                                                .expositionScores(Arrays.asList(3.0))
+                                                .build(),
+                                        EpochExposition.builder()
+                                                .epochId(twoDaysAgo.asEpochId())
+                                                .expositionScores(Arrays.asList(4.3))
+                                                .build()
 
-        givenCryptoServerIdA(ByteString.copyFrom(registration.getPermanentIdentifier()));
+                                )
+                        )
+                        .outdatedRisk(true)
+        );
+
+        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
 
         // When
         riskEvaluationService.performs();
@@ -151,15 +203,11 @@ class RiskEvaluationServiceTest {
         // Then
         assertThat(this.contactService.findAll()).isEmpty();
         Optional<Registration> expectedRegistration = this.registrationService
-                .findById(registration.getPermanentIdentifier());
+                .findById("user___1".getBytes());
         assertThat(expectedRegistration).isPresent();
         assertThat(expectedRegistration.get().isAtRisk())
                 .as("Registration risk")
                 .isFalse();
     }
 
-    private void assertThatLogsMatchingRegex(List<String> logs, String regex, int times) {
-        final Condition<String> rowMatchingRegex = new Condition<>(value -> value.matches(regex), regex);
-        assertThat(logs).as("Number of logs matching the regular expression").haveExactly(times, rowMatchingRegex);
-    }
 }

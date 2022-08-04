@@ -5,9 +5,12 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.assertj.core.api.AbstractDoubleAssert;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Condition;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 
+import java.util.List;
 import java.util.Map;
 
 import static java.util.stream.Collectors.toMap;
@@ -36,6 +39,12 @@ public class MetricsManager implements TestExecutionListener {
         } else {
             return -1.0;
         }
+    }
+
+    public static void assertThatLogsMatchingRegex(List<String> logs, String regex, int times) {
+        final Condition<String> rowMatchingRegex = new Condition<>(value -> value.matches(regex), regex);
+        Assertions.assertThat(logs).as("Number of logs matching the regular expression")
+                .haveExactly(times, rowMatchingRegex);
     }
 
     public static AbstractDoubleAssert<?> assertThatCounterMetricIncrement(String label, String... tags) {

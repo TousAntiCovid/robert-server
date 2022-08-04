@@ -78,6 +78,7 @@ public class PurgeOldEpochExpositionsService {
 
             final int currentEpochId = TimeUtils
                     .getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart());
+
             List<EpochExposition> epochsToKeep = batchRegistrationService
                     .getExposedEpochsWithoutEpochsOlderThanContagiousPeriod(
                             exposedEpochs,
@@ -86,9 +87,10 @@ public class PurgeOldEpochExpositionsService {
                             this.serverConfigurationService.getEpochDurationSecs()
                     );
 
-            registration.setExposedEpochs(epochsToKeep);
-
-            registrationService.saveRegistration(registration);
+            if (!epochsToKeep.equals(exposedEpochs)) {
+                registration.setExposedEpochs(epochsToKeep);
+                registrationService.saveRegistration(registration);
+            }
         }
     }
 }
