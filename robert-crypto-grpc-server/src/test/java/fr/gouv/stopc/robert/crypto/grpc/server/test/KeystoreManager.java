@@ -12,25 +12,23 @@ import org.springframework.test.context.TestExecutionListener;
 
 import javax.crypto.spec.SecretKeySpec;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStore.SecretKeyEntry;
-import java.security.KeyStoreException;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Date;
 
 import static java.time.LocalDate.now;
@@ -39,9 +37,7 @@ import static java.time.format.DateTimeFormatter.BASIC_ISO_DATE;
 @Slf4j
 public class KeystoreManager implements TestExecutionListener {
 
-    private static final String keystoreSrc = "target/test-classes/keystore.p12";
-
-    private static final Path keystorePath = Paths.get(new File(keystoreSrc).getPath());
+    private static Path keystorePath;
 
     private static final String password = "1234";
 
@@ -49,21 +45,36 @@ public class KeystoreManager implements TestExecutionListener {
 
     static {
 
+        try {
+            keystorePath = Files.createTempFile("keystore", ".p12");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         System.setProperty("robert.crypto.server.keystore.password", password);
         System.setProperty("robert.crypto.server.keystore.config.file", "classpath:config/SoftHSMv2/softhsm2.cfg");
         System.setProperty("robert.server.time-start", "20200601");
         System.setProperty("robert.protocol.hello-message-timestamp-tolerance", "180");
         System.setProperty(
-                "robert.crypto.server.keystore.file", String.format("classpath:%s", keystorePath.getFileName())
+                "robert.crypto.server.keystore.file", String.format("file:%s", keystorePath.toString())
         );
         System.setProperty("robert.crypto.server.keystore.type", "PKCS12");
 
-        clearKeystore();
+        createKeystore();
         generateRegistrationKey();
         generateAESKey("federation-key", 256);
         generateAESKey("key-encryption-key", 256);
         generateAESKeys();
 
+    }
+
+    @SneakyThrows
+    public static void createKeystore() {
+        final var keystore = KeyStore.getInstance("pkcs12");
+        keystore.load(null, password.toCharArray());
+        FileOutputStream fos = new FileOutputStream(keystorePath.toString());
+        keystore.store(fos, password.toCharArray());
+        fos.close();
     }
 
     @SneakyThrows
@@ -118,7 +129,7 @@ public class KeystoreManager implements TestExecutionListener {
         keystore.setEntry("register-key", privateKeyEntry, new KeyStore.PasswordProtection(password.toCharArray()));
 
         // Save the keystore
-        OutputStream writer = new FileOutputStream(keystoreSrc);
+        OutputStream writer = new FileOutputStream(keystorePath.toString());
         keystore.store(writer, password.toCharArray());
         writer.close();
 
@@ -127,24 +138,8 @@ public class KeystoreManager implements TestExecutionListener {
     @SneakyThrows
     private static KeyStore loadKeystore() {
         final var keystore = KeyStore.getInstance("pkcs12");
-        keystore.load(new FileInputStream(keystoreSrc), password.toCharArray());
+        keystore.load(new FileInputStream(keystorePath.toString()), password.toCharArray());
         return keystore;
-    }
-
-    @SneakyThrows
-    public static void clearKeystore() {
-        final var keystore = loadKeystore();
-
-        Collections.list(keystore.aliases()).forEach(alias -> {
-            try {
-                keystore.deleteEntry(alias);
-            } catch (KeyStoreException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        keystore.store(new FileOutputStream(keystoreSrc), password.toCharArray());
-
     }
 
     @SneakyThrows
@@ -171,7 +166,7 @@ public class KeystoreManager implements TestExecutionListener {
         keystore.setEntry("federation-key", federationKeyEntry, passwordProtection);
         keystore.setEntry(serverKeyAlias, serverKeyEntry, passwordProtection);
 
-        OutputStream writer = new FileOutputStream(keystoreSrc);
+        OutputStream writer = new FileOutputStream(keystorePath.toString());
         keystore.store(writer, password.toCharArray());
         writer.close();
     }

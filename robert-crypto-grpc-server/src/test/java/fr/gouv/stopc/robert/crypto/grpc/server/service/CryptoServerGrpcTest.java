@@ -5,13 +5,7 @@ import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcC
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.impl.CryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoServerConfigurationServiceImpl;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.repository.ClientIdentifierRepository;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.IClientKeyStorageService;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.impl.ClientKeyStorageServiceImpl;
 import fr.gouv.stopc.robert.crypto.grpc.server.test.IntegrationTest;
-import fr.gouv.stopc.robert.crypto.grpc.server.test.TuplesMatchers;
 import fr.gouv.stopc.robert.crypto.grpc.server.utils.CryptoTestUtils;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
@@ -45,21 +39,8 @@ class CryptoServerGrpcTest {
 
     private CryptoService cryptoService;
 
-    private IClientKeyStorageService clientStorageService;
-
-    @Autowired
-    private ICryptographicStorageService cryptographicStorageService;
-
-    @Autowired
-    private ClientIdentifierRepository clientIdentifierRepository;
-
     @Autowired
     private RobertClock clock;
-
-    @Autowired
-    private CryptoServerConfigurationServiceImpl serverConfigurationService;
-
-    private byte[][] serverKeys;
 
     @BeforeEach
     public void setup() {
@@ -67,12 +48,6 @@ class CryptoServerGrpcTest {
         cryptoServerClient = new CryptoServerGrpcClient("localhost", 9090);
 
         cryptoService = new CryptoServiceImpl();
-
-        clientStorageService = new ClientKeyStorageServiceImpl(cryptographicStorageService, clientIdentifierRepository);
-
-        serverKeys = cryptographicStorageService.getServerKeys(
-                currentEpochId, this.serverConfigurationService.getServiceTimeStart(), NUMBER_OF_DAYS_FOR_BUNDLES
-        );
 
     }
 
@@ -100,14 +75,6 @@ class CryptoServerGrpcTest {
                 + TimeUtils.remainingEpochsForToday(currentEpochId);
 
         assertThat(
-                TuplesMatchers.checkTuples(
-                        createRegistrationResponse.getIdA().toByteArray(),
-                        createRegistrationResponse.getTuples().toByteArray(), currentEpochId, serverKeys,
-                        clientStorageService, cryptoService
-                )
-        ).isTrue();
-
-        assertThat(
                 createRegistrationResponse.getTuples().toByteArray(), isEncrypted(
                         isJson(
                                 hasSize(expectedSize)
@@ -115,6 +82,10 @@ class CryptoServerGrpcTest {
                         idAKey
                 )
         );
+
+        // TODO : faire les vérifs par jour
+        // prendre des lots de 96 tuples correspondant à une journée ainsi que la clé
+        // associé
 
         assertThat(
                 createRegistrationResponse.getTuples().toByteArray(), isEncrypted(
