@@ -12,9 +12,7 @@ import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -53,12 +51,16 @@ public class GrpcMockManager implements TestExecutionListener {
         doThrow(error).when(CRYPTO_GRPC_STUB).deleteId(any(), any());
     }
 
-    public static void givenCryptoServerRaiseError430ForEbid(String ebid) {
-        CryptoGrpcStub.EBID_RAISING_430_MISSING_KEY.add(ebid);
+    public static void givenCryptoServerRaiseMissingIdentityForEbid(String ebid) {
+        CryptoGrpcStub.RESPONSE_STATUS_BY_EBID.put(ebid, 404);
     }
 
-    public static void givenCryptoServerRaiseErrorForMacStartingWith(String mac) {
-        CryptoGrpcStub.INVALID_MAC.add(mac);
+    public static void givenCryptoServerRaiseMissingDailyKeyForEbid(String ebid) {
+        CryptoGrpcStub.RESPONSE_STATUS_BY_EBID.put(ebid, 430);
+    }
+
+    public static void givenCryptoServerRaiseError400ForEbid(String ebid) {
+        CryptoGrpcStub.RESPONSE_STATUS_BY_EBID.put(ebid, 400);
     }
 
     public static void verifyNoInteractionsWithCryptoServer() {
@@ -67,28 +69,18 @@ public class GrpcMockManager implements TestExecutionListener {
 
     private static class CryptoGrpcStub extends CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase {
 
-        private static final List<String> EBID_RAISING_430_MISSING_KEY = new ArrayList<>();
-
-        private static final List<String> INVALID_MAC = new ArrayList<>();
+        private static final Map<String, Integer> RESPONSE_STATUS_BY_EBID = new HashMap<>();
 
         private static void reset() {
-            EBID_RAISING_430_MISSING_KEY.clear();
-            INVALID_MAC.clear();
+            RESPONSE_STATUS_BY_EBID.clear();
         }
 
         private Optional<ErrorMessage> handleConfiguredError(ByteString requestEbid, ByteString requestMac) {
-            if (EBID_RAISING_430_MISSING_KEY.contains(requestEbid.toStringUtf8())) {
+            if (RESPONSE_STATUS_BY_EBID.containsKey(requestEbid.toStringUtf8())) {
                 return Optional.of(
                         ErrorMessage.newBuilder()
-                                .setCode(430)
-                                .setDescription("Some description")
-                                .build()
-                );
-            } else if (INVALID_MAC.stream().anyMatch(invalidMac -> requestMac.toStringUtf8().startsWith(invalidMac))) {
-                return Optional.of(
-                        ErrorMessage.newBuilder()
-                                .setCode(400)
-                                .setDescription("Invalid MAC")
+                                .setCode(RESPONSE_STATUS_BY_EBID.get(requestEbid.toStringUtf8()))
+                                .setDescription("Some error description")
                                 .build()
                 );
             } else {

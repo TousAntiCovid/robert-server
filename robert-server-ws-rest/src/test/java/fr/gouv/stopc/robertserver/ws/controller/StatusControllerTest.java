@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
-import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseError430ForEbid;
+import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseMissingDailyKeyForEbid;
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_ANALYTICS;
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_DECLARATION;
 import static fr.gouv.stopc.robertserver.ws.test.LogbackManager.assertThatInfoLogs;
@@ -298,7 +298,7 @@ class StatusControllerTest {
     @MethodSource("acceptable_epoch_and_time_drift")
     void http_430_on_unknown_key(PushInfoVo pushInfo, AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1");
-        givenCryptoServerRaiseError430ForEbid("user___1");
+        givenCryptoServerRaiseMissingDailyKeyForEbid("user___1");
 
         given()
                 .contentType(JSON)
