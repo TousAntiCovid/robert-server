@@ -61,7 +61,7 @@ public class StatusControllerImpl implements IStatusController {
                 .validateStatusRequest(statusVo);
 
         if (Objects.nonNull(validationResult.getResponse()) &&
-                validationResult.getResponse().getError().getCode() == 430) {
+                List.of(404, 430).contains(validationResult.getResponse().getError().getCode())) {
 
             return ResponseEntity.status(430).build();
         }

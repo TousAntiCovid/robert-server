@@ -132,7 +132,7 @@ public class RobertClientSteps {
     public void accountDataIsRemoved(final String userName) {
         final var mobile = mobilePhonesEmulator.getMobileApplication(userName);
         assertThatThrownBy(mobile::requestStatus)
-                .hasMessage("400 : [no body]")
+                .hasMessage("430 : [no body]")
                 .isInstanceOf(HttpClientErrorException.BadRequest.class);
         assertThatThrownBy(mobile::getRegistration)
                 .hasMessage("No value present")

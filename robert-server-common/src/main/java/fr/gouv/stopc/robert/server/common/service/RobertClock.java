@@ -25,7 +25,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
  * NTP timestamp at low level (epoch 1900-01-01), sometimes unix timestamps
  * (epoch 1970-01-01).
  * <p>
- * This is a clock component aware of the service start time to help converting
+ * This is a clock component aware of the service start time to help to convert
  * time to Robert <em>epochs</em>.
  */
 @Component
@@ -55,6 +55,12 @@ public class RobertClock {
 
     public RobertInstant atEpoch(int epochId) {
         final var ntpTimestamp = startNtpTimestamp + (long) epochId * EPOCH_DURATION_SECS;
+        return atNtpTimestamp(ntpTimestamp);
+    }
+
+    public RobertInstant atTime32(byte[] ntpTimestamp32bitByteArray) {
+        final var ntpTimestamp64bitByteArray = ByteUtils.addAll(new byte[] { 0, 0, 0, 0 }, ntpTimestamp32bitByteArray);
+        final var ntpTimestamp = ByteUtils.bytesToLong(ntpTimestamp64bitByteArray);
         return atNtpTimestamp(ntpTimestamp);
     }
 
@@ -97,8 +103,8 @@ public class RobertClock {
         }
 
         public byte[] asTime32() {
-            final var unixTimestampByteArray = ByteUtils.longToBytes(asNtpTimestamp());
-            return Arrays.copyOfRange(unixTimestampByteArray, 4, 8);
+            final var ntpTimestamp32bitByteArray = ByteUtils.longToBytes(asNtpTimestamp());
+            return Arrays.copyOfRange(ntpTimestamp32bitByteArray, 4, 8);
         }
 
         public RobertInstant minus(final long amountToSubtract, final TemporalUnit unit) {
