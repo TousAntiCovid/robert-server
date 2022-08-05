@@ -5,9 +5,9 @@ import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcC
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.*;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
-import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.config.WsServerConfiguration;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -39,6 +39,8 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
     private final IRegistrationService registrationService;
 
     private final WsServerConfiguration wsServerConfiguration;
+
+    private final RobertClock clock;
 
     private ResponseEntity createErrorValidationFailed() {
         log.info("Discarding authenticated request because validation failed");
@@ -102,15 +104,11 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
             Optional<GetIdFromAuthResponse> response = this.cryptoServerClient.getIdFromAuth(request);
 
+            final var timeValidation = validateTimeDrift(authRequestVo);
             if (response.isPresent()) {
-                if (Objects.nonNull(response.get().getIdA())) {
-                    Optional<ValidationResult> timeValidationResult = this.checkTime(
-                            Base64.decode(authRequestVo.getTime()),
-                            response.get().getIdA().toByteArray()
-                    );
-                    if (timeValidationResult.isPresent()) {
-                        return timeValidationResult.get();
-                    }
+                updateRegistrationTimeDrift(response.get().getIdA(), timeValidation.timeDrift);
+                if (timeValidation.error != null) {
+                    return ValidationResult.<GetIdFromAuthResponse>builder().error(timeValidation.error).build();
                 }
                 return ValidationResult.<GetIdFromAuthResponse>builder().response(response.get()).build();
             } else {
@@ -139,15 +137,11 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
             Optional<DeleteIdResponse> response = this.cryptoServerClient.deleteId(request);
 
+            final var timeValidation = validateTimeDrift(authRequestVo);
             if (response.isPresent()) {
-                if (Objects.nonNull(response.get().getIdA())) {
-                    Optional<ValidationResult> timeValidationResult = this.checkTime(
-                            Base64.decode(authRequestVo.getTime()),
-                            response.get().getIdA().toByteArray()
-                    );
-                    if (timeValidationResult.isPresent()) {
-                        return timeValidationResult.get();
-                    }
+                updateRegistrationTimeDrift(response.get().getIdA(), timeValidation.timeDrift);
+                if (timeValidation.error != null) {
+                    return ValidationResult.<DeleteIdResponse>builder().error(timeValidation.error).build();
                 }
                 return ValidationResult.<DeleteIdResponse>builder().response(response.get()).build();
             } else {
@@ -183,18 +177,11 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
             Optional<GetIdFromStatusResponse> response = this.cryptoServerClient.getIdFromStatus(request);
 
+            final var timeValidation = validateTimeDrift(statusVo);
             if (response.isPresent()) {
-                if (response.get().hasError()) {
-                    return ValidationResult.<GetIdFromStatusResponse>builder().response(response.get()).build();
-                }
-                if (Objects.nonNull(response.get().getIdA())) {
-                    Optional<ValidationResult> timeValidationResult = this.checkTime(
-                            Base64.decode(statusVo.getTime()),
-                            response.get().getIdA().toByteArray()
-                    );
-                    if (timeValidationResult.isPresent()) {
-                        return timeValidationResult.get();
-                    }
+                updateRegistrationTimeDrift(response.get().getIdA(), timeValidation.timeDrift);
+                if (timeValidation.error != null) {
+                    return ValidationResult.<GetIdFromStatusResponse>builder().error(timeValidation.error).build();
                 }
                 return ValidationResult.<GetIdFromStatusResponse>builder().response(response.get()).build();
             } else {
@@ -205,45 +192,37 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
         }
     }
 
-    private long convertTimeByteArrayToLong(byte[] timeA) {
-        byte[] timeAIn64bits = ByteUtils.addAll(new byte[] { 0, 0, 0, 0 }, timeA);
-        return ByteUtils.bytesToLong(timeAIn64bits);
-    }
-
-    private Optional<ValidationResult> checkTime(byte[] time, byte[] idA) {
-        final long currentTime = TimeUtils.convertUnixMillistoNtpSeconds(new Date().getTime());
-        final long timeA = convertTimeByteArrayToLong(time);
-        final long delta = currentTime - timeA;
-
-        // Store drift (timestamp delta) if we have the user id
-        if (Objects.nonNull(idA)) {
-            Optional<Registration> registration = this.registrationService.findById(idA);
-            if (registration.isPresent()) {
-                registration.get().setLastTimestampDrift(delta);
-                this.registrationService.saveRegistration(registration.get());
-            }
-        }
-
-        // Step #2: check if time is close to current time
-        if (Math.abs(delta) > this.timeDeltaTolerance) {
+    private TimeValidationResult validateTimeDrift(final AuthRequestVo authRequestVo) {
+        final var timeAs32bitsTimestamp = Base64.decode(authRequestVo.getTime());
+        final var serverTime = clock.now();
+        final var clientTime = clock.atTime32(timeAs32bitsTimestamp);
+        final var timeDrift = clientTime.until(serverTime);
+        if (timeDrift.abs().toSeconds() > this.timeDeltaTolerance) {
             log.warn(
-                    "Witnessing abnormal time difference {} between client: {} and server: {}",
-                    delta,
-                    timeA,
-                    currentTime
+                    "Witnessing abnormal time difference {} between client: {} and server: {}", timeDrift.toSeconds(),
+                    clientTime, serverTime
             );
-            return Optional.of(
-                    ValidationResult.<GetIdFromAuthResponse>builder()
-                            .error(
-                                    createErrorBadRequestCustom(
-                                            "Discarding authenticated request because provided time is too far from current server time"
-                                    )
-                                            .get()
-                            )
-                            .build()
-            );
+            final var error = createErrorBadRequestCustom(
+                    "Discarding authenticated request because provided time is too far from current server time"
+            )
+                    .orElseThrow();
+            return new TimeValidationResult(timeDrift, error);
         }
-        return Optional.empty();
+        return new TimeValidationResult(timeDrift, null);
     }
 
+    private void updateRegistrationTimeDrift(ByteString idA, Duration timeDrift) {
+        registrationService.findById(idA.toByteArray())
+                .stream()
+                .peek(r -> r.setLastTimestampDrift(timeDrift.toSeconds()))
+                .forEach(registrationService::saveRegistration);
+    }
+
+    @lombok.Value
+    private static class TimeValidationResult {
+
+        Duration timeDrift;
+
+        ResponseEntity<?> error;
+    }
 }

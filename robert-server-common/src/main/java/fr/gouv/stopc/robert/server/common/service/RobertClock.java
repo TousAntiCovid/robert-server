@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robert.server.common.service;
 
+import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
+import java.util.Arrays;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
@@ -43,6 +45,12 @@ public class RobertClock {
         return atNtpTimestamp(ntpTimestamp);
     }
 
+    public RobertInstant atTime32(byte[] ntpTimestamp32bitByteArray) {
+        final var ntpTimestamp64bitByteArray = ByteUtils.addAll(new byte[] { 0, 0, 0, 0 }, ntpTimestamp32bitByteArray);
+        final var ntpTimestamp = ByteUtils.bytesToLong(ntpTimestamp64bitByteArray);
+        return atNtpTimestamp(ntpTimestamp);
+    }
+
     public RobertInstant now() {
         return at(Instant.now());
     }
@@ -74,6 +82,11 @@ public class RobertClock {
 
         public RobertInstant minusEpochs(int numberOfEpochs) {
             return plusEpochs(-numberOfEpochs);
+        }
+
+        public byte[] asTime32() {
+            final var ntpTimestamp32bitByteArray = ByteUtils.longToBytes(asNtpTimestamp());
+            return Arrays.copyOfRange(ntpTimestamp32bitByteArray, 4, 8);
         }
 
         public RobertInstant minus(final long amountToSubtract, final TemporalUnit unit) {

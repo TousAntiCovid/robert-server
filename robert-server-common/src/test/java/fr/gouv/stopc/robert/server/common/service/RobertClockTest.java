@@ -18,20 +18,21 @@ public class RobertClockTest {
 
     static List<Arguments> values() {
         return List.of(
-                arguments(Instant.parse("2022-01-01T00:00:00Z"), 3849984000L, 0),
-                arguments(Instant.parse("2022-01-01T00:14:59Z"), 3849984899L, 0),
-                arguments(Instant.parse("2022-01-01T00:14:59.999Z"), 3849984899L, 0),
-                arguments(Instant.parse("2022-01-01T00:15:00Z"), 3849984900L, 1),
-                arguments(Instant.parse("2022-01-01T00:29:59Z"), 3849985799L, 1),
-                arguments(Instant.parse("2022-01-01T00:29:59.999999Z"), 3849985799L, 1),
-                arguments(Instant.parse("2022-01-01T00:30:00Z"), 3849985800L, 2),
-                arguments(Instant.parse("2022-02-15T22:43:13Z"), 3853953793L, 4410)
+                arguments(Instant.parse("2022-01-01T00:00:00Z"), 3849984000L, 0, "E57A1800"),
+                arguments(Instant.parse("2022-01-01T00:14:59Z"), 3849984899L, 0, "E57A1B83"),
+                arguments(Instant.parse("2022-01-01T00:14:59.999Z"), 3849984899L, 0, "E57A1B83"),
+                arguments(Instant.parse("2022-01-01T00:15:00Z"), 3849984900L, 1, "E57A1B84"),
+                arguments(Instant.parse("2022-01-01T00:29:59Z"), 3849985799L, 1, "E57A1F07"),
+                arguments(Instant.parse("2022-01-01T00:29:59.999999Z"), 3849985799L, 1, "E57A1F07"),
+                arguments(Instant.parse("2022-01-01T00:30:00Z"), 3849985800L, 2, "E57A1F08"),
+                arguments(Instant.parse("2022-02-15T22:43:13Z"), 3853953793L, 4410, "E5B6AB01")
         );
     }
 
     @ParameterizedTest
     @MethodSource("values")
-    void timeutils_returns_same_values(final Instant instant, final long ntpTimestamp, final int epochId) {
+    void timeutils_returns_same_values(final Instant instant, final long ntpTimestamp, final int epochId,
+            final String time32AsHexString) {
         final var timeUtilsNtp = TimeUtils.convertUnixMillistoNtpSeconds(instant.toEpochMilli());
         assertThat(timeUtilsNtp)
                 .isEqualTo(ntpTimestamp);
@@ -45,7 +46,8 @@ public class RobertClockTest {
 
     @ParameterizedTest
     @MethodSource("values")
-    void can_convert_values_from_instant(final Instant instant, final long ntpTimestamp, final int epochId) {
+    void can_convert_values_from_instant(final Instant instant, final long ntpTimestamp, final int epochId,
+            final String time32AsHexString) {
         final var robertInstant = robertClock.at(instant);
         assertThat(robertInstant.asNtpTimestamp())
                 .isEqualTo(ntpTimestamp);
