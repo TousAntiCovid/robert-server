@@ -2,6 +2,7 @@ package fr.gouv.stopc.robertserver.ws.controller.crosscuttingconcerns;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
+import fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import fr.gouv.stopc.robertserver.ws.vo.UnregisterRequestVo;
 import org.junit.jupiter.api.DisplayName;
@@ -18,14 +19,13 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.assertj.core.api.HamcrestCondition.matching;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @IntegrationTest
 @DisplayName("ebid should be 12 base64 chars, time 8 base64 chars and mac 44 base64 chars")
-class RequestAuthorizationTest {
+class AuthenticationParamLenghtValidationTest {
 
     @Autowired
     private RobertClock clock;
@@ -46,43 +46,7 @@ class RequestAuthorizationTest {
 
     @ParameterizedTest(name = "when {0} {1}")
     @MethodSource("invalid_auth_params")
-    void bad_request_on_status_with_invalid_authentication(String field, String cause, Integer ebidBase64Length,
-            Integer timeBase64Length, Integer macBase64Length) {
-        given()
-                .contentType(JSON)
-                .body(
-                        UnregisterRequestVo.builder()
-                                .ebid(generateEbidOfLength(ebidBase64Length))
-                                .epochId(clock.now().asEpochId())
-                                .time(generateTimeOfLength(timeBase64Length))
-                                .mac(generateMacOfLength(macBase64Length))
-                                .build()
-                )
-
-                .when()
-                .post("/api/v6/unregister")
-
-                .then()
-                .statusCode(BAD_REQUEST.value())
-                .body("message", equalTo("Invalid data"));
-
-        assertThatErrorLogs()
-                .areExactly(
-                        1,
-                        matching(
-                                startsWith(
-                                        format(
-                                                "Validation failed for argument [0] in public org.springframework.http.ResponseEntity<fr.gouv.stopc.robertserver.ws.dto.UnregisterResponseDto> fr.gouv.stopc.robertserver.ws.controller.impl.UnregisterControllerImpl.unregister(fr.gouv.stopc.robertserver.ws.vo.UnregisterRequestVo): [Field error in object 'unregisterRequestVo' on field '%s':",
-                                                field
-                                        )
-                                )
-                        )
-                );
-    }
-
-    @ParameterizedTest(name = "when {0} {1}")
-    @MethodSource("invalid_auth_params")
-    void bad_request_on_deleteExposureHistory_with_invalid_authentication(String field, String cause,
+    void bad_request_on_status_with_invalid_authentication(String field, String cause,
             Integer ebidBase64Length, Integer timeBase64Length, Integer macBase64Length) {
         given()
                 .contentType(JSON)
@@ -109,6 +73,43 @@ class RequestAuthorizationTest {
                                 startsWith(
                                         format(
                                                 "Validation failed for argument [0] in public org.springframework.http.ResponseEntity<fr.gouv.stopc.robertserver.ws.dto.DeleteHistoryResponseDto> fr.gouv.stopc.robertserver.ws.controller.impl.DeleteHistoryControllerImpl.deleteHistory(fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo): [Field error in object 'deleteHistoryRequestVo' on field '%s':",
+                                                field
+                                        )
+                                )
+                        )
+                );
+    }
+
+    @ParameterizedTest(name = "when {0} {1}")
+    @MethodSource("invalid_auth_params")
+    void bad_request_on_deleteExposureHistory_with_invalid_authentication(String field, String cause,
+            Integer ebidBase64Length,
+            Integer timeBase64Length, Integer macBase64Length) {
+        given()
+                .contentType(JSON)
+                .body(
+                        DeleteHistoryRequestVo.builder()
+                                .ebid(generateEbidOfLength(ebidBase64Length))
+                                .epochId(clock.now().asEpochId())
+                                .time(generateTimeOfLength(timeBase64Length))
+                                .mac(generateMacOfLength(macBase64Length))
+                                .build()
+                )
+
+                .when()
+                .post("/api/v6/deleteExposureHistory")
+
+                .then()
+                .statusCode(BAD_REQUEST.value())
+                .body("message", equalTo("Invalid data"));
+
+        assertThatErrorLogs()
+                .areExactly(
+                        1,
+                        matching(
+                                startsWith(
+                                        format(
+                                                "Validation failed for argument [0] in public org.springframework.http.ResponseEntity<fr.gouv.stopc.robertserver.ws.dto.DeleteHistoryResponseDto> fr.gouv.stopc.robertserver.ws.controller.impl.DeleteHistoryControllerImpl.deleteHistory(fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo): [Field error in object 'deleteHistoryRequestVo' on field '%s'",
                                                 field
                                         )
                                 )

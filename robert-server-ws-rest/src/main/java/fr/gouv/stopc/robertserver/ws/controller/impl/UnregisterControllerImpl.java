@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -32,7 +33,7 @@ public class UnregisterControllerImpl implements IUnregisterController {
                 .validateRequestForAuth(unregisterRequestVo, DigestSaltEnum.UNREGISTER);
 
         if (Objects.nonNull(validationResult.getResponse()) &&
-                validationResult.getResponse().getError().getCode() == 430) {
+                List.of(404, 430).contains(validationResult.getResponse().getError().getCode())) {
 
             return ResponseEntity.status(430).build();
         }

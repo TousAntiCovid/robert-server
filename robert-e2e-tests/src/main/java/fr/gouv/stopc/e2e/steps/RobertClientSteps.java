@@ -8,7 +8,7 @@ import io.cucumber.java.fr.Etantdonnéque;
 import io.cucumber.java.fr.Lorsque;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.UnknownHttpStatusCodeException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -132,8 +132,8 @@ public class RobertClientSteps {
     public void accountDataIsRemoved(final String userName) {
         final var mobile = mobilePhonesEmulator.getMobileApplication(userName);
         assertThatThrownBy(mobile::requestStatus)
-                .hasMessage("400 : [no body]")
-                .isInstanceOf(HttpClientErrorException.BadRequest.class);
+                .hasMessage("430 : [no body]")
+                .isInstanceOf(UnknownHttpStatusCodeException.class);
         assertThatThrownBy(mobile::getRegistration)
                 .hasMessage("No value present")
                 .isInstanceOf(NoSuchElementException.class);

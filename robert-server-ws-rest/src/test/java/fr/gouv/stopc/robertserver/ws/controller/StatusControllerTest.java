@@ -19,11 +19,10 @@ import java.time.Instant;
 import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
-import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseError430ForEbid;
+import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseMissingDailyKeyForEbid;
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_ANALYTICS;
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_DECLARATION;
 import static fr.gouv.stopc.robertserver.ws.test.LogbackManager.assertThatInfoLogs;
-import static fr.gouv.stopc.robertserver.ws.test.LogbackManager.assertThatWarnLogs;
 import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithPushNotifServer;
 import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyPushNotifServerReceivedRegisterForToken;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.*;
@@ -33,12 +32,12 @@ import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64
 import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.isNtpTimestamp;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.isUnixTimestampNear;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.JwtMatcher.isJwtSignedBy;
+import static fr.gouv.stopc.robertserver.ws.test.matchers.TimeDriftMatcher.verifyExceededTimeDriftIsProperlyHandled;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static java.time.temporal.ChronoUnit.MINUTES;
-import static org.assertj.core.api.HamcrestCondition.matching;
 import static org.assertj.core.data.Offset.offset;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.http.HttpStatus.*;
@@ -216,21 +215,7 @@ class StatusControllerTest {
 
         verifyNoInteractionsWithPushNotifServer();
 
-        assertThatRegistrationTimeDriftForUser("user___1")
-                .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));
-
-        assertThatInfoLogs()
-                .containsOnlyOnce(
-                        "Discarding authenticated request because provided time is too far from current server time"
-                );
-        assertThatWarnLogs()
-                .areExactly(
-                        1, matching(
-                                matchesRegex(
-                                        "Witnessing abnormal time difference -?\\d+ between client: \\d+ and server: \\d+"
-                                )
-                        )
-                );
+        verifyExceededTimeDriftIsProperlyHandled("user___1", auth.getTimeDrift());
     }
 
     @ParameterizedTest
@@ -313,7 +298,7 @@ class StatusControllerTest {
     @MethodSource("acceptable_epoch_and_time_drift")
     void http_430_on_unknown_key(PushInfoVo pushInfo, AuthRequestData auth) {
         givenRegistrationExistsForUser("user___1");
-        givenCryptoServerRaiseError430ForEbid("user___1");
+        givenCryptoServerRaiseMissingDailyKeyForEbid("user___1");
 
         given()
                 .contentType(JSON)

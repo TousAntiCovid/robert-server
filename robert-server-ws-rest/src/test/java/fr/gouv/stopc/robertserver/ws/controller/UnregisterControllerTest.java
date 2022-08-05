@@ -10,13 +10,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseError430ForEbid;
-import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseErrorForMacStartingWith;
+import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseError400ForEbid;
+import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseMissingDailyKeyForEbid;
 import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyNoInteractionsWithPushNotifServer;
 import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyPushNotifServerReceivedUnregisterForToken;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.assertThatRegistrations;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.givenRegistrationExistsForUser;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64;
+import static fr.gouv.stopc.robertserver.ws.test.matchers.TimeDriftMatcher.verifyExceededTimeDriftIsProperlyHandled;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.*;
@@ -112,6 +113,8 @@ class UnregisterControllerTest {
                 .statusCode(BAD_REQUEST.value())
                 .body(emptyString());
 
+        verifyExceededTimeDriftIsProperlyHandled("user___1", auth.getTimeDrift());
+
         verifyNoInteractionsWithPushNotifServer();
 
         assertThatRegistrations()
@@ -121,7 +124,7 @@ class UnregisterControllerTest {
 
     @Test
     void cant_unregister_for_a_key_unknown_by_crypto_server() {
-        givenCryptoServerRaiseError430ForEbid("miss-key");
+        givenCryptoServerRaiseMissingDailyKeyForEbid("miss-key");
 
         given()
                 .contentType(JSON)
@@ -145,7 +148,7 @@ class UnregisterControllerTest {
     @Test
     void bad_request_on_mac_validation_error_raised_by_crypto_server() {
         givenRegistrationExistsForUser("user___1");
-        givenCryptoServerRaiseErrorForMacStartingWith("invalid");
+        givenCryptoServerRaiseError400ForEbid("user___1");
 
         given()
                 .contentType(JSON)
@@ -154,7 +157,7 @@ class UnregisterControllerTest {
                                 .ebid(toBase64("user___1"))
                                 .epochId(clock.now().asEpochId())
                                 .time(toBase64(clock.now().asTime32()))
-                                .mac(toBase64("invalid fake mac having a length of exactly 44 characters", 32))
+                                .mac(toBase64("fake mac having a length of exactly 44 characters", 32))
                                 .build()
                 )
 
