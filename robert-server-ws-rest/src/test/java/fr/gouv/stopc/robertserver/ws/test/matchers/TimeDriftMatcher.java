@@ -20,9 +20,7 @@ public class TimeDriftMatcher {
                 1,
                 matching(
                         matchesPattern(
-                                String.format(
-                                        "Witnessing abnormal time difference -?\\d+ between client: \\d+ and server: \\d+"
-                                )
+                                "Witnessing abnormal time difference -?\\d+ between client: [0-9-T:.Z=E]+ and server: [0-9-T:.Z=E]+"
                         )
                 )
         );
