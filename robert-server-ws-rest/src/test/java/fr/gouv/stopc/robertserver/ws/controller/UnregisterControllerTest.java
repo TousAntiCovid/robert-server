@@ -17,6 +17,7 @@ import static fr.gouv.stopc.robertserver.ws.test.MockServerManager.verifyPushNot
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.assertThatRegistrations;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.givenRegistrationExistsForUser;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64;
+import static fr.gouv.stopc.robertserver.ws.test.matchers.TimeDriftMatcher.verifyExceededTimeDriftIsProperlyHandled;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.*;
@@ -111,6 +112,8 @@ class UnregisterControllerTest {
                 .then()
                 .statusCode(BAD_REQUEST.value())
                 .body(emptyString());
+
+        verifyExceededTimeDriftIsProperlyHandled("user___1", auth.getTimeDrift());
 
         verifyNoInteractionsWithPushNotifServer();
 

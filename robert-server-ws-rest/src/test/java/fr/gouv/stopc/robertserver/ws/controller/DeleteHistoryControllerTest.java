@@ -17,6 +17,7 @@ import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServ
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.assertThatRegistrationForUser;
 import static fr.gouv.stopc.robertserver.ws.test.MongodbManager.givenRegistrationExistsForUser;
 import static fr.gouv.stopc.robertserver.ws.test.matchers.Base64Matcher.toBase64;
+import static fr.gouv.stopc.robertserver.ws.test.matchers.TimeDriftMatcher.verifyExceededTimeDriftIsProperlyHandled;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.util.Collections.emptyList;
@@ -119,6 +120,8 @@ class DeleteHistoryControllerTest {
                 .then()
                 .statusCode(BAD_REQUEST.value())
                 .body(emptyString());
+
+        verifyExceededTimeDriftIsProperlyHandled("user___1", auth.getTimeDrift());
     }
 
     @Test
