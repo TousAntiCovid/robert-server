@@ -61,7 +61,7 @@ class ContactProcessingServiceTest {
     }
 
     @Test
-    void metricIsIncrementedWhenProcessPerformed() {
+    void metric_is_incremented_when_process_performed() {
         contactProcessingService.performs();
         assertThatTimerMetricIncrement("robert.batch", "operation", "CONTACT_SCORING_STEP").isEqualTo(1L);
     }

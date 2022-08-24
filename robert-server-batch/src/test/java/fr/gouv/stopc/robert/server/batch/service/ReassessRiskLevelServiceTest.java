@@ -58,7 +58,7 @@ class ReassessRiskLevelServiceTest {
     }
 
     @Test
-    void metricIsIncrementedWhenProcessPerformed() {
+    void metric_is_incremented_when_process_performed() {
         reassessRiskLevelService.performs();
         assertThatTimerMetricIncrement("robert.batch", "operation", "REGISTRATION_RISK_RESET_STEP").isEqualTo(1L);
     }

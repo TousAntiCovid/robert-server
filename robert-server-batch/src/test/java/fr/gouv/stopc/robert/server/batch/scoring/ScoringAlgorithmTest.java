@@ -5,7 +5,7 @@ import com.opencsv.exceptions.CsvException;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.configuration.ScoringAlgorithmConfiguration;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
-import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyV2ServiceImpl;
+import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyServiceImpl;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
@@ -32,11 +32,11 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-class ScoringAlgorithmV2Test {
+class ScoringAlgorithmTest {
 
     // class under test
     @InjectMocks
-    private ScoringStrategyV2ServiceImpl serviceScoring;
+    private ScoringStrategyServiceImpl serviceScoring;
 
     @Mock
     IServerConfigurationService serverConfigurationService;

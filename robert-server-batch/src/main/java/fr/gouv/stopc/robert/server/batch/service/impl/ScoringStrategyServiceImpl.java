@@ -8,19 +8,17 @@ import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Scoring strategy that implements the algorithm version 2
+ * Scoring strategy that implements the algorithm
  */
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "robert.scoring.algo-version", havingValue = "2")
-public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
+public class ScoringStrategyServiceImpl implements ScoringStrategyService {
 
     private final IServerConfigurationService serverConfigurationService;
 
@@ -38,7 +36,7 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
      *                                   <code>ScoringAlgorithmConfiguration</code>
      *                                   bean to inject
      */
-    public ScoringStrategyV2ServiceImpl(IServerConfigurationService serverConfigurationService,
+    public ScoringStrategyServiceImpl(IServerConfigurationService serverConfigurationService,
             ScoringAlgorithmConfiguration configuration,
             PropertyLoader propertyLoader) {
         this.serverConfigurationService = serverConfigurationService;

@@ -64,13 +64,13 @@ class RiskEvaluationServiceTest {
     }
 
     @Test
-    void metricIsIncrementedWhenProcessPerformed() {
+    void metric_is_incremented_when_process_performed() {
         riskEvaluationService.performs();
         assertThatTimerMetricIncrement("robert.batch", "operation", "REGISTRATION_RISK_EVALUATION_STEP").isEqualTo(1L);
     }
 
     @Test
-    void testScoreAndProcessRisksWithABadEncryptedCountryCodeShouldNotUpdateRegistration() {
+    void score_and_process_risks_with_a_bad_encrypted_country_code_should_not_update_registration() {
         var now = clock.now();
 
         // Given
@@ -99,7 +99,7 @@ class RiskEvaluationServiceTest {
     }
 
     @Test
-    void testScoreAndProcessRiskWhenScoresEqualsZerShouldNotBeAtRisk() {
+    void score_and_process_risk_when_scores_equals_zero_should_not_be_at_risk() {
         var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
         var fiveDaysAgo = clock.now().minus(5, ChronoUnit.DAYS);
 
@@ -135,7 +135,7 @@ class RiskEvaluationServiceTest {
     }
 
     @Test
-    void testScoreAndProcessRisksWhenRecentExposedEpochScoreGreaterThanRiskThresholdShouldBeAtRisk() {
+    void score_and_process_risks_when_recent_exposed_epoch_score_greater_than_risk_threshold_should_be_at_risk() {
 
         // Given Registration With Existing Score Above Threshold
         var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
@@ -173,7 +173,7 @@ class RiskEvaluationServiceTest {
     }
 
     @Test
-    void testScoreAndProcessRisksWhenEpochScoresLessThanRiskThresholdShouldNotBeAtRisk() {
+    void score_and_process_risks_when_epoch_scores_less_than_risk_threshold_should_not_be_at_risk() {
         // Given Registration With Existing Score Below Threshold
         var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
 
