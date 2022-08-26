@@ -1,6 +1,5 @@
 package fr.gouv.stopc.e2e.steps;
 
-import fr.gouv.stopc.e2e.config.ApplicationProperties;
 import fr.gouv.stopc.e2e.mobileapplication.MobilePhonesEmulator;
 import io.cucumber.java.en.When;
 import io.cucumber.java.fr.Alors;
@@ -15,19 +14,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.DAYS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 
 @Slf4j
 @AllArgsConstructor
 public class RobertClientSteps {
-
-    private final ApplicationProperties applicationProperties;
 
     private final MobilePhonesEmulator mobilePhonesEmulator;
 
@@ -35,33 +29,19 @@ public class RobertClientSteps {
 
     private final PlatformTimeSteps platformTimeSteps;
 
-    @Etantdonnéque("l'application robert ws rest est démarrée")
-    public void applicationRobertIsReady() {
-        given()
-                .baseUri(applicationProperties.getWsRestBaseUrl().toString())
-                .contentType(JSON)
-
-                .when().get("/actuator/health")
-
-                .then()
-                .statusCode(200)
-                .body("status", equalTo("UP"));
-    }
-
     @Etantdonnéque("{wordList} a/ont l'application TAC")
     public void createMobileApplication(final List<String> users) {
         users.forEach(mobilePhonesEmulator::createMobileApplication);
     }
 
     @Etantdonnéque("{wordList} a/ont l'application TAC depuis {instant}")
-    public void createMobileApplication(final List<String> users, final Instant installationTime) {
+    public void createMobileApplications(final List<String> users, final Instant installationTime) {
         platformTimeSteps.setSystemTime(installationTime);
-        users.forEach(mobilePhonesEmulator::createMobileApplication);
+        createMobileApplication(users);
     }
 
     @Etantdonnéque("{wordList} sont à proximité {duration}")
-    public void generateContactsBetweenTwoUsersWithDuration(final List<String> users,
-            final Duration durationOfExchange) {
+    public void generateContactsBetweenUsers(final List<String> users, final Duration durationOfExchange) {
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
                 users,
                 platformTimeSteps.getPlatformTime().toInstant(),
@@ -73,7 +53,7 @@ public class RobertClientSteps {
     public void pastContact(final List<String> users, final Duration proximityExpositionDuration,
             final Instant expositionStartTime) {
         platformTimeSteps.setSystemTime(expositionStartTime);
-        generateContactsBetweenTwoUsersWithDuration(users, proximityExpositionDuration);
+        generateContactsBetweenUsers(users, proximityExpositionDuration);
     }
 
     @Etantdonnéque("{wordList} étaient à proximité {duration} il y a {instant} et que {word} s'est déclaré/déclarée malade")
@@ -90,7 +70,7 @@ public class RobertClientSteps {
     }
 
     @Etantdonnéque("{word} se déclare malade {relativeTime}")
-    public void reportContactsToday(final String userName, final Instant reportInstant) {
+    public void reportContacts(final String userName, final Instant reportInstant) {
         platformTimeSteps.setSystemTime(reportInstant);
         reportContacts(userName);
     }
@@ -101,7 +81,7 @@ public class RobertClientSteps {
                 .getMobileApplication(userName)
                 .requestStatus();
         assertThat(exposureStatus.getRiskLevel())
-                .as("User risk level")
+                .as("%s risk level", userName)
                 .isEqualTo(4);
     }
 

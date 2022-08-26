@@ -74,3 +74,10 @@ Fonctionnalité: Covid-19 positive declaration
       | 14 jours                    |
       | 15 jours                    |
       | 16 jours                    |
+
+  Scénario: Une personne infectée par la Covid19 a un contact prolongé avec d'autres personnes
+    Etant donné que John, Sarah et Paul étaient à proximité 48 heures il y a 3 jours
+    Lorsque Sarah se déclare malade aujourd'hui
+    Et que le batch robert est exécuté
+    Alors John est à risque
+    Et Paul est à risque
