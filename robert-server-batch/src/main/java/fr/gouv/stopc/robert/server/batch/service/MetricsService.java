@@ -1,31 +1,23 @@
 package fr.gouv.stopc.robert.server.batch.service;
 
-import fr.gouv.stopc.robertserver.database.model.Contact;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MetricsService {
 
-    private final DistributionSummary robertBatchHelloMessageTotal;
-
     private final Counter robertBatchResetRiskLevelOfNeverNotifiedUser;
 
     private final Counter robertBatchResetRiskLevelOfUsersAlreadyNotified;
 
-    private final Counter robertBatchRiskLevelReset;
+    private final Counter riskLevelReset;
+
+    private final Counter totalRegistrationRiskEvaluationValued;
+
+    private final Counter totalContactsToProcessValued;
 
     public MetricsService(final MeterRegistry meterRegistry) {
-
-        robertBatchHelloMessageTotal = DistributionSummary.builder("robert.batch.contact.hellomessage")
-                .description("Hello message count per contact")
-                .baseUnit("HelloMessage")
-                .publishPercentiles(0.05, 0.3, 0.5, 0.8, 0.95)
-                .publishPercentileHistogram(false)
-                .sla(10, 100, 1000, 5000)
-                .register(meterRegistry);
 
         robertBatchResetRiskLevelOfNeverNotifiedUser = Counter
                 .builder("robert.batch.risk.reset")
@@ -39,13 +31,30 @@ public class MetricsService {
                 .description("The number of risk levels reseted of users already notified")
                 .register(meterRegistry);
 
-        robertBatchRiskLevelReset = Counter.builder("robert.batch.risk.reset.step.count")
+        riskLevelReset = Counter.builder("robert.batch.risk.reset.step.count")
                 .description("The number of risk level rested count")
+                .register(meterRegistry);
+
+        totalRegistrationRiskEvaluationValued = Counter
+                .builder("robert.batch.total.registration.risk.evaluation.to.process.step.count")
+                .description("The number of registration évaluation valued")
+                .register(meterRegistry);
+
+        totalContactsToProcessValued = Counter.builder("robert.batch.total.contacts.to.process.step.count")
+                .description("The number of registration évaluation valued")
                 .register(meterRegistry);
     }
 
     public void setRobertBatchRiskLevelReset(double amount) {
-        robertBatchRiskLevelReset.increment(amount);
+        riskLevelReset.increment(amount);
+    }
+
+    public void setTotalRegistrationRiskEvaluationValued(double amount) {
+        totalRegistrationRiskEvaluationValued.increment(amount);
+    }
+
+    public void setTotalContactsToProcessValued(double amount) {
+        totalContactsToProcessValued.increment(amount);
     }
 
     public void incrementResettingRiskLevelOfNeverNotifiedUserCounter() {
@@ -54,11 +63,5 @@ public class MetricsService {
 
     public void incrementResettingRiskLevelOfUsersAlreadyNotifiedCounter() {
         robertBatchResetRiskLevelOfUsersAlreadyNotified.increment();
-    }
-
-    public void countHelloMessages(final Contact contact) {
-        if (null != contact.getMessageDetails() && !contact.getMessageDetails().isEmpty()) {
-            robertBatchHelloMessageTotal.record(contact.getMessageDetails().size());
-        }
     }
 }

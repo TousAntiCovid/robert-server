@@ -12,6 +12,7 @@ import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.mongodb.core.DocumentCallbackHandler;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -72,7 +73,7 @@ public class PurgeOldEpochExpositionsService {
 
         @Override
         @Counted(value = "PURGE_OLD_EXPOSITIONS_STEP_PROCEEDED_REGISTRATIONS")
-        public void processDocument(Document document) throws MongoException, DataAccessException {
+        public void processDocument(@NotNull Document document) throws MongoException, DataAccessException {
             final var registration = mongoTemplate.getConverter().read(Registration.class, document);
             List<EpochExposition> exposedEpochs = new ArrayList<>(registration.getExposedEpochs());
 

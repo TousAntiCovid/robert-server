@@ -7,7 +7,9 @@ import fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory;
 import fr.gouv.stopc.robert.server.batch.manager.MetricsManager;
 import fr.gouv.stopc.robert.server.batch.manager.MongodbManager;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
@@ -18,17 +20,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestExecutionListeners;
 
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager.*;
-import static fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory.*;
+import static fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory.generateHelloMessagesStartingAndDuring;
+import static fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory.randRssi;
 import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatLogsMatchingRegex;
 import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatTimerMetricIncrement;
-import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenContactExistForUser;
-import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenRegistrationExistsForUser;
+import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
@@ -36,8 +37,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @TestExecutionListeners(listeners = {
         GrpcMockManager.class,
         MongodbManager.class,
-        MetricsManager.class,
-        HelloMessageFactory.class
+        MetricsManager.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class ContactProcessingServiceTest {
@@ -67,7 +67,7 @@ class ContactProcessingServiceTest {
     }
 
     @Test
-    void process_two_contacts_and_concat_with_existing_exposed_epochs() {
+    void process_two_helloMessages_and_concat_risk_with_existing_registration_exposed_epochs_risks() {
         var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
         var fiveDaysAgo = clock.now().minus(5, ChronoUnit.DAYS);
 
@@ -77,38 +77,46 @@ class ContactProcessingServiceTest {
                                 List.of(
                                         EpochExposition.builder()
                                                 .epochId(twoDaysAgo.asEpochId())
-                                                .expositionScores(Arrays.asList(3.0))
+                                                .expositionScores(Collections.singletonList(3.0))
                                                 .build(),
                                         EpochExposition.builder()
                                                 .epochId(fiveDaysAgo.asEpochId())
-                                                .expositionScores(Arrays.asList(4.3))
+                                                .expositionScores(Collections.singletonList(4.3))
                                                 .build()
                                 )
                         )
         );
 
         givenContactExistForUser(
-                "user___1", c -> c.messageDetails(generateHelloMessagesStartingAndDuringSeconds(twoDaysAgo, 20))
+                "user___1", twoDaysAgo, c -> c.messageDetails(
+                        generateHelloMessagesStartingAndDuring(
+                                twoDaysAgo,
+                                Duration.of(20, ChronoUnit.SECONDS)
+                        )
+                )
         );
-
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
-        givenCryptoServerEpochId(twoDaysAgo.asEpochId());
 
         // When
         contactProcessingService.performs();
 
         // Then
-        assertThat(this.contactService.findAll()).isEmpty();
-        Optional<Registration> expectedRegistration = registrationService.findById("user___1".getBytes());
-        assertThat(expectedRegistration).isPresent();
-        assertThat(expectedRegistration.get().getExposedEpochs())
-                .isNotEmpty()
+        assertThatContactsToProcess().isEmpty();
+        final var expectedRegistration = registrationService.findById("user___1".getBytes())
+                .orElseThrow();
+        assertThat(expectedRegistration.getExposedEpochs())
                 .hasSize(2)
                 .filteredOn(e -> e.getEpochId() == twoDaysAgo.asEpochId())
-                .isNotEmpty()
                 .asList()
                 .flatExtracting("expositionScores")
-                .hasSize(2);
+                .hasSize(2)
+                .contains(3.0, 0.0);
+        assertThat(expectedRegistration.getExposedEpochs())
+                .hasSize(2)
+                .filteredOn(e -> e.getEpochId() == fiveDaysAgo.asEpochId())
+                .asList()
+                .flatExtracting("expositionScores")
+                .hasSize(1)
+                .contains(4.3);
     }
 
     @Test
@@ -117,15 +125,30 @@ class ContactProcessingServiceTest {
 
         givenRegistrationExistsForUser("user___1");
 
-        var messageDetails = generateHelloMessagesStartingAndDuringSeconds(now, 30);
-        messageDetails.addAll(generateHelloMessageWithTimeCollectedOnDeviceExceeded(now));
-
-        givenContactExistForUser(
-                "user___1", c -> c.messageDetails(messageDetails)
+        var messageDetails = generateHelloMessagesStartingAndDuring(
+                now,
+                Duration.of(30, ChronoUnit.SECONDS)
         );
 
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
-        givenCryptoServerEpochId(now.asEpochId());
+        // Add an helloMessage with timeCollected exceeded max time stamp tolerance
+        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        messageDetails.add(
+                HelloMessageDetail.builder()
+                        .rssiCalibrated(HelloMessageFactory.randRssi())
+                        .timeCollectedOnDevice(
+                                exceededTime.asNtpTimestamp()
+                        )
+                        .timeFromHelloMessage(
+                                now.as16LessSignificantBits()
+                        )
+                        .mac(("mac___exceeded_time").getBytes())
+                        .build()
+        );
+
+        givenContactExistForUser(
+                "user___1", now, c -> c.messageDetails(messageDetails)
+        );
 
         try (final var logCaptor = LogCaptor.forClass(ContactProcessingService.class)) {
             // When
@@ -136,14 +159,12 @@ class ContactProcessingServiceTest {
             // contains one exposed epoch for the computation of the good ones
             assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), TIME_TOLERANCE_REGEX, 1);
 
-            Optional<Registration> expectedRegistration = registrationService
-                    .findById("user___1".getBytes());
-
-            assertThat(expectedRegistration).isPresent();
-            assertThat(expectedRegistration.get().getExposedEpochs())
-                    .isNotEmpty()
+            assertThatRegistrationForUser("user___1")
+                    .extracting(Registration::getExposedEpochs)
+                    .asList()
                     .hasSize(1);
-            assertThat(this.contactService.findAll()).isEmpty();
+
+            assertThatContactsToProcess().isEmpty();
         }
     }
 
@@ -154,23 +175,23 @@ class ContactProcessingServiceTest {
         givenRegistrationExistsForUser("user___1");
 
         givenContactExistForUser(
-                "user___1", c -> c.messageDetails(generateHelloMessagesStartingAndDuringSeconds(now, 120))
+                "user___1", now, c -> c.messageDetails(
+                        generateHelloMessagesStartingAndDuring(
+                                now,
+                                Duration.of(120, ChronoUnit.SECONDS)
+                        )
+                )
         );
-
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
-        givenCryptoServerEpochId(now.asEpochId());
 
         // When
         contactProcessingService.performs();
 
         // Then
-        Optional<Registration> expectedRegistration = registrationService
-                .findById("user___1".getBytes());
-        assertThat(expectedRegistration).isPresent();
-        assertThat(expectedRegistration.get().getExposedEpochs())
-                .isNotEmpty()
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::getExposedEpochs)
+                .asList()
                 .hasSize(1);
-        assertThat(this.contactService.findAll()).isEmpty();
+        assertThatContactsToProcess().isEmpty();
     }
 
     @Test
@@ -181,10 +202,14 @@ class ContactProcessingServiceTest {
         givenRegistrationExistsForUser("user___1");
 
         givenContactExistForUser(
-                "user___1", c -> c.messageDetails(generateHelloMessagesStartingAndDuringSeconds(now, 30))
+                "user___1", now, c -> c.messageDetails(
+                        generateHelloMessagesStartingAndDuring(
+                                now,
+                                Duration.of(30, ChronoUnit.SECONDS)
+                        )
+                )
         );
 
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
         givenCryptoServerCountryCode(ByteString.copyFrom(new byte[] { (byte) 0xff }));
 
         try (final var logCaptor = LogCaptor.forClass(ContactProcessingService.class)) {
@@ -194,20 +219,19 @@ class ContactProcessingServiceTest {
             // Then
             assertThat(logCaptor.getInfoLogs())
                     .contains("Country code [-1] is not managed by this server ([33])");
-            assertThat(this.contactService.findAll()).isEmpty();
+            assertThatContactsToProcess().isEmpty();
         }
     }
 
     @Test
     void process_contact_with_no_messages_fails() {
         // Given
+        var now = clock.now();
         givenRegistrationExistsForUser("user___1");
 
         givenContactExistForUser(
-                "user___1", c -> c.messageDetails(List.of())
+                "user___1", now, c -> c.messageDetails(List.of())
         );
-
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
 
         try (final var logCaptor = LogCaptor.forClass(ContactProcessingService.class)) {
             // When
@@ -216,7 +240,7 @@ class ContactProcessingServiceTest {
             // Then
             assertThat(logCaptor.getInfoLogs())
                     .contains("No messages in contact, discarding contact");
-            assertThat(this.contactService.findAll()).isEmpty();
+            assertThatContactsToProcess().isEmpty();
         }
     }
 
@@ -228,10 +252,13 @@ class ContactProcessingServiceTest {
         var registration = givenRegistrationExistsForUser("user___1");
 
         givenContactExistForUser(
-                "user___1", c -> c.messageDetails(generateHelloMessagesStartingAndDuringSeconds(now, 30))
+                "user___1", now, c -> c.messageDetails(
+                        generateHelloMessagesStartingAndDuring(
+                                now,
+                                Duration.of(30, ChronoUnit.SECONDS)
+                        )
+                )
         );
-
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
 
         this.registrationService.delete(registration);
 
@@ -242,7 +269,7 @@ class ContactProcessingServiceTest {
 
             assertThat(logCaptor.getInfoLogs())
                     .contains("No identity exists for id_A " + idA + " extracted from ebid, discarding contact");
-            assertThat(this.contactService.findAll()).isEmpty();
+            assertThatContactsToProcess().isEmpty();
         }
     }
 
@@ -251,13 +278,28 @@ class ContactProcessingServiceTest {
         // Given
         var now = clock.now();
 
-        var registration = givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForUser("user___1");
 
-        givenContactExistForUser(
-                "user___1", c -> c.messageDetails(generateHelloMessageWithTimeCollectedOnDeviceExceeded(now))
+        // Add an helloMessage with timeCollected exceeded max time stamp tolerance
+        var messageDetails = new ArrayList<HelloMessageDetail>();
+        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        messageDetails.add(
+                HelloMessageDetail.builder()
+                        .rssiCalibrated(HelloMessageFactory.randRssi())
+                        .timeCollectedOnDevice(
+                                exceededTime.asNtpTimestamp()
+                        )
+                        .timeFromHelloMessage(
+                                now.as16LessSignificantBits()
+                        )
+                        .mac(("mac___exceeded_time").getBytes())
+                        .build()
         );
 
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
+        givenContactExistForUser(
+                "user___1", now, c -> c.messageDetails(messageDetails)
+        );
 
         try (final var logCaptor = LogCaptor.forClass(ContactProcessingService.class)) {
             contactProcessingService.performs();
@@ -267,7 +309,7 @@ class ContactProcessingServiceTest {
             assertThat(logCaptor.getInfoLogs())
                     .contains("Contact did not contain any valid messages; discarding contact");
 
-            assertThat(this.contactService.findAll()).isEmpty();
+            assertThatContactsToProcess().isEmpty();
         }
     }
 
@@ -276,13 +318,27 @@ class ContactProcessingServiceTest {
         // Given
         var now = clock.now();
 
-        var registration = givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForUser("user___1");
 
-        givenContactExistForUser(
-                "user___1", c -> c.messageDetails(generateHelloMessageWithDivergenceBetweenMessageAndRegistration(now))
+        // Add HelloMessage with divergence between message and registration
+        final var exceededTime = now.plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
+        var messageDetails = new ArrayList<HelloMessageDetail>();
+        messageDetails.add(
+                HelloMessageDetail.builder()
+                        .rssiCalibrated(randRssi())
+                        .timeCollectedOnDevice(
+                                exceededTime.asNtpTimestamp()
+                        )
+                        .timeFromHelloMessage(
+                                exceededTime.as16LessSignificantBits()
+                        )
+                        .mac(("mac___exceeded_time").getBytes())
+                        .build()
         );
 
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
+        givenContactExistForUser(
+                "user___1", now, c -> c.messageDetails(messageDetails)
+        );
 
         try (final var logCaptor = LogCaptor.forClass(ContactProcessingService.class)) {
             // When
@@ -292,28 +348,44 @@ class ContactProcessingServiceTest {
             assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), DIVERGENT_EPOCHIDS, 1);
             assertThat(logCaptor.getInfoLogs())
                     .contains("Contact did not contain any valid messages; discarding contact");
-            assertThat(this.contactService.findAll()).isEmpty();
-            Optional<Registration> expectedRegistration = registrationService
-                    .findById(registration.getPermanentIdentifier());
-            assertThat(expectedRegistration).isPresent();
-            assertThat(expectedRegistration.get().getExposedEpochs()).isEmpty();
+            assertThatContactsToProcess().isEmpty();
+
+            assertThatRegistrationForUser("user___1")
+                    .extracting(Registration::getExposedEpochs)
+                    .asList()
+                    .isEmpty();
         }
     }
 
     @Test
-    void process_contact_succeeds_and_when_some_of_the_epochs_are_different_logs_and_discard() throws Exception {
+    void process_contact_succeeds_and_when_some_of_the_epochs_are_different_logs_and_discard() {
         // Given
         var now = clock.now();
 
-        var registration = givenRegistrationExistsForUser("user___1");
-        var messageDetails = generateHelloMessagesStartingAndDuringSeconds(now, 30);
-        messageDetails.addAll(generateHelloMessageWithDivergenceBetweenMessageAndRegistration(now));
-
-        givenContactExistForUser(
-                "user___1", c -> c.messageDetails(messageDetails)
+        givenRegistrationExistsForUser("user___1");
+        var messageDetails = generateHelloMessagesStartingAndDuring(
+                now,
+                Duration.of(30, ChronoUnit.SECONDS)
         );
 
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
+        // Add HelloMessage with time divergence with contact epoch
+        final var exceededTime = now.plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
+        messageDetails.add(
+                HelloMessageDetail.builder()
+                        .rssiCalibrated(randRssi())
+                        .timeCollectedOnDevice(
+                                exceededTime.asNtpTimestamp()
+                        )
+                        .timeFromHelloMessage(
+                                exceededTime.as16LessSignificantBits()
+                        )
+                        .mac(("mac___exceeded_time").getBytes())
+                        .build()
+        );
+
+        givenContactExistForUser(
+                "user___1", now, c -> c.messageDetails(messageDetails)
+        );
 
         try (final var logCaptor = LogCaptor.forClass(ContactProcessingService.class)) {
             // When
@@ -321,12 +393,11 @@ class ContactProcessingServiceTest {
 
             // Then
             assertThatLogsMatchingRegex(logCaptor.getWarnLogs(), DIVERGENT_EPOCHIDS, 1);
-            assertThat(this.contactService.findAll()).isEmpty();
-            Optional<Registration> expectedRegistration = registrationService
-                    .findById(registration.getPermanentIdentifier());
-            assertThat(expectedRegistration).isPresent();
-            assertThat(expectedRegistration.get().getExposedEpochs())
-                    .isNotEmpty()
+            assertThatContactsToProcess().isEmpty();
+
+            assertThatRegistrationForUser("user___1")
+                    .extracting(Registration::getExposedEpochs)
+                    .asList()
                     .hasSize(1);
         }
     }

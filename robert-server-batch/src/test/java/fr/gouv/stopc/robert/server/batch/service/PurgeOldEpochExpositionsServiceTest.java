@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestExecutionListeners;
 
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatTimerMetricIncrement;
@@ -72,11 +72,11 @@ class PurgeOldEpochExpositionsServiceTest {
                                 List.of(
                                         EpochExposition.builder()
                                                 .epochId(clock.now().asEpochId())
-                                                .expositionScores(Arrays.asList(1.0))
+                                                .expositionScores(Collections.singletonList(1.0))
                                                 .build(),
                                         EpochExposition.builder()
                                                 .epochId(beforeStartOfContagiousPeriod.asEpochId())
-                                                .expositionScores(Arrays.asList(1.0))
+                                                .expositionScores(Collections.singletonList(1.0))
                                                 .build()
 
                                 )
@@ -87,9 +87,11 @@ class PurgeOldEpochExpositionsServiceTest {
         purgeOldEpochExpositionsService.performs();
 
         // Then
-        assertThatRegistrationForUser("user___1");
-        Registration updatedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
-        assertThat(updatedRegistration.getExposedEpochs()).isNotNull().hasSize(1);
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::getExposedEpochs)
+                .asList()
+                .hasSize(1);
+
         assertThatTimerMetricIncrement("robert.batch", "operation", "PURGE_OLD_EXPOSITIONS_STEP").isEqualTo(1L);
     }
 
@@ -104,11 +106,11 @@ class PurgeOldEpochExpositionsServiceTest {
                                 List.of(
                                         EpochExposition.builder()
                                                 .epochId(clock.now().asEpochId())
-                                                .expositionScores(Arrays.asList(1.0))
+                                                .expositionScores(Collections.singletonList(1.0))
                                                 .build(),
                                         EpochExposition.builder()
                                                 .epochId(beforeStartOfContagiousPeriod.asEpochId())
-                                                .expositionScores(Arrays.asList(1.0))
+                                                .expositionScores(Collections.singletonList(1.0))
                                                 .build()
 
                                 )
@@ -119,11 +121,13 @@ class PurgeOldEpochExpositionsServiceTest {
         purgeOldEpochExpositionsService.performs();
 
         // Then
-        assertThatRegistrationForUser("user___1");
-        Registration updatedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
-        assertThat(updatedRegistration).as("Registration is null").isNotNull();
-        assertThat(updatedRegistration).as("Object has not been updated").isEqualTo(registration);
-        assertThat(updatedRegistration.getExposedEpochs()).as("Exposed epochs is null").isNotNull();
-        assertThat(updatedRegistration.getExposedEpochs()).hasSize(2);
+        assertThatRegistrationForUser("user___1")
+                .as("Object has not been updated")
+                .isEqualTo(registration);
+
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::getExposedEpochs)
+                .asList()
+                .hasSize(2);
     }
 }

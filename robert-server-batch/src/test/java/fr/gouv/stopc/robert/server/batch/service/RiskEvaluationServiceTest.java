@@ -13,26 +13,23 @@ import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.RequiredArgsConstructor;
 import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager.givenCryptoServerCountryCode;
-import static fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager.givenCryptoServerIdA;
-import static fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory.generateHelloMessagesStartingAndDuringSeconds;
+import static fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory.generateHelloMessagesStartingAndDuring;
 import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatLogsMatchingRegex;
 import static fr.gouv.stopc.robert.server.batch.manager.MetricsManager.assertThatTimerMetricIncrement;
-import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenContactExistForUser;
-import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenRegistrationExistsForUser;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
@@ -55,8 +52,6 @@ class RiskEvaluationServiceTest {
 
     private final RobertClock clock;
 
-    private final String RISK_DETECTED = "Risk detected\\. Aggregated risk since [\\d]{0,}: [\\d]{0,}\\.[\\d]{0,} greater than threshold [\\d]{0,}\\.[\\d]{0,}";
-
     @AfterEach
     public void afterAll() {
         this.contactService.deleteAll();
@@ -76,10 +71,15 @@ class RiskEvaluationServiceTest {
         // Given
         givenRegistrationExistsForUser("user___1");
         givenContactExistForUser(
-                "user___1", c -> c.messageDetails(generateHelloMessagesStartingAndDuringSeconds(now, 120))
+                "user___1", now, c -> c.messageDetails(
+                        generateHelloMessagesStartingAndDuring(
+                                now,
+                                Duration.of(120, ChronoUnit.SECONDS)
+                        )
+                )
         );
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
-        // set bad country code
+
+        // Set bad country code
         givenCryptoServerCountryCode(ByteString.copyFrom(new byte[] { (byte) 0xff }));
 
         // When
@@ -89,13 +89,16 @@ class RiskEvaluationServiceTest {
         // Then
         assertTrue(CollectionUtils.isEmpty(this.contactService.findAll()));
 
-        Optional<Registration> expectedRegistration = this.registrationService
-                .findById("user___1".getBytes());
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::isAtRisk)
+                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
+                .as("Registration risk")
+                .isFalse();
 
-        assertTrue(expectedRegistration.isPresent());
-
-        assertTrue(CollectionUtils.isEmpty(expectedRegistration.get().getExposedEpochs()));
-        assertFalse(expectedRegistration.get().isAtRisk());
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::getExposedEpochs)
+                .asList()
+                .isEmpty();
     }
 
     @Test
@@ -109,27 +112,26 @@ class RiskEvaluationServiceTest {
                                 List.of(
                                         EpochExposition.builder()
                                                 .epochId(twoDaysAgo.asEpochId())
-                                                .expositionScores(Arrays.asList(0.0))
+                                                .expositionScores(Collections.singletonList(0.0))
                                                 .build(),
                                         EpochExposition.builder()
                                                 .epochId(fiveDaysAgo.asEpochId())
-                                                .expositionScores(Arrays.asList(0.0))
+                                                .expositionScores(Collections.singletonList(0.0))
                                                 .build()
                                 )
                         )
                         .outdatedRisk(true)
         );
 
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
-
         // When
         riskEvaluationService.performs();
 
         // Then
-        assertThat(this.contactService.findAll()).isEmpty();
-        Optional<Registration> expectedRegistration = registrationService.findById("user___1".getBytes());
-        assertThat(expectedRegistration).isPresent();
-        assertThat(expectedRegistration.get().isAtRisk())
+        assertThatContactsToProcess().isEmpty();
+
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::isAtRisk)
+                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
                 .as("Registration risk")
                 .isFalse();
     }
@@ -146,7 +148,7 @@ class RiskEvaluationServiceTest {
                                 List.of(
                                         EpochExposition.builder()
                                                 .epochId(twoDaysAgo.asEpochId())
-                                                .expositionScores(Arrays.asList(20.0))
+                                                .expositionScores(Collections.singletonList(20.0))
                                                 .build()
 
                                 )
@@ -154,20 +156,20 @@ class RiskEvaluationServiceTest {
                         .outdatedRisk(true)
         );
 
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
-
         // When
         try (final var logCaptor = LogCaptor.forClass(BatchRegistrationServiceImpl.class)) {
             riskEvaluationService.performs();
 
             // Then
-            assertThat(this.contactService.findAll()).isEmpty();
-            Optional<Registration> expectedRegistration = this.registrationService
-                    .findById("user___1".getBytes());
-            assertThat(expectedRegistration).isPresent();
-            assertThat(expectedRegistration.get().isAtRisk())
+            assertThatContactsToProcess().isEmpty();
+
+            assertThatRegistrationForUser("user___1")
+                    .extracting(Registration::isAtRisk)
+                    .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
                     .as("Registration risk")
                     .isTrue();
+
+            final var RISK_DETECTED = "Risk detected\\. Aggregated risk since [\\d]{0,}: [\\d]{0,}\\.[\\d]{0,} greater than threshold [\\d]{0,}\\.[\\d]{0,}";
             assertThatLogsMatchingRegex(logCaptor.getInfoLogs(), RISK_DETECTED, 1);
         }
     }
@@ -183,11 +185,11 @@ class RiskEvaluationServiceTest {
                                 List.of(
                                         EpochExposition.builder()
                                                 .epochId(twoDaysAgo.asEpochId())
-                                                .expositionScores(Arrays.asList(3.0))
+                                                .expositionScores(Collections.singletonList(3.0))
                                                 .build(),
                                         EpochExposition.builder()
                                                 .epochId(twoDaysAgo.asEpochId())
-                                                .expositionScores(Arrays.asList(4.3))
+                                                .expositionScores(Collections.singletonList(4.3))
                                                 .build()
 
                                 )
@@ -195,17 +197,14 @@ class RiskEvaluationServiceTest {
                         .outdatedRisk(true)
         );
 
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
-
         // When
         riskEvaluationService.performs();
 
         // Then
-        assertThat(this.contactService.findAll()).isEmpty();
-        Optional<Registration> expectedRegistration = this.registrationService
-                .findById("user___1".getBytes());
-        assertThat(expectedRegistration).isPresent();
-        assertThat(expectedRegistration.get().isAtRisk())
+        assertThatContactsToProcess().isEmpty();
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::isAtRisk)
+                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
                 .as("Registration risk")
                 .isFalse();
     }

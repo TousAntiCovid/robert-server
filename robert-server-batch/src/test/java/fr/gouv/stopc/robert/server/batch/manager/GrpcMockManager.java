@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactRequest;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse;
-import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -16,8 +15,6 @@ import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 public class GrpcMockManager implements TestExecutionListener {
@@ -46,85 +43,37 @@ public class GrpcMockManager implements TestExecutionListener {
         CryptoGrpcStub.reset();
     }
 
-    public static void givenCryptoServerRaiseErrorForMacStartingWith(String mac) {
-        CryptoGrpcStub.INVALID_MAC.add(mac);
-    }
-
-    public static void givenCryptoServerRaiseErrorForThisHelloMessageDetails(HelloMessageDetail helloMessageDetail) {
-        CryptoGrpcStub.INVALID_HELLO_MESSAGE_DETAILS.add(helloMessageDetail);
-    }
-
-    public static void verifyNoInteractionsWithCryptoServer() {
-        Mockito.verifyNoInteractions(CRYPTO_GRPC_STUB);
-    }
-
-    public static void givenCryptoServerIdA(ByteString newIdA) {
-        CryptoGrpcStub.idA = newIdA;
-    }
-
     public static void givenCryptoServerCountryCode(ByteString serverCountryCode) {
         CryptoGrpcStub.serverCountryCode = serverCountryCode;
     }
 
-    public static void givenCryptoServerEpochId(int epochId) {
-        CryptoGrpcStub.epochId = epochId;
-    }
-
     private static class CryptoGrpcStub extends CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase {
-
-        private static ByteString idA = ByteString.EMPTY;
 
         private static ByteString serverCountryCode = ByteString.EMPTY;
 
-        private static int epochId = 0;
-
-        private static final List<String> ECC = new ArrayList<>();
-
-        private static final List<String> EBID = new ArrayList<>();
-
-        private static final List<String> INVALID_MAC = new ArrayList<>();
-
-        private static final List<HelloMessageDetail> INVALID_HELLO_MESSAGE_DETAILS = new ArrayList<>();
-
         private static void reset() {
-            ECC.clear();
-            EBID.clear();
-            INVALID_MAC.clear();
             serverCountryCode = ByteString.EMPTY;
         }
 
         private ValidateContactResponse handleConfiguredError(ValidateContactRequest request) {
-            if (!INVALID_HELLO_MESSAGE_DETAILS.isEmpty() &&
-                    INVALID_HELLO_MESSAGE_DETAILS.stream().anyMatch(request.getHelloMessageDetailsList()::contains)) {
-
-                var invalidHelloMessageDetails = request.getHelloMessageDetailsList();
-                invalidHelloMessageDetails.retainAll(INVALID_HELLO_MESSAGE_DETAILS);
-
-                return ValidateContactResponse
-                        .newBuilder()
-                        .addAllInvalidHelloMessageDetails(invalidHelloMessageDetails)
-                        .setIdA(idA)
-                        .setCountryCode(
-                                ByteString.copyFromUtf8("fake countryCode")
-                        )
-                        .setEpochId(666)
-                        .build();
-            }
+            // Split ebid and epochid
+            // TODO : trouver un moyen d'expliciter avant car non trivial.
+            var values = request.getEbid().toStringUtf8().split(";");
+            var ebid = ByteString.copyFrom(values[0].getBytes());
+            var epochId = Integer.valueOf(values[1]);
 
             if (serverCountryCode != ByteString.EMPTY) {
                 return ValidateContactResponse
                         .newBuilder()
-                        .setIdA(idA)
+                        .setIdA(ebid)
                         .setCountryCode(serverCountryCode)
                         .setEpochId(epochId)
                         .build();
-            } else if (EBID.contains(request.getEbid())) {
-                return null;
             } else {
                 // Return good answer
                 return ValidateContactResponse
                         .newBuilder()
-                        .setIdA(idA)
+                        .setIdA(ebid)
                         .setCountryCode(request.getServerCountryCode())
                         .setEpochId(epochId)
                         .build();

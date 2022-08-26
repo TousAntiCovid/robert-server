@@ -6,10 +6,9 @@ import fr.gouv.stopc.robert.server.batch.manager.MetricsManager;
 import fr.gouv.stopc.robert.server.batch.manager.MongodbManager;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import nl.altindag.log.LogCaptor;
-import org.assertj.core.api.AssertionsForClassTypes;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -38,8 +37,6 @@ class ReassessRiskLevelServiceTest {
     private final ReassessRiskLevelService reassessRiskLevelService;
 
     private final RobertClock robertClock;
-
-    private final RegistrationRepository registrationRepository;
 
     private final PropertyLoader propertyLoader;
 
@@ -77,9 +74,10 @@ class ReassessRiskLevelServiceTest {
         reassessRiskLevelService.performs();
 
         // Then
-        assertThatRegistrationForUser("user___1");
-        Registration updatedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
-        assertThat(updatedRegistration).as("Object has not been updated").isEqualTo(registration);
+        assertThatRegistrationForUser("user___1")
+                .as("Object has not been updated")
+                .isEqualTo(registration);
+
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "false").isEqualTo(0L);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "true").isEqualTo(0L);
     }
@@ -98,9 +96,9 @@ class ReassessRiskLevelServiceTest {
         reassessRiskLevelService.performs();
 
         // Then
-        assertThatRegistrationForUser("user___1");
-        Registration updatedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
-        assertThat(updatedRegistration).as("Object has not been updated").isEqualTo(registration);
+        assertThatRegistrationForUser("user___1")
+                .as("Object has not been updated")
+                .isEqualTo(registration);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "false").isEqualTo(0L);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "true").isEqualTo(0L);
     }
@@ -128,9 +126,9 @@ class ReassessRiskLevelServiceTest {
         reassessRiskLevelService.performs();
 
         // Then
-        assertThatRegistrationForUser("user___1");
-        Registration updatedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
-        assertThat(updatedRegistration).as("Object has not been updated").isEqualTo(registration);
+        assertThatRegistrationForUser("user___1")
+                .as("Object has not been updated")
+                .isEqualTo(registration);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "false").isEqualTo(0L);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "true").isEqualTo(0L);
     }
@@ -157,12 +155,18 @@ class ReassessRiskLevelServiceTest {
         reassessRiskLevelService.performs();
 
         // Then
-        assertThatRegistrationForUser("user___1");
-        Registration processedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
-        AssertionsForClassTypes.assertThat(processedRegistration.isAtRisk()).as("Registration is not at risk")
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::isAtRisk)
+                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
+                .as("Registration is not at risk")
                 .isFalse();
-        AssertionsForClassTypes.assertThat(processedRegistration.isNotified())
-                .as("Registration is notified for current risk").isTrue();
+
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::isNotified)
+                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
+                .as("Registration is notified for current risk")
+                .isTrue();
+
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "true")
                 .as("Increment between before test method and now").isEqualTo(1L);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "false").isEqualTo(0L);
@@ -182,10 +186,18 @@ class ReassessRiskLevelServiceTest {
         reassessRiskLevelService.performs();
 
         // Then
-        assertThatRegistrationForUser("user___1");
-        Registration processedRegistration = registrationRepository.findById("user___1".getBytes()).orElse(null);
-        assertThat(processedRegistration.isAtRisk()).as("Registration is not at risk").isFalse();
-        assertThat(processedRegistration.isNotified()).as("Registration is not notified for current risk").isFalse();
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::isAtRisk)
+                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
+                .as("Registration is not at risk")
+                .isFalse();
+
+        assertThatRegistrationForUser("user___1")
+                .extracting(Registration::isNotified)
+                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
+                .as("Registration is notified for current risk")
+                .isFalse();
+
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "false")
                 .as("Increment between before test method and now").isEqualTo(1L);
         assertThatCounterMetricIncrement("robert.batch.risk.reset", "notified", "true")

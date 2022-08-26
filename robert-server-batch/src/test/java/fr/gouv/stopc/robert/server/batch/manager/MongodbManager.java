@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robert.server.batch.manager;
 
 import com.mongodb.client.MongoCollection;
+import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.Contact.ContactBuilder;
 import fr.gouv.stopc.robertserver.database.model.Registration;
@@ -18,13 +19,11 @@ import org.springframework.test.context.TestExecutionListener;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.List;
 import java.util.function.Function;
 
 import static java.lang.Boolean.TRUE;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MongodbManager implements TestExecutionListener {
@@ -64,15 +63,13 @@ public class MongodbManager implements TestExecutionListener {
         return mongoOperations.save(transformer.apply(registration).build());
     }
 
-    public static Contact givenContactExistForUser(final String user) {
-        return givenContactExistForUser(user, identity());
-    }
-
     public static Contact givenContactExistForUser(final String user,
+            final RobertClock.RobertInstant time,
             final Function<ContactBuilder, ContactBuilder> transformer) {
 
+        var userAndEpoch = (user + ";" + time.asEpochId()).getBytes();
         final var contact = Contact.builder()
-                .ebid(user.getBytes())
+                .ebid(userAndEpoch)
                 .ecc("fr".getBytes());
 
         return mongoOperations.save(transformer.apply(contact).build());
@@ -113,22 +110,6 @@ public class MongodbManager implements TestExecutionListener {
     public static ListAssert<Contact> assertThatContactsToProcess() {
         return assertThat(mongoOperations.find(new Query(), Contact.class))
                 .as("Mongodb contact_to_process collection");
-    }
-
-    public static List<HelloMessage> helloMessages(final Contact contact) {
-        return contact.getMessageDetails()
-                .stream()
-                .map(
-                        hello -> HelloMessage.builder()
-                                .ebid(new String(contact.getEbid()))
-                                .ecc(new String(contact.getEcc()))
-                                .time(hello.getTimeFromHelloMessage())
-                                .mac(new String(hello.getMac()))
-                                .rssi(hello.getRssiCalibrated())
-                                .receptionTime(hello.getTimeCollectedOnDevice())
-                                .build()
-                )
-                .collect(toList());
     }
 
     @Value

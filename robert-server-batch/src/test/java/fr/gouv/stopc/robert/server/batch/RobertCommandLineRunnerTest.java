@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robert.server.batch;
 
-import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager;
 import fr.gouv.stopc.robert.server.batch.manager.MongodbManager;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
@@ -15,8 +14,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestPropertySource;
 
-import static fr.gouv.stopc.robert.server.batch.manager.GrpcMockManager.givenCryptoServerIdA;
-import static fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory.generateHelloMessagesStartingAndDuringSeconds;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+
+import static fr.gouv.stopc.robert.server.batch.manager.HelloMessageFactory.generateHelloMessagesStartingAndDuring;
 import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenContactExistForUser;
 import static fr.gouv.stopc.robert.server.batch.manager.MongodbManager.givenRegistrationExistsForUser;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,12 +46,16 @@ class RobertCommandLineRunnerTest {
     @Test
     void can_log_how_many_hello_messages_will_be_processed() {
         // Given
+        final var now = clock.now();
         givenRegistrationExistsForUser("user___1");
         givenContactExistForUser(
-                "user___1", c -> c.messageDetails(generateHelloMessagesStartingAndDuringSeconds(clock.now(), 90))
+                "user___1", now, c -> c.messageDetails(
+                        generateHelloMessagesStartingAndDuring(
+                                now,
+                                Duration.of(90, ChronoUnit.SECONDS)
+                        )
+                )
         );
-
-        givenCryptoServerIdA(ByteString.copyFrom("user___1".getBytes()));
 
         try (final var logCaptor = LogCaptor.forClass(RobertCommandLineRunner.class)) {
             robertBatch.run("");

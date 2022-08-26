@@ -270,13 +270,13 @@ class ScoringAlgorithmTest {
                 }
             }
 
-            assertTrue(Arrays.equals(expectedOutput.toArray(), risks.toArray()));
+            assertArrayEquals(expectedOutput.toArray(), risks.toArray());
             assertEquals(
                     expectedFinalRisk,
                     this.serviceScoring.aggregate(
                             risks
                                     .stream()
-                                    .map(a -> a.getRssiScore())
+                                    .map(ScoringResult::getRssiScore)
                                     .collect(Collectors.toList())
                     )
             );

@@ -21,6 +21,7 @@ import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.mongodb.core.DocumentCallbackHandler;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -51,11 +52,15 @@ public class ContactProcessingService {
 
     private final IRegistrationService registrationService;
 
+    private final MetricsService metricsService;
+
     @Timed(value = "robert.batch", extraTags = { "operation", "CONTACT_SCORING_STEP" })
     public void performs() {
         log.info("START : Contact scoring.");
-        // long totalItemCount = contactService.count().longValue();
-        // TOTAL_CONTACT_COUNT_KEY = totalItemCount
+
+        // Value number of contact that'll be processed
+        long totalItemCount = contactService.count();
+        metricsService.setTotalContactsToProcessValued(totalItemCount);
 
         mongoTemplate.executeQuery(
                 new BasicQuery("{}"),
@@ -74,10 +79,6 @@ public class ContactProcessingService {
 
         private final ScoringStrategyService scoringStrategyService;
 
-        private final PropertyLoader propertyLoader;
-
-        private final IServerConfigurationService serverConfigurationService;
-
         final int timeDiffTolerance;
 
         final long tpstStartNTPsec;
@@ -90,8 +91,6 @@ public class ContactProcessingService {
                 IServerConfigurationService serverConfigurationService) {
             this.registrationService = registrationService;
             this.scoringStrategyService = scoringStrategyService;
-            this.propertyLoader = propertyLoader;
-            this.serverConfigurationService = serverConfigurationService;
 
             this.timeDiffTolerance = propertyLoader.getHelloMessageTimeStampTolerance();
             this.tpstStartNTPsec = serverConfigurationService.getServiceTimeStart();
@@ -100,7 +99,7 @@ public class ContactProcessingService {
 
         @Override
         @Counted(value = "CONTACT_SCORING_STEP_PROCEEDED_REGISTRATIONS")
-        public void processDocument(Document document) throws MongoException, DataAccessException {
+        public void processDocument(@NotNull Document document) throws MongoException, DataAccessException {
             final var contact = mongoTemplate.getConverter().read(Contact.class, document);
 
             try {

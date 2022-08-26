@@ -10,6 +10,7 @@ import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.mongodb.core.DocumentCallbackHandler;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -40,10 +41,9 @@ public class ReassessRiskLevelService {
                 "START : Reset risk level of registrations when retention time > {}.",
                 propertyLoader.getRiskLevelRetentionPeriodInDays()
         );
-        // Count number of registrations that'll be used
+        // Value number of registrations that'll be processed
         final long totalItemCount = registrationService.countNbUsersAtRisk();
-        metricsService.setRobertBatchRiskLevelReset(totalItemCount); // TODO : old :
-                                                                     // TOTAL_REGISTRATION_FOR_RISK_LEVEL_RESET_COUNT_KEY
+        metricsService.setRobertBatchRiskLevelReset(totalItemCount);
 
         final var query = new Query().addCriteria(Criteria.where("atRisk").is(true));
 
@@ -59,7 +59,7 @@ public class ReassessRiskLevelService {
 
         @Override
         @Counted(value = "REGISTRATION_RISK_RESET_STEP_PROCEEDED_REGISTRATIONS")
-        public void processDocument(Document document) throws MongoException, DataAccessException {
+        public void processDocument(@NotNull Document document) throws MongoException, DataAccessException {
             final var registration = mongoTemplate.getConverter().read(Registration.class, document);
             if (registration.isAtRisk() && riskRetentionThresholdHasExpired(registration)) {
                 if (!registration.isNotified()) {

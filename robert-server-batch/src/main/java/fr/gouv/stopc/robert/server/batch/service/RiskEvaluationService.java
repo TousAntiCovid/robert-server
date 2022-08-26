@@ -10,6 +10,7 @@ import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.mongodb.core.DocumentCallbackHandler;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -36,6 +37,8 @@ public class RiskEvaluationService {
 
     private final PropertyLoader propertyLoader;
 
+    private final MetricsService metricsService;
+
     private Instant batchExecutionInstant;
 
     /**
@@ -46,11 +49,9 @@ public class RiskEvaluationService {
     public void performs() {
         log.info("START : Risk Evaluation");
 
-        // TODO : Count number of registrations that'll be used
-        // long totalItemCount = registrationService.count().longValue();
-        // stepExecution.getJobExecution().getExecutionContext()
-        // .putLong(RiskEvaluationJobConfiguration.TOTAL_REGISTRATION_COUNT_KEY,
-        // totalItemCount);
+        // Value number of registrations that'll be processed
+        long totalItemCount = registrationService.count();
+        metricsService.setTotalRegistrationRiskEvaluationValued(totalItemCount);
 
         batchExecutionInstant = now();
 
@@ -69,7 +70,7 @@ public class RiskEvaluationService {
 
         @Override
         @Counted(value = "REGISTRATION_RISK_EVALUATION_WORKER_STEP")
-        public void processDocument(Document document) throws MongoException, DataAccessException {
+        public void processDocument(@NotNull Document document) throws MongoException, DataAccessException {
             final var registration = mongoTemplate.getConverter().read(Registration.class, document);
 
             batchRegistrationService.updateRegistrationIfRisk(
