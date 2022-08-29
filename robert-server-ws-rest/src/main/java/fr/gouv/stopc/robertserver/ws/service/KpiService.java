@@ -8,9 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -18,26 +15,10 @@ public class KpiService {
 
     private final KpiRepository kpiRepository;
 
-    private static List<Kpi> emptyKpis() {
-        return List.of(
-                Kpi.builder().name("alertedUsers").value(0L).build(),
-                Kpi.builder().name("exposedButNotAtRiskUsers").value(0L).build(),
-                Kpi.builder().name("infectedUsersNotNotified").value(0L).build(),
-                Kpi.builder().name("notifiedUsersScoredAgain").value(0L).build(),
-                Kpi.builder().name("notifiedUsers").value(0L).build(),
-                Kpi.builder().name("reportsCount").value(0L).build()
-        );
-    }
-
     public RobertServerKpi getKpis() {
 
         final var kpis = kpiRepository.findAll();
-        if (kpis.isEmpty()) {
-            kpiRepository.saveAll(emptyKpis());
-        }
-
         return RobertServerKpi.builder()
-                .date(OffsetDateTime.now())
                 .alertedUsers(
                         kpis
                                 .stream()

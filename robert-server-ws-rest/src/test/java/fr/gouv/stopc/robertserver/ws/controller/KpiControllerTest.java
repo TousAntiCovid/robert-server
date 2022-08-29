@@ -10,13 +10,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
-import java.time.Duration;
-import java.time.OffsetDateTime;
 import java.util.List;
 
-import static fr.gouv.stopc.robertserver.ws.test.matchers.DateTimeMatcher.isoDateTimeNear;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -57,11 +53,8 @@ class KpiControllerTest {
                 .body("notifiedUsers", equalTo(1))
                 .body("usersAboveRiskThresholdButRetentionPeriodExpired", equalTo(90))
                 .body("reportsCount", equalTo(7))
-                .body("size()", equalTo(8));
+                .body("size()", equalTo(7));
 
-        final var fetchingDate = response.extract().path("date");
-        final var fetchingDateAsInstant = OffsetDateTime.parse(fetchingDate.toString()).toInstant();
-        assertThat(fetchingDateAsInstant.toString(), isoDateTimeNear(fetchingDateAsInstant, Duration.ofSeconds(1)));
     }
 
 }
