@@ -8,7 +8,7 @@ import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceIm
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
+import fr.gouv.stopc.robertserver.database.repository.KpiRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -46,10 +46,7 @@ class BatchRegistrationServiceTest {
     ScoringStrategyService scoringStrategyService;
 
     @Autowired
-    private BatchStatisticsService batchStatisticsService;
-
-    @Autowired
-    private BatchStatisticsRepository batchStatisticsRepository;
+    private KpiRepository kpiRepository;
 
     private final RobertClock robertClock = new RobertClock("2020-06-01");
 
@@ -63,9 +60,9 @@ class BatchRegistrationServiceTest {
         final var propertyLoader = mock(PropertyLoader.class, withSettings().lenient());
         when(propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
         batchRegistrationService = new BatchRegistrationServiceImpl(
-                scoringStrategyService, propertyLoader, properties, robertClock, batchStatisticsService
+                scoringStrategyService, propertyLoader, properties, robertClock, kpiRepository
         );
-        batchStatisticsRepository.deleteAll();
+        kpiRepository.deleteAll();
     }
 
     @Test
@@ -153,9 +150,7 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         // WHEN
-        batchRegistrationService.updateRegistrationIfRisk(
-                registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
-        );
+        batchRegistrationService.updateRegistrationIfRisk(registration, startNtpTimestamp, 1.0);
 
         // THEN
         assertThat(registration.isAtRisk())
@@ -197,7 +192,7 @@ class BatchRegistrationServiceTest {
 
         // WHEN
         batchRegistrationService.updateRegistrationIfRisk(
-                registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration, startNtpTimestamp, 1.0
         );
 
         // THEN
@@ -243,7 +238,7 @@ class BatchRegistrationServiceTest {
 
         // WHEN
         batchRegistrationService.updateRegistrationIfRisk(
-                registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration, startNtpTimestamp, 1.0
         );
 
         // THEN
@@ -281,7 +276,7 @@ class BatchRegistrationServiceTest {
 
         // WHEN
         batchRegistrationService.updateRegistrationIfRisk(
-                registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration, startNtpTimestamp, 1.0
         );
 
         // THEN
@@ -329,21 +324,21 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0
         );
 
-        assertThat(batchStatisticsRepository.findAll())
+        assertThat(kpiRepository.findAll())
                 .extracting(
                         stat -> tuple(
-                                stat.getJobStartInstant(),
-                                stat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
+                                stat.getName(),
+                                stat.getValue()
                         )
                 )
                 .containsExactly(
-                        tuple(Instant.parse("2021-01-01T12:30:00Z"), 2L)
+                        tuple("usersAboveRiskThresholdButRetentionPeriodExpired", 2L)
                 );
     }
 
@@ -386,13 +381,13 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0
         );
 
-        assertThat(batchStatisticsRepository.findAll()).isEmpty();
+        assertThat(kpiRepository.findAll()).isEmpty();
     }
 
     @Test
@@ -433,21 +428,21 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0
         );
 
-        assertThat(batchStatisticsRepository.findAll())
+        assertThat(kpiRepository.findAll())
                 .extracting(
                         stat -> tuple(
-                                stat.getJobStartInstant(),
-                                stat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
+                                stat.getName(),
+                                stat.getValue()
                         )
                 )
                 .containsExactly(
-                        tuple(Instant.parse("2021-01-01T12:30:00Z"), 2L)
+                        tuple("usersAboveRiskThresholdButRetentionPeriodExpired", 2L)
                 );
     }
 
@@ -494,21 +489,21 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0
         );
 
-        assertThat(batchStatisticsRepository.findAll())
+        assertThat(kpiRepository.findAll())
                 .extracting(
                         stat -> tuple(
-                                stat.getJobStartInstant(),
-                                stat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
+                                stat.getName(),
+                                stat.getValue()
                         )
                 )
                 .containsExactly(
-                        tuple(Instant.parse("2021-01-01T12:30:00Z"), 2L)
+                        tuple("usersAboveRiskThresholdButRetentionPeriodExpired", 2L)
                 );
     }
 
@@ -555,21 +550,21 @@ class BatchRegistrationServiceTest {
         when(scoringStrategyService.aggregate(anyList())).thenReturn(1.2);
 
         batchRegistrationService.updateRegistrationIfRisk(
-                registration1, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration1, startNtpTimestamp, 1.0
         );
         batchRegistrationService.updateRegistrationIfRisk(
-                registration2, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                registration2, startNtpTimestamp, 1.0
         );
 
-        assertThat(batchStatisticsRepository.findAll())
+        assertThat(kpiRepository.findAll())
                 .extracting(
                         stat -> tuple(
-                                stat.getJobStartInstant(),
-                                stat.getUsersAboveRiskThresholdButRetentionPeriodExpired()
+                                stat.getName(),
+                                stat.getValue()
                         )
                 )
                 .containsExactly(
-                        tuple(Instant.parse("2021-01-01T12:30:00Z"), 2L)
+                        tuple("usersAboveRiskThresholdButRetentionPeriodExpired", 2L)
                 );
     }
 
@@ -607,7 +602,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(robertClock.now().plus(2, MINUTES).asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                    registration, startNtpTimestamp, 1.0
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
@@ -624,7 +619,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(robertClock.now().asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                    registration, startNtpTimestamp, 1.0
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
@@ -641,7 +636,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(robertClock.now().minus(7, DAYS).asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                    registration, startNtpTimestamp, 1.0
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
@@ -658,7 +653,7 @@ class BatchRegistrationServiceTest {
                     .setEpochId(robertClock.now().minus(8, DAYS).asEpochId());
             // when
             batchRegistrationService.updateRegistrationIfRisk(
-                    registration, startNtpTimestamp, 1.0, Instant.parse("2021-01-01T12:30:00Z")
+                    registration, startNtpTimestamp, 1.0
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());
@@ -692,8 +687,7 @@ class BatchRegistrationServiceTest {
             // when
             batchRegistrationService.updateRegistrationIfRisk(
                     registration, startNtpTimestamp,
-                    1.0,
-                    Instant.parse("2021-01-01T12:30:00Z")
+                    1.0
             );
             // then
             final var lastContact = robertClock.atNtpTimestamp(registration.getLastContactTimestamp());

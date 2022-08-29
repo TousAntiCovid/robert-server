@@ -124,9 +124,7 @@
                         </additionalModelTypeAnnotations>
                     </configOptions>
                     <typeMappings>
-                        <typeMapping>
-                            File=org.springframework.core.io.Resource
-                        </typeMapping>
+                        <typeMapping>File=org.springframework.core.io.Resource</typeMapping>
                     </typeMappings>
                 </configuration>
                 <executions>
@@ -154,7 +152,7 @@
                         </goals>
                         <configuration>
                             <inputSpec>
-                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-internal-v1.yml
+                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-internal.yml
                             </inputSpec>
                             <apiPackage>
                                 fr.gouv.stopc.robert.client.api

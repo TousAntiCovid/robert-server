@@ -9,7 +9,7 @@ import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.repository.BatchStatisticsRepository;
+import fr.gouv.stopc.robertserver.database.repository.KpiRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +39,7 @@ class RegistrationRiskLevelResetProcessorTest {
     private ListAppender<ILoggingEvent> processorLoggerAppender;
 
     @Autowired
-    private BatchStatisticsRepository batchStatisticsRepository;
+    private KpiRepository kpiRepository;
 
     @BeforeEach
     public void initializeProcessor() {
@@ -52,7 +52,7 @@ class RegistrationRiskLevelResetProcessorTest {
     @BeforeEach
     public void beforeEach() {
         when(this.propertyLoader.getRiskLevelRetentionPeriodInDays()).thenReturn(7);
-        batchStatisticsRepository.deleteAll();
+        kpiRepository.deleteAll();
     }
 
     @Test
@@ -98,7 +98,7 @@ class RegistrationRiskLevelResetProcessorTest {
         Registration processedRegistration = this.processor.process(registration);
         // Then
         assertThat(processedRegistration).isNull();
-        assertThat(batchStatisticsRepository.count()).isZero();
+        assertThat(kpiRepository.count()).isZero();
     }
 
     @Test

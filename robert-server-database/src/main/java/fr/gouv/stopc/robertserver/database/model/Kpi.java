@@ -8,21 +8,19 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.Instant;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Builder
-@Document
-public class BatchStatistics {
+@Builder(toBuilder = true)
+@Document(value = "kpis")
+public class Kpi {
 
     @Id
     private String id;
 
-    @Indexed
-    private Instant jobStartInstant;
+    @Indexed(unique = true)
+    private String name;
 
-    private long usersAboveRiskThresholdButRetentionPeriodExpired;
+    private Long value;
 
 }

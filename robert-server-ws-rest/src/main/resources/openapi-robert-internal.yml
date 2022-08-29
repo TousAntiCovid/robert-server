@@ -16,17 +16,17 @@ paths:
         - KPI
       summary: Get KPIs
       description: >-
-        Get yesterdays KPIs
+        Get current kpis produced
 
         NOTE: This API must be protected and used only by a trusted back-end server over a secure private connection.
       operationId: kpis
       responses:
         "200":
-          description: Returns the KPI list for date range
+          description: Returns the current kpis
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RobertServerKpiV2"
+                $ref: "#/components/schemas/RobertServerKpi"
         "400":
           description: bad request
 externalDocs:
@@ -36,22 +36,19 @@ servers:
   - url: http://localhost:8080/internal/api/v2
 components:
   schemas:
-    RobertServerKpiV2:
+    RobertServerKpi:
       type: object
       properties:
-        date:
-          type: string
-          format: date
-        nbAlertedUsers:
+        alertedUsers:
           type: integer
           format: int64
-        nbExposedButNotAtRiskUsers:
+        exposedButNotAtRiskUsers:
           type: integer
           format: int64
-        nbInfectedUsersNotNotified:
+        infectedUsersNotNotified:
           type: integer
           format: int64
-        nbNotifiedUsersScoredAgain:
+        notifiedUsersScoredAgain:
           type: integer
           format: int64
         notifiedUsers:
@@ -64,11 +61,10 @@ components:
           type: integer
           format: int64
       required:
-        - date
-        - nbAlertedUsers
-        - nbExposedButNotAtRiskUsers
-        - nbInfectedUsersNotNotified
-        - nbNotifiedUsersScoredAgain
+        - alertedUsers
+        - exposedButNotAtRiskUsers
+        - infectedUsersNotNotified
+        - notifiedUsersScoredAgain
         - notifiedUsers
         - usersAboveRiskThresholdButRetentionPeriodExpired
         - reportsCount

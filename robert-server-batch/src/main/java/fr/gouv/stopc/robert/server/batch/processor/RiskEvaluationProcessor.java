@@ -5,11 +5,8 @@ import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemProcessor;
 
-import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -23,16 +20,6 @@ public class RiskEvaluationProcessor implements ItemProcessor<Registration, Regi
     private final PropertyLoader propertyLoader;
 
     private final BatchRegistrationService registrationService;
-
-    private Instant batchExecutionInstant;
-
-    @BeforeStep
-    void retrieveInterStepData(final StepExecution stepExecution) {
-        batchExecutionInstant = stepExecution
-                .getJobExecution()
-                .getStartTime()
-                .toInstant();
-    }
 
     @Override
     public Registration process(Registration registration) {
@@ -48,8 +35,7 @@ public class RiskEvaluationProcessor implements ItemProcessor<Registration, Regi
         registrationService.updateRegistrationIfRisk(
                 registration,
                 this.serverConfigurationService.getServiceTimeStart(),
-                this.propertyLoader.getRiskThreshold(),
-                this.batchExecutionInstant
+                this.propertyLoader.getRiskThreshold()
         );
 
         registration.setOutdatedRisk(false);
