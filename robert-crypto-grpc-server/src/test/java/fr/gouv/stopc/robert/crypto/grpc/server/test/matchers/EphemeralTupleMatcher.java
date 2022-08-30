@@ -2,7 +2,6 @@ package fr.gouv.stopc.robert.crypto.grpc.server.test.matchers;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
-import fr.gouv.stopc.robert.server.crypto.service.CryptoService;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import lombok.SneakyThrows;
@@ -13,6 +12,7 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 import java.util.Base64;
 
+import static fr.gouv.stopc.robert.crypto.grpc.server.test.CryptoManager.decryptCountryCode;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.SERVER_COUNTRY_CODE;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.KeystoreManager.getFederationKey;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.KeystoreManager.getServerKey;
@@ -25,18 +25,15 @@ public class EphemeralTupleMatcher extends TypeSafeDiagnosingMatcher<EphemeralTu
 
     private byte[] federationKey;
 
-    private final CryptoService cryptoService;
-
     private final RobertClock clock;
 
-    public EphemeralTupleMatcher(final CryptoService cryptoService, final RobertClock clock) {
-        this.cryptoService = cryptoService;
+    public EphemeralTupleMatcher(final RobertClock clock) {
         this.clock = clock;
         this.federationKey = getFederationKey().getEncoded();
     }
 
-    public static EphemeralTupleMatcher isValidTuple(final CryptoService cryptoService, final RobertClock clock) {
-        return new EphemeralTupleMatcher(cryptoService, clock);
+    public static EphemeralTupleMatcher isValidTuple(final RobertClock clock) {
+        return new EphemeralTupleMatcher(clock);
     }
 
     @SneakyThrows
@@ -50,25 +47,23 @@ public class EphemeralTupleMatcher extends TypeSafeDiagnosingMatcher<EphemeralTu
         final var decodedEbid = Base64.getDecoder().decode(item.getKey().ebid);
         final var decryptedEbid = cryptoServerKey.decrypt(decodedEbid);
 
-        int epochIdFromMessage = getEpochIdFromDecryptedEBID(decryptedEbid);
-        if (epochIdFromMessage != item.getEpochId()) {
-            mismatchDescription.appendText("a ephemeral tuple with epochId ")
-                    .appendValue(item.getEpochId())
-                    .appendText(" and ebid ")
-                    .appendValue(item.getKey().ebid)
-                    .appendText(" and with an ebid containing epochId ")
-                    .appendValue(epochIdFromMessage);
+        int epochIdFromDecryptedEbid = getEpochIdFromDecryptedEBID(decryptedEbid);
+        if (epochIdFromDecryptedEbid != item.getEpochId()) {
+            mismatchDescription.appendText("was an ephemeral tuple with an ebid containing epochId ")
+                    .appendValue(epochIdFromDecryptedEbid)
+                    .appendText(" instead of the epochId of the tuple : ")
+                    .appendValue(item.getEpochId());
             return false;
         }
 
         final var decodedEcc = Base64.getDecoder().decode(item.getKey().ecc)[0];
         final var federationKeyForEcc = new CryptoAESECB(federationKey);
-        final var decryptEcc = cryptoService.decryptCountryCode(federationKeyForEcc, decodedEbid, decodedEcc);
+        final var decryptEcc = decryptCountryCode(federationKeyForEcc, decodedEbid, decodedEcc);
 
-        if (SERVER_COUNTRY_CODE != decryptEcc[0]) {
-            mismatchDescription.appendText("a ephemeral tuple with country code ")
-                    .appendValue(decryptEcc[0])
-                    .appendText("instead of country code ")
+        if (SERVER_COUNTRY_CODE != decryptEcc) {
+            mismatchDescription.appendText("was an ephemeral tuple with country code ")
+                    .appendValue(decryptEcc)
+                    .appendText(" instead of country code ")
                     .appendValue(SERVER_COUNTRY_CODE);
             return false;
         }
@@ -78,7 +73,7 @@ public class EphemeralTupleMatcher extends TypeSafeDiagnosingMatcher<EphemeralTu
 
     @Override
     public void describeTo(final Description description) {
-        description.appendText("a consistent ephemeral tuple ");
+        description.appendText("a consistent ephemeral tuple");
     }
 
     private static int getEpochIdFromDecryptedEBID(byte[] ebid) {

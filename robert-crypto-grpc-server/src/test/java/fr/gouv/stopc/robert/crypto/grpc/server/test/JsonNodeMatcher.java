@@ -35,7 +35,7 @@ public class JsonNodeMatcher extends TypeSafeDiagnosingMatcher<String> {
         );
 
         if (!nextMatcher.matches(tupleCollection)) {
-            mismatchDescription.appendText("a json ");
+            mismatchDescription.appendText("a json which ");
             nextMatcher.describeMismatch(tupleCollection, mismatchDescription);
             return false;
         }
@@ -44,7 +44,7 @@ public class JsonNodeMatcher extends TypeSafeDiagnosingMatcher<String> {
 
     @Override
     public void describeTo(final Description description) {
-        description.appendText("a json string with ");
+        description.appendText("a json with ");
         nextMatcher.describeTo(description);
     }
 }

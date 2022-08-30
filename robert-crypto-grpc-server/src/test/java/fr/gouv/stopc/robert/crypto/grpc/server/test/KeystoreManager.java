@@ -26,13 +26,13 @@ import java.security.KeyStore;
 import java.security.KeyStore.SecretKeyEntry;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 import static java.time.LocalDate.now;
 import static java.time.format.DateTimeFormatter.BASIC_ISO_DATE;
+import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
 public class KeystoreManager implements TestExecutionListener {
@@ -115,7 +115,7 @@ public class KeystoreManager implements TestExecutionListener {
         final var pubKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
         final var startDate = new Date();
         final var endDate = Date
-                .from(LocalDate.now().plus(365, ChronoUnit.DAYS).atStartOfDay().toInstant(ZoneOffset.UTC));
+                .from(Instant.now().plus(365, DAYS));
         final var certificateBuilder = new X509v3CertificateBuilder(
                 x500Name, new BigInteger(10, new SecureRandom()), startDate, endDate, x500Name, pubKeyInfo
         );
@@ -153,6 +153,12 @@ public class KeystoreManager implements TestExecutionListener {
     public static Key getFederationKey() {
         final var keystore = loadKeystore();
         return keystore.getKey("federation-key", password.toCharArray());
+    }
+
+    @SneakyThrows
+    public static Key getEncryptionKey() {
+        final var keystore = loadKeystore();
+        return keystore.getKey("key-encryption-key", password.toCharArray());
     }
 
     @SneakyThrows

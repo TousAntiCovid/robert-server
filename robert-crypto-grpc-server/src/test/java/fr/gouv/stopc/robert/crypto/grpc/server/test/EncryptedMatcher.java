@@ -27,7 +27,7 @@ public class EncryptedMatcher extends TypeSafeDiagnosingMatcher<byte[]> {
         final var decryptedContent = aesGcm.decrypt(item);
         final var decryptedString = new String(decryptedContent);
         if (!nextMatcher.matches(decryptedString)) {
-            mismatchDescription.appendText("an encrypted value ");
+            mismatchDescription.appendText("was an encrypted value with ");
             nextMatcher.describeMismatch(decryptedString, mismatchDescription);
             return false;
         }
