@@ -80,7 +80,7 @@ public class KeystoreManager implements TestExecutionListener {
     @SneakyThrows
     private static void generateAESKeys() {
 
-        for (LocalDate date = now().minusDays(15); date.isBefore(now().plusDays(6)); date = date.plusDays(1)) {
+        for (LocalDate date = now().minusDays(20); date.isBefore(now().plusDays(5)); date = date.plusDays(1)) {
             var dateFormatted = date.format(BASIC_ISO_DATE);
             var alias = String.format("server-key-%s", dateFormatted);
             generateAESKey(alias, 192);

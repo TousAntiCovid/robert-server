@@ -4,8 +4,11 @@ import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
@@ -13,7 +16,7 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 import java.util.Base64;
 
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.CryptoManager.decryptCountryCode;
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.SERVER_COUNTRY_CODE;
+import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.FRENCH_COUNTRY_CODE;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.KeystoreManager.getFederationKey;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.KeystoreManager.getServerKey;
 import static java.time.ZoneOffset.UTC;
@@ -60,11 +63,11 @@ public class EphemeralTupleMatcher extends TypeSafeDiagnosingMatcher<EphemeralTu
         final var federationKeyForEcc = new CryptoAESECB(federationKey);
         final var decryptEcc = decryptCountryCode(federationKeyForEcc, decodedEbid, decodedEcc);
 
-        if (SERVER_COUNTRY_CODE != decryptEcc) {
+        if (FRENCH_COUNTRY_CODE != decryptEcc) {
             mismatchDescription.appendText("was an ephemeral tuple with country code ")
                     .appendValue(decryptEcc)
                     .appendText(" instead of country code ")
-                    .appendValue(SERVER_COUNTRY_CODE);
+                    .appendValue(FRENCH_COUNTRY_CODE);
             return false;
         }
 
@@ -82,7 +85,10 @@ public class EphemeralTupleMatcher extends TypeSafeDiagnosingMatcher<EphemeralTu
         return ByteUtils.convertEpoch24bitsToInt(epochId);
     }
 
-    @Value
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class EphemeralTuple {
 
         int epochId;
@@ -91,7 +97,10 @@ public class EphemeralTupleMatcher extends TypeSafeDiagnosingMatcher<EphemeralTu
 
     }
 
-    @Value
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class TupleKey {
 
         String ebid;

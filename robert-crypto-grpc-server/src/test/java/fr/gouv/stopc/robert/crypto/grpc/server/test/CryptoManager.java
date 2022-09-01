@@ -19,10 +19,12 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.IV_LENGTH;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.KeystoreManager.getEncryptionKey;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CryptoManager {
+
+    private static final int IV_LENGTH = 12;
 
     public static KeyPair generateECDHKeyPair(String ecSpec) {
         try {
@@ -55,8 +57,7 @@ public class CryptoManager {
 
     public static int encryptCountryCode(final CryptoCipherStructureAbstract cryptoForECC, final byte[] ebid,
             final byte countryCode) throws RobertServerCryptoException {
-        assertLength("ebid", 64, ebid);
-        assertLength("country code", 8, countryCode);
+        assertThat(ebid.length).isEqualTo(8);
 
         // Pad to 128-bits
         byte[] payloadToEncrypt = Arrays.copyOf(ebid, 128 / 8);
@@ -75,16 +76,6 @@ public class CryptoManager {
             final byte encryptedCountryCode) throws RobertServerCryptoException {
         // decrypt method is same as encrypt
         return encryptCountryCode(cryptoForECC, ebid, encryptedCountryCode);
-    }
-
-    private static void assertLength(String propertyName, int size, byte... bytes) throws RobertServerCryptoException {
-        if (bytes == null || bytes.length != size / 8) {
-            String message = String.format(
-                    "%s should be %s-bits sized but is %s-bits sized", propertyName, size,
-                    bytes == null ? 0 : bytes.length * 8
-            );
-            throw new RobertServerCryptoException(message);
-        }
     }
 
     public static ClientIdentifierBundle findClientById(String id) {

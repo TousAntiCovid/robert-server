@@ -4,10 +4,8 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.impl.CryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
 import fr.gouv.stopc.robert.crypto.grpc.server.test.IntegrationTest;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.internal.Base64;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,20 +14,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.Optional;
 
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.CryptoManager.findClientById;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.CryptoManager.generateDHKeyPair;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.CryptoManager.generateECDHKeyPair;
+import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.FRENCH_COUNTRY_CODE;
+import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.NOW;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.NUMBER_OF_DAYS_FOR_BUNDLES;
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.NUMBER_OF_EPOCHS_IN_A_DAY;
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.SERVER_COUNTRY_CODE;
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.currentEpochId;
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.epochIdInTheFuture;
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.epochIdInThePast;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.EncryptedMatcher.isEncrypted;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.JsonNodeMatcher.isJson;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.matchers.EphemeralTupleMatcher.isValidTuple;
+import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -59,23 +54,20 @@ class CryptoServerGrpcTest {
         final var request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(generateECDHKeyPair("secp256r1").getPublic().getEncoded()))
-                .setFromEpochId(currentEpochId)
+                .setFromEpochId(NOW.asEpochId())
                 .setNumberOfDaysForEpochBundles(NUMBER_OF_DAYS_FOR_BUNDLES)
-                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(SERVER_COUNTRY_CODE).toByteArray()))
+                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(FRENCH_COUNTRY_CODE).toByteArray()))
                 .build();
 
-        Optional<CreateRegistrationResponse> optionalCreateRegistrationResponse = cryptoServerClient
-                .createRegistration(request);
+        final var createRegistrationResponse = cryptoServerClient
+                .createRegistration(request).orElseThrow();
 
-        assertThat(optionalCreateRegistrationResponse.get().hasError()).isFalse();
-
-        CreateRegistrationResponse createRegistrationResponse = optionalCreateRegistrationResponse.get();
+        assertThat(createRegistrationResponse.hasError()).isFalse();
 
         final var keyForTuples = findClientById(Base64.encode(createRegistrationResponse.getIdA().toByteArray()))
                 .getKeyForTuples();
 
-        final var expectedSize = (NUMBER_OF_DAYS_FOR_BUNDLES - 1) * NUMBER_OF_EPOCHS_IN_A_DAY
-                + TimeUtils.remainingEpochsForToday(currentEpochId);
+        final var expectedSize = NOW.plus(4, DAYS).truncatedTo(DAYS).asEpochId() - NOW.asEpochId();
 
         assertThat(
                 createRegistrationResponse.getTuples().toByteArray(), isEncrypted(
@@ -105,29 +97,25 @@ class CryptoServerGrpcTest {
         final var request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(generateECDHKeyPair("secp256r1").getPublic().getEncoded()))
-                .setFromEpochId(currentEpochId)
+                .setFromEpochId(NOW.asEpochId())
                 .setNumberOfDaysForEpochBundles(20)
-                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(SERVER_COUNTRY_CODE).toByteArray()))
+                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(FRENCH_COUNTRY_CODE).toByteArray()))
                 .build();
 
-        final var optionalCreateRegistrationResponse = cryptoServerClient.createRegistration(request);
-
-        assertThat(optionalCreateRegistrationResponse.get().hasError()).isFalse();
-
-        CreateRegistrationResponse createRegistrationResponse = optionalCreateRegistrationResponse.get();
+        final var createRegistrationResponse = cryptoServerClient.createRegistration(request).orElseThrow();
 
         final var keyForTuples = findClientById(Base64.encode(createRegistrationResponse.getIdA().toByteArray()))
                 .getKeyForTuples();
 
-        final var expectedSize = (20 - 1) * NUMBER_OF_EPOCHS_IN_A_DAY
-                + TimeUtils.remainingEpochsForToday(currentEpochId);
+        final var expectedTwentyDaysSize = NOW.plus(20, DAYS).truncatedTo(DAYS).asEpochId() - NOW.asEpochId();
+        final var expectedActualSize = NOW.plus(5, DAYS).truncatedTo(DAYS).asEpochId() - NOW.asEpochId();
 
-        final var errorOnSize = assertThrows(
+        assertThrows(
                 AssertionError.class,
                 () -> assertThat(
                         createRegistrationResponse.getTuples().toByteArray(), isEncrypted(
                                 isJson(
-                                        hasSize(expectedSize)
+                                        hasSize(expectedTwentyDaysSize)
                                 ),
                                 keyForTuples
                         )
@@ -135,10 +123,11 @@ class CryptoServerGrpcTest {
         );
 
         assertThat(
-                errorOnSize.getMessage().replace("\r", ""), equalTo(
-                        "\n" +
-                                "Expected: an encrypted value with a json with a collection with size <1869>\n" +
-                                "     but: was an encrypted value with a json which collection size was <525>"
+                createRegistrationResponse.getTuples().toByteArray(), isEncrypted(
+                        isJson(
+                                hasSize(expectedActualSize)
+                        ),
+                        keyForTuples
                 )
         );
 
@@ -160,15 +149,15 @@ class CryptoServerGrpcTest {
         CreateRegistrationRequest request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(fakeKey))
-                .setFromEpochId(currentEpochId)
+                .setFromEpochId(NOW.asEpochId())
                 .setNumberOfDaysForEpochBundles(NUMBER_OF_DAYS_FOR_BUNDLES)
-                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(SERVER_COUNTRY_CODE).toByteArray()))
+                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(FRENCH_COUNTRY_CODE).toByteArray()))
                 .build();
 
-        final var createRegistrationResponse = cryptoServerClient.createRegistration(request);
+        final var createRegistrationResponse = cryptoServerClient.createRegistration(request).orElseThrow();
 
-        assertThat(createRegistrationResponse.get().hasError()).isTrue();
-        assertThat(createRegistrationResponse.get().getError().getCode()).isEqualTo(400);
+        assertThat(createRegistrationResponse.hasError()).isTrue();
+        assertThat(createRegistrationResponse.getError().getCode()).isEqualTo(400);
     }
 
     @Test
@@ -177,15 +166,15 @@ class CryptoServerGrpcTest {
         CreateRegistrationRequest request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(generateDHKeyPair().getPublic().getEncoded()))
-                .setFromEpochId(currentEpochId)
+                .setFromEpochId(NOW.asEpochId())
                 .setNumberOfDaysForEpochBundles(NUMBER_OF_DAYS_FOR_BUNDLES)
-                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(SERVER_COUNTRY_CODE).toByteArray()))
+                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(FRENCH_COUNTRY_CODE).toByteArray()))
                 .build();
 
-        final var createRegistrationResponse = cryptoServerClient.createRegistration(request);
+        final var createRegistrationResponse = cryptoServerClient.createRegistration(request).orElseThrow();
 
-        assertThat(createRegistrationResponse.get().hasError()).isTrue();
-        assertThat(createRegistrationResponse.get().getError().getCode()).isEqualTo(400);
+        assertThat(createRegistrationResponse.hasError()).isTrue();
+        assertThat(createRegistrationResponse.getError().getCode()).isEqualTo(400);
 
     }
 
@@ -196,15 +185,15 @@ class CryptoServerGrpcTest {
         CreateRegistrationRequest request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(generateECDHKeyPair("secp256k1").getPublic().getEncoded()))
-                .setFromEpochId(currentEpochId)
+                .setFromEpochId(NOW.asEpochId())
                 .setNumberOfDaysForEpochBundles(NUMBER_OF_DAYS_FOR_BUNDLES)
-                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(SERVER_COUNTRY_CODE).toByteArray()))
+                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(FRENCH_COUNTRY_CODE).toByteArray()))
                 .build();
 
-        final var createRegistrationResponse = cryptoServerClient.createRegistration(request);
+        final var createRegistrationResponse = cryptoServerClient.createRegistration(request).orElseThrow();
 
-        assertThat(createRegistrationResponse.get().hasError()).isTrue();
-        assertThat(createRegistrationResponse.get().getError().getCode()).isEqualTo(400);
+        assertThat(createRegistrationResponse.hasError()).isTrue();
+        assertThat(createRegistrationResponse.getError().getCode()).isEqualTo(400);
 
     }
 
@@ -214,15 +203,15 @@ class CryptoServerGrpcTest {
         final var request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(generateECDHKeyPair("secp256r1").getPublic().getEncoded()))
-                .setFromEpochId(epochIdInThePast)
+                .setFromEpochId(clock.now().minus(25, DAYS).asEpochId())
                 .setNumberOfDaysForEpochBundles(NUMBER_OF_DAYS_FOR_BUNDLES)
-                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(SERVER_COUNTRY_CODE).toByteArray()))
+                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(FRENCH_COUNTRY_CODE).toByteArray()))
                 .build();
 
-        final var createRegistrationResponse = cryptoServerClient.createRegistration(request);
+        final var createRegistrationResponse = cryptoServerClient.createRegistration(request).orElseThrow();
 
-        assertThat(createRegistrationResponse.get().hasError()).isTrue();
-        assertThat(createRegistrationResponse.get().getError().getCode()).isEqualTo(500);
+        assertThat(createRegistrationResponse.hasError()).isTrue();
+        assertThat(createRegistrationResponse.getError().getCode()).isEqualTo(500);
     }
 
     @Test
@@ -230,15 +219,15 @@ class CryptoServerGrpcTest {
         final var request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(generateECDHKeyPair("secp256r1").getPublic().getEncoded()))
-                .setFromEpochId(epochIdInTheFuture)
+                .setFromEpochId(clock.now().plus(10, DAYS).asEpochId())
                 .setNumberOfDaysForEpochBundles(NUMBER_OF_DAYS_FOR_BUNDLES)
-                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(SERVER_COUNTRY_CODE).toByteArray()))
+                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(FRENCH_COUNTRY_CODE).toByteArray()))
                 .build();
 
-        final var createRegistrationResponse = cryptoServerClient.createRegistration(request);
+        final var createRegistrationResponse = cryptoServerClient.createRegistration(request).orElseThrow();
 
-        assertThat(createRegistrationResponse.get().hasError()).isTrue();
-        assertThat(createRegistrationResponse.get().getError().getCode()).isEqualTo(500);
+        assertThat(createRegistrationResponse.hasError()).isTrue();
+        assertThat(createRegistrationResponse.getError().getCode()).isEqualTo(500);
     }
 
     @Test
@@ -246,15 +235,15 @@ class CryptoServerGrpcTest {
         final var request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(generateECDHKeyPair("secp256r1").getPublic().getEncoded()))
-                .setFromEpochId(currentEpochId)
+                .setFromEpochId(NOW.asEpochId())
                 .setNumberOfDaysForEpochBundles(0)
-                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(SERVER_COUNTRY_CODE).toByteArray()))
+                .setServerCountryCode(ByteString.copyFrom(BigInteger.valueOf(FRENCH_COUNTRY_CODE).toByteArray()))
                 .build();
 
-        final var createRegistrationResponse = cryptoServerClient.createRegistration(request);
+        final var createRegistrationResponse = cryptoServerClient.createRegistration(request).orElseThrow();
 
-        assertThat(createRegistrationResponse.get().hasError()).isTrue();
-        assertThat(createRegistrationResponse.get().getError().getCode()).isEqualTo(500);
+        assertThat(createRegistrationResponse.hasError()).isTrue();
+        assertThat(createRegistrationResponse.getError().getCode()).isEqualTo(500);
     }
 
     @Test
@@ -262,20 +251,19 @@ class CryptoServerGrpcTest {
         final var request = CreateRegistrationRequest
                 .newBuilder()
                 .setClientPublicKey(ByteString.copyFrom(generateECDHKeyPair("secp256r1").getPublic().getEncoded()))
-                .setFromEpochId(currentEpochId)
+                .setFromEpochId(NOW.asEpochId())
                 .setNumberOfDaysForEpochBundles(NUMBER_OF_DAYS_FOR_BUNDLES)
                 .setServerCountryCode(ByteString.copyFrom("incorrect ecc".getBytes()))
                 .build();
 
-        final var optionalCreateRegistrationResponse = cryptoServerClient.createRegistration(request);
+        final var createRegistrationResponse = cryptoServerClient.createRegistration(request).orElseThrow();
 
-        CreateRegistrationResponse createRegistrationResponse = optionalCreateRegistrationResponse.get();
+        assertThat(createRegistrationResponse.hasError()).isFalse();
 
         final var keyForTuples = findClientById(Base64.encode(createRegistrationResponse.getIdA().toByteArray()))
                 .getKeyForTuples();
 
-        final var expectedSize = (NUMBER_OF_DAYS_FOR_BUNDLES - 1) * NUMBER_OF_EPOCHS_IN_A_DAY
-                + TimeUtils.remainingEpochsForToday(currentEpochId);
+        final var expectedSize = NOW.plus(4, DAYS).truncatedTo(DAYS).asEpochId() - NOW.asEpochId();
 
         assertThat(
                 createRegistrationResponse.getTuples().toByteArray(), isEncrypted(
