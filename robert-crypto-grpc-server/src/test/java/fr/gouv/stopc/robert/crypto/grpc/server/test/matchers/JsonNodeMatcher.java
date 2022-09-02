@@ -1,8 +1,7 @@
-package fr.gouv.stopc.robert.crypto.grpc.server.test;
+package fr.gouv.stopc.robert.crypto.grpc.server.test.matchers;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.stopc.robert.crypto.grpc.server.test.matchers.EphemeralTupleMatcher;
 import lombok.SneakyThrows;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;

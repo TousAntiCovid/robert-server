@@ -21,9 +21,9 @@ import static fr.gouv.stopc.robert.crypto.grpc.server.test.CryptoManager.generat
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.FRENCH_COUNTRY_CODE;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.NOW;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.DataManager.NUMBER_OF_DAYS_FOR_BUNDLES;
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.EncryptedMatcher.isEncrypted;
-import static fr.gouv.stopc.robert.crypto.grpc.server.test.JsonNodeMatcher.isJson;
+import static fr.gouv.stopc.robert.crypto.grpc.server.test.matchers.EncryptedMatcher.isEncrypted;
 import static fr.gouv.stopc.robert.crypto.grpc.server.test.matchers.EphemeralTupleMatcher.isValidTuple;
+import static fr.gouv.stopc.robert.crypto.grpc.server.test.matchers.JsonNodeMatcher.isJson;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;

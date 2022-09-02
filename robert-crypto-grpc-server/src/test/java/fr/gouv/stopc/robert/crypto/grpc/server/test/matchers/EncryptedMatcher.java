@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robert.crypto.grpc.server.test;
+package fr.gouv.stopc.robert.crypto.grpc.server.test.matchers;
 
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import lombok.SneakyThrows;

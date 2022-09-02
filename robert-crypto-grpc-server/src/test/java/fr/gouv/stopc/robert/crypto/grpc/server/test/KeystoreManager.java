@@ -52,7 +52,6 @@ public class KeystoreManager implements TestExecutionListener {
         }
 
         System.setProperty("robert.crypto.server.keystore.password", password);
-        System.setProperty("robert.crypto.server.keystore.config.file", "classpath:config/SoftHSMv2/softhsm2.cfg");
         System.setProperty("robert.server.time-start", "20200601");
         System.setProperty("robert.protocol.hello-message-timestamp-tolerance", "180");
         System.setProperty(
