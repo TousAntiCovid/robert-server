@@ -1,7 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration

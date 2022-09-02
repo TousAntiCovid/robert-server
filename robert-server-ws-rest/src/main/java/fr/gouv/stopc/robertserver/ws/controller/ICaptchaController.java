@@ -16,16 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping(value = { "${controller.path.prefix}" + UriConstants.API_V2,
-        "${controller.path.prefix}" + UriConstants.API_V3,
-        "${controller.path.prefix}" + UriConstants.API_V4,
-        "${controller.path.prefix}" + UriConstants.API_V5,
-        "${controller.path.prefix}" + UriConstants.API_V6 })
+@RequestMapping({ "${controller.path.prefix}" + UriConstants.API_V6 })
 public interface ICaptchaController {
 
     @PostMapping(value = UriConstants.CAPTCHA)
     ResponseEntity<CaptchaCreationDto> createCaptcha(
-            @Valid @RequestBody(required = true) CaptchaCreationVo captchaCreationVo)
+            @Valid @RequestBody CaptchaCreationVo captchaCreationVo)
             throws RobertServerException;
 
     @GetMapping(value = UriConstants.CAPTCHA + "/{captchaId}/image", produces = MediaType.IMAGE_PNG_VALUE)

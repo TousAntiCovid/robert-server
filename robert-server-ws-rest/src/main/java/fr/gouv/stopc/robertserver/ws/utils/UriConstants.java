@@ -19,16 +19,6 @@ public final class UriConstants {
 
     public static final String CAPTCHA = "/captcha";
 
-    public static final String API_V1 = "/v1";
-
-    public static final String API_V2 = "/v2";
-
-    public static final String API_V3 = "/v3";
-
-    public static final String API_V4 = "/v4";
-
-    public static final String API_V5 = "/v5";
-
     public static final String API_V6 = "/v6";
 
 }

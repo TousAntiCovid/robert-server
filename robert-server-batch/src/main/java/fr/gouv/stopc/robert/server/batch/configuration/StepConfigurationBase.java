@@ -1,9 +1,13 @@
 package fr.gouv.stopc.robert.server.batch.configuration;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
+import fr.gouv.stopc.robert.server.batch.reader.MongoItemReaderFactory;
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robertserver.database.model.Contact;
+import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
+import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -24,27 +28,29 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
-import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
-import fr.gouv.stopc.robert.server.batch.utils.MongoItemReaderFactory;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robertserver.database.model.Contact;
-import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
-import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class StepConfigurationBase {
+
     public static final int CHUNK_SIZE = 10000;
+
     public static final int GRID_SIZE = 10;
+
     public static final int POPULATE_STEP_CHUNK_SIZE = 200000;
-    
+
     protected final PropertyLoader propertyLoader;
+
     protected final StepBuilderFactory stepBuilderFactory;
+
     protected final IServerConfigurationService serverConfigurationService;
+
     protected final ItemIdMappingService itemIdMappingService;
+
     protected final MongoItemReaderFactory<Registration> registrationMongoItemReaderFactory;
+
     protected final MongoItemReaderFactory<Contact> contactMongoItemReaderFactory;
 
     public StepConfigurationBase(PropertyLoader propertyLoader, StepBuilderFactory stepBuilderFactory,
@@ -64,7 +70,7 @@ public class StepConfigurationBase {
 
         return sorts;
     }
-    
+
     protected Partitioner partitioner() {
         return new RangePartitioner();
     }
@@ -95,10 +101,12 @@ public class StepConfigurationBase {
     @Bean
     @StepScope
     public MongoItemReader<Registration> mongoRegistrationItemReader(MongoTemplate mongoTemplate,
-                                                                     @Value("#{stepExecutionContext[name]}") final String name,
-                                                                     @Value("#{stepExecutionContext[start]}") final int start,
-                                                                     @Value("#{stepExecutionContext[end]}") final int end) {
-        log.info("{} currently reading Registration(s) from itemId collections from id={} - to id= {} ", name, start, end);
+            @Value("#{stepExecutionContext[name]}") final String name,
+            @Value("#{stepExecutionContext[start]}") final int start,
+            @Value("#{stepExecutionContext[end]}") final int end) {
+        log.info(
+                "{} currently reading Registration(s) from itemId collections from id={} - to id= {} ", name, start, end
+        );
 
         List<byte[]> itemIdentifiers = (List<byte[]>) itemIdMappingService.getItemIdMappingsBetweenIds(start, end);
 
@@ -106,14 +114,17 @@ public class StepConfigurationBase {
         query.addCriteria(Criteria.where("_id").in(itemIdentifiers));
         return registrationMongoItemReaderFactory.getMongoItemReader(mongoTemplate, query, CHUNK_SIZE);
     }
-    
+
     @Bean
     @StepScope
-    public MongoItemReader<Contact> mongoContactItemReader(MongoTemplate mongoTemplate, @Value("#{stepExecutionContext[name]}") final String name, @Value("#{stepExecutionContext[start]}") final int start, @Value("#{stepExecutionContext[end]}") final int end) {
+    public MongoItemReader<Contact> mongoContactItemReader(MongoTemplate mongoTemplate,
+            @Value("#{stepExecutionContext[name]}") final String name,
+            @Value("#{stepExecutionContext[start]}") final int start,
+            @Value("#{stepExecutionContext[end]}") final int end) {
         log.info("{} currently reading Contact(s) from itemId collections from id={} - to id= {} ", name, start, end);
-    
+
         List<String> itemIdentifiers = (List<String>) this.itemIdMappingService.getItemIdMappingsBetweenIds(start, end);
-    
+
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").in(itemIdentifiers));
         return contactMongoItemReaderFactory.getMongoItemReader(mongoTemplate, query, CHUNK_SIZE);

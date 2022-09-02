@@ -26,8 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import javax.validation.Valid;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -56,68 +54,6 @@ public class StatusControllerImpl implements IStatusController {
     private final DeclarationService declarationService;
 
     private final KpiService kpiService;
-
-    @Override
-    public ResponseEntity<StatusResponseDtoV1ToV4> getStatusV1ToV4(@Valid StatusVo statusVo) {
-
-        ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
-
-        if (statusResponse.getStatusCodeValue() == 430) {
-            log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCodeValue());
-            return ResponseEntity.status(430).build();
-        }
-        if (Objects.isNull(statusResponse) || Objects.isNull(statusResponse.getStatusCodeValue())) {
-            log.error("The response of the status must not be null");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
-        if (statusResponse.getStatusCode().isError()) {
-            log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCode());
-            return ResponseEntity.status(statusResponse.getStatusCode()).build();
-        }
-
-        StatusResponseDto status = statusResponse.getBody();
-        return ResponseEntity.ok(
-                StatusResponseDtoV1ToV4.builder()
-                        .atRisk(status.getRiskLevel() != RiskLevel.NONE)
-                        .config(status.getConfig())
-                        .tuples(status.getTuples())
-                        .build()
-        );
-    }
-
-    @Override
-    public ResponseEntity<StatusResponseDtoV5> getStatusV5(@Valid StatusVo statusVo) {
-
-        ResponseEntity<StatusResponseDto> statusResponse = this.getStatus(statusVo);
-
-        if (statusResponse.getStatusCodeValue() == 430) {
-            log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCodeValue());
-            return ResponseEntity.status(430).build();
-        }
-
-        if (Objects.isNull(statusResponse) || Objects.isNull(statusResponse.getStatusCodeValue())) {
-            log.error("The response of the status must not be null");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
-        if (statusResponse.getStatusCode().isError()) {
-            log.warn("Status HTTP response code is equal to : {}", statusResponse.getStatusCodeValue());
-            return ResponseEntity.status(statusResponse.getStatusCodeValue()).build();
-        }
-
-        StatusResponseDto status = statusResponse.getBody();
-        return ResponseEntity.ok(
-                StatusResponseDtoV5.builder()
-                        .riskLevel(status.getRiskLevel())
-                        .config(status.getConfig())
-                        .tuples(status.getTuples())
-                        .declarationToken(status.getDeclarationToken())
-                        .lastContactDate(status.getLastContactDate())
-                        .lastRiskScoringDate(status.getLastRiskScoringDate())
-                        .build()
-        );
-    }
 
     @Override
     public ResponseEntity<StatusResponseDto> getStatus(StatusVo statusVo) {
@@ -263,6 +199,7 @@ public class StatusControllerImpl implements IStatusController {
         // The status atRisk will be reinitialized by the batch
         if (riskLevel != RiskLevel.NONE) {
             record.setNotified(true);
+            kpiService.incrementAlertedUsers();
 
             // Include lastContactDate only if any and if user is evaluated at risk
             if (record.getLastContactTimestamp() > 0) {
@@ -302,7 +239,7 @@ public class StatusControllerImpl implements IStatusController {
         log.debug("analytics token generated : {}", analyticsToken);
 
         // update statistics about user being notified of its risk status
-        kpiService.updateWebserviceStatistics(record);
+        kpiService.incrementNotifiedUsersCount(record);
         record.setNotifiedForCurrentRisk(true);
 
         // Save changes to the record

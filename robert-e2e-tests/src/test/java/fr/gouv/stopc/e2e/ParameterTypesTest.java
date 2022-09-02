@@ -26,6 +26,7 @@ class ParameterTypesTest {
                 Arguments.of("il y a 33 minutes", Instant.now().minus(33, MINUTES)),
                 Arguments.of("il y a 2 jours 3 heures et 5 minutes", Instant.now().minus(Duration.parse("PT51H5M"))),
                 Arguments.of("maintenant", Instant.now()),
+                Arguments.of("aujourd'hui", Instant.now()),
                 Arguments.of("dans 1 jour", Instant.now().plus(1, DAYS)),
                 Arguments.of("dans 22 jours", Instant.now().plus(22, DAYS)),
                 Arguments.of("dans 1 heure", Instant.now().plus(1, HOURS)),
@@ -43,7 +44,7 @@ class ParameterTypesTest {
                 .isCloseTo(expectedInstant, within(5, SECONDS));
     }
 
-    private static List<Arguments> can_parse_expression() {
+    private static List<Arguments> can_parse_expression_to_duration() {
         return List.of(
                 Arguments.of("1 jour", Duration.ofDays(1)),
                 Arguments.of("22 jours", Duration.ofDays(22)),
@@ -57,8 +58,41 @@ class ParameterTypesTest {
 
     @ParameterizedTest
     @MethodSource
-    void can_parse_expression(final String durationExpression, final Duration expectedDuration) {
+    void can_parse_expression_to_duration(final String durationExpression, final Duration expectedDuration) {
         assertThat(parameters.duration(durationExpression))
                 .isEqualTo(expectedDuration);
+    }
+
+    private static List<Arguments> can_parse_expression_to_instant() {
+        return List.of(
+                Arguments.of("1 jour", Instant.now().minus(1, DAYS)),
+                Arguments.of(
+                        "1 jour à 2:34", Instant.now()
+                                .minus(1, DAYS)
+                                .truncatedTo(DAYS)
+                                .plus(2, HOURS)
+                                .plus(34, MINUTES)
+                ),
+                Arguments.of("22 jours", Instant.now().minus(22, DAYS)),
+                Arguments.of("1 heure", Instant.now().minus(1, HOURS)),
+                Arguments.of("19 heures", Instant.now().minus(19, HOURS)),
+                Arguments.of("1 minute", Instant.now().minus(1, MINUTES)),
+                Arguments.of("33 minutes", Instant.now().minus(33, MINUTES)),
+                Arguments.of("1 jour 2 heures et 33 minutes", Instant.now().minus(Duration.parse("PT26H33M"))),
+                Arguments.of(
+                        "1 jour 2 heures et 33 minutes à 15:22", Instant.now()
+                                .truncatedTo(DAYS)
+                                .minus(1, DAYS)
+                                .plus(15, HOURS)
+                                .plus(22, MINUTES)
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void can_parse_expression_to_instant(final String instantExpression, final Instant expectedInstant) {
+        assertThat(parameters.instant(instantExpression))
+                .isCloseTo(expectedInstant, within(5, SECONDS));
     }
 }

@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robert.server.batch.writer;
 
-import fr.gouv.stopc.robert.server.batch.utils.ItemProcessingCounterUtils;
+import fr.gouv.stopc.robert.server.batch.model.ItemProcessingCounterUtils;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.AllArgsConstructor;
@@ -24,7 +24,7 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
 
     private String totalItemCountKey;
 
-    public RegistrationItemWriter(IRegistrationService registrationService, String totalItemCountKey){
+    public RegistrationItemWriter(IRegistrationService registrationService, String totalItemCountKey) {
         this.registrationService = registrationService;
         this.totalItemCountKey = totalItemCountKey;
     }
@@ -43,12 +43,7 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
         }
     }
 
-    /**
-     * Update Registrations
-     *
-     * @param registrationList
-     */
-    private void updateRegistrationList(List<Registration> registrationList){
+    private void updateRegistrationList(List<Registration> registrationList) {
         Instant startTime = Instant.now();
 
         log.info("{} Registration(s) to update.", registrationList.size());
@@ -59,11 +54,14 @@ public class RegistrationItemWriter implements ItemWriter<Registration> {
                 .addNumberOfProcessedRegistrations(registrationList.size());
 
         log.info("Execution duration of the update registrations : {} second(s).", timeElapsed);
-        log.info("Total number of updated registrations/Total number of registrations to update : {}/{}", processedRegistrationCount, totalRegistrationCount);
+        log.info(
+                "Total number of updated registrations/Total number of registrations to update : {}/{}",
+                processedRegistrationCount, totalRegistrationCount
+        );
     }
 
     @BeforeStep
     public void beforeStep(StepExecution stepExecution) {
-            totalRegistrationCount = stepExecution.getJobExecution().getExecutionContext().getLong(totalItemCountKey);
+        totalRegistrationCount = stepExecution.getJobExecution().getExecutionContext().getLong(totalItemCountKey);
     }
 }

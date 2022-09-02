@@ -108,21 +108,9 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>5.1.0</version>
+                <version>5.2.1</version>
                 <configuration>
-                    <inputSpec>
-                        ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-server-v1.yml
-                    </inputSpec>
                     <generatorName>java</generatorName>
-                    <apiPackage>fr.gouv.stopc.robert.client.api</apiPackage>
-                    <modelPackage>
-                        fr.gouv.stopc.robert.client.model
-                    </modelPackage>
-                    <typeMappings>
-                        <typeMapping>
-                            File=org.springframework.core.io.Resource
-                        </typeMapping>
-                    </typeMappings>
                     <configOptions>
                         <library>resttemplate</library>
                         <dateLibrary>java8</dateLibrary>
@@ -135,12 +123,44 @@
                             @lombok.NoArgsConstructor
                         </additionalModelTypeAnnotations>
                     </configOptions>
+                    <typeMappings>
+                        <typeMapping>File=org.springframework.core.io.Resource</typeMapping>
+                    </typeMappings>
                 </configuration>
                 <executions>
                     <execution>
+                        <id>robert-server-api</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-server-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.robert.client.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.robert.client.model
+                            </modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>robert-server-internal-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/../robert-server-ws-rest/src/main/resources/openapi-robert-internal.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.robert.client.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.robert.client.model
+                            </modelPackage>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

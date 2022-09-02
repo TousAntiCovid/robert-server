@@ -483,21 +483,12 @@ components:
           items:
             $ref: "#/components/schemas/Contact"
           description: >-
-            Optional (either 'contacts' or 'contactsAsBinary' must be provided).
-
+            Can be an empty list but must not be null.
 
             The list of contacts stored in the LocalProximityList (local contacts DB)
-        contactsAsBinary:
-          description: >-
-            WIP - DO NOT USE. Optional (either 'contacts' or 'contactsAsBinary'
-            must be provided).
-
-
-            A protobuf containing the same data as the 'contacts' parameter. Encoded as Base64
-          type: string
-          format: byte
       required:
         - token
+        - contacts
     ReportBatchResponse:
       type: object
       properties:

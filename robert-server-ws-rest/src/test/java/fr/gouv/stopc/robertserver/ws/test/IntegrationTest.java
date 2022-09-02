@@ -19,10 +19,14 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @ActiveProfiles({ "dev", "test" })
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners(listeners = {
+        AuthDataManager.class,
         JwtKeysManager.class,
+        LogbackManager.class,
         RestAssuredManager.class,
         MongodbManager.class,
-        MockServerManager.class
+        MockServerManager.class,
+        GrpcMockManager.class,
+        StatisticsManager.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {

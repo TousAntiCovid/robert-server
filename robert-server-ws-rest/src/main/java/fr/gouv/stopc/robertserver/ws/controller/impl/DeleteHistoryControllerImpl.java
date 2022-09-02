@@ -6,7 +6,6 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import fr.gouv.stopc.robertserver.ws.controller.IDeleteHistoryController;
 import fr.gouv.stopc.robertserver.ws.dto.DeleteHistoryResponseDto;
-import fr.gouv.stopc.robertserver.ws.exception.RobertServerException;
 import fr.gouv.stopc.robertserver.ws.service.AuthRequestValidationService;
 import fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +28,7 @@ public class DeleteHistoryControllerImpl implements IDeleteHistoryController {
     private final AuthRequestValidationService authRequestValidationService;
 
     @Override
-    public ResponseEntity<DeleteHistoryResponseDto> deleteHistory(DeleteHistoryRequestVo deleteHistoryRequestVo)
-            throws RobertServerException {
+    public ResponseEntity<DeleteHistoryResponseDto> deleteHistory(DeleteHistoryRequestVo deleteHistoryRequestVo) {
         log.info("Receiving delete exposure history request");
 
         AuthRequestValidationService.ValidationResult<GetIdFromAuthResponse> validationResult = this.authRequestValidationService

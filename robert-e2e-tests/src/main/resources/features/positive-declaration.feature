@@ -6,8 +6,7 @@ Fonctionnalité: Covid-19 positive declaration
   Dans le but de limiter la propagation du Covid19
 
   Contexte:
-    Etant donné que l'on est aujourd'hui
-    Et que John, Sarah et Paul ont l'application TAC
+    Etant donné que John, Sarah et Paul ont l'application TAC depuis 18 jours
 
   Scénario: Une personne est prévenue si un de ses contacts se déclare malade
     Etant donné que John et Sarah sont à proximité 60 minutes
@@ -42,32 +41,36 @@ Fonctionnalité: Covid-19 positive declaration
     Alors Sarah n'est pas à risque
     Et Paul n'est pas à risque
 
-  Plan du Scénario: On passe à risque lorsque notre dernier contact date d'il y a 7 jours ou moins (exemple avec il y a <jours>)
-    Etant donné que John et Sarah étaient à proximité 60 minutes il y a <jours> jours et que Sarah s'est déclarée malade
-    Lorsque le batch robert est exécuté
+  Plan du Scénario: On passe à risque lorsque notre dernier contact date d'il y a 7 jours ou moins (exemple avec il y a <date de visite>)
+    Etant donné que John et Sarah étaient à proximité 60 minutes il y a <date de visite>
+    Lorsque Sarah se déclare malade aujourd'hui
+    Et que le batch robert est exécuté
     Alors John est à risque
     Exemples:
-      | jours |
-      | 1     |
-      | 2     |
-      | 3     |
-      | 4     |
-      | 5     |
-      | 6     |
-      | 7     |
+      | date de visite     |
+      | 1 jour             |
+      | 2 jours            |
+      | 3 jours            |
+      | 4 jours            |
+      | 5 jours            |
+      | 6 jours            |
+      | 7 jours            |
+      | 7 jours 45 minutes |
 
-  Plan du Scénario: Pas d'alerte si le dernier contact date d'il y a plus de 7 jours (exemple avec il y a <jours>)
-    Etant donné que John et Sarah étaient à proximité 60 minutes il y a <jours> jours et que Sarah s'est déclarée malade
-    Lorsque le batch robert est exécuté
+  Plan du Scénario: Pas d'alerte si le dernier contact date d'il y a plus de 7 jours (exemple avec il y a <date de visite>)
+    Etant donné que John et Sarah étaient à proximité 60 minutes il y a <date de visite>
+    Lorsque Sarah se déclare malade aujourd'hui
+    Et que le batch robert est exécuté
     Alors John n'est pas à risque
     Exemples:
-      | jours |
-      | 8     |
-      | 9     |
-      | 10    |
-      | 11    |
-      | 12    |
-      | 13    |
-      | 14    |
-      | 15    |
-      | 16    |
+      | date de visite              |
+      | 7 jours 1 heures 15 minutes |
+      | 8 jours                     |
+      | 9 jours                     |
+      | 10 jours                    |
+      | 11 jours                    |
+      | 12 jours                    |
+      | 13 jours                    |
+      | 14 jours                    |
+      | 15 jours                    |
+      | 16 jours                    |

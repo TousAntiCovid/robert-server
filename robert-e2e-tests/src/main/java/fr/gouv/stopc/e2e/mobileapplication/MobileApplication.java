@@ -15,6 +15,7 @@ import fr.gouv.stopc.e2e.mobileapplication.model.RobertRequestBuilder;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
 import fr.gouv.stopc.robert.client.model.CaptchaGenerationRequest;
@@ -27,7 +28,6 @@ import fr.gouv.stopc.robert.client.model.ReportBatchRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
-import static java.time.temporal.ChronoUnit.DAYS;
 import static java.util.Base64.getEncoder;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
@@ -67,12 +66,17 @@ public class MobileApplication {
 
     private final RegistrationRepository registrationRepository;
 
-    public MobileApplication(final String username,
+    private final PlatformTimeSteps platformTime;
+
+    public MobileApplication(
+            final String username,
             final ApplicationProperties applicationProperties,
             final CaptchaApi captchaApi,
             final RobertLegacyApi robertLegacyApi,
             final ClientIdentifierRepository clientIdentifierRepository,
-            final RegistrationRepository registrationRepository) {
+            final RegistrationRepository registrationRepository,
+            final PlatformTimeSteps platformTime) {
+        this.platformTime = platformTime;
         this.username = username;
         this.applicationProperties = applicationProperties;
         this.registrationRepository = registrationRepository;
@@ -107,7 +111,7 @@ public class MobileApplication {
         assertThat("image content", response.getBody(), notNullValue());
 
         // The user reads the image content
-        return new CaptchaSolution(captchaChallenge.getId(), "ABCD");
+        return new CaptchaSolution(captchaChallenge.getId(), "valid challenge answer");
     }
 
     private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {
@@ -196,7 +200,7 @@ public class MobileApplication {
     }
 
     public ExposureStatus requestStatus() {
-        final var now = clock.now();
+        final var now = clock.at(platformTime.getPlatformTime().toInstant());
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
         final var exposureStatusResponse = robertLegacyApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
@@ -233,25 +237,5 @@ public class MobileApplication {
     public Registration getRegistration() {
         return this.registrationRepository.findById(Base64.getDecoder().decode(applicationId))
                 .orElseThrow();
-    }
-
-    public void fakeExposedEpochs(final Duration durationBackInTime) {
-        final var registration = getRegistration();
-
-        final var lastContactTime = clock.now()
-                .minus(durationBackInTime)
-                .truncatedTo(DAYS);
-        registration.setLastContactTimestamp(lastContactTime.asNtpTimestamp());
-
-        final var latestRiskTime = clock.atEpoch(registration.getLatestRiskEpoch())
-                .minus(durationBackInTime);
-        registration.setLatestRiskEpoch(latestRiskTime.asEpochId());
-
-        for (final var epochExposition : registration.getExposedEpochs()) {
-            final var expositionTime = clock.atEpoch(epochExposition.getEpochId())
-                    .minus(durationBackInTime);
-            epochExposition.setEpochId(expositionTime.asEpochId());
-        }
-        this.registrationRepository.save(registration);
     }
 }

@@ -1,15 +1,16 @@
 package fr.gouv.stopc.e2e.steps;
 
 import fr.gouv.stopc.robert.client.api.RobertApi;
-import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Etantdonnéque;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -24,49 +25,48 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.given;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PlatformTimeSteps {
 
-    @Autowired
     private final RobertApi robertApi;
 
-    @Etantdonnéque("l'on est aujourd'hui")
-    public void resetFakeTimeToNow() throws IOException, InterruptedException {
-
-        execInContainer("ws-rest", "rm -f /etc/faketime.d/faketime");
-        verifyServiceClock("ws-rest", ZERO);
-        verifyServiceClock("crypto-server", ZERO);
+    public ZonedDateTime getPlatformTime() {
+        return ZonedDateTime.parse(execInContainer("ws-rest", "date --iso-8601=seconds -u"));
     }
 
-    @Etantdonnéque("l'on est il y a {duration}")
-    public void changeSystemDateTo(final Duration durationAgo) throws IOException, InterruptedException {
+    public LocalDate getPlatformDate() {
+        return getPlatformTime().toLocalDate();
+    }
 
+    @Etantdonnéque("l'on est {relativeTime}")
+    public void setSystemTime(final Instant instant) {
+        var durationAgo = Duration.between(instant, Instant.now());
+        if (durationAgo.toSeconds() < 5) {
+            durationAgo = ZERO;
+        }
         execInContainer("ws-rest", format("echo -%d > /etc/faketime.d/faketime", durationAgo.toSeconds()));
         verifyServiceClock("ws-rest", durationAgo);
         verifyServiceClock("crypto-server", durationAgo);
     }
 
-    @Alors("l'horloge de {word} est à il y a {duration}")
-    public void verifyServiceClock(final String containerName,
-            final Duration duration) {
+    private void verifyServiceClock(final String containerName, final Duration duration) {
 
         final var expectedFakedInstant = now().minus(duration);
         given()
                 .await("Wait for faked time to be set in service " + containerName)
                 .atMost(1, MINUTES)
-                .with()
                 .pollInterval(fibonacci(MILLISECONDS))
                 .and()
                 .untilAsserted(
                         () -> assertThat(robertApi.clock().getTime().toInstant())
+                                .as("%s clock", containerName)
                                 .isCloseTo(expectedFakedInstant, within(1, ChronoUnit.MINUTES))
                 );
 
     }
 
-    private String execInContainer(
-            final String containerName,
-            final String command) throws IOException, InterruptedException {
+    @SneakyThrows
+    private String execInContainer(final String containerName, final String command) {
 
         final var dockerExecCommand = List
                 .of("docker-compose", "exec", "-T", containerName, "bash", "-c", command);

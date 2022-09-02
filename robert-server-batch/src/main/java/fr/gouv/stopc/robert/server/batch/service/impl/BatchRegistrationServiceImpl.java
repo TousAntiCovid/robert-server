@@ -1,21 +1,20 @@
 package fr.gouv.stopc.robert.server.batch.service.impl;
 
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
+import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.service.BatchRegistrationService;
-import fr.gouv.stopc.robert.server.batch.service.BatchStatisticsService;
 import fr.gouv.stopc.robert.server.batch.service.ScoringStrategyService;
-import fr.gouv.stopc.robert.server.batch.utils.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.service.RobertClock.RobertInstant;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
+import fr.gouv.stopc.robertserver.database.repository.KpiRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -36,7 +35,7 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
 
     private final RobertClock robertClock;
 
-    private final BatchStatisticsService batchStatisticsService;
+    private final KpiRepository kpiRepository;
 
     /**
      * Keep epochs within the contagious period
@@ -60,8 +59,7 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
     public void updateRegistrationIfRisk(
             Registration registration,
             long serviceTimeStart,
-            double riskThreshold,
-            Instant batchExecutionInstant) {
+            double riskThreshold) {
 
         int latestRiskEpoch = registration.getLatestRiskEpoch();
         List<EpochExposition> epochExpositions = registration.getExposedEpochs();
@@ -127,8 +125,9 @@ public class BatchRegistrationServiceImpl implements BatchRegistrationService {
             // It is up to the client to know if it should notify (new risk) or not given
             // the risk change or not.
         } else if (totalRisk >= riskThreshold && !isExpositionInRiskExpositionPeriod(latestExpositionTime)) {
-            batchStatisticsService.incrementUsersAboveRiskThresholdButRetentionPeriodExpired(batchExecutionInstant);
+            kpiRepository.incrementKpi("usersAboveRiskThresholdButRetentionPeriodExpired");
         }
+
     }
 
     private boolean isExpositionInRiskExpositionPeriod(RobertInstant expositionTime) {

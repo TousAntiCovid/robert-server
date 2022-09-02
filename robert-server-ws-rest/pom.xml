@@ -152,8 +152,14 @@
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-client-java</artifactId>
-	    <version>${mockserver.version}</version>
-	    <scope>test</scope>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.grpcmock</groupId>
+            <artifactId>grpcmock-core</artifactId>
+            <version>${grpcmock.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -188,9 +194,15 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi-robert-internal-v1.yml</inputSpec>
-                            <apiPackage>fr.gouv.stopc.robertserver.ws.api</apiPackage>
-                            <modelPackage>fr.gouv.stopc.robertserver.ws.api.model</modelPackage>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi-robert-internal.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.robertserver.ws.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.robertserver.ws.api.model
+                            </modelPackage>
                         </configuration>
                     </execution>
                     <execution>
@@ -199,9 +211,15 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi-robert-server-v1.yml</inputSpec>
-                            <apiPackage>fr.gouv.stopc.robertserver.ws.api</apiPackage>
-                            <modelPackage>fr.gouv.stopc.robertserver.ws.api.model</modelPackage>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi-robert-server-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.robertserver.ws.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.robertserver.ws.api.model
+                            </modelPackage>
                         </configuration>
                     </execution>
                 </executions>

@@ -2,6 +2,8 @@ version: "3.5"
 services:
   crypto-server:
     build: robert-crypto-grpc-server
+    healthcheck:
+      test: wget -qO - localhost:8081/actuator/health | grep UP
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/robert
       - ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE=PKCS12
@@ -15,6 +17,8 @@ services:
 
   ws-rest:
     build: robert-server-ws-rest
+    healthcheck:
+      test: wget -qO - localhost:8081/actuator/health | grep UP
     environment:
       - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
       - ROBERT_CRYPTO_SERVER_HOST=crypto-server
@@ -24,6 +28,7 @@ services:
       - PUSH_SERVER_HOST=mock-push-notif-server
       - PUSH_SERVER_PORT=1080
       - ESR_LIMIT=0
+      - ROBERT_EPOCHBUNDLEDURATIONINDAYS=20
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
     ports:
       - "8086:8086"
@@ -46,6 +51,7 @@ services:
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_SHUTDOWNOPERATION=DELETE
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_PUSHRATE=5s
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
+      - SPRING_PROFILES_ACTIVE=dev
     depends_on:
       - mongo
       - crypto-server
@@ -54,6 +60,8 @@ services:
 
   postgres:
     image: postgres:9.6
+    healthcheck:
+      test: psql -U robert -c "select id from identity limit 0"
     ports:
       - "5432:5432"
     environment:
@@ -75,6 +83,8 @@ services:
 
   mongo:
     image: "mongo:4.2.11"
+    healthcheck:
+      test: "mongo --quiet 127.0.0.1/test --eval 'quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)'"
     ports:
       - "27017:27017"
 

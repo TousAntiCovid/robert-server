@@ -9,6 +9,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Instant;
 import java.util.List;
 
+import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
+import static java.time.temporal.ChronoUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -53,6 +55,9 @@ public class RobertClockTest {
                 .isEqualTo(ntpTimestamp);
         assertThat(robertInstant.asEpochId())
                 .isEqualTo(epochId);
+        assertThat(robertInstant.asTime32())
+                .asHexString()
+                .isEqualTo(time32AsHexString);
     }
 
     @Test
@@ -62,4 +67,44 @@ public class RobertClockTest {
                 .isEqualTo("2022-04-23T08:30:00Z=10786E");
     }
 
+    @Test
+    void can_add_time() {
+        final var instant = Instant.parse("2022-04-23T08:30:00Z");
+        final var robertInstant = robertClock.at(instant);
+
+        // add 30 minutes
+        assertThat(robertInstant.plus(1_800_000, MILLIS)).hasToString("2022-04-23T09:00:00Z=10788E");
+        assertThat(robertInstant.plus(1_800, SECONDS)).hasToString("2022-04-23T09:00:00Z=10788E");
+        assertThat(robertInstant.plus(30, MINUTES)).hasToString("2022-04-23T09:00:00Z=10788E");
+        assertThat(robertInstant.plus(2, ROBERT_EPOCH)).hasToString("2022-04-23T09:00:00Z=10788E");
+
+        // add 2 days
+        assertThat(robertInstant.plus(48, HOURS)).hasToString("2022-04-25T08:30:00Z=10978E");
+        assertThat(robertInstant.plus(2, DAYS)).hasToString("2022-04-25T08:30:00Z=10978E");
+        assertThat(robertInstant.plus(192, ROBERT_EPOCH)).hasToString("2022-04-25T08:30:00Z=10978E");
+    }
+
+    @Test
+    void can_subtract_time() {
+        final var instant = Instant.parse("2022-04-23T08:30:00Z");
+        final var robertInstant = robertClock.at(instant);
+
+        // subtract 30 minutes
+        assertThat(robertInstant.minus(1_800_000, MILLIS)).hasToString("2022-04-23T08:00:00Z=10784E");
+        assertThat(robertInstant.minus(1_800, SECONDS)).hasToString("2022-04-23T08:00:00Z=10784E");
+        assertThat(robertInstant.minus(30, MINUTES)).hasToString("2022-04-23T08:00:00Z=10784E");
+        assertThat(robertInstant.minus(2, ROBERT_EPOCH)).hasToString("2022-04-23T08:00:00Z=10784E");
+
+        // subtract 2 days
+        assertThat(robertInstant.minus(48, HOURS)).hasToString("2022-04-21T08:30:00Z=10594E");
+        assertThat(robertInstant.minus(2, DAYS)).hasToString("2022-04-21T08:30:00Z=10594E");
+        assertThat(robertInstant.minus(192, ROBERT_EPOCH)).hasToString("2022-04-21T08:30:00Z=10594E");
+    }
+
+    @Test
+    void can_truncate_to_robert_epoch() {
+        final var instant = Instant.parse("2022-04-23T08:35:12.004Z");
+        final var robertInstant = robertClock.at(instant);
+        assertThat(robertInstant.truncatedTo(ROBERT_EPOCH)).hasToString("2022-04-23T08:30:00Z=10786E");
+    }
 }

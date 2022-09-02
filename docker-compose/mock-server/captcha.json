@@ -1,14 +1,20 @@
 [
   {
-    "id": "By default, any call to the checkAnswer endpoint of Orange Captcha with an id containing 'success' returns a SUCCESS response",
+    "id": "By default, any call to the checkAnswer endpoint of Orange Captcha with an answer containing 'valid' returns a SUCCESS response",
     "httpRequest": {
       "method": "POST",
-      "path": "/private/api/v1/captcha/.*success.*/checkAnswer"
+      "path": "/private/api/v1/captcha/.*/checkAnswer",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "answer": "${json-unit.regex}valid.*"
+        }
+      }
     },
     "httpResponse": {
       "headers": {
-          "Content-Type": ["application/json"]
-        },
+        "Content-Type": ["application/json"]
+      },
       "statusCode": 200,
       "body": "{\"result\":\"SUCCESS\"}"
     }
@@ -37,8 +43,8 @@
       "headers": {
         "Content-Type": ["application/json"]
       },
-      "statusCode": 200,
-      "body": "{\"id\":\"this-captcha-is-made-for-success\",\"captchaId\":\"this-captcha-is-made-for-success\"}"
+      "statusCode": 201,
+      "body": "{\"id\":\"5227b11ff4bf44dbbbbec7fd777bd022\",\"captchaId\":\"5227b11ff4bf44dbbbbec7fd777bd022\"}",
     }
   },
   {
