@@ -15,16 +15,11 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
+import java.security.*;
 import java.security.KeyStore.SecretKeyEntry;
-import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -33,11 +28,12 @@ import java.util.Date;
 import static java.time.LocalDate.now;
 import static java.time.format.DateTimeFormatter.BASIC_ISO_DATE;
 import static java.time.temporal.ChronoUnit.DAYS;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 public class KeystoreManager implements TestExecutionListener {
 
-    private static Path keystorePath;
+    public static final Path KEYSTORE_PATH;
 
     private static final String password = "1234";
 
@@ -46,16 +42,16 @@ public class KeystoreManager implements TestExecutionListener {
     static {
 
         try {
-            keystorePath = Files.createTempFile("keystore", ".p12");
+            KEYSTORE_PATH = Files.createTempFile("keystore", ".p12");
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
         System.setProperty("robert.crypto.server.keystore.password", password);
         System.setProperty("robert.server.time-start", "20200601");
         System.setProperty("robert.protocol.hello-message-timestamp-tolerance", "180");
         System.setProperty(
-                "robert.crypto.server.keystore.file", String.format("file:%s", keystorePath.toString())
+                "robert.crypto.server.keystore.file", String.format("file:%s", KEYSTORE_PATH.toString())
         );
         System.setProperty("robert.crypto.server.keystore.type", "PKCS12");
 
@@ -71,31 +67,31 @@ public class KeystoreManager implements TestExecutionListener {
     public static void createKeystore() {
         final var keystore = KeyStore.getInstance("pkcs12");
         keystore.load(null, password.toCharArray());
-        FileOutputStream fos = new FileOutputStream(keystorePath.toString());
-        keystore.store(fos, password.toCharArray());
-        fos.close();
+        try (final var fos = new FileOutputStream(KEYSTORE_PATH.toString())) {
+            keystore.store(fos, password.toCharArray());
+        }
     }
 
     @SneakyThrows
     private static void generateAESKeys() {
-
-        for (LocalDate date = now().minusDays(20); date.isBefore(now().plusDays(5)); date = date.plusDays(1)) {
-            var dateFormatted = date.format(BASIC_ISO_DATE);
-            var alias = String.format("server-key-%s", dateFormatted);
+        for (var date = now(); date.isBefore(now().plusDays(5)); date = date.plusDays(1)) {
+            final var dateFormatted = date.format(BASIC_ISO_DATE);
+            final var alias = String.format("server-key-%s", dateFormatted);
             generateAESKey(alias, 192);
-
         }
     }
 
     @SneakyThrows
     private static void generateAESKey(String alias, int size) {
         log.info("Generating {}", alias);
-        final var command = String.format(
-                "keytool -genseckey -alias \"%s\" -keyalg AES -keysize \"%d\" -keystore %s -storepass %s -storetype PKCS12",
-                alias, size, keystorePath.toAbsolutePath(), password
-        );
+        final var command = new String[] {
+                "keytool", "-genseckey", "-alias", alias, "-keyalg", "AES", "-keysize", String.valueOf(size),
+                "-keystore", KEYSTORE_PATH.toAbsolutePath().toString(), "-storepass", password, "-storetype", "PKCS12"
+        };
         var process = Runtime.getRuntime().exec(command);
-        process.waitFor();
+        assertThat(process.waitFor())
+                .as("keytool exit code for '%s' key generation", alias)
+                .isEqualTo(0);
     }
 
     @SneakyThrows
@@ -128,16 +124,15 @@ public class KeystoreManager implements TestExecutionListener {
         keystore.setEntry("register-key", privateKeyEntry, new KeyStore.PasswordProtection(password.toCharArray()));
 
         // Save the keystore
-        OutputStream writer = new FileOutputStream(keystorePath.toString());
-        keystore.store(writer, password.toCharArray());
-        writer.close();
-
+        try (final var writer = new FileOutputStream(KEYSTORE_PATH.toString())) {
+            keystore.store(writer, password.toCharArray());
+        }
     }
 
     @SneakyThrows
     private static KeyStore loadKeystore() {
         final var keystore = KeyStore.getInstance("pkcs12");
-        keystore.load(new FileInputStream(keystorePath.toString()), password.toCharArray());
+        keystore.load(new FileInputStream(KEYSTORE_PATH.toString()), password.toCharArray());
         return keystore;
     }
 
@@ -171,9 +166,9 @@ public class KeystoreManager implements TestExecutionListener {
         keystore.setEntry("federation-key", federationKeyEntry, passwordProtection);
         keystore.setEntry(serverKeyAlias, serverKeyEntry, passwordProtection);
 
-        OutputStream writer = new FileOutputStream(keystorePath.toString());
-        keystore.store(writer, password.toCharArray());
-        writer.close();
+        try (final var writer = new FileOutputStream(KEYSTORE_PATH.toString())) {
+            keystore.store(writer, password.toCharArray());
+        }
     }
 
 }
