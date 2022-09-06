@@ -4,6 +4,7 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Instant;
@@ -106,5 +107,25 @@ public class RobertClockTest {
         final var instant = Instant.parse("2022-04-23T08:35:12.004Z");
         final var robertInstant = robertClock.at(instant);
         assertThat(robertInstant.truncatedTo(ROBERT_EPOCH)).hasToString("2022-04-23T08:30:00Z=10786E");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2022-04-23T08:00:00Z=10784E   ,2022-04-23T08:00:00Z       ,10784",
+            "2022-01-01T00:00:00Z=0E       ,2022-01-01T00:00:00Z       ,0",
+            "2022-01-01T00:14:59Z=0E       ,2022-01-01T00:14:59Z       ,0",
+            "2022-01-01T00:14:59.999Z=0E   ,2022-01-01T00:14:59.999Z   ,0",
+            "2022-01-01T00:15:00Z=1E       ,2022-01-01T00:15:00Z       ,1",
+            "2022-01-01T00:29:59Z=1E       ,2022-01-01T00:29:59Z       ,1",
+            "2022-01-01T00:29:59.999999Z=1E,2022-01-01T00:29:59.999999Z,1",
+            "2022-01-01T00:30:00Z=2E       ,2022-01-01T00:30:00Z       ,2",
+            "2022-02-15T22:43:13Z=4410E    ,2022-02-15T22:43:13Z       ,4410"
+    })
+    void can_parse_robert_instant(String robertInstantString, String expectedInstant, int expectedEpochId) {
+        final var parsedRobertInstant = RobertClock.parse(robertInstantString);
+        assertThat(parsedRobertInstant.asInstant())
+                .hasToString(expectedInstant);
+        assertThat(parsedRobertInstant.asEpochId())
+                .isEqualTo(expectedEpochId);
     }
 }
