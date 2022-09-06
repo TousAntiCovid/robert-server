@@ -8,13 +8,16 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
+import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 /**
@@ -66,6 +69,31 @@ public class RobertClock {
 
     public RobertInstant now() {
         return at(Instant.now());
+    }
+
+    /**
+     * Obtains an instance of {@code RobertInstant} from a text string such as
+     * {@code 2007-12-03T10:15:30.00Z=3598E}.
+     * <p>
+     * The string must represent a valid instant in UTC concatenated with the epoch
+     * and terminating with the character 'E'.
+     *
+     * @param text the text to parse, not null
+     * @return the parsed robert instant, not null
+     * @throws DateTimeParseException if the text cannot be parsed
+     */
+    public static RobertInstant parse(final CharSequence text) {
+        final var matcher = Pattern.compile("(?<instant>[^Z]+Z)=(?<epochId>\\d+)E")
+                .matcher(text);
+        if (!matcher.find()) {
+            throw new DateTimeParseException(format("%s doesn't match RobertInstant pattern", text), text, 0);
+        }
+        final var instant = Instant.parse(matcher.group("instant"));
+        final var epochId = Integer.parseInt(matcher.group("epochId"));
+        return new RobertClock(
+                instant.minus(epochId, ROBERT_EPOCH).getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970
+        )
+                .at(instant);
     }
 
     /**
@@ -141,7 +169,7 @@ public class RobertClock {
 
         @Override
         public String toString() {
-            return String.format("%s=%sE", time.toString(), asEpochId());
+            return format("%s=%sE", time.toString(), asEpochId());
         }
     }
 
