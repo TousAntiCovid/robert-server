@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalField;
 import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -111,7 +112,7 @@ public class RobertClock {
      */
     @RequiredArgsConstructor
     @EqualsAndHashCode
-    public class RobertInstant {
+    public class RobertInstant implements Temporal {
 
         private final long startNtpTimestamp;
 
@@ -135,10 +136,17 @@ public class RobertClock {
             return Arrays.copyOfRange(ntpTimestamp32bitByteArray, 4, 8);
         }
 
+        @Override
         public RobertInstant minus(final long amountToSubtract, final TemporalUnit unit) {
             return RobertClock.this.at(time.minus(amountToSubtract, unit));
         }
 
+        @Override
+        public long until(final Temporal endExclusive, final TemporalUnit unit) {
+            return unit.between(this, endExclusive);
+        }
+
+        @Override
         public RobertInstant plus(final long amountToAdd, final TemporalUnit unit) {
             return RobertClock.this.at(time.plus(amountToAdd, unit));
         }
@@ -147,12 +155,34 @@ public class RobertClock {
             return RobertClock.this.at(time.truncatedTo(unit));
         }
 
+        @Override
         public RobertInstant minus(final TemporalAmount amountToSubtract) {
             return RobertClock.this.at(time.minus(amountToSubtract));
         }
 
+        @Override
+        public boolean isSupported(final TemporalUnit unit) {
+            return time.isSupported(unit);
+        }
+
+        @Override
+        public Temporal with(final TemporalField field, final long newValue) {
+            return RobertClock.this.at(time.with(field, newValue));
+        }
+
+        @Override
         public RobertInstant plus(final TemporalAmount amountToAdd) {
             return RobertClock.this.at(time.plus(amountToAdd));
+        }
+
+        @Override
+        public boolean isSupported(final TemporalField field) {
+            return time.isSupported(field);
+        }
+
+        @Override
+        public long getLong(final TemporalField field) {
+            return time.getLong(field);
         }
 
         public Duration until(final RobertInstant otherRobertInstant) {
@@ -171,6 +201,7 @@ public class RobertClock {
         public String toString() {
             return format("%s=%sE", time.toString(), asEpochId());
         }
+
     }
 
     /**
@@ -208,13 +239,17 @@ public class RobertClock {
         @Override
         public <R extends Temporal> R addTo(R temporal, long amount) {
             @SuppressWarnings("unchecked")
-            final var result = (R) temporal.plus(amount * getDuration().getSeconds(), SECONDS);
+            final var result = (R) temporal.plus(
+                    amount * getDuration().getSeconds(),
+                    SECONDS
+            );
             return result;
         }
 
         @Override
         public long between(Temporal temporal1Inclusive, Temporal temporal2Exclusive) {
-            return temporal1Inclusive.until(temporal2Exclusive, this);
+            return Duration.between(temporal1Inclusive, temporal2Exclusive)
+                    .dividedBy(getDuration());
         }
     }
 }
