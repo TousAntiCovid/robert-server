@@ -144,4 +144,19 @@ public class RobertClockTest {
         assertThat(begin.until(end, ROBERT_EPOCH))
                 .isEqualTo(epochsCount);
     }
+
+    @Test
+    void can_list_epochs_until() {
+        final var begin = robertClock.at(Instant.parse("2022-12-18T06:23:43Z"));
+        // 1h and 5m later, or 4 epochs later
+        final var end = robertClock.at(Instant.parse("2022-12-18T07:28:43Z"));
+        assertThat(begin.epochsUntil(end))
+                .extracting(RobertClock.RobertInstant::toString)
+                .contains(
+                        "2022-12-18T06:15:00Z=33721E",
+                        "2022-12-18T06:30:00Z=33722E",
+                        "2022-12-18T06:45:00Z=33723E",
+                        "2022-12-18T07:00:00Z=33724E"
+                );
+    }
 }

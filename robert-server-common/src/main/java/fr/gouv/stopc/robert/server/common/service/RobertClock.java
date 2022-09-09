@@ -15,6 +15,7 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
@@ -197,11 +198,18 @@ public class RobertClock {
             return time.isAfter(otherRobertInstant.time);
         }
 
+        public Stream<RobertInstant> epochsUntil(final RobertInstant endExclusive) {
+            return Stream.iterate(
+                    this.truncatedTo(ROBERT_EPOCH),
+                    instant -> instant.isBefore(endExclusive),
+                    instant -> instant.plus(1, ROBERT_EPOCH)
+            );
+        }
+
         @Override
         public String toString() {
             return format("%s=%sE", time.toString(), asEpochId());
         }
-
     }
 
     /**
