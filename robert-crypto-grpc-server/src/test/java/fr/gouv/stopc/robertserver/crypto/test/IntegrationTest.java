@@ -1,5 +1,6 @@
-package fr.gouv.stopc.robert.crypto.grpc.server.test;
+package fr.gouv.stopc.robertserver.crypto.test;
 
+import fr.gouv.stopc.robert.crypto.grpc.server.RobertCryptoGrpcServerApplication;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,9 +16,12 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 
 @Retention(RUNTIME)
 @Target(TYPE)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestExecutionListeners(listeners = { PostgreSqlManager.class, KeystoreManager.class,
-        DataManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes = RobertCryptoGrpcServerApplication.class)
+@TestExecutionListeners(listeners = {
+        ClockManager.class,
+        KeystoreManager.class,
+        PostgreSqlManager.class
+}, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {
 
