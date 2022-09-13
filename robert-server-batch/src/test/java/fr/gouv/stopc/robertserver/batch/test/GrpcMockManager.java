@@ -42,6 +42,7 @@ public class GrpcMockManager implements TestExecutionListener {
     @SneakyThrows
     public void beforeTestMethod(@NonNull TestContext testContext) {
         Mockito.reset(CRYPTO_GRPC_STUB);
+        CryptoGrpcStub.reset();
     }
 
     @SneakyThrows
@@ -54,7 +55,17 @@ public class GrpcMockManager implements TestExecutionListener {
         Mockito.verifyNoInteractions(CRYPTO_GRPC_STUB);
     }
 
+    public static void givenCryptoServerCountryCode(ByteString serverCountryCode) {
+        CryptoGrpcStub.serverCountryCode = serverCountryCode;
+    }
+
     private static class CryptoGrpcStub extends CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase {
+
+        private static ByteString serverCountryCode = ByteString.EMPTY;
+
+        private static void reset() {
+            serverCountryCode = ByteString.EMPTY;
+        }
 
         @Override
         public void validateContact(ValidateContactRequest request,
@@ -68,12 +79,20 @@ public class GrpcMockManager implements TestExecutionListener {
                 final var idA = matcher.group("idA");
                 final var ecc = request.getEcc();
                 final var epochId = Integer.parseInt(matcher.group("epochId"));
-                final var response = ValidateContactResponse.newBuilder()
+                var response = ValidateContactResponse.newBuilder()
                         .setIdA(ByteString.copyFromUtf8(idA))
                         .setCountryCode(ecc)
                         .setEpochId(epochId)
                         .addAllInvalidHelloMessageDetails(List.of())
                         .build();
+                if (serverCountryCode != ByteString.EMPTY) {
+                    response = ValidateContactResponse.newBuilder()
+                            .setIdA(ByteString.copyFromUtf8(idA))
+                            .setCountryCode(serverCountryCode)
+                            .setEpochId(epochId)
+                            .addAllInvalidHelloMessageDetails(List.of())
+                            .build();
+                }
                 responseObserver.onNext(response);
             }
             responseObserver.onCompleted();

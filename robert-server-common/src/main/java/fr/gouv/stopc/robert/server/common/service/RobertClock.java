@@ -130,6 +130,28 @@ public class RobertClock {
             return (int) numberEpochs;
         }
 
+        /**
+         * Quote from Robert specification :
+         *
+         * <pre>
+         * "16-bit timestamp (to encode the ne-grain emission time). It contains the 16 less signicant bits of the
+         * current NTP "Seconds" timestamp of AppA (which represents, for era 0, the number of seconds since 0h
+         * January 1st, 1900 UTC). Since it is truncated to 16 bits, it covers a bit more than 18 hours, what is much
+         * larger than the epoch duration."
+         * </pre>
+         */
+        public int as16LessSignificantBits() {
+            byte[] timeHelloB = new byte[4];
+            System.arraycopy(ByteUtils.longToBytes(asNtpTimestamp()), 4, timeHelloB, 0, 4);
+
+            // Clear out the first two bytes
+            timeHelloB[0] = (byte) (timeHelloB[0] & 0x00);
+            timeHelloB[1] = (byte) (timeHelloB[1] & 0x00);
+
+            int timeHello = ByteUtils.bytesToInt(timeHelloB);
+            return timeHello;
+        }
+
         public byte[] asTime32() {
             final var ntpTimestamp32bitByteArray = ByteUtils.longToBytes(asNtpTimestamp());
             return Arrays.copyOfRange(ntpTimestamp32bitByteArray, 4, 8);

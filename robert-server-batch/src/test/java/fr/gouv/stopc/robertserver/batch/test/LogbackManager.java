@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Condition;
 import org.assertj.core.api.ListAssert;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestContext;
@@ -22,6 +23,12 @@ public class LogbackManager implements TestExecutionListener {
         rootLogger.addAppender(LOG_EVENTS);
         LOG_EVENTS.list.clear();
         LOG_EVENTS.start();
+    }
+
+    public static void assertThatLogsMatchingRegex(ListAssert<String> logs, String regex, int times) {
+        final Condition<String> rowMatchingRegex = new Condition<>(value -> value.matches(regex), regex);
+        logs.as("Number of logs matching the regular expression")
+                .haveExactly(times, rowMatchingRegex);
     }
 
     public static ListAssert<String> assertThatInfoLogs() {

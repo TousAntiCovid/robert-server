@@ -61,15 +61,27 @@ public class MongodbManager implements TestExecutionListener {
                 .forEach(MongoCollection::drop);
     }
 
-    public static void givenRegistrationExistsForUser(final String idA) {
-        givenRegistrationExistsForUser(idA, identity());
+    public static Registration givenRegistrationExistsForUser(final String idA) {
+        return givenRegistrationExistsForUser(idA, identity());
     }
 
-    public static void givenRegistrationExistsForUser(final String idA,
+    public static Registration givenRegistrationExistsForUser(final String idA,
             final Function<RegistrationBuilder, RegistrationBuilder> transformer) {
         final var registration = Registration.builder()
                 .permanentIdentifier(idA.getBytes());
-        mongoOperations.save(transformer.apply(registration).build());
+        return mongoOperations.save(transformer.apply(registration).build());
+    }
+
+    public static Contact givenContactExistForUser(final String user,
+            final RobertClock.RobertInstant time,
+            final Function<Contact.ContactBuilder, Contact.ContactBuilder> transformer) {
+
+        var userAndEpoch = String.format("%s:%d", user, time.asEpochId()).getBytes();
+        final var contact = Contact.builder()
+                .ebid(userAndEpoch)
+                .ecc(new byte[] { 33 });
+
+        return mongoOperations.save(transformer.apply(contact).build());
     }
 
     public static void givenPendingContact(final String idA,
