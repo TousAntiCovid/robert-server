@@ -11,9 +11,11 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalField;
 import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
 import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
@@ -111,7 +113,7 @@ public class RobertClock {
      */
     @RequiredArgsConstructor
     @EqualsAndHashCode
-    public class RobertInstant {
+    public class RobertInstant implements Temporal {
 
         private final long startNtpTimestamp;
 
@@ -130,11 +132,15 @@ public class RobertClock {
             return (int) numberEpochs;
         }
 
+        public long asDayTruncatedTimestamp() {
+            return asNtpTimestamp() - (asNtpTimestamp() % EPOCH_DURATION_SECS);
+        }
+
         /**
          * Quote from Robert specification :
          *
          * <pre>
-         * "16-bit timestamp (to encode the ne-grain emission time). It contains the 16 less signicant bits of the
+         * "16-bit timestamp (to encode the ne-grain emission time). It contains the 16 less significant bits of the
          * current NTP "Seconds" timestamp of AppA (which represents, for era 0, the number of seconds since 0h
          * January 1st, 1900 UTC). Since it is truncated to 16 bits, it covers a bit more than 18 hours, what is much
          * larger than the epoch duration."
@@ -157,10 +163,17 @@ public class RobertClock {
             return Arrays.copyOfRange(ntpTimestamp32bitByteArray, 4, 8);
         }
 
+        @Override
         public RobertInstant minus(final long amountToSubtract, final TemporalUnit unit) {
             return RobertClock.this.at(time.minus(amountToSubtract, unit));
         }
 
+        @Override
+        public long until(final Temporal endExclusive, final TemporalUnit unit) {
+            return unit.between(this, endExclusive);
+        }
+
+        @Override
         public RobertInstant plus(final long amountToAdd, final TemporalUnit unit) {
             return RobertClock.this.at(time.plus(amountToAdd, unit));
         }
@@ -169,12 +182,34 @@ public class RobertClock {
             return RobertClock.this.at(time.truncatedTo(unit));
         }
 
+        @Override
         public RobertInstant minus(final TemporalAmount amountToSubtract) {
             return RobertClock.this.at(time.minus(amountToSubtract));
         }
 
+        @Override
+        public boolean isSupported(final TemporalUnit unit) {
+            return time.isSupported(unit);
+        }
+
+        @Override
+        public Temporal with(final TemporalField field, final long newValue) {
+            return RobertClock.this.at(time.with(field, newValue));
+        }
+
+        @Override
         public RobertInstant plus(final TemporalAmount amountToAdd) {
             return RobertClock.this.at(time.plus(amountToAdd));
+        }
+
+        @Override
+        public boolean isSupported(final TemporalField field) {
+            return time.isSupported(field);
+        }
+
+        @Override
+        public long getLong(final TemporalField field) {
+            return time.getLong(field);
         }
 
         public Duration until(final RobertInstant otherRobertInstant) {
@@ -187,6 +222,14 @@ public class RobertClock {
 
         public boolean isAfter(final RobertInstant otherRobertInstant) {
             return time.isAfter(otherRobertInstant.time);
+        }
+
+        public Stream<RobertInstant> epochsUntil(final RobertInstant endExclusive) {
+            return Stream.iterate(
+                    this.truncatedTo(ROBERT_EPOCH),
+                    instant -> instant.isBefore(endExclusive),
+                    instant -> instant.plus(1, ROBERT_EPOCH)
+            );
         }
 
         @Override
@@ -230,13 +273,17 @@ public class RobertClock {
         @Override
         public <R extends Temporal> R addTo(R temporal, long amount) {
             @SuppressWarnings("unchecked")
-            final var result = (R) temporal.plus(amount * getDuration().getSeconds(), SECONDS);
+            final var result = (R) temporal.plus(
+                    amount * getDuration().getSeconds(),
+                    SECONDS
+            );
             return result;
         }
 
         @Override
         public long between(Temporal temporal1Inclusive, Temporal temporal2Exclusive) {
-            return temporal1Inclusive.until(temporal2Exclusive, this);
+            return Duration.between(temporal1Inclusive, temporal2Exclusive)
+                    .dividedBy(getDuration());
         }
     }
 }
