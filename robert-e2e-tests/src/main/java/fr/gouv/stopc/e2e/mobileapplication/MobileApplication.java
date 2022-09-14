@@ -125,7 +125,7 @@ public class MobileApplication {
                         .clientPublicECDHKey(publicKey)
                         .pushInfo(
                                 PushInfo.builder()
-                                        .token("device-" + username)
+                                        .token("valid-device-" + username)
                                         .locale("fr")
                                         .timezone("Europe/Paris")
                                         .build()
