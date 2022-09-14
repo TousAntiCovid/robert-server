@@ -1,9 +1,12 @@
 package fr.gouv.stopc.robertserver.crypto.test;
 
 import com.google.protobuf.ByteString;
+import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
 import lombok.SneakyThrows;
 import org.flywaydb.core.Flyway;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 import org.testcontainers.containers.JdbcDatabaseContainer;
@@ -62,6 +65,17 @@ public class PostgreSqlManager implements TestExecutionListener {
                 .queryForObject("select key_for_tuples from IDENTITY where idA = ?", String.class, idA);
         final var encryptedKey = Base64.getDecoder().decode(base64Key);
         return cipherForStoredKey().decrypt(encryptedKey);
+    }
+
+    public static int insert(final ClientIdentifier clientIdentifier) {
+        final MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("idA", clientIdentifier.getIdA());
+        parameters.addValue("key_for_mac", clientIdentifier.getKeyForMac());
+        parameters.addValue("key_for_tuples", clientIdentifier.getKeyForTuples());
+        return new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("IDENTITY")
+                .usingGeneratedKeyColumns("id")
+                .execute(parameters);
     }
 
 }
