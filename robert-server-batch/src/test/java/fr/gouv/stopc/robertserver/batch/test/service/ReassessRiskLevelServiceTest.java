@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robertserver.batch.test.service;
 
-import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.database.model.Registration;
@@ -27,9 +26,9 @@ class ReassessRiskLevelServiceTest {
 
     private final JobLauncherTestUtils jobLauncher;
 
-    private final PropertyLoader propertyLoader;
-
     private final RobertClock robertClock;
+
+    public final int RISK_LEVEL_RETENTION_PERIOD_IN_DAYS = 7;
 
     @SneakyThrows
     private void runRobertBatchJob() {
@@ -44,7 +43,7 @@ class ReassessRiskLevelServiceTest {
         assertThatInfoLogs()
                 .contains(
                         "START : Reset risk level of registrations when retention time > "
-                                + propertyLoader.getRiskLevelRetentionPeriodInDays() + ".",
+                                + RISK_LEVEL_RETENTION_PERIOD_IN_DAYS + ".",
                         "END : Reset risk level of registrations."
                 );
     }

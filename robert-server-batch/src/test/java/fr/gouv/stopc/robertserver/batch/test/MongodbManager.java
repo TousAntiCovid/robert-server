@@ -85,6 +85,7 @@ public class MongodbManager implements TestExecutionListener {
     }
 
     public static void givenPendingContact(final String idA,
+            final byte[] ecc,
             Consumer<HelloMessagesBuilder> helloMessagesBuilderConsumer) {
         final var messageDetails = new HelloMessagesBuilder(idA);
         helloMessagesBuilderConsumer.accept(messageDetails);
@@ -98,11 +99,16 @@ public class MongodbManager implements TestExecutionListener {
                 .orElseThrow();
         final var contact = Contact.builder()
                 .ebid(String.format("%s:%d", idA, epochId).getBytes())
-                .ecc(new byte[] { 33 })
+                .ecc(ecc)
                 .timeInsertion(Instant.now().toEpochMilli())
                 .messageDetails(messageDetails.build())
                 .build();
         mongoOperations.save(contact);
+    }
+
+    public static void givenPendingContact(final String idA,
+            Consumer<HelloMessagesBuilder> helloMessagesBuilderConsumer) {
+        givenPendingContact(idA, new byte[] { 33 }, helloMessagesBuilderConsumer);
     }
 
     /**

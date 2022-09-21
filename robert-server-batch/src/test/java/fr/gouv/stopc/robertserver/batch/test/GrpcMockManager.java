@@ -17,9 +17,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-
 public class GrpcMockManager implements TestExecutionListener {
 
     private static final CryptoGrpcStub CRYPTO_GRPC_STUB = Mockito.spy(new CryptoGrpcStub());
@@ -42,30 +39,9 @@ public class GrpcMockManager implements TestExecutionListener {
     @SneakyThrows
     public void beforeTestMethod(@NonNull TestContext testContext) {
         Mockito.reset(CRYPTO_GRPC_STUB);
-        CryptoGrpcStub.reset();
-    }
-
-    @SneakyThrows
-    public static void givenCryptoServerIsOffline() {
-        final var error = new RuntimeException("Crypto server is offline");
-        doThrow(error).when(CRYPTO_GRPC_STUB).validateContact(any(), any());
-    }
-
-    public static void verifyNoInteractionsWithCryptoServer() {
-        Mockito.verifyNoInteractions(CRYPTO_GRPC_STUB);
-    }
-
-    public static void givenCryptoServerCountryCode(ByteString serverCountryCode) {
-        CryptoGrpcStub.serverCountryCode = serverCountryCode;
     }
 
     private static class CryptoGrpcStub extends CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplImplBase {
-
-        private static ByteString serverCountryCode = ByteString.EMPTY;
-
-        private static void reset() {
-            serverCountryCode = ByteString.EMPTY;
-        }
 
         @Override
         public void validateContact(ValidateContactRequest request,
@@ -85,14 +61,6 @@ public class GrpcMockManager implements TestExecutionListener {
                         .setEpochId(epochId)
                         .addAllInvalidHelloMessageDetails(List.of())
                         .build();
-                if (serverCountryCode != ByteString.EMPTY) {
-                    response = ValidateContactResponse.newBuilder()
-                            .setIdA(ByteString.copyFromUtf8(idA))
-                            .setCountryCode(serverCountryCode)
-                            .setEpochId(epochId)
-                            .addAllInvalidHelloMessageDetails(List.of())
-                            .build();
-                }
                 responseObserver.onNext(response);
             }
             responseObserver.onCompleted();

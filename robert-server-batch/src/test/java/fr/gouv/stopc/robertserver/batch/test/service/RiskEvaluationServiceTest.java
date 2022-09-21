@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robertserver.batch.test.service;
 
-import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
@@ -18,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
-import static fr.gouv.stopc.robertserver.batch.test.GrpcMockManager.givenCryptoServerCountryCode;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatLogsMatchingRegex;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
@@ -42,15 +40,13 @@ class RiskEvaluationServiceTest {
     @Test
     void score_and_process_risks_with_a_bad_encrypted_country_code_should_not_update_registration() {
         var now = clock.now();
+        var badEcc = new byte[] { (byte) 0xff };
 
         // Given
         givenRegistrationExistsForUser("user___1");
         givenPendingContact(
-                "user___1", helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(120, SECONDS))
+                "user___1", badEcc, helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(120, SECONDS))
         );
-
-        // Set bad country code
-        givenCryptoServerCountryCode(ByteString.copyFrom(new byte[] { (byte) 0xff }));
 
         // When
         runRobertBatchJob();
@@ -59,15 +55,15 @@ class RiskEvaluationServiceTest {
         assertThatContactsToProcess().isEmpty();
 
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isFalse();
+                .hasFieldOrPropertyWithValue("atRisk", false);
 
         assertThatRegistrationForUser("user___1")
                 .extracting(Registration::getExposedEpochs)
                 .asList()
                 .isEmpty();
+
+        assertThatInfoLogs()
+                .contains("Country code [-1] is not managed by this server ([33])");
     }
 
     @Test
@@ -97,10 +93,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isFalse();
+                .hasFieldOrPropertyWithValue("atRisk", false);
     }
 
     @Test
@@ -128,10 +121,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isTrue();
+                .hasFieldOrPropertyWithValue("atRisk", true);
 
         final var RISK_DETECTED = "Risk detected\\. Aggregated risk since [\\d]{0,}: [\\d]{0,}\\.[\\d]{0,} greater than threshold [\\d]{0,}\\.[\\d]{0,}";
         assertThatLogsMatchingRegex(assertThatInfoLogs(), RISK_DETECTED, 1);
@@ -165,10 +155,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isFalse();
+                .hasFieldOrPropertyWithValue("atRisk", false);
     }
 
     @Test
@@ -199,10 +186,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isTrue();
+                .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatRegistrationForUser("user___1")
                 .extracting(Registration::getLatestRiskEpochAsInstant)
@@ -242,22 +226,9 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isFalse();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getLatestRiskEpoch)
-                .asInstanceOf(InstanceOfAssertFactories.INTEGER)
-                .as("Last risk update")
-                .isZero();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getLastContactTimestamp)
-                .asInstanceOf(InstanceOfAssertFactories.LONG)
-                .as("Last contact timestamp")
-                .isZero();
+                .hasFieldOrPropertyWithValue("atRisk", false)
+                .hasFieldOrPropertyWithValue("latestRiskEpoch", 0)
+                .hasFieldOrPropertyWithValue("lastContactTimestamp", 0L);
     }
 
     @Test
@@ -284,10 +255,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isTrue();
+                .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatRegistrationForUser("user___1")
                 .extracting(Registration::getLatestRiskEpochAsInstant)
@@ -329,10 +297,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isTrue();
+                .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatRegistrationForUser("user___1")
                 .extracting(Registration::getLatestRiskEpochAsInstant)
@@ -374,10 +339,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isTrue();
+                .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatRegistrationForUser("user___1")
                 .extracting(Registration::getLatestRiskEpochAsInstant)
@@ -417,10 +379,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isTrue();
+                .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatRegistrationForUser("user___1")
                 .extracting(Registration::getLatestRiskEpochAsInstant)
@@ -457,16 +416,8 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isFalse();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isNotified)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Notified")
-                .isFalse();
+                .hasFieldOrPropertyWithValue("isNotified", false)
+                .hasFieldOrPropertyWithValue("atRisk", false);
     }
 
     @Test
@@ -491,16 +442,8 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isTrue();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isNotified)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Notified")
-                .isFalse();
+                .hasFieldOrPropertyWithValue("isNotified", false)
+                .hasFieldOrPropertyWithValue("atRisk", true);
     }
 
     @Test
@@ -525,16 +468,8 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isTrue();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isNotified)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Notified")
-                .isTrue();
+                .hasFieldOrPropertyWithValue("isNotified", true)
+                .hasFieldOrPropertyWithValue("atRisk", true);
     }
 
     @Test
@@ -559,16 +494,8 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isFalse();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isNotified)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Notified")
-                .isTrue();
+                .hasFieldOrPropertyWithValue("isNotified", true)
+                .hasFieldOrPropertyWithValue("atRisk", false);
     }
 
     @Test
@@ -587,10 +514,7 @@ class RiskEvaluationServiceTest {
 
         // Then
         assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration risk")
-                .isFalse();
+                .hasFieldOrPropertyWithValue("atRisk", false);
     }
 
 }

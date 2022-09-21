@@ -1,17 +1,14 @@
 package fr.gouv.stopc.robertserver.batch.test.service;
 
-import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static fr.gouv.stopc.robertserver.batch.test.GrpcMockManager.givenCryptoServerCountryCode;
 import static fr.gouv.stopc.robertserver.batch.test.HelloMessageFactory.generateHelloMessagesStartingAndDuring;
 import static fr.gouv.stopc.robertserver.batch.test.HelloMessageFactory.randRssi;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.*;
@@ -34,8 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IntegrationTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class ContactProcessingServiceTest {
-
-    private final ContactService contactService;
 
     private final IRegistrationService registrationService;
 
@@ -50,13 +44,6 @@ class ContactProcessingServiceTest {
     @SneakyThrows
     private void runRobertBatchJob() {
         jobLauncher.launchJob();
-    }
-
-    @AfterEach
-    public void afterAll() {
-
-        this.contactService.deleteAll();
-        this.registrationService.deleteAll();
     }
 
     @Test
@@ -179,14 +166,13 @@ class ContactProcessingServiceTest {
     void process_contact_with_a_bad_encrypted_country_code_fails() {
         // Given
         var now = clock.now();
+        var badEcc = new byte[] { (byte) 0xff };
 
         givenRegistrationExistsForUser("user___1");
 
         givenPendingContact(
-                "user___1", helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(30, SECONDS))
+                "user___1", badEcc, helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(30, SECONDS))
         );
-
-        givenCryptoServerCountryCode(ByteString.copyFrom(new byte[] { (byte) 0xff }));
 
         // When
         runRobertBatchJob();

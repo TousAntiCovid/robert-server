@@ -28,9 +28,9 @@ class PurgeOldEpochExpositionsServiceTest {
 
     private final JobLauncherTestUtils jobLauncher;
 
-    private final PropertyLoader propertyLoader;
-
     private final RobertClock clock;
+
+    public static final int CONTAGIOUS_PERIOD = 14;
 
     @SneakyThrows
     private void runRobertBatchJob() {
@@ -38,9 +38,10 @@ class PurgeOldEpochExpositionsServiceTest {
     }
 
     @Test
-    void contagious_period_is_forteen_days() {
-        assertThat(propertyLoader.getContagiousPeriod()).as("Contagious period property is set to 14 days")
-                .isEqualTo(14);
+    void contagious_period_is_set_to_fourteen_days(@Autowired PropertyLoader propertyLoader) {
+        assertThat(propertyLoader.getContagiousPeriod())
+                .as("Contagious period property is set to 14 days")
+                .isEqualTo(CONTAGIOUS_PERIOD);
     }
 
     @Test
@@ -57,7 +58,7 @@ class PurgeOldEpochExpositionsServiceTest {
 
     @Test
     void epochs_expositions_are_deleted_when_epochs_are_before_contagious_period() {
-        final int contagiousPeriodPlusOneDay = propertyLoader.getContagiousPeriod() + 1;
+        final int contagiousPeriodPlusOneDay = CONTAGIOUS_PERIOD + 1;
         var beforeStartOfContagiousPeriod = clock.now().minus(contagiousPeriodPlusOneDay, ChronoUnit.DAYS);
 
         givenRegistrationExistsForUser(
