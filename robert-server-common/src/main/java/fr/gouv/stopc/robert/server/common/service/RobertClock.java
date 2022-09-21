@@ -75,7 +75,7 @@ public class RobertClock {
 
     /**
      * Obtains an instance of {@code RobertInstant} from a text string such as
-     * {@code 2007-12-03T10:15:30.00Z3598E}.
+     * {@code 2007-12-03T10:15:30.00Z=3598E}.
      * <p>
      * The string must represent a valid instant in UTC concatenated with the epoch
      * and terminating with the character 'E'.

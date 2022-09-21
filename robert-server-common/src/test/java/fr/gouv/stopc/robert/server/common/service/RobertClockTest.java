@@ -128,4 +128,35 @@ public class RobertClockTest {
         assertThat(parsedRobertInstant.asEpochId())
                 .isEqualTo(expectedEpochId);
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2022-01-01T00:00:00Z,2022-01-01T00:00:00Z,0",
+            "2022-01-01T00:00:00Z,2022-01-01T00:14:59.999Z,0",
+            "2022-01-01T00:00:00Z,2022-01-01T00:15:00Z,1",
+            "2022-02-15T18:43:13Z,2022-02-15T22:43:13Z,16",
+            "2022-02-15T18:43:13Z,2022-02-15T22:43:13Z,16",
+            "2022-02-15T18:43:13Z,2022-02-15T22:43:13Z,16",
+            "2022-02-15T20:43:13Z,2022-02-15T18:13:00Z,-10",
+            "1950-01-01T00:00:00Z,1950-01-01T01:00:00Z,4",
+    })
+    void can_count_epochs_between_two_instants(Instant begin, Instant end, int epochsCount) {
+        assertThat(begin.until(end, ROBERT_EPOCH))
+                .isEqualTo(epochsCount);
+    }
+
+    @Test
+    void can_list_epochs_until() {
+        final var begin = robertClock.at(Instant.parse("2022-12-18T06:23:43Z"));
+        // 1h and 5m later, or 4 epochs later
+        final var end = robertClock.at(Instant.parse("2022-12-18T07:28:43Z"));
+        assertThat(begin.epochsUntil(end))
+                .extracting(RobertClock.RobertInstant::toString)
+                .contains(
+                        "2022-12-18T06:15:00Z=33721E",
+                        "2022-12-18T06:30:00Z=33722E",
+                        "2022-12-18T06:45:00Z=33723E",
+                        "2022-12-18T07:00:00Z=33724E"
+                );
+    }
 }
