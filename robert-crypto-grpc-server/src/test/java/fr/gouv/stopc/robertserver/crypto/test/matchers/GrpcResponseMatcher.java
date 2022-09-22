@@ -1,62 +1,46 @@
 package fr.gouv.stopc.robertserver.crypto.test.matchers;
 
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationResponse;
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthResponse;
+import com.google.protobuf.GeneratedMessageV3;
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage;
 import org.assertj.core.api.Condition;
+
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static org.assertj.core.condition.VerboseCondition.verboseCondition;
 
 public class GrpcResponseMatcher {
 
-    public static Condition<CreateRegistrationResponse> noGrpcError() {
+    public static <T extends GeneratedMessageV3> Condition<T> noGrpcError() {
         return verboseCondition(
-                response -> !response.hasError(),
+                response -> extractErrorAttribute(response).isEmpty(),
                 "a response without error attribute",
-                response -> format(
-                        " but it has error %d '%s'", response.getError().getCode(),
-                        response.getError().getDescription()
-                )
+                response -> format(" but it has error '%s'", extractErrorAttribute(response))
         );
     }
 
-    public static Condition<CreateRegistrationResponse> grpcErrorResponse(int code, String description) {
+    public static <T extends GeneratedMessageV3> Condition<T> grpcErrorResponse(int code, String descriptionFormat,
+            Object... args) {
+        final var description = format(descriptionFormat, args);
         return verboseCondition(
-                response -> response.hasError()
-                        && code == response.getError().getCode()
-                        && description.equals(response.getError().getDescription()),
+                response -> extractErrorAttribute(response)
+                        .map(err -> code == err.getCode() && description.equals(err.getDescription()))
+                        .orElse(false),
                 format("an error %d '%s'", code, description),
-                response -> response.hasError() ? format(
-                        " but it was error %d '%s'", response.getError().getCode(),
-                        response.getError().getDescription()
-                )
-                        : " but it was not an error"
-        );
-    }
-
-    public static Condition<GetIdFromAuthResponse> noGetIdFromAuthResponseError() {
-        return verboseCondition(
-                response -> !response.hasError(),
-                "a response without error attribute",
                 response -> format(
-                        " but it has error %d '%s'", response.getError().getCode(),
-                        response.getError().getDescription()
+                        " but it was error %d '%s'",
+                        extractErrorAttribute(response).map(ErrorMessage::getCode).orElse(null),
+                        extractErrorAttribute(response).map(ErrorMessage::getDescription).orElse(null)
                 )
         );
     }
 
-    public static Condition<GetIdFromAuthResponse> getIdFromAuthErrorResponse(int code, String description) {
-        return verboseCondition(
-                response -> response.hasError()
-                        && code == response.getError().getCode()
-                        && description.equals(response.getError().getDescription()),
-                format("an error %d '%s'", code, description),
-                response -> response.hasError() ? format(
-                        " but it was error %d '%s'", response.getError().getCode(),
-                        response.getError().getDescription()
-                )
-                        : " but it was not an error"
-        );
+    private static Optional<ErrorMessage> extractErrorAttribute(GeneratedMessageV3 message) {
+        return message.getAllFields()
+                .entrySet().stream()
+                .filter(e -> "error".equals(e.getKey().getName()))
+                .findFirst()
+                .map(e -> (ErrorMessage) e.getValue());
     }
 
 }
