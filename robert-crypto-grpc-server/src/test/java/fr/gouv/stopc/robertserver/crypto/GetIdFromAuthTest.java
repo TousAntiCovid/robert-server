@@ -8,34 +8,27 @@ import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBun
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Value;
 import org.junit.jupiter.api.Test;
 
 import java.security.SecureRandom;
 import java.time.temporal.ChronoUnit;
 
 import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
-import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.createClientId;
-import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.generateEbid;
-import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.generateMac;
-import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.getServerKey;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.getIdFromAuthErrorResponse;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.noGetIdFromAuthResponseError;
+import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.*;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.grpcErrorResponse;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.noGrpcError;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
 public class GetIdFromAuthTest {
 
-    private final ICryptoServerGrpcClient cryptoServerClient = new CryptoServerGrpcClient("localhost", 9090);
+    private final ICryptoServerGrpcClient robertCryptoClient = new CryptoServerGrpcClient("localhost", 9090);
 
     private static final RobertClock.RobertInstant now = clock().now();
 
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Getter
+    @Value
     @Builder
     static class AuthRequestBundle {
 
@@ -89,9 +82,9 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
-        assertThat(response).has(noGetIdFromAuthResponseError());
+        assertThat(response).has(noGrpcError());
         assertThat(authRequestBundle.getIdA()).isEqualTo(response.getIdA().toByteArray());
         assertThat(authRequestBundle.getEpochId()).isEqualTo(response.getEpochId());
 
@@ -119,9 +112,9 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
-        assertThat(response).has(noGetIdFromAuthResponseError());
+        assertThat(response).has(noGrpcError());
         assertThat(authRequestBundle.getIdA()).isEqualTo(response.getIdA().toByteArray());
         assertThat(authRequestBundle.getEpochId()).isEqualTo(response.getEpochId());
     }
@@ -148,9 +141,9 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
-        assertThat(response).has(noGetIdFromAuthResponseError());
+        assertThat(response).has(noGrpcError());
         assertThat(authRequestBundle.getIdA()).isEqualTo(response.getIdA().toByteArray());
         assertThat(authRequestBundle.getEpochId()).isEqualTo(response.getEpochId());
     }
@@ -168,15 +161,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(0)
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Unknown request type 0"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Unknown request type 0"));
     }
 
     @Test
@@ -196,15 +184,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Could not decrypt ebid content"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Could not decrypt ebid content"));
     }
 
     @Test
@@ -221,15 +204,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Could not decrypt ebid content"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Could not decrypt ebid content"));
     }
 
     @Test
@@ -251,16 +229,13 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
                 .is(
-                        getIdFromAuthErrorResponse(
-                                430,
-                                String.format(
-                                        "No server key found from cryptographic storage : %s",
-                                        authRequestBundle.getEpochId()
-                                )
+                        grpcErrorResponse(
+                                430, "No server key found from cryptographic storage : %s",
+                                authRequestBundle.getEpochId()
                         )
                 );
     }
@@ -282,15 +257,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                404,
-                                "Could not find id"
-                        )
-                );
+                .is(grpcErrorResponse(404, "Could not find id"));
     }
 
     @Test
@@ -310,15 +280,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Invalid MAC"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Invalid MAC"));
 
     }
 
@@ -343,15 +308,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Invalid MAC"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Invalid MAC"));
     }
 
     @Test
@@ -377,15 +337,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Invalid MAC"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Invalid MAC"));
     }
 
     @Test
@@ -409,15 +364,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Invalid MAC"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Invalid MAC"));
     }
 
     @Test
@@ -443,15 +393,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Invalid MAC"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Invalid MAC"));
     }
 
     @Test
@@ -469,15 +414,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                500,
-                                "Error validating authenticated request"
-                        )
-                );
+                .is(grpcErrorResponse(500, "Error validating authenticated request"));
     }
 
     @Test
@@ -500,15 +440,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Invalid MAC"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Invalid MAC"));
     }
 
     @Test
@@ -524,15 +459,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Invalid MAC"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Invalid MAC"));
     }
 
     @Test
@@ -555,15 +485,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Could not decrypt ebid content"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Could not decrypt ebid content"));
     }
 
     @Test
@@ -582,15 +507,10 @@ public class GetIdFromAuthTest {
                 .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
                 .build();
 
-        final var response = cryptoServerClient.getIdFromAuth(request).orElseThrow();
+        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
         assertThat(response)
-                .is(
-                        getIdFromAuthErrorResponse(
-                                400,
-                                "Could not decrypt ebid content"
-                        )
-                );
+                .is(grpcErrorResponse(400, "Could not decrypt ebid content"));
     }
 
 }
