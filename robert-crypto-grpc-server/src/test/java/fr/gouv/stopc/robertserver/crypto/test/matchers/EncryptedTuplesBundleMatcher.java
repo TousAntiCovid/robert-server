@@ -87,10 +87,9 @@ public class EncryptedTuplesBundleMatcher {
         );
     }
 
-    public ObjectArrayAssert<EphemeralTuple> isEncryptedWith(byte[] keyForTuples) {
-        final var aesGcm = new CryptoAESGCM(keyForTuples);
+    public ObjectArrayAssert<EphemeralTuple> isEncryptedWith(CryptoAESGCM cipherForTuples) {
         try {
-            final var decryptedTuplesBundle = aesGcm.decrypt(encryptedTuplesBundle);
+            final var decryptedTuplesBundle = cipherForTuples.decrypt(encryptedTuplesBundle);
             final var listOfEphemeralTuples = new ObjectMapper()
                     .readValue(decryptedTuplesBundle, EphemeralTuple[].class);
             return assertThat(listOfEphemeralTuples)

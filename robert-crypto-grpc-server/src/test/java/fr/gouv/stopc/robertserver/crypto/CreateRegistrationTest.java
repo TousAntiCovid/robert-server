@@ -15,7 +15,7 @@ import java.security.SecureRandom;
 
 import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
 import static fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE;
-import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.findKeyForTuplesByIdA;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.getCipherForTuples;
 import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcher.*;
 import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.grpcErrorResponse;
 import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.noGrpcError;
@@ -58,11 +58,11 @@ class CreateRegistrationTest {
         final var response = robertCryptoClient.createRegistration(request)
                 .orElseThrow();
 
-        final var tuplesKeyForNewlyCreatedIdentity = findKeyForTuplesByIdA(response.getIdA());
+        final var tuplesCipherForNewlyCreatedIdentity = getCipherForTuples(response.getIdA());
 
         assertThat(response).has(noGrpcError());
         assertThatTuplesBundle(response.getTuples())
-                .isEncryptedWith(tuplesKeyForNewlyCreatedIdentity)
+                .isEncryptedWith(tuplesCipherForNewlyCreatedIdentity)
                 .have(countryCode(countryCode))
                 .have(idA(response.getIdA().toByteArray()))
                 .have(ebidConstistentWithTupleEpoch())
@@ -77,11 +77,11 @@ class CreateRegistrationTest {
         final var response = robertCryptoClient.createRegistration(request)
                 .orElseThrow();
 
-        final var tuplesKeyForNewlyCreatedIdentity = findKeyForTuplesByIdA(response.getIdA());
+        final var tuplesCipherForNewlyCreatedIdentity = getCipherForTuples(response.getIdA());
 
         assertThat(response).has(noGrpcError());
         assertThatTuplesBundle(response.getTuples())
-                .isEncryptedWith(tuplesKeyForNewlyCreatedIdentity)
+                .isEncryptedWith(tuplesCipherForNewlyCreatedIdentity)
                 .have(countryCode(FRANCE))
                 .have(idA(response.getIdA().toByteArray()))
                 .have(ebidConstistentWithTupleEpoch())
@@ -100,11 +100,11 @@ class CreateRegistrationTest {
         final var response = robertCryptoClient.createRegistration(request)
                 .orElseThrow();
 
-        final var tuplesKeyForNewlyCreatedIdentity = findKeyForTuplesByIdA(response.getIdA());
+        final var tuplesCipherForNewlyCreatedIdentity = getCipherForTuples(response.getIdA());
 
         assertThat(response).has(noGrpcError());
         assertThatTuplesBundle(response.getTuples())
-                .isEncryptedWith(tuplesKeyForNewlyCreatedIdentity)
+                .isEncryptedWith(tuplesCipherForNewlyCreatedIdentity)
                 .have(countryCode(FRANCE))
                 .have(idA(response.getIdA().toByteArray()))
                 .have(ebidConstistentWithTupleEpoch())
@@ -173,24 +173,11 @@ class CreateRegistrationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = { 5, 6, 7, 8, 9, 10, 15, 25 })
-    void cant_create_a_registration_requesting_a_bundle_beginning_in_the_past(int daysCountInThePast) {
+    @ValueSource(ints = { -25, -15, -10, -9, -8, -7, -6, 5, 6, 7, 8, 9, 10, 15, 25 })
+    void cant_create_a_registration_producing_a_bundle_with_zero_tuples(int bundleStartDayDrift) {
         final var request = givenValidCreateRegistrationRequest()
-                .setFromEpochId(clock().now().minus(daysCountInThePast, DAYS).asEpochId())
-                .build();
-
-        final var response = robertCryptoClient.createRegistration(request)
-                .orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(500, "Unhandled exception while creating registration"));
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = { 5, 6, 7, 8, 9, 10, 15, 25 })
-    void cant_create_a_registration_requesting_a_bundle_beginning_in_the_future(int daysCountInTheFuture) {
-        final var request = givenValidCreateRegistrationRequest()
-                .setFromEpochId(clock().now().plus(daysCountInTheFuture, DAYS).asEpochId())
+                .setNumberOfDaysForEpochBundles(1)
+                .setFromEpochId(clock().now().plus(bundleStartDayDrift, DAYS).asEpochId())
                 .build();
 
         final var response = robertCryptoClient.createRegistration(request)

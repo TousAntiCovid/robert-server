@@ -4,21 +4,26 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.impl.CryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robert.server.common.service.RobertClock.RobertInstant;
+import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest;
 import lombok.Builder;
+import lombok.SneakyThrows;
 import lombok.Value;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.security.SecureRandom;
-import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
-import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.*;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.grpcErrorResponse;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.noGrpcError;
+import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.cipherForEbidAtEpoch;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.*;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.*;
+import static java.time.temporal.ChronoUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
@@ -26,138 +31,191 @@ public class GetIdFromAuthTest {
 
     private final ICryptoServerGrpcClient robertCryptoClient = new CryptoServerGrpcClient("localhost", 9090);
 
-    private static final RobertClock.RobertInstant now = clock().now();
-
     @Value
-    @Builder
-    static class AuthRequestBundle {
+    @Builder(toBuilder = true)
+    static class AuthBundle {
 
-        byte[] ebid;
-
-        int epochId;
-
-        long time;
-
-        byte[] mac;
+        String title;
 
         DigestSaltEnum requestType;
 
-        byte[] idA;
+        String idA;
 
-        byte[] serverKey;
+        RobertInstant time;
 
-        ClientIdentifierBundle clientIdentifierBundle;
+        Integer epochId;
+
+        public static AuthBundleBuilder withDefaults(String title) {
+            final var now = clock().now();
+            final var randomIdA = new byte[5];
+            new SecureRandom().nextBytes(randomIdA);
+            return builder()
+                    .title(title)
+                    .idA(Base64.getEncoder().encodeToString(randomIdA))
+                    .timeAndEpoch(now);
+        }
+
+        public static class AuthBundleBuilder {
+
+            public AuthBundleBuilder timeAndEpoch(RobertInstant time) {
+                this.time = time;
+                this.epochId = time.asEpochId();
+                return this;
+            }
+        }
+
+        /**
+         * Assemble and encrypt epochId and idA to return an EBID.
+         * <p>
+         * The unencrypted EBID is made of 8 bytes.
+         * 
+         * <pre>
+         *     +---------------------------------+
+         *     | Unencrypted EBID                |
+         *     +------------+--------------------+
+         *     | epochId    | idA                |
+         *     |  (24 bits) |          (40 bits) |
+         *     +------------+--------------------+
+         * </pre>
+         *
+         * @see <a href=
+         *      "https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert
+         *      Protocol 1.1</a> §4
+         */
+        @SneakyThrows
+        public ByteString getEbid() {
+            final var idABytes = Base64.getDecoder().decode(idA);
+            final var ebid = new byte[8];
+            System.arraycopy(ByteUtils.intToBytes(epochId), 1, ebid, 0, 3);
+            System.arraycopy(idABytes, 0, ebid, 3, 5);
+            final var encryptedEbid = cipherForEbidAtEpoch(epochId).encrypt(ebid);
+            return ByteString.copyFrom(encryptedEbid);
+        }
+
+        /**
+         * Computes the MAC for this EBID, epochId and time.
+         * 
+         * <pre>
+         *     +----------------------------------------------------------------+
+         *     |                    MAC structure (128 bits)                    |
+         *     +----------------------------------------------------------------+
+         *     | Req type     | EBID           | Epoch          | Time          |
+         *     |     (8 bits) |      (64 bits) |      (32 bits) |     (32 bits) |
+         *     +----------------------------------------------------------------+
+         * </pre>
+         *
+         * @see <a href=
+         *      "https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert
+         *      Protocol 1.1</a> §7 and §C
+         */
+        @SneakyThrows
+        public ByteString getMac() {
+            final var ebid = getEbid().toByteArray();
+            final var data = new byte[1 + 8 + Integer.BYTES + Integer.BYTES];
+            data[0] = requestType.getValue();
+            System.arraycopy(ebid, 0, data, 1, 8);
+            System.arraycopy(ByteUtils.intToBytes(epochId), 0, data, 1 + ebid.length, Integer.BYTES);
+            System.arraycopy(time.asTime32(), 0, data, 1 + ebid.length + Integer.BYTES, Integer.BYTES);
+            final var mac = getCipherForMac(idA).encrypt(data);
+            return ByteString.copyFrom(mac);
+        }
+
+        public String toString() {
+            return String.format(
+                    "%s (idA=%s, requestType=%s, time=%s, epochId=%d)", title, idA, requestType, time,
+                    epochId
+            );
+        }
     }
 
-    private static AuthRequestBundle.AuthRequestBundleBuilder givenValidAuthRequestBundle() {
-        final var clientBundle = createClientId();
-        final var epochId = now.asEpochId();
-        final var serverKey = getServerKey(epochId).getEncoded();
-        final var ebid = generateEbid(clientBundle.getId(), epochId, serverKey);
-        final var time = now.asNtpTimestamp();
-        final var mac = generateMac(ebid, epochId, time, clientBundle.getKeyForMac(), DigestSaltEnum.DELETE_HISTORY);
-
-        return AuthRequestBundle.builder()
-                .ebid(ebid)
-                .epochId(epochId)
-                .time(time)
-                .mac(mac)
-                .serverKey(serverKey)
-                .clientIdentifierBundle(clientBundle)
-                .requestType(DigestSaltEnum.DELETE_HISTORY)
-                .idA(clientBundle.getId());
-
+    static Stream<AuthBundle> valid_auth_bundle() {
+        final var now = clock().now();
+        return Arrays.stream(DigestSaltEnum.values())
+                .flatMap(
+                        requestType -> Stream.of(
+                                AuthBundle.withDefaults("regular auth attributes")
+                                        .requestType(requestType)
+                                        .build(),
+                                AuthBundle.withDefaults("use current time but epoch-1")
+                                        .requestType(requestType)
+                                        .epochId(now.asEpochId() - 1)
+                                        .build(),
+                                AuthBundle.withDefaults("use current time but epoch-10")
+                                        .requestType(requestType)
+                                        .epochId(now.asEpochId() - 10)
+                                        .build(),
+                                AuthBundle.withDefaults("use current time but epoch-2days")
+                                        .requestType(requestType)
+                                        .epochId(now.minus(2, DAYS).asEpochId())
+                                        .build(),
+                                AuthBundle.withDefaults("use current time but epoch+1")
+                                        .requestType(requestType)
+                                        .epochId(now.asEpochId() + 1)
+                                        .build(),
+                                AuthBundle.withDefaults("use current time but epoch+10")
+                                        .requestType(requestType)
+                                        .epochId(now.asEpochId() + 10)
+                                        .build(),
+                                AuthBundle.withDefaults("use current time but epoch+2days")
+                                        .requestType(requestType)
+                                        .epochId(now.plus(2, DAYS).asEpochId())
+                                        .build(),
+                                AuthBundle.withDefaults("use current epoch but time-2days")
+                                        .requestType(requestType)
+                                        .time(now.plus(-2, DAYS))
+                                        .build(),
+                                AuthBundle.withDefaults("use current epoch but time-10min")
+                                        .requestType(requestType)
+                                        .time(now.plus(-10, MINUTES))
+                                        .build(),
+                                AuthBundle.withDefaults("use current epoch but time+10min")
+                                        .requestType(requestType)
+                                        .time(now.plus(10, MINUTES))
+                                        .build(),
+                                AuthBundle.withDefaults("use current epoch but time+2days")
+                                        .requestType(requestType)
+                                        .time(now.plus(2, DAYS))
+                                        .build(),
+                                AuthBundle.withDefaults("use current epoch but time at NTP timestamp=0")
+                                        .requestType(requestType)
+                                        .time(clock().atNtpTimestamp(0))
+                                        .build()
+                        )
+                );
     }
 
-    @Test
-    void getIdFromAuthRequest_succeed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
+    @ParameterizedTest
+    @MethodSource("valid_auth_bundle")
+    void can_authenticate_valid_request(final AuthBundle auth) {
+        givenIdentityExistsForIdA(auth.getIdA());
 
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
+        final var request = GetIdFromAuthRequest.newBuilder()
+                .setEbid(auth.getEbid())
+                .setEpochId(auth.getEpochId())
+                .setTime(auth.getTime().asNtpTimestamp())
+                .setMac(auth.getMac())
+                .setRequestType(auth.getRequestType().getValue())
                 .build();
 
         final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
-        assertThat(response).has(noGrpcError());
-        assertThat(authRequestBundle.getIdA()).isEqualTo(response.getIdA().toByteArray());
-        assertThat(authRequestBundle.getEpochId()).isEqualTo(response.getEpochId());
+        assertThat(response)
+                .has(noGrpcError())
+                .has(grpcBinaryField("idA", auth.getIdA()))
+                .has(grpcField("epochId", auth.getEpochId()));
 
     }
 
-    @Test
-    void getIdFromAuthRequest_with_epochid_in_the_past_succeed() {
-        final var authRequestBundle = givenValidAuthRequestBundle()
-                .epochId(now.minus(10, RobertClock.ROBERT_EPOCH).asEpochId())
-                .build();
-        final var ebid = generateEbid(
-                authRequestBundle.getIdA(), authRequestBundle.getEpochId(), authRequestBundle.getServerKey()
-        );
-        final var mac = generateMac(
-                ebid, authRequestBundle.getEpochId(), authRequestBundle.getTime(),
-                authRequestBundle.getClientIdentifierBundle().getKeyForMac(), DigestSaltEnum.DELETE_HISTORY
-        );
+    @ParameterizedTest
+    @MethodSource("valid_auth_bundle")
+    void cant_authenticate_with_unknown_request_type(final AuthBundle auth) {
+        givenIdentityExistsForIdA(auth.getIdA());
 
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(ebid))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(mac))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response).has(noGrpcError());
-        assertThat(authRequestBundle.getIdA()).isEqualTo(response.getIdA().toByteArray());
-        assertThat(authRequestBundle.getEpochId()).isEqualTo(response.getEpochId());
-    }
-
-    @Test
-    void getIdFromAuthRequest_with_epochid_in_the_future_succeed() {
-        final var authRequestBundle = givenValidAuthRequestBundle()
-                .epochId(now.plus(10, RobertClock.ROBERT_EPOCH).asEpochId())
-                .build();
-        final var ebid = generateEbid(
-                authRequestBundle.getIdA(), authRequestBundle.getEpochId(), authRequestBundle.getServerKey()
-        );
-        final var mac = generateMac(
-                ebid, authRequestBundle.getEpochId(), authRequestBundle.getTime(),
-                authRequestBundle.getClientIdentifierBundle().getKeyForMac(), DigestSaltEnum.DELETE_HISTORY
-        );
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(ebid))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(mac))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response).has(noGrpcError());
-        assertThat(authRequestBundle.getIdA()).isEqualTo(response.getIdA().toByteArray());
-        assertThat(authRequestBundle.getEpochId()).isEqualTo(response.getEpochId());
-    }
-
-    @Test
-    void getIdFromAuthRequest_with_incorrect_request_type_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
+        final var request = GetIdFromAuthRequest.newBuilder()
+                .setEbid(auth.getEbid())
+                .setEpochId(auth.getEpochId())
+                .setTime(auth.getTime().asNtpTimestamp())
+                .setMac(auth.getMac())
                 .setRequestType(0)
                 .build();
 
@@ -167,21 +225,19 @@ public class GetIdFromAuthTest {
                 .is(grpcErrorResponse(400, "Unknown request type 0"));
     }
 
-    @Test
-    void getIdFromAuthRequest_with_malformed_EBID_failed() {
+    @ParameterizedTest
+    @MethodSource("valid_auth_bundle")
+    void cant_authenticate_with_malformed_ebid(final AuthBundle auth) {
+        givenIdentityExistsForIdA(auth.getIdA());
         final var malformedEbid = new byte[8];
         new SecureRandom().nextBytes(malformedEbid);
-        final var authRequestBundle = givenValidAuthRequestBundle()
-                .ebid(malformedEbid)
-                .build();
 
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
+        final var request = GetIdFromAuthRequest.newBuilder()
+                .setEbid(ByteString.copyFrom(malformedEbid))
+                .setEpochId(auth.getEpochId())
+                .setTime(auth.getTime().asNtpTimestamp())
+                .setMac(auth.getMac())
+                .setRequestType(auth.getRequestType().getValue())
                 .build();
 
         final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
@@ -190,18 +246,18 @@ public class GetIdFromAuthTest {
                 .is(grpcErrorResponse(400, "Could not decrypt ebid content"));
     }
 
-    @Test
-    void getIdFromAuthRequest_with_different_epochid_in_ebid_and_request_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-        final var epochidInRequest = now.minus(5, ChronoUnit.HOURS).asEpochId();
+    @ParameterizedTest
+    @MethodSource("valid_auth_bundle")
+    void cant_authenticate_with_an_epoch_different_from_ebid(final AuthBundle auth) {
+        givenIdentityExistsForIdA(auth.getIdA());
+        final var inconsistentEpoch = auth.getEpochId() - 1;
 
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(epochidInRequest)
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
+        final var request = GetIdFromAuthRequest.newBuilder()
+                .setEbid(auth.getEbid())
+                .setEpochId(inconsistentEpoch)
+                .setTime(auth.getTime().asNtpTimestamp())
+                .setMac(auth.getMac())
+                .setRequestType(auth.getRequestType().getValue())
                 .build();
 
         final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
@@ -210,23 +266,22 @@ public class GetIdFromAuthTest {
                 .is(grpcErrorResponse(400, "Could not decrypt ebid content"));
     }
 
-    @Test
-    void getIdFromAuthRequest_with_no_server_key_for_epochid_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle()
-                .epochId(now.minus(1, ChronoUnit.DAYS).asEpochId())
+    @ParameterizedTest
+    @MethodSource("valid_auth_bundle")
+    void cant_authenticate_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(
+            final AuthBundle auth) {
+        final var oneMonthOldAuth = auth.toBuilder()
+                .title("30 days in the past: " + auth.getTitle())
+                .timeAndEpoch(clock().now().minus(30, DAYS))
                 .build();
+        givenIdentityExistsForIdA(oneMonthOldAuth.getIdA());
 
-        final var serverKey = new byte[24];
-        new SecureRandom().nextBytes(serverKey);
-        final var ebid = generateEbid(authRequestBundle.getIdA(), authRequestBundle.getEpochId(), serverKey);
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(ebid))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
+        final var request = GetIdFromAuthRequest.newBuilder()
+                .setEbid(oneMonthOldAuth.getEbid())
+                .setEpochId(oneMonthOldAuth.getEpochId())
+                .setTime(oneMonthOldAuth.getTime().asNtpTimestamp())
+                .setMac(oneMonthOldAuth.getMac())
+                .setRequestType(oneMonthOldAuth.getRequestType().getValue())
                 .build();
 
         final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
@@ -235,27 +290,26 @@ public class GetIdFromAuthTest {
                 .is(
                         grpcErrorResponse(
                                 430, "No server key found from cryptographic storage : %s",
-                                authRequestBundle.getEpochId()
+                                oneMonthOldAuth.getEpochId()
                         )
                 );
     }
 
-    @Test
-    void getIdFromAuthRequest_with_unknown_id_failed() {
-        createClientId();
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-        final var idA = new byte[5];
-        new SecureRandom().nextBytes(idA);
-        final var ebid = generateEbid(idA, authRequestBundle.getEpochId(), authRequestBundle.getServerKey());
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(ebid))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
+    @ParameterizedTest
+    @MethodSource("valid_auth_bundle")
+    void cant_authenticate_with_unknown_idA(final AuthBundle auth) {
+        // create the identity to be able to compute mac with regular tools
+        givenIdentityExistsForIdA(auth.getIdA());
+        final var request = GetIdFromAuthRequest.newBuilder()
+                .setEbid(auth.getEbid())
+                .setEpochId(auth.getEpochId())
+                .setTime(auth.getTime().asNtpTimestamp())
+                .setMac(auth.getMac())
+                .setRequestType(auth.getRequestType().getValue())
                 .build();
+
+        // delete the identity to simulate an unknown idA
+        givenIdentityDoesntExistForIdA(auth.getIdA());
 
         final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
 
@@ -263,21 +317,18 @@ public class GetIdFromAuthTest {
                 .is(grpcErrorResponse(404, "Could not find id"));
     }
 
-    @Test
-    void getIdFromAuthRequest_with_random_mac_failed() {
-        final var mac = new byte[5];
-        new SecureRandom().nextBytes(mac);
-        final var authRequestBundle = givenValidAuthRequestBundle()
-                .mac(mac)
-                .build();
+    @ParameterizedTest
+    @MethodSource("valid_auth_bundle")
+    void cant_authenticate_with_incorrect_mac(final AuthBundle auth) {
+        givenIdentityExistsForIdA(auth.getIdA());
 
         final var request = GetIdFromAuthRequest
                 .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
+                .setEbid(auth.getEbid())
+                .setEpochId(auth.getEpochId())
+                .setTime(auth.getTime().asNtpTimestamp())
+                .setMac(ByteString.copyFromUtf8("Incorrect MAC value"))
+                .setRequestType(auth.getRequestType().getValue())
                 .build();
 
         final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
@@ -287,131 +338,20 @@ public class GetIdFromAuthTest {
 
     }
 
-    @Test
-    void getIdFromAuthRequest_with_different_epochId_in_mac_failed() {
+    @ParameterizedTest
+    @MethodSource("valid_auth_bundle")
+    void cant_authenticate_with_an_ebid_larger_than_64bits(final AuthBundle auth) {
+        givenIdentityExistsForIdA(auth.getIdA());
 
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-        final var macWithDifferentEpochId = generateMac(
-                authRequestBundle.getEbid(),
-                now.plus(1, ChronoUnit.HOURS).asEpochId(),
-                authRequestBundle.getTime(),
-                authRequestBundle.getClientIdentifierBundle().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY
-        );
+        final var largerEbid = Arrays.copyOf(auth.getEbid().toByteArray(), 9);
 
         final var request = GetIdFromAuthRequest
                 .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(macWithDifferentEpochId))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(400, "Invalid MAC"));
-    }
-
-    @Test
-    void getIdFromAuthRequest_with_different_ebid_in_mac_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-        final var randomEbid = new byte[8];
-        new SecureRandom().nextBytes(randomEbid);
-
-        final var macWithDifferentEbid = generateMac(
-                randomEbid,
-                authRequestBundle.getEpochId(),
-                authRequestBundle.getTime(),
-                authRequestBundle.getClientIdentifierBundle().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY
-        );
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(macWithDifferentEbid))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(400, "Invalid MAC"));
-    }
-
-    @Test
-    void getIdFromAuthRequest_with_different_time_in_mac_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-
-        final var macWithDifferentTime = generateMac(
-                authRequestBundle.getEbid(),
-                authRequestBundle.getEpochId(),
-                0,
-                authRequestBundle.getClientIdentifierBundle().getKeyForMac(),
-                DigestSaltEnum.DELETE_HISTORY
-        );
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(macWithDifferentTime))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(400, "Invalid MAC"));
-    }
-
-    @Test
-    void getIdFromAuthRequest_mac_encrypted_with_incorrect_key_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-        byte[] differentKeyForMac = new byte[32];
-        new SecureRandom().nextBytes(differentKeyForMac);
-
-        final var macEncryptedWithDifferentKey = generateMac(
-                authRequestBundle.getEbid(),
-                authRequestBundle.getEpochId(),
-                authRequestBundle.getTime(),
-                differentKeyForMac,
-                DigestSaltEnum.DELETE_HISTORY
-        );
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(macEncryptedWithDifferentKey))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(400, "Invalid MAC"));
-    }
-
-    @Test
-    void getIdFromAuthRequest_with_EBID_too_big_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-        final var incorrectEbid = new byte[64]; // should be 64-bits size
-        new SecureRandom().nextBytes(incorrectEbid);
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(incorrectEbid))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
+                .setEbid(ByteString.copyFrom(largerEbid))
+                .setEpochId(auth.getEpochId())
+                .setTime(auth.getTime().asNtpTimestamp())
+                .setMac(auth.getMac())
+                .setRequestType(auth.getRequestType().getValue())
                 .build();
 
         final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
@@ -419,98 +359,4 @@ public class GetIdFromAuthTest {
         assertThat(response)
                 .is(grpcErrorResponse(500, "Error validating authenticated request"));
     }
-
-    @Test
-    void getIdFromAuthRequest_with_different_salt_in_mac_and_request_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-        final var macWithDifferentSalt = generateMac(
-                authRequestBundle.getEbid(),
-                authRequestBundle.getEpochId(),
-                authRequestBundle.getTime(),
-                authRequestBundle.getClientIdentifierBundle().getKeyForMac(),
-                DigestSaltEnum.UNREGISTER
-        );
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(macWithDifferentSalt))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(400, "Invalid MAC"));
-    }
-
-    @Test
-    void getIdFromAuthRequest_with_incorrect_time_value_in_request_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(authRequestBundle.getEbid()))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(0)
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(400, "Invalid MAC"));
-    }
-
-    @Test
-    void getIdFromAuthRequest_with_ebid_encoded_with_previous_server_key_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle()
-                .epochId(now.plus(1, ChronoUnit.DAYS).asEpochId())
-                .build();
-
-        final var serverKeyFromPreviousDay = getServerKey(now.asEpochId()).getEncoded();
-        final var ebid = generateEbid(
-                authRequestBundle.getIdA(), authRequestBundle.getEpochId(), serverKeyFromPreviousDay
-        );
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(ebid))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(400, "Could not decrypt ebid content"));
-    }
-
-    @Test
-    void getIdFromAuthRequest_with_ebid_encoded_with_next_day_server_key_failed() {
-        final var authRequestBundle = givenValidAuthRequestBundle().build();
-
-        final var serverKey = getServerKey(now.plus(1, ChronoUnit.DAYS).asEpochId()).getEncoded();
-        final var ebid = generateEbid(authRequestBundle.getIdA(), authRequestBundle.getEpochId(), serverKey);
-
-        final var request = GetIdFromAuthRequest
-                .newBuilder()
-                .setEbid(ByteString.copyFrom(ebid))
-                .setEpochId(authRequestBundle.getEpochId())
-                .setTime(authRequestBundle.getTime())
-                .setMac(ByteString.copyFrom(authRequestBundle.getMac()))
-                .setRequestType(DigestSaltEnum.DELETE_HISTORY.getValue())
-                .build();
-
-        final var response = robertCryptoClient.getIdFromAuth(request).orElseThrow();
-
-        assertThat(response)
-                .is(grpcErrorResponse(400, "Could not decrypt ebid content"));
-    }
-
 }

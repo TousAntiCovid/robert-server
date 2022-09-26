@@ -1,12 +1,8 @@
 package fr.gouv.stopc.robertserver.crypto.test;
 
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.crypto.structure.ICryptoStructure;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
-import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +28,6 @@ import java.security.cert.Certificate;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Date;
 
 import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
@@ -68,7 +63,7 @@ public class KeystoreManager implements TestExecutionListener {
             generateRegisterKey();
             generateAESKey("federation-key", 256);
             generateAESKey("key-encryption-key", 256);
-            LocalDate.now().datesUntil(LocalDate.now().plusDays(5))
+            LocalDate.now().minusDays(5).datesUntil(LocalDate.now().plusDays(5))
                     .map(date -> date.format(BASIC_ISO_DATE))
                     .forEach(date -> generateAESKey("server-key-" + date, 192));
             try (final var fos = new FileOutputStream(KEYSTORE_PATH.toString())) {
@@ -152,73 +147,24 @@ public class KeystoreManager implements TestExecutionListener {
 
     @SneakyThrows
     public static CryptoSkinny64 cipherForEbidAtEpoch(final int epochId) {
-        final var serverKey = getServerKey(epochId);
-        return new CryptoSkinny64(serverKey.getEncoded());
-    }
-
-    @SneakyThrows
-    public static CryptoAESECB cipherForEcc() {
-        return new CryptoAESECB(KEYSTORE.getKey("federation-key", KEYSTORE_PASSWORD.toCharArray()));
-    }
-
-    @SneakyThrows
-    public static Key getServerKey(final int epochId) {
         final var epochDate = clock().atEpoch(epochId)
                 .asInstant()
                 .atZone(UTC)
                 .toLocalDate()
                 .format(BASIC_ISO_DATE);
-        return KEYSTORE.getKey(format("server-key-%s", epochDate), KEYSTORE_PASSWORD.toCharArray());
+        final var serverKey = KEYSTORE.getKey(format("server-key-%s", epochDate), KEYSTORE_PASSWORD.toCharArray());
+        if (null != serverKey) {
+            return new CryptoSkinny64(serverKey.getEncoded());
+        } else {
+            final var rsaKeyGenerator = KeyGenerator.getInstance("AES");
+            rsaKeyGenerator.init(192);
+            return new CryptoSkinny64(rsaKeyGenerator.generateKey().getEncoded());
+        }
     }
 
     @SneakyThrows
-    public static byte[] generateEbid(byte[] id, int epochId, byte[] ks) {
-        final var ebid = new byte[8];
-        System.arraycopy(ByteUtils.intToBytes(epochId), 1, ebid, 0, Integer.BYTES - 1);
-        System.arraycopy(id, 0, ebid, Integer.BYTES - 1, id.length);
-
-        CryptoSkinny64 cryptoSkinny64 = new CryptoSkinny64(ks);
-
-        return cryptoSkinny64.encrypt(ebid);
-    }
-
-    @SneakyThrows
-    public static byte[] generateMac(byte[] ebid, int epochId, long time, byte[] keyForMac, DigestSaltEnum digestSalt) {
-        final var digest = new byte[] { digestSalt.getValue() };
-        final var toHash = new byte[digest.length + ebid.length + Integer.BYTES + Integer.BYTES];
-        System.arraycopy(digest, 0, toHash, 0, digest.length);
-        System.arraycopy(ebid, 0, toHash, digest.length, ebid.length);
-        System.arraycopy(ByteUtils.intToBytes(epochId), 0, toHash, digest.length + ebid.length, Integer.BYTES);
-        System.arraycopy(
-                ByteUtils.longToBytes(time), 4, toHash, digest.length + ebid.length + Integer.BYTES, Integer.BYTES
-        );
-
-        CryptoHMACSHA256 hmacsha256 = new CryptoHMACSHA256(keyForMac);
-        return hmacsha256.encrypt(toHash);
-
-    }
-
-    @SneakyThrows
-    public static ClientIdentifierBundle createClientId() {
-        byte[] keyForMac = new byte[32];
-        byte[] keyForTuples = new byte[32];
-        final var idA = new byte[5];
-        new SecureRandom().nextBytes(idA);
-        final var encryptedKeyForMac = cipherForStoredKey().encrypt(keyForMac);
-        final var encryptedKeyForTuples = cipherForStoredKey().encrypt(keyForTuples);
-
-        ClientIdentifier clientIdentifier = ClientIdentifier.builder()
-                .idA(Base64.getEncoder().encodeToString(idA))
-                .keyForMac(Base64.getEncoder().encodeToString(encryptedKeyForMac))
-                .keyForTuples(Base64.getEncoder().encodeToString(encryptedKeyForTuples))
-                .build();
-        PostgreSqlManager.insert(clientIdentifier);
-
-        return ClientIdentifierBundle.builder()
-                .id(idA)
-                .keyForMac(keyForMac)
-                .keyForTuples(keyForTuples)
-                .build();
+    public static CryptoAESECB cipherForEcc() {
+        return new CryptoAESECB(KEYSTORE.getKey("federation-key", KEYSTORE_PASSWORD.toCharArray()));
     }
 
     private static KeyPair generateKeyPair() {
