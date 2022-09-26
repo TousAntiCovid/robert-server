@@ -1,18 +1,18 @@
 package fr.gouv.stopc.robertserver.crypto.test;
 
 import com.google.protobuf.ByteString;
-import fr.gouv.stopc.robert.crypto.grpc.server.storage.database.model.ClientIdentifier;
+import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
+import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import lombok.SneakyThrows;
 import org.flywaydb.core.Flyway;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.security.SecureRandom;
 import java.util.Base64;
 
 import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.cipherForStoredKey;
@@ -54,28 +54,48 @@ public class PostgreSqlManager implements TestExecutionListener {
                 .migrate();
     }
 
-    public static byte[] findKeyForTuplesByIdA(final ByteString idA) {
+    @SneakyThrows
+    public static void givenIdentityExistsForIdA(String base64EncodedIdA) {
+        final var keyForMac = new byte[32];
+        final var keyForTuples = new byte[32];
+        final var random = new SecureRandom();
+        random.nextBytes(keyForMac);
+        random.nextBytes(keyForTuples);
+        final var encryptedKeyForMac = cipherForStoredKey().encrypt(keyForMac);
+        final var encryptedKeyForTuples = cipherForStoredKey().encrypt(keyForTuples);
+        jdbcTemplate.update(
+                "insert into identity(id, idA, key_for_mac, key_for_tuples, creation_time, last_update)" +
+                        " values ((select nextval('identity_id_seq ')), ?, ?, ?, now(), now())",
+                base64EncodedIdA,
+                Base64.getEncoder().encodeToString(encryptedKeyForMac),
+                Base64.getEncoder().encodeToString(encryptedKeyForTuples)
+        );
+    }
+
+    public static void givenIdentityDoesntExistForIdA(String base64EncodedIdA) {
+        jdbcTemplate.update("delete from identity where idA = ?", base64EncodedIdA);
+    }
+
+    public static CryptoAESGCM getCipherForTuples(final ByteString idA) {
         final var base64EncodedIdA = Base64.getEncoder().encodeToString(idA.toByteArray());
         return findKeyForTuplesByIdA(base64EncodedIdA);
     }
 
     @SneakyThrows
-    public static byte[] findKeyForTuplesByIdA(final String idA) {
+    public static CryptoAESGCM findKeyForTuplesByIdA(final String base64EncodedIdA) {
         final var base64Key = jdbcTemplate
-                .queryForObject("select key_for_tuples from IDENTITY where idA = ?", String.class, idA);
+                .queryForObject("select key_for_tuples from IDENTITY where idA = ?", String.class, base64EncodedIdA);
         final var encryptedKey = Base64.getDecoder().decode(base64Key);
-        return cipherForStoredKey().decrypt(encryptedKey);
+        final var key = cipherForStoredKey().decrypt(encryptedKey);
+        return new CryptoAESGCM(key);
     }
 
-    public static int insert(final ClientIdentifier clientIdentifier) {
-        final MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("idA", clientIdentifier.getIdA());
-        parameters.addValue("key_for_mac", clientIdentifier.getKeyForMac());
-        parameters.addValue("key_for_tuples", clientIdentifier.getKeyForTuples());
-        return new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("IDENTITY")
-                .usingGeneratedKeyColumns("id")
-                .execute(parameters);
+    @SneakyThrows
+    public static CryptoHMACSHA256 getCipherForMac(final String base64EncodedIdA) {
+        final var base64Key = jdbcTemplate
+                .queryForObject("select key_for_mac from identity where idA = ?", String.class, base64EncodedIdA);
+        final var encryptedKey = Base64.getDecoder().decode(base64Key);
+        final var keyForMac = cipherForStoredKey().decrypt(encryptedKey);
+        return new CryptoHMACSHA256(keyForMac);
     }
-
 }
