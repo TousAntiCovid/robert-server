@@ -83,7 +83,7 @@ public class EncryptedTuplesBundleMatcher {
                     return Arrays.equals(actualEpochs, expectedEpochIds);
                 },
                 format("a bundle with all epochs from %s to %s", bundleStart, bundleEnd),
-                ephemeralTuples -> format("but is was a bundle containing epochs %s", Arrays.toString(ephemeralTuples))
+                ephemeralTuples -> format(" but is was a bundle containing epochs %s", Arrays.toString(ephemeralTuples))
         );
     }
 
