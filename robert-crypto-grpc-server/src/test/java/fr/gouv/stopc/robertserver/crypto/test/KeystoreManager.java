@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robertserver.crypto.test;
 
+import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.crypto.structure.ICryptoStructure;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
@@ -62,7 +63,7 @@ public class KeystoreManager implements TestExecutionListener {
             generateRegisterKey();
             generateAESKey("federation-key", 256);
             generateAESKey("key-encryption-key", 256);
-            LocalDate.now().datesUntil(LocalDate.now().plusDays(5))
+            LocalDate.now().minusDays(5).datesUntil(LocalDate.now().plusDays(5))
                     .map(date -> date.format(BASIC_ISO_DATE))
                     .forEach(date -> generateAESKey("server-key-" + date, 192));
             try (final var fos = new FileOutputStream(KEYSTORE_PATH.toString())) {
@@ -118,8 +119,14 @@ public class KeystoreManager implements TestExecutionListener {
             }
 
             @Override
-            public byte[] encrypt(byte[] clearData) {
-                throw new UnsupportedOperationException("Not implemented!");
+            @SneakyThrows
+            public byte[] encrypt(byte[] dataToEncrypt) {
+                final var keyEncryptionKey = KEYSTORE.getKey("key-encryption-key", KEYSTORE_PASSWORD.toCharArray());
+                final var cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                cipher.init(Cipher.ENCRYPT_MODE, keyEncryptionKey);
+                final var cipherText = cipher.doFinal(dataToEncrypt);
+                return ByteUtils.addAll(cipher.getIV(), cipherText);
+
             }
 
             @Override
@@ -146,7 +153,13 @@ public class KeystoreManager implements TestExecutionListener {
                 .toLocalDate()
                 .format(BASIC_ISO_DATE);
         final var serverKey = KEYSTORE.getKey(format("server-key-%s", epochDate), KEYSTORE_PASSWORD.toCharArray());
-        return new CryptoSkinny64(serverKey.getEncoded());
+        if (null != serverKey) {
+            return new CryptoSkinny64(serverKey.getEncoded());
+        } else {
+            final var rsaKeyGenerator = KeyGenerator.getInstance("AES");
+            rsaKeyGenerator.init(192);
+            return new CryptoSkinny64(rsaKeyGenerator.generateKey().getEncoded());
+        }
     }
 
     @SneakyThrows
