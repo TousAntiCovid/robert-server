@@ -26,7 +26,6 @@ import fr.gouv.stopc.robertserver.database.service.ContactService;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.log.LogCaptor;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,7 +63,7 @@ import static org.mockito.Mockito.*;
 @TestPropertySource(locations = "classpath:application-legacy.properties", properties = {
         "robert.scoring.algo-version=2",
         "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK" })
-public class ScoringAndRiskEvaluationJobConfigurationTest {
+class ScoringAndRiskEvaluationJobConfigurationTest {
 
     @Autowired
     JobLauncherTestUtils jobLauncherTestUtils;
@@ -104,7 +103,8 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
 
     @BeforeEach
     public void before() {
-
+        this.contactService.deleteAll();
+        this.registrationService.deleteAll();
         this.serverKey = this.generateKey(24);
         this.federationKey = new SecretKeySpec(this.generateKey(32), CryptoAES.AES_ENCRYPTION_KEY_SCHEME);
         this.countryCode = this.serverConfigurationService.getServerCountryCode();
@@ -601,12 +601,6 @@ public class ScoringAndRiskEvaluationJobConfigurationTest {
             return jobLauncherTestUtils;
         }
 
-    }
-
-    @AfterEach
-    public void afterAll() {
-        this.contactService.deleteAll();
-        this.registrationService.deleteAll();
     }
 
     private HelloMessageDetail generateHelloMessageFor(byte[] ebid, byte[] encryptedCountryCode, long t, int rssi)
