@@ -55,7 +55,7 @@ Fonctionnalité: Covid-19 positive declaration
       | 5 jours            |
       | 6 jours            |
       | 7 jours            |
-      | 7 jours 45 minutes |
+      | 7 jours 30 minutes |
 
   Plan du Scénario: Pas d'alerte si le dernier contact date d'il y a plus de 7 jours (exemple avec il y a <date de visite>)
     Etant donné que John et Sarah étaient à proximité 60 minutes il y a <date de visite>
