@@ -121,8 +121,10 @@ class RiskEvaluationServiceTest {
         assertThatRegistrationForUser("user___1")
                 .hasFieldOrPropertyWithValue("atRisk", true);
 
-        final var RISK_DETECTED = "Risk detected\\. Aggregated risk since [\\d]{0,}: [\\d]{0,}\\.[\\d]{0,} greater than threshold [\\d]{0,}\\.[\\d]{0,}";
-        assertThatLogsMatchingRegex(assertThatInfoLogs(), RISK_DETECTED, 1);
+        assertThatInfoLogs()
+                .containsOnlyOnce(
+                        "Risk detected. Aggregated risk since 0: 0.13237874351408596 greater than threshold 0.1"
+                );
     }
 
     @Test
