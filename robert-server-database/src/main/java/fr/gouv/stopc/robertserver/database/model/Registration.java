@@ -45,5 +45,4 @@ public class Registration {
 
     @Builder.Default
     private boolean outdatedRisk = false; /* true if atRisk needs to be recomputed from exposedEpochs */
-
 }

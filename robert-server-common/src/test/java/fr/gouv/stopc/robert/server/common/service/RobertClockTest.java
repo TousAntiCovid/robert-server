@@ -15,7 +15,7 @@ import static java.time.temporal.ChronoUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-public class RobertClockTest {
+class RobertClockTest {
 
     final RobertClock robertClock = new RobertClock("2022-01-01");
 
@@ -66,6 +66,18 @@ public class RobertClockTest {
         final var instant = Instant.parse("2022-04-23T08:30:00Z");
         assertThat(robertClock.at(instant).toString())
                 .isEqualTo("2022-04-23T08:30:00Z=10786E");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2022-04-23T08:35:12.004Z, 14528",
+            "1980-01-01T00:00:00.000Z, 9344",
+            "2010-05-04T12:00:30.000Z, 35550"
+    })
+    void can_retrieve_16_less_significant_bits(String date, int expectedValue) {
+        final var instant = Instant.parse(date);
+        final var robertInstant = robertClock.at(instant);
+        assertThat(robertInstant.as16LessSignificantBits()).isEqualTo(expectedValue);
     }
 
     @Test

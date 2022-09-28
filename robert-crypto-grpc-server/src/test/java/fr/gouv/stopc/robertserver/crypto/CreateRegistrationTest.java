@@ -52,6 +52,8 @@ class CreateRegistrationTest {
             "GERMANY"
     })
     void can_create_a_registration_and_return_a_valid_5_days_tuples_bundle(final CountryCode countryCode) {
+        final var now = clock().now();
+
         final var request = givenValidCreateRegistrationRequest()
                 .setServerCountryCode(countryCode.asByteString())
                 .build();
@@ -66,7 +68,7 @@ class CreateRegistrationTest {
                 .have(countryCode(countryCode))
                 .have(idA(response.getIdA().toByteArray()))
                 .have(ebidConstistentWithTupleEpoch())
-                .is(aBundleWithEpochs(clock().now(), clock().now().plus(5, DAYS).truncatedTo(DAYS)));
+                .is(aBundleWithEpochs(now, now.plus(5, DAYS).truncatedTo(DAYS)));
     }
 
     @Test
