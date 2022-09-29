@@ -35,10 +35,6 @@ class ContactProcessingServiceTest {
 
     private final RobertClock clock;
 
-    private final String TIME_TOLERANCE_REGEX = "(Time tolerance was exceeded: \\|[\\d]{1,} \\(HELLO\\) vs [\\d]{1,} \\(receiving device\\)\\| > 180; discarding HELLO message)";
-
-    private final String DIVERGENT_EPOCHIDS = "Epochid from message [\\d]{1,}  vs epochid from ebid  [\\d]{1,} > 1 \\(tolerance\\); discarding HELLO message";
-
     private final JobLauncherTestUtils jobLauncher;
 
     @SneakyThrows
@@ -131,7 +127,13 @@ class ContactProcessingServiceTest {
         // Then : Check that there is one bad contact in logs and that the final
         // registration
         // contains one exposed epoch for the computation of the good ones
-        assertThatLogsMatchingRegex(assertThatWarnLogs(), TIME_TOLERANCE_REGEX, 1);
+        assertThatWarnLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
+                                now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
+                        )
+                );
 
         assertThatRegistrationForUser("user___1")
                 .extracting(Registration::getExposedEpochs)
@@ -254,7 +256,13 @@ class ContactProcessingServiceTest {
 
         runRobertBatchJob();
 
-        assertThatLogsMatchingRegex(assertThatWarnLogs(), TIME_TOLERANCE_REGEX, 1);
+        assertThatWarnLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
+                                now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
+                        )
+                );
 
         assertThatInfoLogs()
                 .contains("Contact did not contain any valid messages; discarding contact");
@@ -293,7 +301,13 @@ class ContactProcessingServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatLogsMatchingRegex(assertThatWarnLogs(), DIVERGENT_EPOCHIDS, 1);
+
+        assertThatWarnLogs().containsOnlyOnce(
+                String.format(
+                        "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
+                        now.asEpochId() + 2, now.asEpochId()
+                )
+        );
         // Note : DIVERGENT_EPOCHIDS il y a des espaces en trop dans les logs de cette
         // version applicative
         assertThatInfoLogs()
@@ -340,7 +354,12 @@ class ContactProcessingServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatLogsMatchingRegex(assertThatWarnLogs(), DIVERGENT_EPOCHIDS, 1);
+        assertThatWarnLogs().containsOnlyOnce(
+                String.format(
+                        "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
+                        now.asEpochId() + 2, now.asEpochId()
+                )
+        );
         assertThatContactsToProcess().isEmpty();
 
         assertThatRegistrationForUser("user___1")
