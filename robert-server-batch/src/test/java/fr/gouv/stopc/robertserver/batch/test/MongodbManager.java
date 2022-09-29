@@ -3,13 +3,14 @@ package fr.gouv.stopc.robertserver.batch.test;
 import com.mongodb.client.MongoCollection;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.service.RobertClock.RobertInstant;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.batch.CountryCode;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.model.Registration.RegistrationBuilder;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.Value;
 import org.assertj.core.api.*;
 import org.springframework.data.mongodb.core.MongoOperations;
@@ -21,6 +22,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,8 +30,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static fr.gouv.stopc.robertserver.batch.test.HelloMessageFactory.randRssi;
 import static java.lang.Boolean.TRUE;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static lombok.AccessLevel.PRIVATE;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -92,45 +94,6 @@ public class MongodbManager implements TestExecutionListener {
         return mongoOperations.save(transformer.apply(registration).build());
     }
 
-    public static Contact givenContactExistForUser(final String user,
-            final RobertClock.RobertInstant time,
-            final Function<Contact.ContactBuilder, Contact.ContactBuilder> transformer) {
-
-        var userAndEpoch = String.format("%s:%d", user, time.asEpochId()).getBytes();
-        final var contact = Contact.builder()
-                .ebid(userAndEpoch)
-                .ecc(new byte[] { 33 });
-
-        return mongoOperations.save(transformer.apply(contact).build());
-    }
-
-    public static void givenPendingContact(final String idA,
-            final byte[] ecc,
-            Consumer<HelloMessagesBuilder> helloMessagesBuilderConsumer) {
-        final var messageDetails = new HelloMessagesBuilder(idA);
-        helloMessagesBuilderConsumer.accept(messageDetails);
-        final var epochId = messageDetails.messageDetails.stream()
-                .findFirst()
-                .map(HelloMessageDetail::getMac)
-                .map(String::new)
-                .map(fakeMac -> fakeMac.replaceFirst("^[^:]*:", ""))
-                .map(RobertClock::parse)
-                .map(RobertInstant::asEpochId)
-                .orElseThrow();
-        final var contact = Contact.builder()
-                .ebid(String.format("%s:%d", idA, epochId).getBytes())
-                .ecc(ecc)
-                .timeInsertion(Instant.now().toEpochMilli())
-                .messageDetails(messageDetails.build())
-                .build();
-        mongoOperations.save(contact);
-    }
-
-    public static void givenPendingContact(final String idA,
-            Consumer<HelloMessagesBuilder> helloMessagesBuilderConsumer) {
-        givenPendingContact(idA, new byte[] { 33 }, helloMessagesBuilderConsumer);
-    }
-
     /**
      * Ensure the container is not "paused", "unpausing" it if necessary.
      */
@@ -145,24 +108,7 @@ public class MongodbManager implements TestExecutionListener {
         }
     }
 
-    /**
-     * Put the container in "paused" state. Can be used to simulate failure.
-     */
-    public static void givenMongodbIsOffline() {
-        final var docker = MONGO_DB_CONTAINER.getDockerClient();
-        try (final var cmd = docker.pauseContainerCmd(MONGO_DB_CONTAINER.getContainerId())) {
-            cmd.exec();
-        }
-    }
-
-    @SneakyThrows
-    private static void exec(String... args) {
-        new ProcessBuilder().command(args)
-                .start()
-                .waitFor(5, SECONDS);
-    }
-
-    public static ListAssert<Registration> assertThatRegistrations() {
+    private static ListAssert<Registration> assertThatRegistrations() {
         return assertThat(mongoOperations.find(new Query(), Registration.class));
     }
 
@@ -177,6 +123,98 @@ public class MongodbManager implements TestExecutionListener {
     public static ListAssert<Contact> assertThatContactsToProcess() {
         return assertThat(mongoOperations.find(new Query(), Contact.class))
                 .as("Mongodb contact_to_process collection");
+    }
+
+    public static GivenPendingContact givenGivenPendingContact() {
+        return new GivenPendingContact();
+    }
+
+    public static class GivenPendingContact {
+
+        private String idA;
+
+        private CountryCode countryCode = CountryCode.FRANCE;
+
+        private Integer epochId = clock.now().asEpochId();
+
+        private final List<HelloMessageDetail> messageDetails = new ArrayList<>();
+
+        public GivenPendingContact ecc(final CountryCode countryCode) {
+            this.countryCode = countryCode;
+            return this;
+        }
+
+        public GivenPendingContact idA(final String idA) {
+            this.idA = idA;
+            return this;
+        }
+
+        private HelloMessageDetail withHelloMessage(final RobertInstant timeCollectedOnDevice,
+                final RobertInstant timeFromHelloMessage) {
+            return HelloMessageDetail.builder()
+                    .rssiCalibrated(randRssi())
+                    .timeCollectedOnDevice(
+                            timeCollectedOnDevice.asNtpTimestamp()
+                    )
+                    .timeFromHelloMessage(
+                            timeFromHelloMessage.as16LessSignificantBits()
+                    )
+                    .mac(String.format("%s:%s", idA, clock.now()).getBytes())
+                    .build();
+        }
+
+        public GivenPendingContact withHelloMessageTimeCollectedIsDivergentFromRegistrationEpochId() {
+            final var timeFromHelloMessage = clock.now();
+            final var timeCollectedOnDevice = timeFromHelloMessage
+                    .plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
+
+            this.messageDetails.add(
+                    withHelloMessage(timeCollectedOnDevice, timeCollectedOnDevice)
+            );
+            return this;
+        }
+
+        public GivenPendingContact withHelloMessageTimeCollectedExceededMaxTimeStampTolerance() {
+            final var HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
+            final var timeFromHelloMessage = clock.now();
+            final var timeCollectedOnDevice = timeFromHelloMessage
+                    .plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+
+            this.messageDetails.add(
+                    withHelloMessage(timeCollectedOnDevice, timeFromHelloMessage)
+            );
+            return this;
+        }
+
+        public GivenPendingContact withValidHelloMessages(
+                final Consumer<HelloMessagesBuilder> helloMessagesBuilderConsumer) {
+            final var messageDetails = new HelloMessagesBuilder(idA);
+            helloMessagesBuilderConsumer.accept(messageDetails);
+
+            this.messageDetails.addAll(messageDetails.build());
+            return this;
+        }
+
+        public Contact build() {
+            if (messageDetails.size() > 0) {
+                this.epochId = messageDetails.stream()
+                        .findFirst()
+                        .map(HelloMessageDetail::getMac)
+                        .map(String::new)
+                        .map(fakeMac -> fakeMac.replaceFirst("^[^:]*:", ""))
+                        .map(RobertClock::parse)
+                        .map(RobertInstant::asEpochId)
+                        .orElseThrow();
+            }
+
+            final var contact = Contact.builder()
+                    .ebid(String.format("%s:%d", this.idA, this.epochId).getBytes())
+                    .ecc(countryCode.asByteArray())
+                    .timeInsertion(Instant.now().toEpochMilli())
+                    .messageDetails(this.messageDetails)
+                    .build();
+            return mongoOperations.save(contact);
+        }
     }
 
     @Value

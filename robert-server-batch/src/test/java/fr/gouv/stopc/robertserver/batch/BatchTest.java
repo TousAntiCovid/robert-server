@@ -46,9 +46,12 @@ class BatchTest {
         final var yesterday = clock.now().minus(1, DAYS);
 
         givenRegistrationExistsForUser("user___1");
-        givenPendingContact("user___1", helloMessagesBuilder -> {
-            helloMessagesBuilder.addAt(yesterday);
-        });
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(yesterday)
+                )
+                .build();
 
         runRobertBatchJob();
 
@@ -71,9 +74,12 @@ class BatchTest {
         final var yesterday = clock.now().minus(1, DAYS);
 
         givenRegistrationExistsForUser("user___1");
-        givenPendingContact("user___1", helloMessagesBuilder -> {
-            helloMessagesBuilder.addAt(yesterday, yesterday.plus(5, MINUTES));
-        });
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(yesterday, yesterday.plus(5, MINUTES))
+                )
+                .build();
 
         runRobertBatchJob();
 

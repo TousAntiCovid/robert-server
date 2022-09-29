@@ -16,7 +16,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
-import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.*;
+import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
+import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatLogsMatchingRegex;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -38,13 +39,20 @@ class RiskEvaluationServiceTest {
     @Test
     void score_and_process_risks_with_a_bad_encrypted_country_code_should_not_update_registration() {
         var now = clock.now();
-        var badEcc = new byte[] { (byte) 0xff };
 
         // Given
         givenRegistrationExistsForUser("user___1");
-        givenPendingContact(
-                "user___1", badEcc, helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(120, SECONDS))
-        );
+
+        givenGivenPendingContact()
+                .idA("user___1")
+                .ecc(CountryCode.GERMANY)
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
+                                now,
+                                now.plus(120, SECONDS)
+                        )
+                )
+                .build();
 
         // When
         runRobertBatchJob();
@@ -61,7 +69,12 @@ class RiskEvaluationServiceTest {
                 .isEmpty();
 
         assertThatInfoLogs()
-                .contains("Country code [-1] is not managed by this server ([33])");
+                .containsOnlyOnce(
+                        String.format(
+                                "Country code [%d] is not managed by this server ([33])",
+                                CountryCode.GERMANY.getNumericCode()
+                        )
+                );
     }
 
     @Test
@@ -250,7 +263,7 @@ class RiskEvaluationServiceTest {
                 .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatLatestRiskEpochForUser("user___1")
-                .isCloseTo(now.asInstant(), within(1, ROBERT_EPOCH));
+                .isCloseTo(now.truncatedTo(ROBERT_EPOCH).asInstant(), within(1, ROBERT_EPOCH));
 
         assertThatLastContactTimestampForUser("user___1")
                 .isCloseTo(twoDaysAgo.asInstant(), within(1, DAYS));

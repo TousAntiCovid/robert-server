@@ -1,10 +1,8 @@
 package fr.gouv.stopc.robertserver.batch;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
-import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.RequiredArgsConstructor;
@@ -13,15 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static fr.gouv.stopc.robertserver.batch.test.HelloMessageFactory.generateHelloMessagesStartingAndDuring;
-import static fr.gouv.stopc.robertserver.batch.test.HelloMessageFactory.randRssi;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.*;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -67,9 +61,15 @@ class ContactProcessingServiceTest {
                         )
         );
 
-        givenPendingContact(
-                "user___1", helloMessagesBuilder -> helloMessagesBuilder.addAt(twoDaysAgo, twoDaysAgo.plus(20, SECONDS))
-        );
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
+                                twoDaysAgo,
+                                twoDaysAgo.plus(20, SECONDS)
+                        )
+                )
+                .build();
 
         // When
         runRobertBatchJob();
@@ -100,30 +100,16 @@ class ContactProcessingServiceTest {
 
         givenRegistrationExistsForUser("user___1");
 
-        var messageDetails = generateHelloMessagesStartingAndDuring(
-                now,
-                Duration.of(30, ChronoUnit.SECONDS)
-        );
-
-        // Add a helloMessage with timeCollected exceeded max time stamp tolerance
-        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
-        messageDetails.add(
-                HelloMessageDetail.builder()
-                        .rssiCalibrated(randRssi())
-                        .timeCollectedOnDevice(
-                                exceededTime.asNtpTimestamp()
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withHelloMessageTimeCollectedExceededMaxTimeStampTolerance()
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
+                                now,
+                                now.plus(30, SECONDS)
                         )
-                        .timeFromHelloMessage(
-                                now.as16LessSignificantBits()
-                        )
-                        .mac(("mac___exceeded_time").getBytes())
-                        .build()
-        );
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(messageDetails)
-        );
+                )
+                .build();
 
         // When
         runRobertBatchJob();
@@ -147,9 +133,15 @@ class ContactProcessingServiceTest {
 
         givenRegistrationExistsForUser("user___1");
 
-        givenPendingContact(
-                "user___1", helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(120, SECONDS))
-        );
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
+                                now,
+                                now.plus(120, SECONDS)
+                        )
+                )
+                .build();
 
         // When
         runRobertBatchJob();
@@ -165,21 +157,32 @@ class ContactProcessingServiceTest {
     @Test
     void process_contact_with_a_bad_encrypted_country_code_fails() {
         // Given
-        var now = clock.now();
-        var badEcc = new byte[] { (byte) 0xff };
+        final var now = clock.now();
 
         givenRegistrationExistsForUser("user___1");
 
-        givenPendingContact(
-                "user___1", badEcc, helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(30, SECONDS))
-        );
+        givenGivenPendingContact()
+                .idA("user___1")
+                .ecc(CountryCode.GERMANY)
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
+                                now,
+                                now.plus(30, SECONDS)
+                        )
+                )
+                .build();
 
         // When
         runRobertBatchJob();
 
         // Then
         assertThatInfoLogs()
-                .contains("Country code [-1] is not managed by this server ([33])");
+                .containsOnlyOnce(
+                        String.format(
+                                "Country code [%d] is not managed by this server ([33])",
+                                CountryCode.GERMANY.getNumericCode()
+                        )
+                );
         assertThatContactsToProcess().isEmpty();
     }
 
@@ -189,9 +192,9 @@ class ContactProcessingServiceTest {
         var now = clock.now();
         givenRegistrationExistsForUser("user___1");
 
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(List.of())
-        );
+        givenGivenPendingContact()
+                .idA("user___1")
+                .build();
 
         // When
         runRobertBatchJob();
@@ -209,9 +212,15 @@ class ContactProcessingServiceTest {
 
         var registration = givenRegistrationExistsForUser("user___1");
 
-        givenPendingContact(
-                "user___1", helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(30, SECONDS))
-        );
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
+                                now,
+                                now.plus(30, SECONDS)
+                        )
+                )
+                .build();
 
         this.registrationService.delete(registration);
 
@@ -227,30 +236,12 @@ class ContactProcessingServiceTest {
     @Test
     void process_contact_logs_when_hello_message_timestamp_is_exceeded() {
         // Given
-        var now = clock.now();
-
         givenRegistrationExistsForUser("user___1");
 
-        // Add an helloMessage with timeCollected exceeded max time stamp tolerance
-        var messageDetails = new ArrayList<HelloMessageDetail>();
-        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
-        messageDetails.add(
-                HelloMessageDetail.builder()
-                        .rssiCalibrated(randRssi())
-                        .timeCollectedOnDevice(
-                                exceededTime.asNtpTimestamp()
-                        )
-                        .timeFromHelloMessage(
-                                now.as16LessSignificantBits()
-                        )
-                        .mac(("mac___exceeded_time").getBytes())
-                        .build()
-        );
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(messageDetails)
-        );
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withHelloMessageTimeCollectedExceededMaxTimeStampTolerance()
+                .build();
 
         runRobertBatchJob();
 
@@ -265,29 +256,13 @@ class ContactProcessingServiceTest {
     @Test
     void process_contact_logs_when_the_epochs_are_different() {
         // Given
-        var now = clock.now();
-
         givenRegistrationExistsForUser("user___1");
 
         // Add HelloMessage with divergence between message and registration
-        final var exceededTime = now.plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
-        var messageDetails = new ArrayList<HelloMessageDetail>();
-        messageDetails.add(
-                HelloMessageDetail.builder()
-                        .rssiCalibrated(randRssi())
-                        .timeCollectedOnDevice(
-                                exceededTime.asNtpTimestamp()
-                        )
-                        .timeFromHelloMessage(
-                                exceededTime.as16LessSignificantBits()
-                        )
-                        .mac(("mac___exceeded_time").getBytes())
-                        .build()
-        );
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(messageDetails)
-        );
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withHelloMessageTimeCollectedIsDivergentFromRegistrationEpochId()
+                .build();
 
         // When
         runRobertBatchJob();
@@ -312,29 +287,17 @@ class ContactProcessingServiceTest {
         var now = clock.now();
 
         givenRegistrationExistsForUser("user___1");
-        var messageDetails = generateHelloMessagesStartingAndDuring(
-                now,
-                Duration.of(30, ChronoUnit.SECONDS)
-        );
 
-        // Add HelloMessage with time divergence with contact epoch
-        final var exceededTime = now.plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
-        messageDetails.add(
-                HelloMessageDetail.builder()
-                        .rssiCalibrated(randRssi())
-                        .timeCollectedOnDevice(
-                                exceededTime.asNtpTimestamp()
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withHelloMessageTimeCollectedIsDivergentFromRegistrationEpochId()
+                .withValidHelloMessages(
+                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
+                                now,
+                                now.plus(30, SECONDS)
                         )
-                        .timeFromHelloMessage(
-                                exceededTime.as16LessSignificantBits()
-                        )
-                        .mac(("mac___exceeded_time").getBytes())
-                        .build()
-        );
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(messageDetails)
-        );
+                )
+                .build();
 
         // When
         runRobertBatchJob();
