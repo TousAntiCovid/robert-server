@@ -18,8 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.assertThatRegistrationForUser;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForUser;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
@@ -61,7 +60,7 @@ class PurgeOldEpochExpositionsServiceTest {
         final int contagiousPeriodPlusOneDay = CONTAGIOUS_PERIOD + 1;
         var beforeStartOfContagiousPeriod = clock.now().minus(contagiousPeriodPlusOneDay, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -93,7 +92,7 @@ class PurgeOldEpochExpositionsServiceTest {
     void epochs_expositions_are_not_deleted_when_epochs_are_not_before_contagious_period(int inContagiousPeriod) {
         // Given
         var beforeStartOfContagiousPeriod = clock.now().minus(inContagiousPeriod, ChronoUnit.DAYS);
-        var registration = givenRegistrationExistsForUser(
+        var registration = givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(

@@ -17,7 +17,7 @@ import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.assertThatRegistrationForUser;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForUser;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static java.time.temporal.ChronoUnit.DAYS;
 
 @IntegrationTest
@@ -51,7 +51,7 @@ class ReassessRiskLevelServiceTest {
     @Test
     void risk_level_should_not_be_reset_when_not_at_risk_and_not_notified() {
         // Given
-        var registration = givenRegistrationExistsForUser(
+        var registration = givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(false)
@@ -70,7 +70,7 @@ class ReassessRiskLevelServiceTest {
     @Test
     void risk_level_should_not_be_reset_when_not_at_risk_and_notified() {
         // Given
-        var registration = givenRegistrationExistsForUser(
+        var registration = givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(false)
@@ -97,7 +97,7 @@ class ReassessRiskLevelServiceTest {
                         .truncatedTo(DAYS)
                         .minus(lastContactDate, DAYS)
         );
-        var registration = givenRegistrationExistsForUser(
+        var registration = givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(true)
@@ -124,7 +124,7 @@ class ReassessRiskLevelServiceTest {
                         .truncatedTo(DAYS)
                         .minus(lastContactDate, DAYS)
         );
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(true)
@@ -152,7 +152,7 @@ class ReassessRiskLevelServiceTest {
     @Test
     void risk_level_should_be_reset_when_at_risk_and_not_notified_and_epoch_minimum_is_reached() {
         // Given
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(true)

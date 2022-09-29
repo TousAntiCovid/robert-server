@@ -20,7 +20,6 @@ import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInf
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatLogsMatchingRegex;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static java.time.temporal.ChronoUnit.DAYS;
-import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.within;
 
 @IntegrationTest
@@ -41,17 +40,12 @@ class RiskEvaluationServiceTest {
         var now = clock.now();
 
         // Given
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .ecc(CountryCode.GERMANY)
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
-                                now,
-                                now.plus(120, SECONDS)
-                        )
-                )
+                .countryCode(CountryCode.GERMANY)
+                .withValidHelloMessageAt(now, 12)
                 .build();
 
         // When
@@ -82,7 +76,7 @@ class RiskEvaluationServiceTest {
         var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
         var fiveDaysAgo = clock.now().minus(5, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -113,7 +107,7 @@ class RiskEvaluationServiceTest {
         // Given Registration With Existing Score Above Threshold
         var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -143,7 +137,7 @@ class RiskEvaluationServiceTest {
         // Given Registration With Existing Score Below Threshold
         var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -174,7 +168,7 @@ class RiskEvaluationServiceTest {
         var now = clock.now();
         var yesterday = now.minus(1, ChronoUnit.DAYS);
         // Given
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -212,7 +206,7 @@ class RiskEvaluationServiceTest {
         var now = clock.now();
         var twoDaysAgo = now.minus(2, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -241,7 +235,7 @@ class RiskEvaluationServiceTest {
         var now = clock.now();
         var twoDaysAgo = now.minus(2, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -275,7 +269,7 @@ class RiskEvaluationServiceTest {
         var threeDaysAgo = now.minus(3, ChronoUnit.DAYS);
         var fiveDaysAgo = now.minus(5, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -311,7 +305,7 @@ class RiskEvaluationServiceTest {
         var threeDaysAgo = now.minus(3, ChronoUnit.DAYS);
         var fiveDaysAgo = now.minus(5, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -346,7 +340,7 @@ class RiskEvaluationServiceTest {
         var now = clock.now();
         var inFourDays = now.plus(4, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -377,7 +371,7 @@ class RiskEvaluationServiceTest {
 
     @Test
     void notified_remains_false_when_risk_not_detected() {
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -403,7 +397,7 @@ class RiskEvaluationServiceTest {
 
     @Test
     void notified_remains_false_when_risk_detected() {
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -429,7 +423,7 @@ class RiskEvaluationServiceTest {
 
     @Test
     void notified_remains_true_when_risk_detected() {
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -455,7 +449,7 @@ class RiskEvaluationServiceTest {
 
     @Test
     void notified_remains_true_when_risk_not_detected() {
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -481,7 +475,7 @@ class RiskEvaluationServiceTest {
 
     @Test
     void no_risk_detected_if_no_score() {
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of()

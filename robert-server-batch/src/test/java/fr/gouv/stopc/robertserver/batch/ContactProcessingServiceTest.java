@@ -18,7 +18,6 @@ import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.*;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
-import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
@@ -45,7 +44,7 @@ class ContactProcessingServiceTest {
         var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
         var fiveDaysAgo = clock.now().minus(5, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -63,12 +62,7 @@ class ContactProcessingServiceTest {
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
-                                twoDaysAgo,
-                                twoDaysAgo.plus(20, SECONDS)
-                        )
-                )
+                .withValidHelloMessageAt(twoDaysAgo, 2)
                 .build();
 
         // When
@@ -76,6 +70,7 @@ class ContactProcessingServiceTest {
 
         // Then
         assertThatContactsToProcess().isEmpty();
+        // TODO : ===> faire un truc pour simplifier
         final var expectedRegistration = registrationService.findById("user___1".getBytes())
                 .orElseThrow();
         assertThat(expectedRegistration.getExposedEpochs())
@@ -98,17 +93,12 @@ class ContactProcessingServiceTest {
     void process_contact_succeeds_when_has_at_least_one_hello_message_valid() {
         var now = clock.now();
 
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageTimeCollectedExceededMaxTimeStampTolerance()
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
-                                now,
-                                now.plus(30, SECONDS)
-                        )
-                )
+                .withHelloMessageTimeCollectedExceededMaxTimeStampTolerance(clock.now())
+                .withValidHelloMessageAt(now, 3)
                 .build();
 
         // When
@@ -131,16 +121,11 @@ class ContactProcessingServiceTest {
     void process_contact_when_the_contact_is_valid_succeeds() {
         var now = clock.now();
 
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
-                                now,
-                                now.plus(120, SECONDS)
-                        )
-                )
+                .withValidHelloMessageAt(now, 12)
                 .build();
 
         // When
@@ -159,17 +144,12 @@ class ContactProcessingServiceTest {
         // Given
         final var now = clock.now();
 
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .ecc(CountryCode.GERMANY)
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
-                                now,
-                                now.plus(30, SECONDS)
-                        )
-                )
+                .countryCode(CountryCode.GERMANY)
+                .withValidHelloMessageAt(now, 3)
                 .build();
 
         // When
@@ -190,7 +170,7 @@ class ContactProcessingServiceTest {
     void process_contact_with_no_messages_fails() {
         // Given
         var now = clock.now();
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
@@ -210,16 +190,11 @@ class ContactProcessingServiceTest {
         // Given
         var now = clock.now();
 
-        var registration = givenRegistrationExistsForUser("user___1");
+        var registration = givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
-                                now,
-                                now.plus(30, SECONDS)
-                        )
-                )
+                .withValidHelloMessageAt(now, 3)
                 .build();
 
         this.registrationService.delete(registration);
@@ -236,11 +211,11 @@ class ContactProcessingServiceTest {
     @Test
     void process_contact_logs_when_hello_message_timestamp_is_exceeded() {
         // Given
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageTimeCollectedExceededMaxTimeStampTolerance()
+                .withHelloMessageTimeCollectedExceededMaxTimeStampTolerance(clock.now())
                 .build();
 
         runRobertBatchJob();
@@ -256,12 +231,12 @@ class ContactProcessingServiceTest {
     @Test
     void process_contact_logs_when_the_epochs_are_different() {
         // Given
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
         // Add HelloMessage with divergence between message and registration
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageTimeCollectedIsDivergentFromRegistrationEpochId()
+                .withHelloMessageTimeCollectedIsDivergentFromRegistrationEpochId(clock.now())
                 .build();
 
         // When
@@ -286,17 +261,12 @@ class ContactProcessingServiceTest {
         // Given
         var now = clock.now();
 
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageTimeCollectedIsDivergentFromRegistrationEpochId()
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(
-                                now,
-                                now.plus(30, SECONDS)
-                        )
-                )
+                .withHelloMessageTimeCollectedIsDivergentFromRegistrationEpochId(clock.now())
+                .withValidHelloMessageAt(now, 3)
                 .build();
 
         // When

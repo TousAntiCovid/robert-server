@@ -14,7 +14,6 @@ import java.util.List;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static java.time.temporal.ChronoUnit.DAYS;
-import static java.time.temporal.ChronoUnit.MINUTES;
 
 @IntegrationTest
 class BatchTest {
@@ -45,12 +44,10 @@ class BatchTest {
     void can_process_contact() {
         final var yesterday = clock.now().minus(1, DAYS);
 
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
         givenGivenPendingContact()
                 .idA("user___1")
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(yesterday)
-                )
+                .withValidHelloMessageAt(yesterday)
                 .build();
 
         runRobertBatchJob();
@@ -73,12 +70,10 @@ class BatchTest {
     void can_process_contact_with_multiple_hellomessages() {
         final var yesterday = clock.now().minus(1, DAYS);
 
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
         givenGivenPendingContact()
                 .idA("user___1")
-                .withValidHelloMessages(
-                        helloMessagesBuilder -> helloMessagesBuilder.addAt(yesterday, yesterday.plus(5, MINUTES))
-                )
+                .withValidHelloMessageAt(yesterday, 2)
                 .build();
 
         runRobertBatchJob();
