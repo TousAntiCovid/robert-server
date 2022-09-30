@@ -20,6 +20,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @TestExecutionListeners(listeners = {
         ClockManager.class,
         KeystoreManager.class,
+        LogbackManager.class,
         PostgreSqlManager.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)

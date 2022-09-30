@@ -14,10 +14,18 @@ import static org.assertj.core.condition.VerboseCondition.verboseCondition;
 
 public class GrpcResponseMatcher {
 
+    public static Condition<GeneratedMessageV3> grpcField(final String name) {
+        return verboseCondition(
+                response -> extractField(response, name).isPresent(),
+                format("a response having field '%s'", name),
+                response -> " but it is missing"
+        );
+    }
+
     public static Condition<GeneratedMessageV3> grpcField(final String name, final Object expectedValue) {
         return verboseCondition(
                 response -> expectedValue.equals(extractField(response, name).orElse(null)),
-                format("a response having field '%s' = '%s' ", name, expectedValue),
+                format("a response having field '%s' = '%s'", name, expectedValue),
                 response -> format(" but it has value '%s'", extractField(response, name).orElse(null))
         );
     }
@@ -25,7 +33,7 @@ public class GrpcResponseMatcher {
     public static Condition<GeneratedMessageV3> grpcBinaryField(final String name, final String base64ExpectedValue) {
         return verboseCondition(
                 response -> base64ExpectedValue.equals(extractBinaryFieldAsBase64(response, name)),
-                format("a response having binary field '%s' = base64Decode(%s) ", name, base64ExpectedValue),
+                format("a response having binary field '%s' = base64Decode(%s)", name, base64ExpectedValue),
                 response -> format(" but it has value base64Decode(%s)", extractBinaryFieldAsBase64(response, name))
         );
     }
