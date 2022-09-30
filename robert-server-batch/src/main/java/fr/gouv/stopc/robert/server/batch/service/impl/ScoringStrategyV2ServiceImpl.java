@@ -84,17 +84,6 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
     @Override
     public ScoringResult execute(Contact contact) throws RobertScoringException {
 
-        final int epochDurationInMinutes = this.serverConfigurationService.getEpochDurationSecs() / 60;
-
-        // Variables
-        final List<Number>[] listRSSI = new ArrayList[epochDurationInMinutes];
-        double[] qm = new double[epochDurationInMinutes];
-        int[] np = new int[epochDurationInMinutes];
-        for (int k = 0; k < epochDurationInMinutes; k++) {
-            listRSSI[k] = new ArrayList<>();
-        }
-
-        // Verification
         List<HelloMessageDetail> messageDetails = contact.getMessageDetails();
         if (messageDetails.size() == 0) {
             String errorMessage = "Cannot score contact with no HELLO messages";
@@ -102,19 +91,27 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
             throw new RobertScoringException(errorMessage);
         }
 
+        final int epochDurationInMinutes = this.serverConfigurationService.getEpochDurationSecs() / 60;
+
+        // Variables
+        final List<Number>[] rssiGroupedByMinutes = new ArrayList[epochDurationInMinutes];
+        double[] maxRssiByMinutes = new double[epochDurationInMinutes];
+        int[] numberOfRssiByMinutes = new int[epochDurationInMinutes];
+        for (int k = 0; k < epochDurationInMinutes; k++) {
+            rssiGroupedByMinutes[k] = new ArrayList<>();
+        }
+
         // Phase 1 : fading compensation
         // First index corresponds to the first minute of the first EBID emission
-        double t0 = messageDetails.get(0).getTimeCollectedOnDevice();
+        double firstTimeCollectedOnDevice = messageDetails.get(0).getTimeCollectedOnDevice();
+        double lastTimeCollectedOnDevice = messageDetails.get(messageDetails.size() - 1).getTimeCollectedOnDevice();
 
-        int vectorSize = messageDetails.size();
-
-        double tf = messageDetails.get(vectorSize - 1).getTimeCollectedOnDevice();
-
-        /* Over run verification */
-        if ((tf - t0) > (epochDurationInMinutes * 60 + configuration.getEpochTolerance())) {
+        // Create zero scoring if contacts helloMessages bounds exceed epoch tolerance
+        if ((lastTimeCollectedOnDevice - firstTimeCollectedOnDevice) > (epochDurationInMinutes * 60
+                + configuration.getEpochTolerance())) {
             String errorMessage = String.format(
                     "Skip contact because some hello messages are coming too late: %s sec after first message",
-                    tf - t0
+                    lastTimeCollectedOnDevice - firstTimeCollectedOnDevice
             );
             log.warn(errorMessage);
 
@@ -127,46 +124,60 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
                     .build();
         }
 
-        for (int k = 0; k < vectorSize; k++) {
-            HelloMessageDetail messageDetail = messageDetails.get(k);
-            double timestampDelta = messageDetail.getTimeCollectedOnDevice() - t0;
-            int index = (int) Math.floor(timestampDelta / 60.0);
-            index = index > epochDurationInMinutes ? epochDurationInMinutes - 1 : index;
-            if ((index >= 0) && (index < epochDurationInMinutes)) {
-                // Drop error Hello messages with too big RSSI (corresponding to errors in iOS
-                // and Android)
+        // Tri et lissage des RSSI
+        messageDetails.forEach(messageDetail -> {
+            // On cherche la bonne minute dans l'époque
+            double timestampDelta = messageDetail.getTimeCollectedOnDevice() - firstTimeCollectedOnDevice;
+            int minuteInEpoch = (int) Math.floor(timestampDelta / 60.0);
+            minuteInEpoch = minuteInEpoch > epochDurationInMinutes ? epochDurationInMinutes - 1 : minuteInEpoch;
 
+            // Si la minute est comprise dans l'époque
+            if ((minuteInEpoch >= 0) && (minuteInEpoch < epochDurationInMinutes)) {
+
+                // Si le rssi (<= -5)
+                // si il est > rssiMax (-35) alors il est ramené à rssiMax (-35) sinon on garde
+                // la valeur
+                // Sinon il est ignoré
                 if (messageDetail.getRssiCalibrated() <= -5) {
-                    // Cutting peaks
+                    // Cutting peaks / lissage
                     int rssi = Math.min(messageDetail.getRssiCalibrated(), configuration.getRssiMax());
-                    listRSSI[index].add(rssi);
+                    rssiGroupedByMinutes[minuteInEpoch].add(rssi); // Note : On a donc que des rssi <=-35
                 }
             }
         }
+        );
 
         // Phase 2: Average RSSI
         for (int k = 0; k < epochDurationInMinutes - 1; k++) {
-            ArrayList<Number> listRssi2 = new ArrayList<>(listRSSI[k]);
-            listRssi2.addAll(listRSSI[k + 1]);
-            qm[k] = softMax(listRssi2, configuration.getSoftMaxA());
-            np[k] = listRSSI[k].size() + listRSSI[k + 1].size();
+            ArrayList<Number> rssiOfTwoMinutes = new ArrayList<>();
+            rssiOfTwoMinutes.addAll(rssiGroupedByMinutes[k]);
+            rssiOfTwoMinutes.addAll(rssiGroupedByMinutes[k + 1]);
+
+            maxRssiByMinutes[k] = softMax(rssiOfTwoMinutes, configuration.getSoftMaxA()); // calcul Rssi des deux min
+            numberOfRssiByMinutes[k] = rssiGroupedByMinutes[k].size() + rssiGroupedByMinutes[k + 1].size(); // Nombre de
+                                                                                                            // rssi dans
+                                                                                                            // les deux
+                                                                                                            // min
         }
         // Only one window for the last sample
-        qm[epochDurationInMinutes - 1] = softMax(listRSSI[epochDurationInMinutes - 1], configuration.getSoftMaxA());
-        np[epochDurationInMinutes - 1] = listRSSI[epochDurationInMinutes - 1].size();
+        maxRssiByMinutes[epochDurationInMinutes - 1] = softMax(
+                rssiGroupedByMinutes[epochDurationInMinutes - 1], configuration.getSoftMaxA()
+        );
+        numberOfRssiByMinutes[epochDurationInMinutes - 1] = rssiGroupedByMinutes[epochDurationInMinutes - 1].size();
 
         // Phase 3: Risk scoring
         // https://hal.inria.fr/hal-02641630/document - eq (52)
 
-        int kmax = 0;
+        int minuteMax = 0;
         int nbcontacts = 0;
         List<Number> risk = new ArrayList<>();
 
-        for (int k = 0; k < epochDurationInMinutes; k++) {
-            if (np[k] > 0) {
-                kmax = k;
-                int dd = Math.min(np[k], configuration.getDeltas().length - 1);
-                double gamma = (qm[k] - configuration.getP0()) / Double.parseDouble(configuration.getDeltas()[dd]);
+        for (int minuteInEpoch = 0; minuteInEpoch < epochDurationInMinutes; minuteInEpoch++) {
+            if (numberOfRssiByMinutes[minuteInEpoch] > 0) {
+                minuteMax = minuteInEpoch;
+                int dd = Math.min(numberOfRssiByMinutes[minuteInEpoch], configuration.getDeltas().length - 1);
+                double gamma = (maxRssiByMinutes[minuteInEpoch] - configuration.getP0())
+                        / Double.parseDouble(configuration.getDeltas()[dd]);
                 double vrisk = (gamma <= 0.0) ? 0.0 : (gamma >= 1) ? 1.0 : gamma;
                 if (vrisk > 0) {
                     nbcontacts++;
@@ -176,12 +187,13 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
         }
 
         return ScoringResult.builder()
-                .rssiScore(Math.min(softMax(risk, configuration.getSoftMaxB()) * 1.2, 1.0) * kmax) // multiplying by
-                                                                                                   // duration because
-                                                                                                   // we do not store it
-                                                                                                   // yet in list of
-                                                                                                   // exposed epochs
-                .duration(kmax)
+                .rssiScore(Math.min(softMax(risk, configuration.getSoftMaxB()) * 1.2, 1.0) * minuteMax) // multiplying
+                                                                                                        // by
+                // duration because
+                // we do not store it
+                // yet in list of
+                // exposed epochs
+                .duration(minuteMax)
                 .nbContacts(nbcontacts)
                 .build();
 
