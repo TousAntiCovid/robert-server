@@ -40,6 +40,9 @@ class GetIdFromStatusTest {
                 .flatMap(AuthBundleManager::valid_auth_bundle);
     }
 
+    /**
+     * Returns a GetIdFromStatusRequest builder with acceptable default values.
+     */
     static GetIdFromStatusRequest.Builder givenValidStatusRequest(AuthBundle auth) {
         return GetIdFromStatusRequest.newBuilder()
                 .setEbid(auth.getEbid())
