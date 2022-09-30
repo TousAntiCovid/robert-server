@@ -2,10 +2,8 @@ package fr.gouv.stopc.robertserver.batch;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
-import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -16,7 +14,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.assertThatRegistrationForUser;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.assertThatRegistrationForIdA;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -51,7 +49,7 @@ class ReassessRiskLevelServiceTest {
     @Test
     void risk_level_should_not_be_reset_when_not_at_risk_and_not_notified() {
         // Given
-        var registration = givenRegistrationExistsForIdA(
+        final var registration = givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(false)
@@ -62,7 +60,7 @@ class ReassessRiskLevelServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForUser("user___1")
+        assertThatRegistrationForIdA("user___1")
                 .as("Object has not been updated")
                 .isEqualTo(registration);
     }
@@ -70,7 +68,7 @@ class ReassessRiskLevelServiceTest {
     @Test
     void risk_level_should_not_be_reset_when_not_at_risk_and_notified() {
         // Given
-        var registration = givenRegistrationExistsForIdA(
+        final var registration = givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(false)
@@ -81,7 +79,7 @@ class ReassessRiskLevelServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForUser("user___1")
+        assertThatRegistrationForIdA("user___1")
                 .as("Object has not been updated")
                 .isEqualTo(registration);
     }
@@ -109,7 +107,7 @@ class ReassessRiskLevelServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForUser("user___1")
+        assertThatRegistrationForIdA("user___1")
                 .as("Object has not been updated")
                 .isEqualTo(registration);
     }
@@ -136,17 +134,8 @@ class ReassessRiskLevelServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration is not at risk")
-                .isFalse();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isNotified)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration is notified for current risk")
-                .isTrue();
+        assertThatRegistrationForIdA("user___1").hasFieldOrPropertyWithValue("atRisk", false);
+        assertThatRegistrationForIdA("user___1").hasFieldOrPropertyWithValue("isNotified", true);
     }
 
     @Test
@@ -163,16 +152,7 @@ class ReassessRiskLevelServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isAtRisk)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration is not at risk")
-                .isFalse();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::isNotified)
-                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-                .as("Registration is notified for current risk")
-                .isFalse();
+        assertThatRegistrationForIdA("user___1").hasFieldOrPropertyWithValue("atRisk", false);
+        assertThatRegistrationForIdA("user___1").hasFieldOrPropertyWithValue("isNotified", false);
     }
 }

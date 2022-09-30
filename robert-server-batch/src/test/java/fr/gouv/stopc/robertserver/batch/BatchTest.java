@@ -3,7 +3,6 @@ package fr.gouv.stopc.robertserver.batch;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
-import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.test.JobLauncherTestUtils;
@@ -42,6 +41,7 @@ class BatchTest {
 
     @Test
     void can_process_contact() {
+        // Given
         final var yesterday = clock.now().minus(1, DAYS);
 
         givenRegistrationExistsForIdA("user___1");
@@ -50,24 +50,25 @@ class BatchTest {
                 .withValidHelloMessageAt(yesterday)
                 .build();
 
+        // When
         runRobertBatchJob();
 
+        // Then
         assertThatInfoLogs()
                 .contains(
                         "1 hello messages waiting for process",
                         "0 hello messages remaining after process"
                 );
 
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getExposedEpochs)
-                .asList()
-                .contains(
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(
                         new EpochExposition(yesterday.asEpochId(), List.of(0.0))
                 );
     }
 
     @Test
-    void can_process_contact_with_multiple_hellomessages() {
+    void can_process_contact_with_multiple_messages() {
+        // Given
         final var yesterday = clock.now().minus(1, DAYS);
 
         givenRegistrationExistsForIdA("user___1");
@@ -76,18 +77,18 @@ class BatchTest {
                 .withValidHelloMessageAt(yesterday, 2)
                 .build();
 
+        // When
         runRobertBatchJob();
 
+        // Then
         assertThatInfoLogs()
                 .contains(
                         "2 hello messages waiting for process",
                         "0 hello messages remaining after process"
                 );
 
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getExposedEpochs)
-                .asList()
-                .contains(
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(
                         new EpochExposition(yesterday.asEpochId(), List.of(0.0))
                 );
     }

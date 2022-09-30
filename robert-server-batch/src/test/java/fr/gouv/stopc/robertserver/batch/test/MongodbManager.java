@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
-import static fr.gouv.stopc.robertserver.batch.test.HelloMessageFactory.randRssi;
 import static java.util.function.Function.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,20 +58,44 @@ public class MongodbManager implements TestExecutionListener {
         clock = testContext.getApplicationContext().getBean(RobertClock.class);
     }
 
-    public static AbstractInstantAssert<?> assertThatLatestRiskEpochForUser(String idA) {
+    private static ListAssert<Registration> assertThatRegistrations() {
+        return assertThat(mongoOperations.find(new Query(), Registration.class));
+    }
+
+    public static ObjectAssert<Registration> assertThatRegistrationForIdA(final String idA) {
+        return assertThatRegistrations()
+                .filteredOn(r -> idA.equals(new String(r.getPermanentIdentifier())))
+                .hasSize(1)
+                .first()
+                .as("Registration for idA %s", idA);
+    }
+
+    public static ListAssert<Contact> assertThatContactsToProcess() {
+        return assertThat(mongoOperations.find(new Query(), Contact.class))
+                .as("Mongodb contact_to_process collection");
+    }
+
+    public static AbstractListAssert<?, List<?>, Object, ObjectAssert<Object>> assertThatEpochExpositionsForIdA(
+            String idA) {
+        return assertThatRegistrationForIdA(idA)
+                .extracting(Registration::getExposedEpochs)
+                .asList();
+    }
+
+    public static AbstractInstantAssert<?> assertThatLatestRiskEpochForIdA(String idA) {
         final var EPOCH_INSTANT = new InstanceOfAssertFactory<>(
                 Integer.class, value -> AssertionsForClassTypes.assertThat(clock.atEpoch(value).asInstant())
         );
-        return assertThatRegistrationForUser(idA)
+        return assertThatRegistrationForIdA(idA)
                 .extracting(Registration::getLatestRiskEpoch, EPOCH_INSTANT)
                 .as("Last risk update");
     }
 
-    public static AbstractInstantAssert<?> assertThatLastContactTimestampForUser(String idA) {
+    public static AbstractInstantAssert<?> assertThatLastContactTimestampForIdA(String idA) {
         final var NTP_INSTANT = new InstanceOfAssertFactory<>(
                 Long.class, value -> AssertionsForClassTypes.assertThat(clock.atNtpTimestamp(value).asInstant())
         );
-        return assertThatRegistrationForUser(idA)
+        return assertThatRegistrationForIdA(idA)
                 .extracting(Registration::getLastContactTimestamp, NTP_INSTANT)
                 .as("Last contact timestamp");
     }
@@ -86,23 +109,6 @@ public class MongodbManager implements TestExecutionListener {
         final var registration = Registration.builder()
                 .permanentIdentifier(idA.getBytes());
         return mongoOperations.save(transformer.apply(registration).build());
-    }
-
-    private static ListAssert<Registration> assertThatRegistrations() {
-        return assertThat(mongoOperations.find(new Query(), Registration.class));
-    }
-
-    public static ObjectAssert<Registration> assertThatRegistrationForUser(final String idA) {
-        return assertThatRegistrations()
-                .filteredOn(r -> idA.equals(new String(r.getPermanentIdentifier())))
-                .hasSize(1)
-                .first()
-                .as("Registration for idA %s", idA);
-    }
-
-    public static ListAssert<Contact> assertThatContactsToProcess() {
-        return assertThat(mongoOperations.find(new Query(), Contact.class))
-                .as("Mongodb contact_to_process collection");
     }
 
     public static ContactBuilder givenGivenPendingContact() {
@@ -127,7 +133,7 @@ public class MongodbManager implements TestExecutionListener {
             return this;
         }
 
-        private ContactBuilder buildHelloMessage(final RobertInstant timeCollectedOnDevice,
+        private void buildHelloMessage(final RobertInstant timeCollectedOnDevice,
                 final RobertInstant timeFromHelloMessage,
                 final RobertInstant contactEpochId) {
             this.messageDetails.add(
@@ -142,14 +148,13 @@ public class MongodbManager implements TestExecutionListener {
                             .mac(String.format("%s:%s", idA, contactEpochId).getBytes())
                             .build()
             );
-            return this;
         }
 
-        public ContactBuilder withHelloMessageTimeCollectedIsDivergentFromRegistrationEpochId(RobertInstant instant) {// TODO
-                                                                                                                      // :
-                                                                                                                      // reduce
-                                                                                                                      // name
-                                                                                                                      // length
+        /**
+         * This helloMessage has a timeCollectedOnDevice which is diverging from
+         * Registration EpochId (1800s)
+         */
+        public ContactBuilder withHelloMessageWithDivergentTimeCollected(RobertInstant instant) {
             final var timeCollectedOnDevice = instant
                     .plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
             final var timeFromHelloMessage = timeCollectedOnDevice;
@@ -159,7 +164,11 @@ public class MongodbManager implements TestExecutionListener {
             return this;
         }
 
-        public ContactBuilder withHelloMessageTimeCollectedExceededMaxTimeStampTolerance(RobertInstant instant) {
+        /**
+         * This helloMessage has a TimeCollectedOnDevice higher than the max timestamp
+         * tolerance (181s)
+         */
+        public ContactBuilder withHelloMessageWithBadTimeCollectedOnDevice(RobertInstant instant) {
             final var HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
             final var timeFromHelloMessage = instant;
             final var timeCollectedOnDevice = timeFromHelloMessage
@@ -170,34 +179,21 @@ public class MongodbManager implements TestExecutionListener {
             return this;
         }
 
-        // TODO : WIP in testing
-        private RobertInstant generateRandomIntoTheSameEpoch(final RobertInstant instant, final int number) {
-            var randomThread = ThreadLocalRandom.current().nextInt(900 / number);
-            var instantR = instant;
-            instantR = instantR.plus(randomThread, ChronoUnit.SECONDS);
-            if (instant.asEpochId() != instantR.asEpochId()) {
-                generateRandomIntoTheSameEpoch(instant, number);
-            }
-            return instantR;
-        }
-
-        // TODO : WIP in testing
         public ContactBuilder withValidHelloMessageAt(final RobertInstant instant, final int number) {
-            var randomInstant = instant;
+            var currentInstant = instant;
             for (int i = 0; i < number; i++) {
-                randomInstant = generateRandomIntoTheSameEpoch(randomInstant, number);
-                withValidHelloMessageAt(randomInstant);
+                currentInstant = instant.plus(i, ChronoUnit.SECONDS);
+                withValidHelloMessageAt(currentInstant);
             }
             return this;
         }
 
-        // TODO : WIP in testing
         public ContactBuilder withValidHelloMessageAt(final RobertInstant instant) {
             messageDetails.add(
                     HelloMessageDetail.builder()
                             .timeFromHelloMessage((int) instant.asNtpTimestamp())
-                            .timeCollectedOnDevice(instant.asNtpTimestamp())
-                            .rssiCalibrated(0)
+                            .timeCollectedOnDevice(instant.plus(60, ChronoUnit.SECONDS).asNtpTimestamp())
+                            .rssiCalibrated(randRssi())
                             .mac(String.format("%s:%s", idA, instant).getBytes())
                             .build()
             );
@@ -239,5 +235,9 @@ public class MongodbManager implements TestExecutionListener {
         int rssi;
 
         long receptionTime;
+    }
+
+    private static int randRssi() {
+        return ThreadLocalRandom.current().nextInt(-75, -35);
     }
 }
