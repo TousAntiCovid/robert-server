@@ -15,7 +15,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.*;
+import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
+import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatWarnLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 
 @IntegrationTest
@@ -25,10 +26,6 @@ class ContactProcessingServiceTest {
     private final IRegistrationService registrationService;
 
     private final RobertClock clock;
-
-    private final String TIME_TOLERANCE_REGEX = "(Time tolerance was exceeded: \\|[\\d]{1,} \\(HELLO\\) vs [\\d]{1,} \\(receiving device\\)\\| > 180; discarding HELLO message)";
-
-    private final String DIVERGENT_EPOCHIDS = "Epochid from message [\\d]{1,}  vs epochid from ebid  [\\d]{1,} > 1 \\(tolerance\\); discarding HELLO message";
 
     private final JobLauncherTestUtils jobLauncher;
 
@@ -115,11 +112,24 @@ class ContactProcessingServiceTest {
         // When
         runRobertBatchJob();
 
+        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        assertThatWarnLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
+                                now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
+                        )
+                );
+        assertThatWarnLogs().containsOnlyOnce(
+                String.format(
+                        "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
+                        now.asEpochId() + 2, now.asEpochId()
+                )
+        );
+
         // Then : Check that the registration contains one exposed epoch for the
         // computation of the good ones
-        assertThatLogsMatchingRegex(assertThatWarnLogs(), TIME_TOLERANCE_REGEX, 1);
-        assertThatLogsMatchingRegex(assertThatWarnLogs(), DIVERGENT_EPOCHIDS, 1);
-
         assertThatEpochExpositionsForIdA("user___1")
                 .containsOnlyOnce(
                         new EpochExposition(now.asEpochId(), List.of(1.0))
@@ -225,16 +235,25 @@ class ContactProcessingServiceTest {
     @Test
     void logs_and_discard_when_hello_message_timestamp_is_exceeded() {
         // Given
+        final var now = clock.now();
         givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(clock.now())
+                .withHelloMessageWithBadTimeCollectedOnDevice(now)
                 .build();
 
         runRobertBatchJob();
 
-        assertThatLogsMatchingRegex(assertThatWarnLogs(), TIME_TOLERANCE_REGEX, 1);
+        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        assertThatWarnLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
+                                now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
+                        )
+                );
         assertThatEpochExpositionsForIdA("user___1").isEmpty();
         assertThatContactsToProcess().isEmpty();
     }
@@ -242,19 +261,25 @@ class ContactProcessingServiceTest {
     @Test
     void logs_and_discard_when_the_epochs_are_different() {
         // Given
+        final var now = clock.now();
         givenRegistrationExistsForIdA("user___1");
 
         // Add HelloMessage with divergence between message and registration
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithDivergentTimeCollected(clock.now())
+                .withHelloMessageWithDivergentTimeCollected(now)
                 .build();
 
         // When
         runRobertBatchJob();
 
         // Then
-        assertThatLogsMatchingRegex(assertThatWarnLogs(), DIVERGENT_EPOCHIDS, 1);
+        assertThatWarnLogs().containsOnlyOnce(
+                String.format(
+                        "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
+                        now.asEpochId() + 2, now.asEpochId()
+                )
+        );
         // Note : DIVERGENT_EPOCHIDS il y a des espaces en trop dans les logs de cette
         // version applicative
         assertThatEpochExpositionsForIdA("user___1").isEmpty();

@@ -16,7 +16,6 @@ import java.util.List;
 
 import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
-import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatLogsMatchingRegex;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.within;
@@ -118,8 +117,10 @@ class RiskEvaluationServiceTest {
         // Then
         assertThatRegistrationForIdA("user___1").hasFieldOrPropertyWithValue("atRisk", true);
 
-        final var RISK_DETECTED = "Risk detected\\. Aggregated risk since [\\d]{0,}: [\\d]{0,}\\.[\\d]{0,} greater than threshold [\\d]{0,}\\.[\\d]{0,}";
-        assertThatLogsMatchingRegex(assertThatInfoLogs(), RISK_DETECTED, 1);
+        assertThatInfoLogs()
+                .containsOnlyOnce(
+                        "Risk detected. Aggregated risk since 0: 0.13237874351408596 greater than threshold 0.1"
+                );
     }
 
     @Test
