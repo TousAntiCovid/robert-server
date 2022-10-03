@@ -17,7 +17,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatRegistrationForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest

@@ -16,6 +16,7 @@ import java.util.List;
 
 import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.*;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.within;

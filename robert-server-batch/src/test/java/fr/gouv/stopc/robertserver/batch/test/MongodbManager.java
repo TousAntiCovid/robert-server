@@ -11,9 +11,7 @@ import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.model.Registration.RegistrationBuilder;
 import lombok.Builder;
 import lombok.Value;
-import org.assertj.core.api.*;
 import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.lang.NonNull;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
@@ -28,7 +26,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 import static java.util.function.Function.identity;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class MongodbManager implements TestExecutionListener {
 
@@ -56,48 +53,6 @@ public class MongodbManager implements TestExecutionListener {
                 .map(mongoOperations::getCollection)
                 .forEach(MongoCollection::drop);
         clock = testContext.getApplicationContext().getBean(RobertClock.class);
-    }
-
-    private static ListAssert<Registration> assertThatRegistrations() {
-        return assertThat(mongoOperations.find(new Query(), Registration.class));
-    }
-
-    public static ObjectAssert<Registration> assertThatRegistrationForIdA(final String idA) {
-        return assertThatRegistrations()
-                .filteredOn(r -> idA.equals(new String(r.getPermanentIdentifier())))
-                .hasSize(1)
-                .first()
-                .as("Registration for idA %s", idA);
-    }
-
-    public static ListAssert<Contact> assertThatContactsToProcess() {
-        return assertThat(mongoOperations.find(new Query(), Contact.class))
-                .as("Mongodb contact_to_process collection");
-    }
-
-    public static AbstractListAssert<?, List<?>, Object, ObjectAssert<Object>> assertThatEpochExpositionsForIdA(
-            String idA) {
-        return assertThatRegistrationForIdA(idA)
-                .extracting(Registration::getExposedEpochs)
-                .asList();
-    }
-
-    public static AbstractInstantAssert<?> assertThatLatestRiskEpochForIdA(String idA) {
-        final var EPOCH_INSTANT = new InstanceOfAssertFactory<>(
-                Integer.class, value -> AssertionsForClassTypes.assertThat(clock.atEpoch(value).asInstant())
-        );
-        return assertThatRegistrationForIdA(idA)
-                .extracting(Registration::getLatestRiskEpoch, EPOCH_INSTANT)
-                .as("Last risk update");
-    }
-
-    public static AbstractInstantAssert<?> assertThatLastContactTimestampForIdA(String idA) {
-        final var NTP_INSTANT = new InstanceOfAssertFactory<>(
-                Long.class, value -> AssertionsForClassTypes.assertThat(clock.atNtpTimestamp(value).asInstant())
-        );
-        return assertThatRegistrationForIdA(idA)
-                .extracting(Registration::getLastContactTimestamp, NTP_INSTANT)
-                .as("Last contact timestamp");
     }
 
     public static Registration givenRegistrationExistsForIdA(final String idA) {
@@ -158,9 +113,8 @@ public class MongodbManager implements TestExecutionListener {
             final var timeCollectedOnDevice = instant
                     .plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
             final var timeFromHelloMessage = timeCollectedOnDevice;
-            final var contactEpochId = instant;
 
-            buildHelloMessage(timeCollectedOnDevice, timeFromHelloMessage, contactEpochId);
+            buildHelloMessage(timeCollectedOnDevice, timeFromHelloMessage, instant);
             return this;
         }
 
@@ -168,14 +122,9 @@ public class MongodbManager implements TestExecutionListener {
          * This helloMessage has a TimeCollectedOnDevice higher than the max timestamp
          * tolerance (181s)
          */
-        public ContactBuilder withHelloMessageWithBadTimeCollectedOnDevice(RobertInstant instant) {
-            final var HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
-            final var timeFromHelloMessage = instant;
-            final var timeCollectedOnDevice = timeFromHelloMessage
-                    .plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
-            final var contactEpochId = instant;
-
-            buildHelloMessage(timeCollectedOnDevice, timeFromHelloMessage, contactEpochId);
+        public ContactBuilder withHelloMessageWithBadTimeCollectedOnDevice(RobertInstant instant,
+                RobertInstant timeCollectedOnDevice) {
+            buildHelloMessage(timeCollectedOnDevice, instant, instant);
             return this;
         }
 

@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.assertThatRegistrationForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatRegistrationForIdA;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static java.time.temporal.ChronoUnit.DAYS;
 

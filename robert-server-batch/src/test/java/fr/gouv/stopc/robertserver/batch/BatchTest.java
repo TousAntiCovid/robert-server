@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenGivenPendingContact;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static java.time.temporal.ChronoUnit.DAYS;
 
 @IntegrationTest

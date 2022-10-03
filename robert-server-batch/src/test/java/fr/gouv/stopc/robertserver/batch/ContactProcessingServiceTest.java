@@ -17,7 +17,10 @@ import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatWarnLogs;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatContactsToProcess;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenGivenPendingContact;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 
 @IntegrationTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -28,6 +31,8 @@ class ContactProcessingServiceTest {
     private final RobertClock clock;
 
     private final JobLauncherTestUtils jobLauncher;
+
+    private final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
 
     @SneakyThrows
     private void runRobertBatchJob() {
@@ -99,12 +104,13 @@ class ContactProcessingServiceTest {
     @Test
     void remove_invalid_hello_messages() {
         final var now = clock.now();
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
 
         givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(now)
+                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime)
                 .withHelloMessageWithDivergentTimeCollected(now)
                 .withValidHelloMessageAt(now, 70)
                 .build();
@@ -112,8 +118,13 @@ class ContactProcessingServiceTest {
         // When
         runRobertBatchJob();
 
-        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        // Then : Check that the registration contains one exposed epoch for the
+        // computation of the good ones
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(
+                        new EpochExposition(now.asEpochId(), List.of(1.0))
+                );
+
         assertThatWarnLogs()
                 .containsOnlyOnce(
                         String.format(
@@ -127,13 +138,6 @@ class ContactProcessingServiceTest {
                         now.asEpochId() + 2, now.asEpochId()
                 )
         );
-
-        // Then : Check that the registration contains one exposed epoch for the
-        // computation of the good ones
-        assertThatEpochExpositionsForIdA("user___1")
-                .containsOnlyOnce(
-                        new EpochExposition(now.asEpochId(), List.of(1.0))
-                );
 
         assertThatContactsToProcess().isEmpty();
     }
@@ -216,10 +220,12 @@ class ContactProcessingServiceTest {
     void logs_and_discard_when_all_messages_have_been_rejected() {
         // Given
         givenRegistrationExistsForIdA("user___1");
+        final var now = clock.now();
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(clock.now())
+                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime)
                 .build();
 
         // When
@@ -236,17 +242,18 @@ class ContactProcessingServiceTest {
     void logs_and_discard_when_hello_message_timestamp_is_exceeded() {
         // Given
         final var now = clock.now();
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
         givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(now)
+                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime)
                 .build();
 
+        // When
         runRobertBatchJob();
 
-        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        // Then
         assertThatWarnLogs()
                 .containsOnlyOnce(
                         String.format(

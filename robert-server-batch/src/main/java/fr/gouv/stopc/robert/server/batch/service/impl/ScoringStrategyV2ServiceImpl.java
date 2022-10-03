@@ -63,7 +63,7 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
     // https://hal.inria.fr/hal-02641630/document (Table 4)
 
     // Aggregate (formula n56) taken from https://hal.inria.fr/hal-02641630/document
-    public double aggregate(List<Double> scores) {
+    public double aggregate(final List<Double> scores) {
         // double scoreSum = scores.stream().mapToDouble(Double::doubleValue).sum();
 
         double scoreSum = 0.0;
@@ -82,10 +82,10 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
      * c {@inheritDoc}
      */
     @Override
-    public ScoringResult execute(Contact contact) throws RobertScoringException {
+    public ScoringResult execute(final Contact contact) throws RobertScoringException {
 
         List<HelloMessageDetail> messageDetails = contact.getMessageDetails();
-        if (messageDetails.size() == 0) {
+        if (messageDetails.isEmpty()) {
             String errorMessage = "Cannot score contact with no HELLO messages";
             log.error(errorMessage);
             throw new RobertScoringException(errorMessage);
@@ -103,8 +103,8 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
 
         // Phase 1 : fading compensation
         // First index corresponds to the first minute of the first EBID emission
-        double firstTimeCollectedOnDevice = messageDetails.get(0).getTimeCollectedOnDevice();
-        double lastTimeCollectedOnDevice = messageDetails.get(messageDetails.size() - 1).getTimeCollectedOnDevice();
+        final var firstTimeCollectedOnDevice = messageDetails.get(0).getTimeCollectedOnDevice();
+        final var lastTimeCollectedOnDevice = messageDetails.get(messageDetails.size() - 1).getTimeCollectedOnDevice();
 
         // Create zero scoring if contacts helloMessages bounds exceed epoch tolerance
         if ((lastTimeCollectedOnDevice - firstTimeCollectedOnDevice) > (epochDurationInMinutes * 60
@@ -127,22 +127,21 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
         // Tri et lissage des RSSI
         messageDetails.forEach(messageDetail -> {
             // On cherche la bonne minute dans l'époque
-            double timestampDelta = messageDetail.getTimeCollectedOnDevice() - firstTimeCollectedOnDevice;
+            final double timestampDelta = messageDetail.getTimeCollectedOnDevice() - firstTimeCollectedOnDevice;
             int minuteInEpoch = (int) Math.floor(timestampDelta / 60.0);
             minuteInEpoch = minuteInEpoch > epochDurationInMinutes ? epochDurationInMinutes - 1 : minuteInEpoch;
 
-            // Si la minute est comprise dans l'époque
-            if ((minuteInEpoch >= 0) && (minuteInEpoch < epochDurationInMinutes)) {
+            // Si la minute est comprise dans l'époque et Si le rssi (<= -5)
+            // Sinon il est ignoré
+            if (minuteInEpoch >= 0
+                    && minuteInEpoch < epochDurationInMinutes
+                    && messageDetail.getRssiCalibrated() <= -5) {
 
-                // Si le rssi (<= -5)
-                // si il est > rssiMax (-35) alors il est ramené à rssiMax (-35) sinon on garde
+                // Si il est > rssiMax (-35) alors il est ramené à rssiMax (-35) sinon on garde
                 // la valeur
-                // Sinon il est ignoré
-                if (messageDetail.getRssiCalibrated() <= -5) {
-                    // Cutting peaks / lissage
-                    int rssi = Math.min(messageDetail.getRssiCalibrated(), configuration.getRssiMax());
-                    rssiGroupedByMinutes[minuteInEpoch].add(rssi); // Note : On a donc que des rssi <=-35
-                }
+                // Cutting peaks / lissage
+                final var rssi = Math.min(messageDetail.getRssiCalibrated(), configuration.getRssiMax());
+                rssiGroupedByMinutes[minuteInEpoch].add(rssi); // Note : On a donc que des rssi <= rssiMax (-35)
             }
         }
         );
@@ -175,10 +174,10 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
         for (int minuteInEpoch = 0; minuteInEpoch < epochDurationInMinutes; minuteInEpoch++) {
             if (numberOfRssiByMinutes[minuteInEpoch] > 0) {
                 minuteMax = minuteInEpoch;
-                int dd = Math.min(numberOfRssiByMinutes[minuteInEpoch], configuration.getDeltas().length - 1);
-                double gamma = (maxRssiByMinutes[minuteInEpoch] - configuration.getP0())
+                final var dd = Math.min(numberOfRssiByMinutes[minuteInEpoch], configuration.getDeltas().length - 1);
+                final var gamma = (maxRssiByMinutes[minuteInEpoch] - configuration.getP0())
                         / Double.parseDouble(configuration.getDeltas()[dd]);
-                double vrisk = (gamma <= 0.0) ? 0.0 : (gamma >= 1) ? 1.0 : gamma;
+                final var vrisk = (gamma <= 0.0) ? 0.0 : (gamma >= 1) ? 1.0 : gamma;
                 if (vrisk > 0) {
                     nbcontacts++;
                 }
@@ -204,7 +203,7 @@ public class ScoringStrategyV2ServiceImpl implements ScoringStrategyService {
      * @param softmaxCoef
      * @return
      */
-    private Double softMax(List<Number> listValues, double softmaxCoef) {
+    private Double softMax(final List<Number> listValues, final double softmaxCoef) {
         int ll = listValues.size();
         double vm = 0.0;
 
