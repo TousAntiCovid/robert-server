@@ -17,6 +17,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * TODO : Explain mac/ebid solution for tests
+ */
 public class GrpcMockManager implements TestExecutionListener {
 
     private static final CryptoGrpcStub CRYPTO_GRPC_STUB = Mockito.spy(new CryptoGrpcStub());

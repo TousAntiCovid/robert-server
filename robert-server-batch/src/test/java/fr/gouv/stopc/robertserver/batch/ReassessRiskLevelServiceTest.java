@@ -49,7 +49,7 @@ class ReassessRiskLevelServiceTest {
     @Test
     void risk_level_should_not_be_reset_when_not_at_risk_and_not_notified() {
         // Given
-        final var registration = givenRegistrationExistsForIdA(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(false)
@@ -60,15 +60,13 @@ class ReassessRiskLevelServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForIdA("user___1")
-                .as("Object has not been updated")
-                .isEqualTo(registration);
+        assertThatRegistrationForIdA("user___1").hasFieldOrPropertyWithValue("atRisk", false);
     }
 
     @Test
     void risk_level_should_not_be_reset_when_not_at_risk_and_notified() {
         // Given
-        final var registration = givenRegistrationExistsForIdA(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(false)
@@ -79,9 +77,7 @@ class ReassessRiskLevelServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForIdA("user___1")
-                .as("Object has not been updated")
-                .isEqualTo(registration);
+        assertThatRegistrationForIdA("user___1").hasFieldOrPropertyWithValue("atRisk", false);
     }
 
     @ParameterizedTest
@@ -90,26 +86,24 @@ class ReassessRiskLevelServiceTest {
             int lastContactDate) {
 
         // Given
-        final var nowMinusDays = robertClock.at(
+        final var someDaysAgo = robertClock.at(
                 Instant.now()
                         .truncatedTo(DAYS)
                         .minus(lastContactDate, DAYS)
         );
-        var registration = givenRegistrationExistsForIdA(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(List.of())
                         .atRisk(true)
                         .isNotified(true)
-                        .lastContactTimestamp(nowMinusDays.asNtpTimestamp())
+                        .lastContactTimestamp(someDaysAgo.asNtpTimestamp())
         );
 
         // When
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForIdA("user___1")
-                .as("Object has not been updated")
-                .isEqualTo(registration);
+        assertThatRegistrationForIdA("user___1").hasFieldOrPropertyWithValue("atRisk", true);
     }
 
     @ParameterizedTest

@@ -18,7 +18,6 @@ import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
-import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatRegistrationForIdA;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -95,7 +94,7 @@ class PurgeOldEpochExpositionsServiceTest {
         // Given
         final var now = clock.now();
         final var beforeStartOfContagiousPeriod = now.minus(inContagiousPeriod, ChronoUnit.DAYS);
-        final var registration = givenRegistrationExistsForIdA(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -116,10 +115,6 @@ class PurgeOldEpochExpositionsServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForIdA("user___1")
-                .as("Object has not been updated")
-                .isEqualTo(registration);
-
         assertThatEpochExpositionsForIdA("user___1")
                 .containsOnlyOnce(
                         new EpochExposition(now.asEpochId(), List.of(2.0)),

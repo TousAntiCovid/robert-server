@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robertserver.batch;
+package fr.gouv.stopc.robertserver.batch.test;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;

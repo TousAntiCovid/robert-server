@@ -1,15 +1,18 @@
 package fr.gouv.stopc.robertserver.batch;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.batch.test.CountryCode;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,8 +28,6 @@ import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistra
 @IntegrationTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class ContactProcessingServiceTest {
-
-    private final IRegistrationService registrationService;
 
     private final RobertClock clock;
 
@@ -193,14 +194,11 @@ class ContactProcessingServiceTest {
     void logs_and_discard_when_registration_does_not_exist() {
         // Given
         final var now = clock.now();
-        final var registration = givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
                 .withValidHelloMessageAt(now, 3)
                 .build();
-
-        this.registrationService.delete(registration);
 
         // When
         runRobertBatchJob();
@@ -210,7 +208,7 @@ class ContactProcessingServiceTest {
                 .containsOnlyOnce(
                         String.format(
                                 "No identity exists for id_A %s extracted from ebid, discarding contact",
-                                Arrays.toString(registration.getPermanentIdentifier())
+                                Arrays.toString("user___1".getBytes())
                         )
                 );
         assertThatContactsToProcess().isEmpty();
@@ -238,16 +236,50 @@ class ContactProcessingServiceTest {
         assertThatContactsToProcess().isEmpty();
     }
 
-    @Test
-    void logs_and_discard_when_hello_message_timestamp_is_exceeded() {
+    @ParameterizedTest
+    @ValueSource(strings = { "PT3M", "PT-3M", "PT1M", "PT-1M" })
+    void no_logs_and_no_discard_when_hello_message_timestamp_tolerance_is_not_exceeded(final Duration gap) {
         // Given
         final var now = clock.now();
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        final var exceededTime = now.plus(gap);
         givenRegistrationExistsForIdA("user___1");
 
         givenGivenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime)
+                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime) // Passer directement via
+                                                                                 // buildHelloMessage et avoir tous les
+                                                                                 // param ici
+                .build();
+
+        // When
+        runRobertBatchJob();
+
+        // Then
+        assertThatWarnLogs()
+                .doesNotContain(
+                        String.format(
+                                "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
+                                now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
+                        )
+                );
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(new EpochExposition(now.asEpochId(), List.of(0.0)));
+        assertThatContactsToProcess().isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "PT3M1S", "PT-3M-1S", "PT15M", "PT-15M" })
+    void logs_and_discard_when_hello_message_timestamp_tolerance_is_exceeded(final Duration gap) {
+        // Given
+        final var now = clock.now();
+        final var exceededTime = now.plus(gap);
+        givenRegistrationExistsForIdA("user___1");
+
+        givenGivenPendingContact()
+                .idA("user___1")
+                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime) // Passer directement via
+                                                                                 // buildHelloMessage et avoir tous les
+                                                                                 // param ici
                 .build();
 
         // When
