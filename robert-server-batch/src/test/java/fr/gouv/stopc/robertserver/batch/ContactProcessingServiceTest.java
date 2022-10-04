@@ -18,12 +18,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatWarnLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatContactsToProcess;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenGivenPendingContact;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenPendingContact;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
+import static java.time.temporal.ChronoUnit.SECONDS;
 
 @IntegrationTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -46,7 +48,7 @@ class ContactProcessingServiceTest {
 
         givenRegistrationExistsForIdA("user___1");
 
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
                 .withValidHelloMessageAt(now, 1)
                 .build();
@@ -86,7 +88,7 @@ class ContactProcessingServiceTest {
         );
 
         // Should raise an exposedEpoch risk
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
                 .withValidHelloMessageAt(twoDaysAgo, 70)
                 .build();
@@ -105,22 +107,29 @@ class ContactProcessingServiceTest {
     @Test
     void remove_invalid_hello_messages() {
         final var now = clock.now();
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        final var exceedTimeStampTolerance = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, SECONDS);
+        final var divergingTimeCollected = now
+                .plus(EPOCH_DURATION_SECS * 2L, SECONDS);
 
         givenRegistrationExistsForIdA("user___1");
 
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime)
-                .withHelloMessageWithDivergentTimeCollected(now)
+                // Bad HMD with timeCollectedOnDevice exceeded time tolerance
+                .buildHelloMessage(exceedTimeStampTolerance, now, now)
+                // Bad HMD with timeCollectedOnDevice which is diverging from Registration
+                // EpochId
+                .buildHelloMessage(divergingTimeCollected, divergingTimeCollected, now)
+                // Good helloMessageDetails
                 .withValidHelloMessageAt(now, 70)
                 .build();
 
         // When
         runRobertBatchJob();
 
-        // Then : Check that the registration contains one exposed epoch for the
-        // computation of the good ones
+        // Then
+        // Check that the registration contains one exposed epoch for the computation of
+        // the good ones
         assertThatEpochExpositionsForIdA("user___1")
                 .containsOnlyOnce(
                         new EpochExposition(now.asEpochId(), List.of(1.0))
@@ -130,15 +139,16 @@ class ContactProcessingServiceTest {
                 .containsOnlyOnce(
                         String.format(
                                 "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
-                                now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
+                                now.as16LessSignificantBits(), exceedTimeStampTolerance.as16LessSignificantBits()
                         )
                 );
-        assertThatWarnLogs().containsOnlyOnce(
-                String.format(
-                        "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
-                        now.asEpochId() + 2, now.asEpochId()
-                )
-        );
+        assertThatWarnLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
+                                divergingTimeCollected.asEpochId(), now.asEpochId()
+                        )
+                );
 
         assertThatContactsToProcess().isEmpty();
     }
@@ -150,7 +160,7 @@ class ContactProcessingServiceTest {
 
         givenRegistrationExistsForIdA("user___1");
 
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
                 .countryCode(CountryCode.GERMANY)
                 .withValidHelloMessageAt(now, 3)
@@ -176,7 +186,7 @@ class ContactProcessingServiceTest {
         // Given
         givenRegistrationExistsForIdA("user___1");
 
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
                 .build();
 
@@ -195,7 +205,7 @@ class ContactProcessingServiceTest {
         // Given
         final var now = clock.now();
 
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
                 .withValidHelloMessageAt(now, 3)
                 .build();
@@ -219,11 +229,11 @@ class ContactProcessingServiceTest {
         // Given
         givenRegistrationExistsForIdA("user___1");
         final var now = clock.now();
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, SECONDS);
 
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime)
+                .buildHelloMessage(exceededTime, now, now)
                 .build();
 
         // When
@@ -238,17 +248,15 @@ class ContactProcessingServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "PT3M", "PT-3M", "PT1M", "PT-1M" })
-    void no_logs_and_no_discard_when_hello_message_timestamp_tolerance_is_not_exceeded(final Duration gap) {
+    void no_logs_and_no_discard_when_hello_message_timestamp_tolerance_is_not_exceeded(final Duration receptionDelay) {
         // Given
         final var now = clock.now();
-        final var exceededTime = now.plus(gap);
+        final var exceededTime = now.plus(receptionDelay);
         givenRegistrationExistsForIdA("user___1");
 
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime) // Passer directement via
-                                                                                 // buildHelloMessage et avoir tous les
-                                                                                 // param ici
+                .buildHelloMessage(exceededTime, now, now) // param ici
                 .build();
 
         // When
@@ -269,17 +277,15 @@ class ContactProcessingServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "PT3M1S", "PT-3M-1S", "PT15M", "PT-15M" })
-    void logs_and_discard_when_hello_message_timestamp_tolerance_is_exceeded(final Duration gap) {
+    void logs_and_discard_when_hello_message_timestamp_tolerance_is_exceeded(final Duration receptionDelay) {
         // Given
         final var now = clock.now();
-        final var exceededTime = now.plus(gap);
+        final var exceededTime = now.plus(receptionDelay);
         givenRegistrationExistsForIdA("user___1");
 
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithBadTimeCollectedOnDevice(now, exceededTime) // Passer directement via
-                                                                                 // buildHelloMessage et avoir tous les
-                                                                                 // param ici
+                .buildHelloMessage(exceededTime, now, now)
                 .build();
 
         // When
@@ -301,12 +307,13 @@ class ContactProcessingServiceTest {
     void logs_and_discard_when_the_epochs_are_different() {
         // Given
         final var now = clock.now();
+        final var divergingTimeCollected = now.plus(EPOCH_DURATION_SECS * 2L, SECONDS);
         givenRegistrationExistsForIdA("user___1");
 
-        // Add HelloMessage with divergence between message and registration
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
-                .withHelloMessageWithDivergentTimeCollected(now)
+                // Add HelloMessage with divergence between message and registration
+                .buildHelloMessage(divergingTimeCollected, divergingTimeCollected, now)
                 .build();
 
         // When
@@ -316,7 +323,7 @@ class ContactProcessingServiceTest {
         assertThatWarnLogs().containsOnlyOnce(
                 String.format(
                         "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
-                        now.asEpochId() + 2, now.asEpochId()
+                        divergingTimeCollected.asEpochId(), now.asEpochId()
                 )
         );
         // Note : DIVERGENT_EPOCHIDS il y a des espaces en trop dans les logs de cette

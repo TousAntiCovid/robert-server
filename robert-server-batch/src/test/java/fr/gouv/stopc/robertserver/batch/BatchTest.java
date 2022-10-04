@@ -12,7 +12,7 @@ import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenGivenPendingContact;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenPendingContact;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -47,7 +47,7 @@ class BatchTest {
         final var yesterday = clock.now().minus(1, DAYS);
 
         givenRegistrationExistsForIdA("user___1");
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
                 .withValidHelloMessageAt(yesterday)
                 .build();
@@ -74,7 +74,7 @@ class BatchTest {
         final var yesterday = clock.now().minus(1, DAYS);
 
         givenRegistrationExistsForIdA("user___1");
-        givenGivenPendingContact()
+        givenPendingContact()
                 .idA("user___1")
                 .withValidHelloMessageAt(yesterday, 2)
                 .build();

@@ -54,7 +54,7 @@ public class MongodbManager implements TestExecutionListener {
         return mongoOperations.save(transformer.apply(registration).build());
     }
 
-    public static ContactFactory.ContactBuilder givenGivenPendingContact() {
+    public static ContactFactory.ContactBuilder givenPendingContact() {
         return new ContactFactory.ContactBuilder(mongoOperations, clock);
     }
 

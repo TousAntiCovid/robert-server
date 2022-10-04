@@ -1,7 +1,6 @@
 package fr.gouv.stopc.robertserver.batch.test;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.Builder;
@@ -43,7 +42,8 @@ public class ContactFactory {
             return this;
         }
 
-        private void buildHelloMessage(final RobertClock.RobertInstant timeCollectedOnDevice,
+        public ContactBuilder buildHelloMessage(
+                final RobertClock.RobertInstant timeCollectedOnDevice,
                 final RobertClock.RobertInstant timeFromHelloMessage,
                 final RobertClock.RobertInstant contactEpochId) {
             this.messageDetails.add(
@@ -58,28 +58,6 @@ public class ContactFactory {
                             .mac(String.format("%s:%s", idA, contactEpochId).getBytes())
                             .build()
             );
-        }
-
-        /**
-         * This helloMessage has a timeCollectedOnDevice which is diverging from
-         * Registration EpochId (1800s)
-         */
-        public ContactBuilder withHelloMessageWithDivergentTimeCollected(RobertClock.RobertInstant instant) {
-            final var timeCollectedOnDevice = instant
-                    .plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
-            final var timeFromHelloMessage = timeCollectedOnDevice;
-
-            buildHelloMessage(timeCollectedOnDevice, timeFromHelloMessage, instant);
-            return this;
-        }
-
-        /**
-         * This helloMessage has a TimeCollectedOnDevice higher than the max timestamp
-         * tolerance (181s)
-         */
-        public ContactBuilder withHelloMessageWithBadTimeCollectedOnDevice(RobertClock.RobertInstant instant,
-                RobertClock.RobertInstant timeCollectedOnDevice) {
-            buildHelloMessage(timeCollectedOnDevice, instant, instant);
             return this;
         }
 
