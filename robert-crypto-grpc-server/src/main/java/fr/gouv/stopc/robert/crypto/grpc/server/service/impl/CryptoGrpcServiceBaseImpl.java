@@ -514,13 +514,11 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     String errorMessage = "MAC is invalid";
                     log.warn(errorMessage);
                     invalidMessageDetails.add(helloMessageDetail);
-                    break;
                 }
             } catch (RobertServerCryptoException e) {
                 String errorMessage = "Could not validate MAC";
                 log.warn(errorMessage, e);
                 invalidMessageDetails.add(helloMessageDetail);
-                break;
             }
 
         }
