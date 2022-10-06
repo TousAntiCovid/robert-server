@@ -17,6 +17,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * In order to simulate resolution by the cryptoserver of a
+ * ValidateContactRequest, we pass some informations (idA:epochId) in the ebid
+ * of the ValidateContactRequest These informations will be used : firstly by
+ * the mock to create an appropriate response secondly by ContactProcessor
+ * script to make some validations.
+ */
 public class GrpcMockManager implements TestExecutionListener {
 
     private static final CryptoGrpcStub CRYPTO_GRPC_STUB = Mockito.spy(new CryptoGrpcStub());
