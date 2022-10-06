@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import lombok.SneakyThrows;
+import org.assertj.core.api.ListAssert;
 import org.flywaydb.core.Flyway;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestContext;
@@ -14,8 +15,10 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Map;
 
 import static fr.gouv.stopc.robertserver.crypto.test.KeystoreManager.cipherForStoredKey;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * A {@link TestExecutionListener} to start a PostgreSQL container to be used as
@@ -37,6 +40,10 @@ public class PostgreSqlManager implements TestExecutionListener {
         System.setProperty("spring.datasource.url", POSTGRE.getJdbcUrl());
         System.setProperty("spring.datasource.username", POSTGRE.getUsername());
         System.setProperty("spring.datasource.password", POSTGRE.getPassword());
+    }
+
+    public static ListAssert<Map<String, Object>> assertThatAllIdentities() {
+        return assertThat(jdbcTemplate.queryForList("select * from identity"));
     }
 
     @Override
