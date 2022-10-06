@@ -1,41 +1,41 @@
 package fr.gouv.stopc.robertserver.batch;
 
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.batch.test.CountryCode;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
-import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
-import fr.gouv.stopc.robertserver.database.model.Registration;
-import fr.gouv.stopc.robertserver.database.service.IRegistrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static fr.gouv.stopc.robertserver.batch.test.HelloMessageFactory.generateHelloMessagesStartingAndDuring;
-import static fr.gouv.stopc.robertserver.batch.test.HelloMessageFactory.randRssi;
-import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.*;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
+import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
+import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
+import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatWarnLogs;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatContactsToProcess;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenPendingContact;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class ContactProcessingServiceTest {
 
-    private final IRegistrationService registrationService;
-
     private final RobertClock clock;
 
     private final JobLauncherTestUtils jobLauncher;
+
+    private final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
 
     @SneakyThrows
     private void runRobertBatchJob() {
@@ -43,11 +43,35 @@ class ContactProcessingServiceTest {
     }
 
     @Test
-    void process_two_helloMessages_and_concat_risk_with_existing_registration_exposed_epochs_risks() {
-        var twoDaysAgo = clock.now().minus(2, ChronoUnit.DAYS);
-        var fiveDaysAgo = clock.now().minus(5, ChronoUnit.DAYS);
+    void epoch_risk_0_when_not_enough_messages() {
+        var now = clock.now();
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA("user___1");
+
+        givenPendingContact()
+                .idA("user___1")
+                .withValidHelloMessageAt(now, 1)
+                .build();
+
+        // When
+        runRobertBatchJob();
+
+        // Then
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(
+                        new EpochExposition(now.asEpochId(), List.of(0.0))
+                );
+
+        assertThatContactsToProcess().isEmpty();
+    }
+
+    @Test
+    void add_new_risk_to_existing_exposed_epochs_risks() {
+        final var now = clock.now();
+        final var twoDaysAgo = now.minus(2, ChronoUnit.DAYS);
+        final var fiveDaysAgo = now.minus(5, ChronoUnit.DAYS);
+
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
@@ -63,70 +87,211 @@ class ContactProcessingServiceTest {
                         )
         );
 
-        givenPendingContact(
-                "user___1", helloMessagesBuilder -> helloMessagesBuilder.addAt(twoDaysAgo, twoDaysAgo.plus(20, SECONDS))
-        );
+        // Should raise an exposedEpoch risk
+        givenPendingContact()
+                .idA("user___1")
+                .withValidHelloMessageAt(twoDaysAgo, 70)
+                .build();
 
         // When
         runRobertBatchJob();
 
         // Then
-        assertThatContactsToProcess().isEmpty();
-        final var expectedRegistration = registrationService.findById("user___1".getBytes())
-                .orElseThrow();
-        assertThat(expectedRegistration.getExposedEpochs())
-                .hasSize(2)
-                .filteredOn(e -> e.getEpochId() == twoDaysAgo.asEpochId())
-                .asList()
-                .flatExtracting("expositionScores")
-                .hasSize(2)
-                .contains(3.0, 0.0);
-        assertThat(expectedRegistration.getExposedEpochs())
-                .hasSize(2)
-                .filteredOn(e -> e.getEpochId() == fiveDaysAgo.asEpochId())
-                .asList()
-                .flatExtracting("expositionScores")
-                .hasSize(1)
-                .contains(4.3);
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(
+                        new EpochExposition(fiveDaysAgo.asEpochId(), List.of(4.3)),
+                        new EpochExposition(twoDaysAgo.asEpochId(), List.of(3.0, 1.0))
+                );
     }
 
     @Test
-    void process_contact_succeeds_when_has_at_least_one_hello_message_valid() {
-        var now = clock.now();
+    void remove_invalid_hello_messages() {
+        final var now = clock.now();
+        final var exceedTimeStampTolerance = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, SECONDS);
+        final var divergingTimeCollected = now
+                .plus(EPOCH_DURATION_SECS * 2L, SECONDS);
 
-        givenRegistrationExistsForUser("user___1");
+        givenRegistrationExistsForIdA("user___1");
 
-        var messageDetails = generateHelloMessagesStartingAndDuring(
-                now,
-                Duration.of(30, ChronoUnit.SECONDS)
-        );
-
-        // Add a helloMessage with timeCollected exceeded max time stamp tolerance
-        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
-        messageDetails.add(
-                HelloMessageDetail.builder()
-                        .rssiCalibrated(randRssi())
-                        .timeCollectedOnDevice(
-                                exceededTime.asNtpTimestamp()
-                        )
-                        .timeFromHelloMessage(
-                                now.as16LessSignificantBits()
-                        )
-                        .mac(("mac___exceeded_time").getBytes())
-                        .build()
-        );
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(messageDetails)
-        );
+        givenPendingContact()
+                .idA("user___1")
+                // Bad HMD with timeCollectedOnDevice exceeded time tolerance
+                .buildHelloMessage(exceedTimeStampTolerance, now, now)
+                // Bad HMD with timeCollectedOnDevice which is diverging from Registration
+                // EpochId
+                .buildHelloMessage(divergingTimeCollected, divergingTimeCollected, now)
+                // Good helloMessageDetails
+                .withValidHelloMessageAt(now, 70)
+                .build();
 
         // When
         runRobertBatchJob();
 
-        // Then : Check that there is one bad contact in logs and that the final
-        // registration
-        // contains one exposed epoch for the computation of the good ones
+        // Then
+        // Check that the registration contains one exposed epoch for the computation of
+        // the good ones
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(
+                        new EpochExposition(now.asEpochId(), List.of(1.0))
+                );
+
+        assertThatWarnLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
+                                now.as16LessSignificantBits(), exceedTimeStampTolerance.as16LessSignificantBits()
+                        )
+                );
+        assertThatWarnLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
+                                divergingTimeCollected.asEpochId(), now.asEpochId()
+                        )
+                );
+
+        assertThatContactsToProcess().isEmpty();
+    }
+
+    @Test
+    void logs_and_discard_messages_when_bad_encrypted_country_code_rejection() {
+        // Given
+        final var now = clock.now();
+
+        givenRegistrationExistsForIdA("user___1");
+
+        givenPendingContact()
+                .idA("user___1")
+                .countryCode(CountryCode.GERMANY)
+                .withValidHelloMessageAt(now, 3)
+                .build();
+
+        // When
+        runRobertBatchJob();
+
+        // Then
+        assertThatInfoLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "Country code [%d] is not managed by this server ([33])",
+                                CountryCode.GERMANY.getNumericCode()
+                        )
+                );
+        assertThatEpochExpositionsForIdA("user___1").isEmpty();
+        assertThatContactsToProcess().isEmpty();
+    }
+
+    @Test
+    void logs_and_discard_when_contact_has_no_messages() {
+        // Given
+        givenRegistrationExistsForIdA("user___1");
+
+        givenPendingContact()
+                .idA("user___1")
+                .build();
+
+        // When
+        runRobertBatchJob();
+
+        // Then
+        assertThatInfoLogs()
+                .containsOnlyOnce("No messages in contact, discarding contact");
+        assertThatEpochExpositionsForIdA("user___1").isEmpty();
+        assertThatContactsToProcess().isEmpty();
+    }
+
+    @Test
+    void logs_and_discard_when_registration_does_not_exist() {
+        // Given
+        final var now = clock.now();
+
+        givenPendingContact()
+                .idA("user___1")
+                .withValidHelloMessageAt(now, 3)
+                .build();
+
+        // When
+        runRobertBatchJob();
+
+        // Then
+        assertThatInfoLogs()
+                .containsOnlyOnce(
+                        String.format(
+                                "No identity exists for id_A %s extracted from ebid, discarding contact",
+                                Arrays.toString("user___1".getBytes())
+                        )
+                );
+        assertThatContactsToProcess().isEmpty();
+    }
+
+    @Test
+    void logs_and_discard_when_all_messages_have_been_rejected() {
+        // Given
+        givenRegistrationExistsForIdA("user___1");
+        final var now = clock.now();
+        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, SECONDS);
+
+        givenPendingContact()
+                .idA("user___1")
+                .buildHelloMessage(exceededTime, now, now)
+                .build();
+
+        // When
+        runRobertBatchJob();
+
+        // Then
+        assertThatInfoLogs()
+                .containsOnlyOnce("Contact did not contain any valid messages; discarding contact");
+        assertThatEpochExpositionsForIdA("user___1").isEmpty();
+        assertThatContactsToProcess().isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "PT3M", "PT-3M", "PT1M", "PT-1M" })
+    void no_logs_and_no_discard_when_hello_message_timestamp_tolerance_is_not_exceeded(final Duration receptionDelay) {
+        // Given
+        final var now = clock.now();
+        final var exceededTime = now.plus(receptionDelay);
+        givenRegistrationExistsForIdA("user___1");
+
+        givenPendingContact()
+                .idA("user___1")
+                .buildHelloMessage(exceededTime, now, now) // param ici
+                .build();
+
+        // When
+        runRobertBatchJob();
+
+        // Then
+        assertThatWarnLogs()
+                .doesNotContain(
+                        String.format(
+                                "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
+                                now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
+                        )
+                );
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(new EpochExposition(now.asEpochId(), List.of(0.0)));
+        assertThatContactsToProcess().isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "PT3M1S", "PT-3M-1S", "PT15M", "PT-15M" })
+    void logs_and_discard_when_hello_message_timestamp_tolerance_is_exceeded(final Duration receptionDelay) {
+        // Given
+        final var now = clock.now();
+        final var exceededTime = now.plus(receptionDelay);
+        givenRegistrationExistsForIdA("user___1");
+
+        givenPendingContact()
+                .idA("user___1")
+                .buildHelloMessage(exceededTime, now, now)
+                .build();
+
+        // When
+        runRobertBatchJob();
+
+        // Then
         assertThatWarnLogs()
                 .containsOnlyOnce(
                         String.format(
@@ -134,237 +299,36 @@ class ContactProcessingServiceTest {
                                 now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
                         )
                 );
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getExposedEpochs)
-                .asList()
-                .hasSize(1);
-
+        assertThatEpochExpositionsForIdA("user___1").isEmpty();
         assertThatContactsToProcess().isEmpty();
     }
 
     @Test
-    void process_contact_when_the_contact_is_valid_succeeds() {
-        var now = clock.now();
+    void logs_and_discard_when_the_epochs_are_different() {
+        // Given
+        final var now = clock.now();
+        final var divergingTimeCollected = now.plus(EPOCH_DURATION_SECS * 2L, SECONDS);
+        givenRegistrationExistsForIdA("user___1");
 
-        givenRegistrationExistsForUser("user___1");
-
-        givenPendingContact(
-                "user___1", helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(120, SECONDS))
-        );
+        givenPendingContact()
+                .idA("user___1")
+                // Add HelloMessage with divergence between message and registration
+                .buildHelloMessage(divergingTimeCollected, divergingTimeCollected, now)
+                .build();
 
         // When
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getExposedEpochs)
-                .asList()
-                .hasSize(1);
-        assertThatContactsToProcess().isEmpty();
-    }
-
-    @Test
-    void process_contact_with_a_bad_encrypted_country_code_fails() {
-        // Given
-        var now = clock.now();
-        var badEcc = new byte[] { (byte) 0xff };
-
-        givenRegistrationExistsForUser("user___1");
-
-        givenPendingContact(
-                "user___1", badEcc, helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(30, SECONDS))
-        );
-
-        // When
-        runRobertBatchJob();
-
-        // Then
-        assertThatInfoLogs()
-                .contains("Country code [-1] is not managed by this server ([33])");
-        assertThatContactsToProcess().isEmpty();
-    }
-
-    @Test
-    void process_contact_with_no_messages_fails() {
-        // Given
-        var now = clock.now();
-        givenRegistrationExistsForUser("user___1");
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(List.of())
-        );
-
-        // When
-        runRobertBatchJob();
-
-        // Then
-        assertThatInfoLogs()
-                .contains("No messages in contact, discarding contact");
-        assertThatContactsToProcess().isEmpty();
-    }
-
-    @Test
-    void process_contact_with_non_existent_registration_fails() {
-        // Given
-        var now = clock.now();
-
-        var registration = givenRegistrationExistsForUser("user___1");
-
-        givenPendingContact(
-                "user___1", helloMessagesBuilder -> helloMessagesBuilder.addAt(now, now.plus(30, SECONDS))
-        );
-
-        this.registrationService.delete(registration);
-
-        runRobertBatchJob();
-
-        final var idA = Arrays.toString(registration.getPermanentIdentifier());
-
-        assertThatInfoLogs()
-                .contains("No identity exists for id_A " + idA + " extracted from ebid, discarding contact");
-        assertThatContactsToProcess().isEmpty();
-    }
-
-    @Test
-    void process_contact_logs_when_hello_message_timestamp_is_exceeded() {
-        // Given
-        var now = clock.now();
-
-        givenRegistrationExistsForUser("user___1");
-
-        // Add an helloMessage with timeCollected exceeded max time stamp tolerance
-        var messageDetails = new ArrayList<HelloMessageDetail>();
-        final int HELLO_MESSAGE_TIME_STAMP_TOLERANCE = 180;
-        final var exceededTime = now.plus(HELLO_MESSAGE_TIME_STAMP_TOLERANCE + 1, ChronoUnit.SECONDS);
-        messageDetails.add(
-                HelloMessageDetail.builder()
-                        .rssiCalibrated(randRssi())
-                        .timeCollectedOnDevice(
-                                exceededTime.asNtpTimestamp()
-                        )
-                        .timeFromHelloMessage(
-                                now.as16LessSignificantBits()
-                        )
-                        .mac(("mac___exceeded_time").getBytes())
-                        .build()
-        );
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(messageDetails)
-        );
-
-        runRobertBatchJob();
-
-        assertThatWarnLogs()
-                .containsOnlyOnce(
-                        String.format(
-                                "Time tolerance was exceeded: |%d (HELLO) vs %d (receiving device)| > 180; discarding HELLO message",
-                                now.as16LessSignificantBits(), exceededTime.as16LessSignificantBits()
-                        )
-                );
-
-        assertThatInfoLogs()
-                .contains("Contact did not contain any valid messages; discarding contact");
-
-        assertThatContactsToProcess().isEmpty();
-    }
-
-    @Test
-    void process_contact_logs_when_the_epochs_are_different() {
-        // Given
-        var now = clock.now();
-
-        givenRegistrationExistsForUser("user___1");
-
-        // Add HelloMessage with divergence between message and registration
-        final var exceededTime = now.plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
-        var messageDetails = new ArrayList<HelloMessageDetail>();
-        messageDetails.add(
-                HelloMessageDetail.builder()
-                        .rssiCalibrated(randRssi())
-                        .timeCollectedOnDevice(
-                                exceededTime.asNtpTimestamp()
-                        )
-                        .timeFromHelloMessage(
-                                exceededTime.as16LessSignificantBits()
-                        )
-                        .mac(("mac___exceeded_time").getBytes())
-                        .build()
-        );
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(messageDetails)
-        );
-
-        // When
-        runRobertBatchJob();
-
-        // Then
-
         assertThatWarnLogs().containsOnlyOnce(
                 String.format(
                         "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
-                        now.asEpochId() + 2, now.asEpochId()
+                        divergingTimeCollected.asEpochId(), now.asEpochId()
                 )
         );
         // Note : DIVERGENT_EPOCHIDS il y a des espaces en trop dans les logs de cette
         // version applicative
-        assertThatInfoLogs()
-                .contains("Contact did not contain any valid messages; discarding contact");
+        assertThatEpochExpositionsForIdA("user___1").isEmpty();
         assertThatContactsToProcess().isEmpty();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getExposedEpochs)
-                .asList()
-                .isEmpty();
-    }
-
-    @Test
-    void process_contact_succeeds_and_when_some_of_the_epochs_are_different_logs_and_discard() {
-        // Given
-        var now = clock.now();
-
-        givenRegistrationExistsForUser("user___1");
-        var messageDetails = generateHelloMessagesStartingAndDuring(
-                now,
-                Duration.of(30, ChronoUnit.SECONDS)
-        );
-
-        // Add HelloMessage with time divergence with contact epoch
-        final var exceededTime = now.plus(TimeUtils.EPOCH_DURATION_SECS * 2L, ChronoUnit.SECONDS);
-        messageDetails.add(
-                HelloMessageDetail.builder()
-                        .rssiCalibrated(randRssi())
-                        .timeCollectedOnDevice(
-                                exceededTime.asNtpTimestamp()
-                        )
-                        .timeFromHelloMessage(
-                                exceededTime.as16LessSignificantBits()
-                        )
-                        .mac(("mac___exceeded_time").getBytes())
-                        .build()
-        );
-
-        givenContactExistForUser(
-                "user___1", now, c -> c.messageDetails(messageDetails)
-        );
-
-        // When
-        runRobertBatchJob();
-
-        // Then
-        assertThatWarnLogs().containsOnlyOnce(
-                String.format(
-                        "Epochid from message %d  vs epochid from ebid  %d > 1 (tolerance); discarding HELLO message",
-                        now.asEpochId() + 2, now.asEpochId()
-                )
-        );
-        assertThatContactsToProcess().isEmpty();
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getExposedEpochs)
-                .asList()
-                .hasSize(1);
     }
 }

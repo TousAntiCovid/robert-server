@@ -4,7 +4,6 @@ import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
-import fr.gouv.stopc.robertserver.database.model.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -18,8 +17,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.assertThatRegistrationForUser;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForUser;
+import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
@@ -45,7 +44,7 @@ class PurgeOldEpochExpositionsServiceTest {
     }
 
     @Test
-    void can_log_start_and_end_of_purge_process() {
+    void logs_start_and_end_of_purge_process() {
         // When
         runRobertBatchJob();
 
@@ -57,16 +56,17 @@ class PurgeOldEpochExpositionsServiceTest {
     }
 
     @Test
-    void epochs_expositions_are_deleted_when_epochs_are_before_contagious_period() {
+    void delete_epochs_when_are_before_contagious_period() {
         final int contagiousPeriodPlusOneDay = CONTAGIOUS_PERIOD + 1;
-        var beforeStartOfContagiousPeriod = clock.now().minus(contagiousPeriodPlusOneDay, ChronoUnit.DAYS);
+        final var now = clock.now();
+        final var beforeStartOfContagiousPeriod = now.minus(contagiousPeriodPlusOneDay, ChronoUnit.DAYS);
 
-        givenRegistrationExistsForUser(
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
                                         EpochExposition.builder()
-                                                .epochId(clock.now().asEpochId())
+                                                .epochId(now.asEpochId())
                                                 .expositionScores(Collections.singletonList(1.0))
                                                 .build(),
                                         EpochExposition.builder()
@@ -82,28 +82,29 @@ class PurgeOldEpochExpositionsServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getExposedEpochs)
-                .asList()
-                .hasSize(1);
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(
+                        new EpochExposition(now.asEpochId(), List.of(1.0))
+                );
     }
 
     @ParameterizedTest
     @ValueSource(ints = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 })
-    void epochs_expositions_are_not_deleted_when_epochs_are_not_before_contagious_period(int inContagiousPeriod) {
+    void no_delete_epochs_when_not_before_contagious_period(int inContagiousPeriod) {
         // Given
-        var beforeStartOfContagiousPeriod = clock.now().minus(inContagiousPeriod, ChronoUnit.DAYS);
-        var registration = givenRegistrationExistsForUser(
+        final var now = clock.now();
+        final var beforeStartOfContagiousPeriod = now.minus(inContagiousPeriod, ChronoUnit.DAYS);
+        givenRegistrationExistsForIdA(
                 "user___1", r -> r
                         .exposedEpochs(
                                 List.of(
                                         EpochExposition.builder()
-                                                .epochId(clock.now().asEpochId())
-                                                .expositionScores(Collections.singletonList(1.0))
+                                                .epochId(now.asEpochId())
+                                                .expositionScores(Collections.singletonList(2.0))
                                                 .build(),
                                         EpochExposition.builder()
                                                 .epochId(beforeStartOfContagiousPeriod.asEpochId())
-                                                .expositionScores(Collections.singletonList(1.0))
+                                                .expositionScores(Collections.singletonList(3.0))
                                                 .build()
 
                                 )
@@ -114,13 +115,10 @@ class PurgeOldEpochExpositionsServiceTest {
         runRobertBatchJob();
 
         // Then
-        assertThatRegistrationForUser("user___1")
-                .as("Object has not been updated")
-                .isEqualTo(registration);
-
-        assertThatRegistrationForUser("user___1")
-                .extracting(Registration::getExposedEpochs)
-                .asList()
-                .hasSize(2);
+        assertThatEpochExpositionsForIdA("user___1")
+                .containsOnlyOnce(
+                        new EpochExposition(now.asEpochId(), List.of(2.0)),
+                        new EpochExposition(beforeStartOfContagiousPeriod.asEpochId(), List.of(3.0))
+                );
     }
 }

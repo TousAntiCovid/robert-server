@@ -26,7 +26,8 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @TestExecutionListeners(listeners = {
         GrpcMockManager.class,
         LogbackManager.class,
-        MongodbManager.class
+        MongodbManager.class,
+        MessageMatcher.class
 }, mergeMode = MERGE_WITH_DEFAULTS)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface IntegrationTest {
