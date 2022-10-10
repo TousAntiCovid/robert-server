@@ -4,6 +4,7 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Instant;
@@ -14,7 +15,7 @@ import static java.time.temporal.ChronoUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-public class RobertClockTest {
+class RobertClockTest {
 
     final RobertClock robertClock = new RobertClock("2022-01-01");
 
@@ -67,6 +68,18 @@ public class RobertClockTest {
                 .isEqualTo("2022-04-23T08:30:00Z=10786E");
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "2022-04-23T08:35:12.004Z, 14528",
+            "1980-01-01T00:00:00.000Z, 9344",
+            "2010-05-04T12:00:30.000Z, 35550"
+    })
+    void can_retrieve_16_less_significant_bits(String date, int expectedValue) {
+        final var instant = Instant.parse(date);
+        final var robertInstant = robertClock.at(instant);
+        assertThat(robertInstant.as16LessSignificantBits()).isEqualTo(expectedValue);
+    }
+
     @Test
     void can_add_time() {
         final var instant = Instant.parse("2022-04-23T08:30:00Z");
@@ -106,5 +119,56 @@ public class RobertClockTest {
         final var instant = Instant.parse("2022-04-23T08:35:12.004Z");
         final var robertInstant = robertClock.at(instant);
         assertThat(robertInstant.truncatedTo(ROBERT_EPOCH)).hasToString("2022-04-23T08:30:00Z=10786E");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2022-04-23T08:00:00Z=10784E   ,2022-04-23T08:00:00Z       ,10784",
+            "2022-01-01T00:00:00Z=0E       ,2022-01-01T00:00:00Z       ,0",
+            "2022-01-01T00:14:59Z=0E       ,2022-01-01T00:14:59Z       ,0",
+            "2022-01-01T00:14:59.999Z=0E   ,2022-01-01T00:14:59.999Z   ,0",
+            "2022-01-01T00:15:00Z=1E       ,2022-01-01T00:15:00Z       ,1",
+            "2022-01-01T00:29:59Z=1E       ,2022-01-01T00:29:59Z       ,1",
+            "2022-01-01T00:29:59.999999Z=1E,2022-01-01T00:29:59.999999Z,1",
+            "2022-01-01T00:30:00Z=2E       ,2022-01-01T00:30:00Z       ,2",
+            "2022-02-15T22:43:13Z=4410E    ,2022-02-15T22:43:13Z       ,4410"
+    })
+    void can_parse_robert_instant(String robertInstantString, String expectedInstant, int expectedEpochId) {
+        final var parsedRobertInstant = RobertClock.parse(robertInstantString);
+        assertThat(parsedRobertInstant.asInstant())
+                .hasToString(expectedInstant);
+        assertThat(parsedRobertInstant.asEpochId())
+                .isEqualTo(expectedEpochId);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2022-01-01T00:00:00Z,2022-01-01T00:00:00Z,0",
+            "2022-01-01T00:00:00Z,2022-01-01T00:14:59.999Z,0",
+            "2022-01-01T00:00:00Z,2022-01-01T00:15:00Z,1",
+            "2022-02-15T18:43:13Z,2022-02-15T22:43:13Z,16",
+            "2022-02-15T18:43:13Z,2022-02-15T22:43:13Z,16",
+            "2022-02-15T18:43:13Z,2022-02-15T22:43:13Z,16",
+            "2022-02-15T20:43:13Z,2022-02-15T18:13:00Z,-10",
+            "1950-01-01T00:00:00Z,1950-01-01T01:00:00Z,4",
+    })
+    void can_count_epochs_between_two_instants(Instant begin, Instant end, int epochsCount) {
+        assertThat(begin.until(end, ROBERT_EPOCH))
+                .isEqualTo(epochsCount);
+    }
+
+    @Test
+    void can_list_epochs_until() {
+        final var begin = robertClock.at(Instant.parse("2022-12-18T06:23:43Z"));
+        // 1h and 5m later, or 4 epochs later
+        final var end = robertClock.at(Instant.parse("2022-12-18T07:28:43Z"));
+        assertThat(begin.epochsUntil(end))
+                .extracting(RobertClock.RobertInstant::toString)
+                .contains(
+                        "2022-12-18T06:15:00Z=33721E",
+                        "2022-12-18T06:30:00Z=33722E",
+                        "2022-12-18T06:45:00Z=33723E",
+                        "2022-12-18T07:00:00Z=33724E"
+                );
     }
 }

@@ -159,8 +159,13 @@ class StatusControllerTest {
                                 .withClaim("iat", isUnixTimestampNear(now, Duration.ofSeconds(60)))
                                 .withClaim("iss", equalTo("tac"))
                                 .withClaim(
-                                        "notificationDateTimestamp",
-                                        isNtpTimestamp(clock.now().truncatedTo(ROBERT_EPOCH).asInstant())
+                                        "notificationDateTimestamp", anyOf(
+                                                isNtpTimestamp(
+                                                        clock.now().truncatedTo(ROBERT_EPOCH)
+                                                                .minus(1, ROBERT_EPOCH).asInstant()
+                                                ),
+                                                isNtpTimestamp(clock.now().truncatedTo(ROBERT_EPOCH).asInstant())
+                                        )
                                 )
                                 .withClaim("lastContactDateTimestamp", equalTo(888))
                 )

@@ -12,9 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Service
@@ -60,7 +58,7 @@ public class MobilePhonesEmulator {
 
         for (final String user : users) {
             final var mobileApplication = mobileApplications.get(user);
-            Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(10))
+            Stream.iterate(startInstant, d -> d.isBefore(endDate), d -> d.plusSeconds(1))
                     .map(mobileApplication::produceHelloMessage)
                     .forEach(
                             hello -> users.stream()
