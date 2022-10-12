@@ -58,13 +58,13 @@ class ScoringAlgorithmV2Test {
             }
         };
 
-        final var configuration = new ScoringAlgorithmConfiguration();
-        configuration.setDeltas(new String[] { "39.0", "27.0", "23.0", "21.0", "20.0", "15.0" });
-        configuration.setRssiMax(-35);
-        configuration.setP0(-66.0);
-        configuration.setSoftMaxA(4.342);
-        configuration.setSoftMaxB(0.2);
-        configuration.setEpochTolerance(180);
+        final var scoringConfiguration = new ScoringAlgorithmConfiguration();
+        scoringConfiguration.setDeltas(new String[] { "39.0", "27.0", "23.0", "21.0", "20.0", "15.0" });
+        scoringConfiguration.setRssiMax(-35);
+        scoringConfiguration.setP0(-66.0);
+        scoringConfiguration.setSoftMaxA(4.342);
+        scoringConfiguration.setSoftMaxB(0.2);
+        scoringConfiguration.setEpochTolerance(180);
 
         final var propertyLoader = new PropertyLoader() {
 
@@ -75,13 +75,13 @@ class ScoringAlgorithmV2Test {
         };
 
         serviceScoring = new ScoringStrategyV2ServiceImpl(
-                serverConfigurationServiceStub, configuration,
+                serverConfigurationServiceStub, scoringConfiguration,
                 propertyLoader
         );
     }
 
     @Test
-    void throw_exception_when_no_hello_messages_in_contact() {
+    void cant_execute_scoring_on_contact_with_zero_hello_messages() {
         // Given
         final var emptyContact = Contact.builder().messageDetails(List.of()).build();
 
@@ -99,7 +99,9 @@ class ScoringAlgorithmV2Test {
 
     @ParameterizedTest
     @ValueSource(strings = { "PT3M1S", "PT15M" })
-    void logs_when_no_hello_messages_exceeded_epoch_limit(final Duration receptionDelay) throws RobertScoringException {
+    void contact_scoring_should_return_a_zero_score_and_log_when_no_hello_messages_exceeded_epoch_limit(
+            final Duration receptionDelay)
+            throws RobertScoringException {
         // Given
         final var now = CLOCK.now();
         final var exceededTime = now
@@ -129,7 +131,7 @@ class ScoringAlgorithmV2Test {
 
         // When
         try (final var logCaptor = LogCaptor.forClass(ScoringStrategyV2ServiceImpl.class)) {
-            serviceScoring.execute(contact);
+            final var score = serviceScoring.execute(contact);
 
             // Then
             final var diff = exceededTime.asNtpTimestamp() - now.asNtpTimestamp() + 0.0;
@@ -140,6 +142,13 @@ class ScoringAlgorithmV2Test {
                                     diff
                             )
                     );
+            assertThat(score).isEqualTo(
+                    ScoringResult.builder()
+                            .duration(0)
+                            .nbContacts(0)
+                            .rssiScore(0.0)
+                            .build()
+            );
         }
     }
 
@@ -274,13 +283,11 @@ class ScoringAlgorithmV2Test {
             "/input_v2/R1_AA/R1_AA67.csv, 0.2463398180057588         ,  1,  2",
             "/input_v2/R1_AA/R1_AA68.csv, 0.0                        ,  1,  0"
     })
-    void risk_from_hello_messages_contact_must_match_expected_risk(final String path,
-            final double expectedRssiScore,
-            final int expectedDuration,
-            final int expectedContactCount) throws RobertScoringException {
+    void contact_scoring_should_match_dataset_expected_risk(final String datasetPath, final double expectedRssiScore,
+            final int expectedDuration, final int expectedContactCount) throws RobertScoringException {
 
         // Given
-        final var contact = readContact(new ClassPathResource(path));
+        final var contact = readContact(new ClassPathResource(datasetPath));
 
         // When
         final var risk = serviceScoring.execute(contact);
@@ -300,10 +307,11 @@ class ScoringAlgorithmV2Test {
             "/input_v2/C4_20_A/*.csv, 0.44161884230882675",
             "/input_v2/R1_AA/*.csv  , 0.20799057803577403"
     })
-    void aggregateContactRisksShouldReturnExpectedFinalRisk(final String path, final double expectedFinalRisk)
+    void score_aggregation_should_match_dataset_expected_final_risk(final String datasetPath,
+            final double expectedFinalRisk)
             throws IOException {
         // Given
-        final var contacts = new PathMatchingResourcePatternResolver().getResources(path);
+        final var contacts = new PathMatchingResourcePatternResolver().getResources(datasetPath);
         final var scores = Arrays.stream(contacts)
                 .map(this::readContact)
                 .map(contact -> {
