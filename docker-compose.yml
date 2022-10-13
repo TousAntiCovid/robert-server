@@ -89,21 +89,21 @@ services:
       - "27017:27017"
 
   mock-captcha:
-    image: mockserver/mockserver:mockserver-5.13.2
+    image: mockserver/mockserver:mockserver-5.14.0
     environment:
       MOCKSERVER_INITIALIZATION_JSON_PATH: /expectations.json
     volumes:
       - ./docker-compose/mock-server/captcha.json:/expectations.json:ro
 
   mock-push-notif-server:
-    image: mockserver/mockserver:mockserver-5.13.2
+    image: mockserver/mockserver:mockserver-5.14.0
     environment:
       MOCKSERVER_INITIALIZATION_JSON_PATH: /expectations.json
     volumes:
       - ./docker-compose/mock-server/push-notif-server.json:/expectations.json:ro
 
   mock-submission-code-server:
-    image: mockserver/mockserver:mockserver-5.13.2
+    image: mockserver/mockserver:mockserver-5.14.0
     environment:
       MOCKSERVER_INITIALIZATION_JSON_PATH: /expectations.json
     volumes:

@@ -1,2 +1,6 @@
 spring.main.banner-mode: off
-spring.batch.job.enabled: false
+spring:
+  batch.job.enabled: false
+  cloud:
+    consul.enabled: false
+    vault.enabled: false
