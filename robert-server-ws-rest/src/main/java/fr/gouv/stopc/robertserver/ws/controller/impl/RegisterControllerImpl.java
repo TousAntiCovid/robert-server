@@ -21,7 +21,6 @@ import fr.gouv.stopc.robertserver.ws.utils.MessageConstants;
 import fr.gouv.stopc.robertserver.ws.vo.RegisterVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.internal.Base64;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -29,6 +28,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.validation.Valid;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +66,7 @@ public class RegisterControllerImpl implements IRegisterController {
 
     private ResponseEntity<RegisterResponseDto> postCheckRegister(RegisterVo registerVo) throws RobertServerException {
 
-        byte[] clientPublicECDHKey = Base64.decode(registerVo.getClientPublicECDHKey());
+        byte[] clientPublicECDHKey = Base64.getDecoder().decode(registerVo.getClientPublicECDHKey());
         byte[] serverCountryCode = new byte[1];
         serverCountryCode[0] = this.serverConfigurationService.getServerCountryCode();
 
@@ -110,7 +110,7 @@ public class RegisterControllerImpl implements IRegisterController {
                 );
             }
 
-            registerResponseDto.setTuples(Base64.encode(identity.getTuples().toByteArray()));
+            registerResponseDto.setTuples(Base64.getEncoder().encodeToString(identity.getTuples().toByteArray()));
             registerResponseDto.setTimeStart(this.serverConfigurationService.getServiceTimeStart());
 
             Optional.ofNullable(registerVo.getPushInfo()).ifPresent(this.restApiService::registerPushNotif);

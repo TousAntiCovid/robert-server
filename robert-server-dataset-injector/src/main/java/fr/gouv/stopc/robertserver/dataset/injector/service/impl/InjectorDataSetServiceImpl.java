@@ -21,7 +21,6 @@ import fr.gouv.stopc.robertserver.dataset.injector.service.InjectorDataSetServic
 import fr.gouv.stopc.robertserver.dataset.injector.utils.PropertyLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.internal.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -176,7 +175,8 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
         registrationService.saveRegistration(registration);
 
         // retrieve the key_for_mac from crypto server
-        Optional<ClientIdentifier> clientId = clientIdentifierRepository.findByIdA(Base64.encode(permanentIdentifier));
+        Optional<ClientIdentifier> clientId = clientIdentifierRepository
+                .findByIdA(Base64.getEncoder().encodeToString(permanentIdentifier));
 
         Key clientKek = this.cryptographicStorageService.getKeyForEncryptingClientKeys();
         if (Objects.isNull(clientKek)) {
@@ -192,7 +192,9 @@ public class InjectorDataSetServiceImpl implements InjectorDataSetService {
         for (int i = 0; i < contactPerRegistration; i++) {
             ClientIdentifier clientIdentifier = clientId.get();
             byte[] decryptedKeyForMac = generatorIdService
-                    .decryptStoredKeyWithAES256GCMAndKek(Base64.decode(clientIdentifier.getKeyForMac()), clientKek);
+                    .decryptStoredKeyWithAES256GCMAndKek(
+                            Base64.getDecoder().decode(clientIdentifier.getKeyForMac()), clientKek
+                    );
 
             byte[] ebid = this.cryptoService
                     .generateEBID(new CryptoSkinny64(serverKey), currentEpochId, permanentIdentifier);
