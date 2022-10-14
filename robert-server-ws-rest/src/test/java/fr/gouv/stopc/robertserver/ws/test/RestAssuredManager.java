@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.test;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import io.restassured.RestAssured;
 import org.hamcrest.Matcher;
 import org.springframework.test.context.TestContext;

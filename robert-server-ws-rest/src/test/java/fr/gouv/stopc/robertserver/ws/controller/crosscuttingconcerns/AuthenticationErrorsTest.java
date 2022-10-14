@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.controller.crosscuttingconcerns;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.ws.vo.DeleteHistoryRequestVo;

@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robert.crypto.grpc.server.contributors;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;

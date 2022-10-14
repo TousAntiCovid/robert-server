@@ -22,7 +22,7 @@ robert:
   server:
     country-code: ${ROBERT_SERVER_COUNTRY_CODE:0x21}
     request-time-delta-tolerance: ${ROBERT_SERVER_REQUEST_TIME_DELTA_TOLERANCE:60}
-    time-start: ${ROBERT_SERVER_TIMESTART:20200601}
+    time-start: ${ROBERT_SERVER_TIMESTART:2020-06-01}
     disable-check-token: false
   captcha:
     enabled: true

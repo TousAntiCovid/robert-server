@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.batch;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -14,10 +14,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.*;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
+import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.within;
 

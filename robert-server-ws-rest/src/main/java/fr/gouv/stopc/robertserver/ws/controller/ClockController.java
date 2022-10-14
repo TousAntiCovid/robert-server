@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.ws.api.RobertApi;
 import fr.gouv.stopc.robertserver.ws.api.model.ClockResponse;
 import lombok.RequiredArgsConstructor;

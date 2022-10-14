@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.config;
 
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -26,6 +27,11 @@ public class Config {
 
     @Value("${push.server.global.timeout}")
     private int globalTimeout;
+
+    @Bean
+    public RobertClock clock(@Value("${robert.server.time-start}") String serviceStartTime) {
+        return new RobertClock(serviceStartTime);
+    }
 
     @Bean
     public RestTemplate restTemplate() {

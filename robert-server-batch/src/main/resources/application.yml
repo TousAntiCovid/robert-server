@@ -3,7 +3,7 @@ robert:
     host: ${ROBERT_CRYPTO_SERVER_HOST:localhost}
     port: ${ROBERT_CRYPTO_SERVER_PORT:9090}
   server:
-    time-start: ${ROBERT_SERVER_TIMESTART:20200601}
+    time-start: ${ROBERT_SERVER_TIMESTART:2020-06-01}
     server.country-code: ${ROBERT_SERVER_COUNTRY_CODE:0x21}
   scoring:
     soft-max-a: ${ROBERT_SCORING_SOFT_MAX_A:4.342}

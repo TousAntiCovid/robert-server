@@ -9,7 +9,6 @@ import fr.gouv.stopc.robert.server.batch.configuration.job.ScoringAndRiskEvaluat
 import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
@@ -18,6 +17,7 @@ import fr.gouv.stopc.robert.server.crypto.structure.CryptoAES;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
@@ -64,6 +64,8 @@ import static org.mockito.Mockito.*;
         "robert.scoring.algo-version=2",
         "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK" })
 class ScoringAndRiskEvaluationJobConfigurationTest {
+
+    private RobertClock robertClock = new RobertClock("2020-06-01");
 
     @Autowired
     JobLauncherTestUtils jobLauncherTestUtils;
@@ -517,7 +519,6 @@ class ScoringAndRiskEvaluationJobConfigurationTest {
     void testResetAtRisk() throws Exception {
 
         // Given
-        final var robertClock = new RobertClock(serverConfigurationService.getServiceTimeStart());
         final var nowMinus7Days = robertClock.now().minus(7, DAYS);
         final var nowMinus8Days = robertClock.now().minus(8, DAYS);
 

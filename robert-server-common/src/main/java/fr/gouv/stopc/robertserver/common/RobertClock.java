@@ -1,25 +1,22 @@
-package fr.gouv.stopc.robert.server.common.service;
+package fr.gouv.stopc.robertserver.common;
 
-import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalField;
 import java.time.temporal.TemporalUnit;
-import java.util.Arrays;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.EPOCH_DURATION_SECS;
-import static fr.gouv.stopc.robert.server.common.utils.TimeUtils.SECONDS_FROM_01_01_1900_TO_01_01_1970;
 import static java.lang.String.format;
+import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 /**
@@ -33,39 +30,50 @@ import static java.time.temporal.ChronoUnit.SECONDS;
  * This is a clock component aware of the service start time to help to convert
  * time to Robert <em>epochs</em>.
  */
-@Component
-@RequiredArgsConstructor
 public class RobertClock {
 
-    private final long startNtpTimestamp;
+    private final static long SECONDS_BETWEEN_NTP_EPOCH_AND_UNIX_EPOCH;
 
-    @Autowired
-    public RobertClock(final IServerConfigurationService config) {
-        this(config.getServiceTimeStart());
+    static {
+        final var unixEpoch = Instant.parse("1970-01-01T00:00:00Z");
+        final var ntpEpoch = Instant.parse("1900-01-01T00:00:00Z");
+        SECONDS_BETWEEN_NTP_EPOCH_AND_UNIX_EPOCH = Duration.between(ntpEpoch, unixEpoch).getSeconds();
     }
+
+    private final Instant start;
 
     public RobertClock(final String startDate) {
-        this(Instant.parse(startDate + "T00:00:00Z").getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970);
+        this(LocalDate.parse(startDate));
     }
 
-    public RobertInstant at(Instant time) {
-        return new RobertInstant(startNtpTimestamp, time);
+    public RobertClock(final LocalDate startDate) {
+        this(startDate.atStartOfDay(UTC).toInstant());
     }
 
-    public RobertInstant atNtpTimestamp(long ntpTimestamp) {
-        final var unixTimestampSeconds = ntpTimestamp - SECONDS_FROM_01_01_1900_TO_01_01_1970;
-        final var instant = Instant.ofEpochSecond(unixTimestampSeconds);
+    private RobertClock(final Instant startInstant) {
+        this.start = startInstant;
+    }
+
+    public RobertInstant at(final Instant time) {
+        return new RobertInstant(start, time);
+    }
+
+    public RobertInstant atNtpTimestamp(final long ntpTimestamp) {
+        final var instant = Instant.ofEpochSecond(ntpTimestamp)
+                .minusSeconds(SECONDS_BETWEEN_NTP_EPOCH_AND_UNIX_EPOCH);
         return at(instant);
     }
 
-    public RobertInstant atEpoch(int epochId) {
-        final var ntpTimestamp = startNtpTimestamp + (long) epochId * EPOCH_DURATION_SECS;
-        return atNtpTimestamp(ntpTimestamp);
+    public RobertInstant atEpoch(final int epochId) {
+        return new RobertInstant(start, start.plus(epochId, ROBERT_EPOCH));
     }
 
-    public RobertInstant atTime32(byte[] ntpTimestamp32bitByteArray) {
-        final var ntpTimestamp64bitByteArray = ByteUtils.addAll(new byte[] { 0, 0, 0, 0 }, ntpTimestamp32bitByteArray);
-        final var ntpTimestamp = ByteUtils.bytesToLong(ntpTimestamp64bitByteArray);
+    public RobertInstant atTime32(final byte[] ntpTimestamp32bitByteArray) {
+        final var ntpTimestamp = ByteBuffer.allocate(Long.BYTES)
+                .position(4)
+                .put(ntpTimestamp32bitByteArray)
+                .rewind()
+                .getLong();
         return atNtpTimestamp(ntpTimestamp);
     }
 
@@ -92,9 +100,8 @@ public class RobertClock {
         }
         final var instant = Instant.parse(matcher.group("instant"));
         final var epochId = Integer.parseInt(matcher.group("epochId"));
-        return new RobertClock(
-                instant.minus(epochId, ROBERT_EPOCH).getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970
-        )
+        final var clockStart = instant.minus(epochId, ROBERT_EPOCH);
+        return new RobertClock(clockStart)
                 .at(instant);
     }
 
@@ -115,12 +122,12 @@ public class RobertClock {
     @EqualsAndHashCode
     public class RobertInstant implements Temporal {
 
-        private final long startNtpTimestamp;
+        private final Instant clockStart;
 
         private final Instant time;
 
         public long asNtpTimestamp() {
-            return time.getEpochSecond() + SECONDS_FROM_01_01_1900_TO_01_01_1970;
+            return time.getEpochSecond() + SECONDS_BETWEEN_NTP_EPOCH_AND_UNIX_EPOCH;
         }
 
         public Instant asInstant() {
@@ -128,13 +135,13 @@ public class RobertClock {
         }
 
         public int asEpochId() {
-            final var numberEpochs = (asNtpTimestamp() - startNtpTimestamp) / EPOCH_DURATION_SECS;
-            return (int) numberEpochs;
+            return (int) Duration.between(clockStart, time)
+                    .dividedBy(ROBERT_EPOCH.getDuration());
         }
 
         /**
          * Quote from Robert specification :
-         *
+         * 
          * <pre>
          * "16-bit timestamp (to encode the ne-grain emission time). It contains the 16 less significant bits of the
          * current NTP "Seconds" timestamp of AppA (which represents, for era 0, the number of seconds since 0h
@@ -143,13 +150,17 @@ public class RobertClock {
          * </pre>
          */
         public int as16LessSignificantBits() {
-            var less16SignificantBits = (asNtpTimestamp() & 0x0000FFFF);
+            final var less16SignificantBits = (asNtpTimestamp() & 0x0000FFFF);
             return (int) less16SignificantBits;
         }
 
         public byte[] asTime32() {
-            final var ntpTimestamp32bitByteArray = ByteUtils.longToBytes(asNtpTimestamp());
-            return Arrays.copyOfRange(ntpTimestamp32bitByteArray, 4, 8);
+            final var time32 = new byte[4];
+            ByteBuffer.allocate(Long.BYTES)
+                    .putLong(asNtpTimestamp())
+                    .position(4)
+                    .get(time32);
+            return time32;
         }
 
         @Override
@@ -260,8 +271,7 @@ public class RobertClock {
         }
 
         @Override
-        public <R extends Temporal> R addTo(R temporal, long amount) {
-            @SuppressWarnings("unchecked")
+        public <R extends Temporal> R addTo(final R temporal, final long amount) {
             final var result = (R) temporal.plus(
                     amount * getDuration().getSeconds(),
                     SECONDS
@@ -270,7 +280,7 @@ public class RobertClock {
         }
 
         @Override
-        public long between(Temporal temporal1Inclusive, Temporal temporal2Exclusive) {
+        public long between(final Temporal temporal1Inclusive, final Temporal temporal2Exclusive) {
             return Duration.between(temporal1Inclusive, temporal2Exclusive)
                     .dividedBy(getDuration());
         }

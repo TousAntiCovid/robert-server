@@ -2,8 +2,10 @@ package fr.gouv.stopc.robert.crypto.grpc.server;
 
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICryptographicStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.utils.PropertyLoader;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,6 +29,11 @@ public class CryptoServiceConfiguration {
         server.initPort(Integer.parseInt(propertyLoader.getCryptoServerPort()));
         server.start();
 
+    }
+
+    @Bean
+    public RobertClock clock(@Value("${robert.server.time-start}") String serviceStartTime) {
+        return new RobertClock(serviceStartTime);
     }
 
     @Bean

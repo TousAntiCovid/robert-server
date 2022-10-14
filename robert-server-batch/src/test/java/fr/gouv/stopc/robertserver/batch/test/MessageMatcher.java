@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.batch.test;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import org.assertj.core.api.*;

@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.test;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import lombok.Value;
 import org.junit.jupiter.params.provider.Arguments;
 import org.springframework.data.util.Pair;

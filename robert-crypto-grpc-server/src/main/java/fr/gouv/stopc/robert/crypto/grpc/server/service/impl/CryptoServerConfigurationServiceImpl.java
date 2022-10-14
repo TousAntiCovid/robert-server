@@ -10,7 +10,6 @@ import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 
 /**
  * Default implementation of the ICryptoServerConfigurationService
@@ -31,7 +30,7 @@ public class CryptoServerConfigurationServiceImpl implements ICryptoServerConfig
      */
     @PostConstruct
     private void initTimeStartNtp() {
-        LocalDate ld = LocalDate.parse(this.propertyLoader.getTimeStart(), DateTimeFormatter.BASIC_ISO_DATE);
+        LocalDate ld = LocalDate.parse(this.propertyLoader.getTimeStart());
         final ZonedDateTime zdt = ld.atStartOfDay().atZone(ZoneId.of("UTC"));
         timeStartNtp = TimeUtils.convertUnixMillistoNtpSeconds(zdt.toInstant().toEpochMilli());
     }

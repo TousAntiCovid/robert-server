@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.controller;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager;
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData;
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest;
@@ -17,7 +17,7 @@ import org.springframework.test.context.TestPropertySource;
 import java.time.Duration;
 import java.util.stream.Stream;
 
-import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
+import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
 import static fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.givenCryptoServerRaiseMissingDailyKeyForEbid;
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_ANALYTICS;
 import static fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_DECLARATION;
