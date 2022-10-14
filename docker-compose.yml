@@ -20,6 +20,7 @@ services:
     healthcheck:
       test: wget -qO - localhost:8081/actuator/health | grep UP
     environment:
+      - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
       - ROBERT_CRYPTO_SERVER_HOST=crypto-server
       - SUBMISSION_CODE_SERVER_URL=http://mock-submission-code-server:1080
@@ -43,6 +44,7 @@ services:
   batch:
     build: robert-server-batch
     environment:
+      - SPRING_PROFILES_ACTIVE=dev
       - ROBERT_CRYPTO_SERVER_HOST=crypto-server
       - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_ENABLED=true
@@ -51,7 +53,6 @@ services:
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_SHUTDOWNOPERATION=DELETE
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_PUSHGATEWAY_PUSHRATE=5s
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
-      - SPRING_PROFILES_ACTIVE=dev
     depends_on:
       - mongo
       - crypto-server

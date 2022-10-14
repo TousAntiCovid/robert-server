@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
-@TestPropertySource("classpath:application.properties")
+@TestPropertySource("classpath:application.yml")
 public class RestApiServiceImplTest {
 
     @InjectMocks

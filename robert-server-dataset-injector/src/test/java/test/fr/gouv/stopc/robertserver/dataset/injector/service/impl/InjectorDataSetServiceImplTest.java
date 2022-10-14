@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { RobertServerInjectorDatasetApplication.class })
-@TestPropertySource("classpath:application.properties")
+@TestPropertySource("classpath:application.yml")
 @Disabled("FIXME: require a running postgresql database")
 public class InjectorDataSetServiceImplTest {
 

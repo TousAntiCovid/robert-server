@@ -49,6 +49,6 @@ public class PropertyLoader {
     @Value("${robert.jwt.lifetime}")
     private int jwtLifeTime;
 
-    @Value("${robert.server.disable-check-token}")
+    @Value("${robert.server.disable-check-token:false}")
     private Boolean disableCheckToken;
 }

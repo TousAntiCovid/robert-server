@@ -4,6 +4,7 @@ import fr.gouv.stopc.robert.crypto.grpc.server.RobertCryptoGrpcServerApplication
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestExecutionListeners;
 
 import java.lang.annotation.Retention;
@@ -16,6 +17,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 
 @Retention(RUNTIME)
 @Target(TYPE)
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = RANDOM_PORT, classes = RobertCryptoGrpcServerApplication.class)
 @TestExecutionListeners(listeners = {
         ClockManager.class,
