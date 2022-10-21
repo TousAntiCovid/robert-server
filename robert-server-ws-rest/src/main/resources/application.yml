@@ -11,7 +11,6 @@ push:
     port: ${PUSH_SERVER_PORT:9096}
     connection.timeout-millis: ${PUSH_SERVER_CONNECTION_TIMEOUT_MILLIS:10000}
     global.timeout: ${PUSH_SERVER_READ_TIMEOUT:10}
-    disable-check-token: false
 
 server.port: ${ROBERT_SERVER_PORT:8086}
 
@@ -24,6 +23,7 @@ robert:
     country-code: ${ROBERT_SERVER_COUNTRY_CODE:0x21}
     request-time-delta-tolerance: ${ROBERT_SERVER_REQUEST_TIME_DELTA_TOLERANCE:60}
     time-start: ${ROBERT_SERVER_TIMESTART:20200601}
+    disable-check-token: false
   captcha:
     enabled: true
     public-base-url: http://localhost/private/api/v1
