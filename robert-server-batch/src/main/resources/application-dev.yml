@@ -1,0 +1,19 @@
+spring.data.mongodb.uri: ${ROBERT_SERVER_DB_URI:mongodb\://${ROBERT_SERVER_DB_HOST:localhost}\:${ROBERT_SERVER_DB_PORT:27017}/${ROBERT_SERVER_DB_NAME:protectedRobertDB}}
+robert:
+  scoring:
+    deltas: ${ROBERT_SCORING_DELTAS:39.0,27.0,23.0,21.0,20.0,15.0}
+    rssi-max: ${ROBERT_SCORING_RSSI_MAX:-35}
+    p0: ${ROBERT_SCORING_P0:-66.0}
+    soft-max-a: ${ROBERT_SCORING_SOFT_MAX_A:4.342}
+    soft-max-b: ${ROBERT_SCORING_SOFT_MAX_B:0.2}
+    algo-version: ${ROBERT_SCORING_ALGO_VERSION:2}
+    scoring-algo-r0: ${ROBERT_SCORING_R0:0.0071}
+    batch-mode: ${ROBERT_SCORING_BATCH_MODE:SCORE_CONTACTS_AND_COMPUTE_RISK}
+  protocol:
+    # RSSI (in dB) at 1 meter used by the scoring algorithm
+    scoring-algo-rssi: ${ROBERT_PROTOCOL_SCORING_ALGO_RSSI:-40}
+    # Scoring risk threshold
+    risk-threshold: ${ROBERT_PROTOCOL_SCORING_THRESHOLD:0.1}
+    hello-message-timestamp-tolerance: ${ROBERT_PROTOCOL_HELLO_TOLERANCE:180}
+    contagious-period: ${ROBERT_PROTOCOL_CONTAGIOUS_PERIOD:14}
+    risk-flag-retention-period: ${ROBERT_PROTOCOL_RISK_FLAG_RETENTION_PERIOD:7}

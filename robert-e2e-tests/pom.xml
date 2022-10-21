@@ -124,7 +124,9 @@
                         </additionalModelTypeAnnotations>
                     </configOptions>
                     <typeMappings>
-                        <typeMapping>File=org.springframework.core.io.Resource</typeMapping>
+                        <typeMapping>
+                            File=org.springframework.core.io.Resource
+                        </typeMapping>
                     </typeMappings>
                 </configuration>
                 <executions>

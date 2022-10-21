@@ -20,16 +20,12 @@ import fr.gouv.stopc.robertserver.ws.utils.PropertyLoader;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.internal.Base64;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -189,7 +185,7 @@ public class StatusControllerImpl implements IStatusController {
         StatusResponseDto statusResponse = StatusResponseDto.builder()
                 .riskLevel(riskLevel)
                 .config(this.getClientConfig())
-                .tuples(Base64.encode(tuples))
+                .tuples(Base64.getEncoder().encodeToString(tuples))
                 .build();
 
         // Step #3: Set UserNotified to true if at risk
@@ -222,7 +218,7 @@ public class StatusControllerImpl implements IStatusController {
                     serverConfigurationService.getServiceTimeStart()
             );
             GenerateDeclarationTokenRequest request = GenerateDeclarationTokenRequest.builder()
-                    .technicalApplicationIdentifier(Base64.encode(record.getPermanentIdentifier()))
+                    .technicalApplicationIdentifier(Base64.getEncoder().encodeToString(record.getPermanentIdentifier()))
                     .lastContactDateTimestamp(record.getLastContactTimestamp())
                     .riskLevel(riskLevel)
                     .lastStatusRequestTimestamp(lastStatusRequestTimestamp)

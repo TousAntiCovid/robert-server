@@ -15,12 +15,12 @@ import fr.gouv.stopc.robertserver.ws.vo.AuthRequestVo;
 import fr.gouv.stopc.robertserver.ws.vo.StatusVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.internal.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -63,17 +63,17 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
             return createErrorBadRequestCustom("Discarding authenticated request because of empty request body");
         }
 
-        byte[] ebid = Base64.decode(authRequestVo.getEbid());
+        byte[] ebid = Base64.getDecoder().decode(authRequestVo.getEbid());
         if (ByteUtils.isEmpty(ebid) || ebid.length != 8) {
             return createErrorBadRequestCustom("Discarding authenticated request because of invalid EBID field size");
         }
 
-        byte[] time = Base64.decode(authRequestVo.getTime());
+        byte[] time = Base64.getDecoder().decode(authRequestVo.getTime());
         if (ByteUtils.isEmpty(time) || time.length != 4) {
             return createErrorBadRequestCustom("Discarding authenticated request because of invalid Time field size");
         }
 
-        byte[] mac = Base64.decode(authRequestVo.getMac());
+        byte[] mac = Base64.getDecoder().decode(authRequestVo.getMac());
         if (ByteUtils.isEmpty(mac) || mac.length != 32) {
             return createErrorBadRequestCustom("Discarding authenticated request because of invalid MAC field size");
         }
@@ -95,10 +95,14 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
         try {
             GetIdFromAuthRequest request = GetIdFromAuthRequest.newBuilder()
-                    .setEbid(ByteString.copyFrom(Base64.decode(authRequestVo.getEbid())))
+                    .setEbid(ByteString.copyFrom(Base64.getDecoder().decode(authRequestVo.getEbid())))
                     .setEpochId(authRequestVo.getEpochId())
-                    .setTime(Integer.toUnsignedLong(ByteUtils.bytesToInt(Base64.decode(authRequestVo.getTime()))))
-                    .setMac(ByteString.copyFrom(Base64.decode(authRequestVo.getMac())))
+                    .setTime(
+                            Integer.toUnsignedLong(
+                                    ByteUtils.bytesToInt(Base64.getDecoder().decode(authRequestVo.getTime()))
+                            )
+                    )
+                    .setMac(ByteString.copyFrom(Base64.getDecoder().decode(authRequestVo.getMac())))
                     .setRequestType(requestType.getValue())
                     .build();
 
@@ -129,10 +133,14 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
         try {
             DeleteIdRequest request = DeleteIdRequest.newBuilder()
-                    .setEbid(ByteString.copyFrom(Base64.decode(authRequestVo.getEbid())))
+                    .setEbid(ByteString.copyFrom(Base64.getDecoder().decode(authRequestVo.getEbid())))
                     .setEpochId(authRequestVo.getEpochId())
-                    .setTime(Integer.toUnsignedLong(ByteUtils.bytesToInt(Base64.decode(authRequestVo.getTime()))))
-                    .setMac(ByteString.copyFrom(Base64.decode(authRequestVo.getMac())))
+                    .setTime(
+                            Integer.toUnsignedLong(
+                                    ByteUtils.bytesToInt(Base64.getDecoder().decode(authRequestVo.getTime()))
+                            )
+                    )
+                    .setMac(ByteString.copyFrom(Base64.getDecoder().decode(authRequestVo.getMac())))
                     .build();
 
             Optional<DeleteIdResponse> response = this.cryptoServerClient.deleteId(request);
@@ -162,10 +170,12 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
 
         try {
             GetIdFromStatusRequest request = GetIdFromStatusRequest.newBuilder()
-                    .setEbid(ByteString.copyFrom(Base64.decode(statusVo.getEbid())))
+                    .setEbid(ByteString.copyFrom(Base64.getDecoder().decode(statusVo.getEbid())))
                     .setEpochId(statusVo.getEpochId())
-                    .setTime(Integer.toUnsignedLong(ByteUtils.bytesToInt(Base64.decode(statusVo.getTime()))))
-                    .setMac(ByteString.copyFrom(Base64.decode(statusVo.getMac())))
+                    .setTime(
+                            Integer.toUnsignedLong(ByteUtils.bytesToInt(Base64.getDecoder().decode(statusVo.getTime())))
+                    )
+                    .setMac(ByteString.copyFrom(Base64.getDecoder().decode(statusVo.getMac())))
                     .setFromEpochId(
                             TimeUtils.getCurrentEpochFrom(this.serverConfigurationService.getServiceTimeStart())
                     )
@@ -193,7 +203,7 @@ public class AuthRequestValidationServiceImpl implements AuthRequestValidationSe
     }
 
     private TimeValidationResult validateTimeDrift(final AuthRequestVo authRequestVo) {
-        final var timeAs32bitsTimestamp = Base64.decode(authRequestVo.getTime());
+        final var timeAs32bitsTimestamp = Base64.getDecoder().decode(authRequestVo.getTime());
         final var serverTime = clock.now();
         final var clientTime = clock.atTime32(timeAs32bitsTimestamp);
         final var timeDrift = clientTime.until(serverTime);

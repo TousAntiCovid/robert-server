@@ -60,7 +60,7 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@TestPropertySource(locations = "classpath:application.properties")
+@TestPropertySource(locations = "classpath:application.yml")
 class CryptoServiceGrpcServerTest {
 
     private final static byte[] SERVER_COUNTRY_CODE = new byte[] { (byte) 0x21 };

@@ -174,9 +174,7 @@
                     <configOptions>
                         <skipDefaultInterface>true</skipDefaultInterface>
                         <annotationLibrary>none</annotationLibrary>
-                        <documentationProvider>
-                            none
-                        </documentationProvider>
+                        <documentationProvider>none</documentationProvider>
                         <openApiNullable>false</openApiNullable>
                         <interfaceOnly>true</interfaceOnly>
                         <useTags>true</useTags>

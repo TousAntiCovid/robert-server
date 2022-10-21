@@ -8,7 +8,6 @@ import fr.gouv.stopc.robertserver.dataset.injector.RobertServerInjectorDatasetAp
 import fr.gouv.stopc.robertserver.dataset.injector.service.GeneratorIdService;
 import fr.gouv.stopc.robertserver.dataset.injector.service.InjectorDataSetService;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.internal.Base64;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +19,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test.fr.gouv.stopc.robertserver.dataset.injector.utils.GenerateIdUtils;
 
+import java.util.Base64;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { RobertServerInjectorDatasetApplication.class })
-@TestPropertySource("classpath:application.properties")
+@TestPropertySource("classpath:application.yml")
 @Disabled("FIXME: require a running postgresql database")
 public class InjectorDataSetServiceImplTest {
 
@@ -81,45 +81,55 @@ public class InjectorDataSetServiceImplTest {
                 .thenReturn(
                         Optional.of(
                                 ClientIdentifier.builder()
-                                        .idA(Base64.encode(idA1))
-                                        .keyForMac(Base64.encode(keyMac1))
-                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .idA(Base64.getEncoder().encodeToString(idA1))
+                                        .keyForMac(Base64.getEncoder().encodeToString(keyMac1))
+                                        .keyForTuples(
+                                                Base64.getEncoder().encodeToString(GenerateIdUtils.generateRandomKey())
+                                        )
                                         .build()
                         )
                 )
                 .thenReturn(
                         Optional.of(
                                 ClientIdentifier.builder()
-                                        .idA(Base64.encode(idA2))
-                                        .keyForMac(Base64.encode(keyMac2))
-                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .idA(Base64.getEncoder().encodeToString(idA2))
+                                        .keyForMac(Base64.getEncoder().encodeToString(keyMac2))
+                                        .keyForTuples(
+                                                Base64.getEncoder().encodeToString(GenerateIdUtils.generateRandomKey())
+                                        )
                                         .build()
                         )
                 )
                 .thenReturn(
                         Optional.of(
                                 ClientIdentifier.builder()
-                                        .idA(Base64.encode(idA3))
-                                        .keyForMac(Base64.encode(keyMac3))
-                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .idA(Base64.getEncoder().encodeToString(idA3))
+                                        .keyForMac(Base64.getEncoder().encodeToString(keyMac3))
+                                        .keyForTuples(
+                                                Base64.getEncoder().encodeToString(GenerateIdUtils.generateRandomKey())
+                                        )
                                         .build()
                         )
                 )
                 .thenReturn(
                         Optional.of(
                                 ClientIdentifier.builder()
-                                        .idA(Base64.encode(idA4))
-                                        .keyForMac(Base64.encode(keyMac4))
-                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .idA(Base64.getEncoder().encodeToString(idA4))
+                                        .keyForMac(Base64.getEncoder().encodeToString(keyMac4))
+                                        .keyForTuples(
+                                                Base64.getEncoder().encodeToString(GenerateIdUtils.generateRandomKey())
+                                        )
                                         .build()
                         )
                 )
                 .thenReturn(
                         Optional.of(
                                 ClientIdentifier.builder()
-                                        .idA(Base64.encode(idA5))
-                                        .keyForMac(Base64.encode(keyMac5))
-                                        .keyForTuples(Base64.encode(GenerateIdUtils.generateRandomKey()))
+                                        .idA(Base64.getEncoder().encodeToString(idA5))
+                                        .keyForMac(Base64.getEncoder().encodeToString(keyMac5))
+                                        .keyForTuples(
+                                                Base64.getEncoder().encodeToString(GenerateIdUtils.generateRandomKey())
+                                        )
                                         .build()
                         )
                 );

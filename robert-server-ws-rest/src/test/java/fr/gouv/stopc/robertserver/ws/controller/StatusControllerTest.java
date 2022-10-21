@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
@@ -129,7 +128,7 @@ class StatusControllerTest {
                         .latestRiskEpoch(999)
         );
 
-        final var now = Instant.now();
+        final var now = clock.now();
 
         given()
                 .contentType(JSON)
@@ -156,32 +155,34 @@ class StatusControllerTest {
                 .body(
                         "declarationToken", isJwtSignedBy(JWT_KEYS_DECLARATION)
                                 .withClaim("jti", matchesRegex("\\w{64}"))
-                                .withClaim("iat", isUnixTimestampNear(now, Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(now.asInstant(), Duration.ofSeconds(60)))
                                 .withClaim("iss", equalTo("tac"))
                                 .withClaim(
                                         "notificationDateTimestamp", anyOf(
                                                 isNtpTimestamp(
-                                                        clock.now().truncatedTo(ROBERT_EPOCH)
+                                                        now.truncatedTo(ROBERT_EPOCH)
                                                                 .minus(1, ROBERT_EPOCH).asInstant()
                                                 ),
-                                                isNtpTimestamp(clock.now().truncatedTo(ROBERT_EPOCH).asInstant())
+                                                isNtpTimestamp(now.truncatedTo(ROBERT_EPOCH).asInstant())
                                         )
                                 )
                                 .withClaim("lastContactDateTimestamp", equalTo(888))
                 )
                 .body(
                         "analyticsToken", isJwtSignedBy(JWT_KEYS_ANALYTICS)
-                                .withClaim("iat", isUnixTimestampNear(now, Duration.ofSeconds(60)))
+                                .withClaim("iat", isUnixTimestampNear(now.asInstant(), Duration.ofSeconds(60)))
                                 .withClaim(
                                         "exp",
-                                        isUnixTimestampNear(now.plus(6, HOURS).plus(1, MINUTES), Duration.ofSeconds(60))
+                                        isUnixTimestampNear(
+                                                now.plus(6, HOURS).plus(1, MINUTES).asInstant(), Duration.ofSeconds(60)
+                                        )
                                 )
                                 .withClaim("iss", equalTo("robert-server"))
                 );
 
         assertThatRegistrationForUser("user___1")
                 .hasFieldOrPropertyWithValue("isNotified", true)
-                .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", clock.now().asEpochId());
+                .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", now.asEpochId());
 
         assertThatRegistrationTimeDriftForUser("user___1")
                 .isCloseTo(-auth.getTimeDrift().getSeconds(), offset(2L));
