@@ -8,7 +8,6 @@ import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBun
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.IClientKeyStorageService;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.internal.Base64;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.BadPaddingException;
@@ -25,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -47,9 +47,9 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
         // TODO: Find out a way not to do this. Required because otherwise lock when
         // saving is done
         ClientIdentifier c = ClientIdentifier.builder()
-                .idA(Base64.encode(generateKey(5)))
-                .keyForMac(Base64.encode(generateRandomKey()))
-                .keyForTuples(Base64.encode(generateRandomKey()))
+                .idA(Base64.getEncoder().encodeToString(generateKey(5)))
+                .keyForMac(Base64.getEncoder().encodeToString(generateRandomKey()))
+                .keyForTuples(Base64.getEncoder().encodeToString(generateRandomKey()))
                 .build();
         c = this.clientIdentifierRepository.saveAndFlush(c);
         this.clientIdentifierRepository.delete(c);
@@ -61,7 +61,7 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
         do {
             id = generateKey(5);
             i++;
-        } while (this.clientIdentifierRepository.findByIdA(Base64.encode(id)).isPresent()
+        } while (this.clientIdentifierRepository.findByIdA(Base64.getEncoder().encodeToString(id)).isPresent()
                 && i < MAX_ID_CREATION_ATTEMPTS);
 
         if (MAX_ID_CREATION_ATTEMPTS == i) {
@@ -109,7 +109,7 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
         byte[] id = null;
         do {
             id = generateKey(5);
-            String tempId = Base64.encode(id);
+            String tempId = Base64.getEncoder().encodeToString(id);
 
             if (!this.clientIdentifierRepository.findByIdA(tempId).isPresent()) {
                 break;
@@ -166,9 +166,9 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
             }
 
             ClientIdentifier c = ClientIdentifier.builder()
-                    .idA(Base64.encode(id))
-                    .keyForMac(Base64.encode(encryptedKeyForMac))
-                    .keyForTuples(Base64.encode(encryptedKeyForTuples))
+                    .idA(Base64.getEncoder().encodeToString(id))
+                    .keyForMac(Base64.getEncoder().encodeToString(encryptedKeyForMac))
+                    .keyForTuples(Base64.getEncoder().encodeToString(encryptedKeyForTuples))
                     .build();
 
             this.clientIdentifierRepository.save(c);
@@ -188,7 +188,7 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
 
     @Override
     public Optional<ClientIdentifierBundle> findKeyById(byte[] id) {
-        return this.clientIdentifierRepository.findByIdA(Base64.encode(id))
+        return this.clientIdentifierRepository.findByIdA(Base64.getEncoder().encodeToString(id))
                 .map(client -> {
 
                     Key clientKek = this.cryptographicStorageService.getKeyForEncryptingClientKeys();
@@ -198,7 +198,7 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
                     }
 
                     byte[] decryptedKeyForMac = this.decryptStoredKeyWithAES256GCMAndKek(
-                            Base64.decode(client.getKeyForMac()),
+                            Base64.getDecoder().decode(client.getKeyForMac()),
                             clientKek
                     );
 
@@ -208,7 +208,7 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
                     }
 
                     byte[] decryptedKeyForTuples = this.decryptStoredKeyWithAES256GCMAndKek(
-                            Base64.decode(client.getKeyForTuples()),
+                            Base64.getDecoder().decode(client.getKeyForTuples()),
                             clientKek
                     );
 
@@ -228,7 +228,8 @@ public class ClientKeyStorageServiceImpl implements IClientKeyStorageService {
 
     @Override
     public void deleteClientId(byte[] id) {
-        this.clientIdentifierRepository.findByIdA(Base64.encode(id)).ifPresent(this.clientIdentifierRepository::delete);
+        this.clientIdentifierRepository.findByIdA(Base64.getEncoder().encodeToString(id))
+                .ifPresent(this.clientIdentifierRepository::delete);
     }
 
     private static final String AES_ENCRYPTION_CIPHER_SCHEME = "AES/GCM/NoPadding";

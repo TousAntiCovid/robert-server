@@ -1,22 +1,5 @@
 package fr.gouv.tac.mobile.emulator.model;
 
-import static fr.gouv.tac.mobile.emulator.utils.EcdhUtils.deriveKeysFromBackendPublicKey;
-import static fr.gouv.tac.mobile.emulator.utils.EcdhUtils.generateKeyPair;
-
-import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.TimerTask;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
@@ -25,23 +8,38 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
-import fr.gouv.tac.mobile.emulator.utils.ExchangeHelloMessageTimer;
 import fr.gouv.tac.mobile.emulator.robert.api.model.AuthentifiedRequest;
 import fr.gouv.tac.mobile.emulator.robert.api.model.Contact;
 import fr.gouv.tac.mobile.emulator.robert.api.model.ExposureStatusResponse;
 import fr.gouv.tac.mobile.emulator.robert.api.model.HelloMessageDetail;
 import fr.gouv.tac.mobile.emulator.robert.api.model.RegisterSuccessResponse;
+import fr.gouv.tac.mobile.emulator.utils.ExchangeHelloMessageTimer;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+
+import static fr.gouv.tac.mobile.emulator.utils.EcdhUtils.deriveKeysFromBackendPublicKey;
+import static fr.gouv.tac.mobile.emulator.utils.EcdhUtils.generateKeyPair;
 
 @Slf4j
 public class AppMobile {
 
     @Getter
     private final String captchaId;
+
     private final String captcha;
+
     private final String robertPublicKey;
+
     private long timestart;
 
     private ExchangeHelloMessageTimer timer;
@@ -57,7 +55,8 @@ public class AppMobile {
 
     KeyPair keyPair;
 
-    public AppMobile(String captchaId, String captcha, String robertPublicKey) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
+    public AppMobile(String captchaId, String captcha, String robertPublicKey)
+            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, RobertServerCryptoException {
         this.captcha = captcha;
         this.captchaId = captchaId;
         this.robertPublicKey = robertPublicKey;
@@ -77,7 +76,7 @@ public class AppMobile {
     }
 
     public String getPublicKey() {
-        return org.bson.internal.Base64.encode(keyPair.getPublic().getEncoded());
+        return Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
     }
 
     public AuthentifiedRequest prepareAuthRequest(final int adjustTimeInSeconds, final DigestSaltEnum saltEnum) {
@@ -98,7 +97,7 @@ public class AppMobile {
         return authentifiedRequest;
     }
 
-    public void decryptStatusResponse(ExposureStatusResponse exposureStatusResponse){
+    public void decryptStatusResponse(ExposureStatusResponse exposureStatusResponse) {
         updateTuples(exposureStatusResponse.getTuples());
     }
 
@@ -109,11 +108,20 @@ public class AppMobile {
 
     public void startHelloMessageExchanges(List<AppMobile> otherApps, Duration delayInMin) {
         if (Objects.isNull(timer)) {
-            timer = new ExchangeHelloMessageTimer(String.format("App Mobile %s is receiving hello messages from following mobile applications [%s] every %s",
-                    this.captchaId, otherApps.stream().map(AppMobile::getCaptchaId).collect(Collectors.joining(",")), delayInMin.toString()));
+            timer = new ExchangeHelloMessageTimer(
+                    String.format(
+                            "App Mobile %s is receiving hello messages from following mobile applications [%s] every %s",
+                            this.captchaId,
+                            otherApps.stream().map(AppMobile::getCaptchaId).collect(Collectors.joining(",")),
+                            delayInMin.toString()
+                    )
+            );
             timer.scheduleAtFixedRate(new HelloMessageExchangeTask(otherApps), 0, delayInMin.toMillis());
         } else {
-            log.warn("A timer with context {} is already running on this application. Please stop it and start it again if needed.", timer.getFunctionalContext());
+            log.warn(
+                    "A timer with context {} is already running on this application. Please stop it and start it again if needed.",
+                    timer.getFunctionalContext()
+            );
         }
     }
 
@@ -124,7 +132,9 @@ public class AppMobile {
     }
 
     private void generateKeyForTuples() throws RobertServerCryptoException {
-        this.clientIdentifierBundleWithPublicKey = deriveKeysFromBackendPublicKey(java.util.Base64.getDecoder().decode(this.robertPublicKey), keyPair);
+        this.clientIdentifierBundleWithPublicKey = deriveKeysFromBackendPublicKey(
+                java.util.Base64.getDecoder().decode(this.robertPublicKey), keyPair
+        );
     }
 
     private void updateTuples(byte[] encryptedTuples) {
@@ -135,7 +145,8 @@ public class AppMobile {
             this.decodedTuples = objectMapper.readValue(
                     decryptedTuples,
                     new TypeReference<List<EphemeralTupleJson>>() {
-                    });
+                    }
+            );
         } catch (IOException | RobertServerCryptoException e) {
             log.error(e.getMessage(), e);
         }
@@ -145,7 +156,7 @@ public class AppMobile {
         int currentEpoch = TimeUtils.getCurrentEpochFrom(timestart);
 
         EphemeralTupleJson tuple = decodedTuples.stream()
-                .filter(e -> e.getEpochId()==currentEpoch)
+                .filter(e -> e.getEpochId() == currentEpoch)
                 .collect(Collectors.toList())
                 .get(0);
 
@@ -177,17 +188,20 @@ public class AppMobile {
 
         byte[] mac = new byte[32];
         try {
-            mac = this.generateHMAC(new CryptoHMACSHA256(getClientIdentifierBundleWithPublicKey().get().getKeyForMac()), agg, saltEnum);
+            mac = this.generateHMAC(
+                    new CryptoHMACSHA256(getClientIdentifierBundleWithPublicKey().get().getKeyForMac()), agg, saltEnum
+            );
         } catch (Exception e) {
             log.info("Problem generating SHA256");
         }
         return mac;
     }
 
-    private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument, final DigestSaltEnum salt)
+    private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument,
+            final DigestSaltEnum salt)
             throws Exception {
 
-        final byte[] prefix = new byte[]{salt.getValue()};
+        final byte[] prefix = new byte[] { salt.getValue() };
 
         // HMAC-SHA256 processing
         return cryptoHMACSHA256S.encrypt(ByteUtils.addAll(prefix, argument));
@@ -208,21 +222,27 @@ public class AppMobile {
 
     private void exchangeEbIdWith(AppMobile otherAppMobile) {
 
-        log.debug("exchange hello message between {} and {} mobile applications", this.captchaId, otherAppMobile.captchaId);
+        log.debug(
+                "exchange hello message between {} and {} mobile applications", this.captchaId, otherAppMobile.captchaId
+        );
 
-        HelloMessageDetail helloMessageDetail = generateHelloMessage(otherAppMobile,
+        HelloMessageDetail helloMessageDetail = generateHelloMessage(
+                otherAppMobile,
                 TimeUtils.convertUnixMillistoNtpSeconds(System.currentTimeMillis()),
-                ThreadLocalRandom.current().nextInt(-10,3));
+                ThreadLocalRandom.current().nextInt(-10, 3)
+        );
 
-        saveHelloMessage(otherAppMobile.getCurrentTuple().getKey().getEcc(),
+        saveHelloMessage(
+                otherAppMobile.getCurrentTuple().getKey().getEcc(),
                 otherAppMobile.getCurrentTuple().getKey().getEbid(),
-                helloMessageDetail);
+                helloMessageDetail
+        );
 
     }
 
     private void saveHelloMessage(byte[] ecc, byte[] ebid, HelloMessageDetail helloMessageDetail) {
 
-        Optional<Contact> contact = getContacts().stream().filter(c -> c.getEbid()== ebid)
+        Optional<Contact> contact = getContacts().stream().filter(c -> c.getEbid() == ebid)
                 .filter(c -> c.getEcc() == ecc).findFirst();
 
         if (contact.isPresent()) {
@@ -260,7 +280,6 @@ public class AppMobile {
         return helloMessageDetail;
     }
 
-
     private byte[] generateMACforHelloMessage(byte[] ebid, byte[] ecc, byte[] timeHelloMessage) {
         // Merge arrays
         // HMAC-256
@@ -268,13 +287,15 @@ public class AppMobile {
         byte[] mai = new byte[ebid.length + ecc.length + 2];
         System.arraycopy(ecc, 0, mai, 0, ecc.length);
         System.arraycopy(ebid, 0, mai, ecc.length, ebid.length);
-        //take into account the 2 last bytes
+        // take into account the 2 last bytes
         System.arraycopy(timeHelloMessage, 2, mai, ecc.length + ebid.length, 2);
-
 
         byte[] encryptedMac = new byte[32];
         try {
-            encryptedMac = this.generateHMAC(new CryptoHMACSHA256(getClientIdentifierBundleWithPublicKey().get().getKeyForMac()), mai, DigestSaltEnum.HELLO);
+            encryptedMac = this.generateHMAC(
+                    new CryptoHMACSHA256(getClientIdentifierBundleWithPublicKey().get().getKeyForMac()), mai,
+                    DigestSaltEnum.HELLO
+            );
         } catch (Exception e) {
             log.info("Problem generating SHA256");
         }

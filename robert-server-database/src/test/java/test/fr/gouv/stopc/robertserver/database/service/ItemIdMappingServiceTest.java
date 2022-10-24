@@ -1,18 +1,17 @@
 package test.fr.gouv.stopc.robertserver.database.service;
 
-import static org.mockito.Mockito.verify;
-
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import fr.gouv.stopc.robertserver.database.repository.ItemIdMappingRepository;
 import fr.gouv.stopc.robertserver.database.service.impl.ItemIdMappingServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@TestPropertySource("classpath:application.properties")
+import static org.mockito.Mockito.verify;
+
+@TestPropertySource("classpath:application.yml")
 @ExtendWith(SpringExtension.class)
 public class ItemIdMappingServiceTest {
 
@@ -21,7 +20,6 @@ public class ItemIdMappingServiceTest {
 
     @Mock
     ItemIdMappingRepository itemIdMappingRepository;
-
 
     @Test
     public void countNbUsersWithOldEpochExpositions() {

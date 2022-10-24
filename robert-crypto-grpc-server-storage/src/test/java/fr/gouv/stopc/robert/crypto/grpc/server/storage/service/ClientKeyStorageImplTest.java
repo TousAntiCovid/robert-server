@@ -9,11 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.data.repository.query.FluentQuery;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -21,12 +22,12 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
-
+@ExtendWith(MockitoExtension.class)
 public class ClientKeyStorageImplTest {
 
     @Mock
@@ -112,6 +113,11 @@ public class ClientKeyStorageImplTest {
         }
 
         @Override
+        public <S extends ClientIdentifier> List<S> saveAllAndFlush(Iterable<S> entities) {
+            return null;
+        }
+
+        @Override
         public Optional<ClientIdentifier> findByIdA(String idA) {
             return Optional.ofNullable(this.lastSavedClientIdentifier);
         }
@@ -152,6 +158,11 @@ public class ClientKeyStorageImplTest {
         }
 
         @Override
+        public void deleteAllById(Iterable<? extends Long> longs) {
+
+        }
+
+        @Override
         public void deleteAll(Iterable<? extends ClientIdentifier> iterable) {
 
         }
@@ -179,6 +190,12 @@ public class ClientKeyStorageImplTest {
         @Override
         public <S extends ClientIdentifier> boolean exists(Example<S> example) {
             return false;
+        }
+
+        @Override
+        public <S extends ClientIdentifier, R> R findBy(Example<S> example,
+                Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+            return null;
         }
 
         @Override
@@ -213,12 +230,32 @@ public class ClientKeyStorageImplTest {
         }
 
         @Override
+        public void deleteAllInBatch(Iterable<ClientIdentifier> entities) {
+
+        }
+
+        @Override
+        public void deleteAllByIdInBatch(Iterable<Long> longs) {
+
+        }
+
+        @Override
         public void deleteAllInBatch() {
 
         }
 
         @Override
         public ClientIdentifier getOne(Long aLong) {
+            return null;
+        }
+
+        @Override
+        public ClientIdentifier getById(Long aLong) {
+            return null;
+        }
+
+        @Override
+        public ClientIdentifier getReferenceById(Long aLong) {
             return null;
         }
 

@@ -1,0 +1,8 @@
+spring:
+  mongodb.embedded.version: 4.0.0
+  data:
+    mongodb.database: test
+    mongodb.host: localhost
+    mongodb.port: 27717
+    mongodb.repositories.enabled: true
+  devtools.reload.trigger-file: .reloadtrigger

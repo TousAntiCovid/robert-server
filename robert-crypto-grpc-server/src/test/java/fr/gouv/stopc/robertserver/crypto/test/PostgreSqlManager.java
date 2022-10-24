@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PostgreSqlManager implements TestExecutionListener {
 
     private static final JdbcDatabaseContainer POSTGRE = new PostgreSQLContainer<>(
-            DockerImageName.parse("postgres:9.6")
+            DockerImageName.parse("postgres:13.8")
     );
 
     private static JdbcTemplate jdbcTemplate;

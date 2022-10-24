@@ -53,7 +53,7 @@ public class MockServerManager implements TestExecutionListener {
     private static MockServerClient startMockServer(String stubsFileName,
             Function<MockServerContainer, Map<String, String>> generateConfigurationToExport) {
         final var container = new MockServerContainer(
-                DockerImageName.parse("mockserver/mockserver:mockserver-5.13.2")
+                DockerImageName.parse("mockserver/mockserver:mockserver-5.14.0")
         )
                 .withEnv("MOCKSERVER_INITIALIZATION_JSON_PATH", "/expectations.json")
                 .withCopyFileToContainer(

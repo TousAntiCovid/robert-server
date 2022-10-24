@@ -1,0 +1,3 @@
+robert.crypto.server.keystore:
+  type: PKCS12
+  file: classpath:/keystore.p12
