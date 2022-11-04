@@ -53,6 +53,7 @@ class MockServerManager : TestExecutionListener {
             val container = MockServerContainer(
                 DockerImageName.parse("mockserver/mockserver:mockserver-5.14.0")
             )
+                .withReuse(true)
                 .withEnv("MOCKSERVER_INITIALIZATION_JSON_PATH", "/expectations.json")
                 .withCopyToContainer(
                     Transferable.of(File("../docker-compose/mock-server/$stubsFileName").readText()),

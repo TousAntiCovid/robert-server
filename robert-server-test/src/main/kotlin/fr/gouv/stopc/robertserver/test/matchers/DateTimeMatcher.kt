@@ -16,11 +16,11 @@ fun isoDateTimeNear(instant: Instant, offset: Duration = Duration.ZERO): Matcher
     return IsoDateTimeMatcher(instant, offset)
 }
 
-fun isNtpTimestamp(instant: Instant, offset: Duration = Duration.ZERO): Matcher<Any> {
+fun isNtpTimestamp(instant: Instant, offset: Duration = Duration.ZERO): Matcher<Any?> {
     return TimestampNear(NTP_EPOCH, instant, offset)
 }
 
-fun isUnixTimestamp(instant: Instant, offset: Duration = Duration.ZERO): Matcher<Any> {
+fun isUnixTimestamp(instant: Instant, offset: Duration = Duration.ZERO): Matcher<Any?> {
     return TimestampNear(UNIX_EPOCH, instant, offset)
 }
 
@@ -53,7 +53,7 @@ class TimestampNear internal constructor(
     private val epoch: Instant,
     private val expectedInstant: Instant,
     private val acceptableDifference: Duration
-) : DiagnosingMatcher<Any>() {
+) : DiagnosingMatcher<Any?>() {
 
     override fun describeTo(description: Description) {
         description
@@ -61,13 +61,16 @@ class TimestampNear internal constructor(
             .appendText(" +/- ").appendText(acceptableDifference.toString())
     }
 
-    override fun matches(item: Any, mismatchDescription: Description): Boolean {
+    override fun matches(item: Any?, mismatchDescription: Description): Boolean {
         val timestamp = when (item) {
             is Int -> item.toLong()
             is Long -> item
             is String -> item.toLong()
             is Date -> item.toInstant().epochSecond
-            else -> throw IllegalArgumentException("'$item' can't be interpreted as a time information")
+            else -> {
+                mismatchDescription.appendText("'$item' can't be interpreted as a time information")
+                return false
+            }
         }
         val actualInstant = epoch.plusSeconds(timestamp)
         val dateTimeMatcher = IsoDateTimeMatcher(expectedInstant, acceptableDifference)

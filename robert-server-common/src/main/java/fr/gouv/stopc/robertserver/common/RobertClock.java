@@ -58,9 +58,13 @@ public class RobertClock {
         return new RobertInstant(start, time);
     }
 
-    public RobertInstant atNtpTimestamp(final long ntpTimestamp) {
-        final var instant = Instant.ofEpochSecond(ntpTimestamp)
-                .minusSeconds(SECONDS_BETWEEN_NTP_EPOCH_AND_UNIX_EPOCH);
+    public RobertInstant atNtpTimestamp(final long ntpTimestampSeconds) {
+        final var unixTimestamp = ntpTimestampSeconds - SECONDS_BETWEEN_NTP_EPOCH_AND_UNIX_EPOCH;
+        return atUnixTimestamp(unixTimestamp);
+    }
+
+    public RobertInstant atUnixTimestamp(final long unixTimestampSeconds) {
+        final var instant = Instant.ofEpochSecond(unixTimestampSeconds);
         return at(instant);
     }
 
@@ -128,6 +132,10 @@ public class RobertClock {
 
         public long asNtpTimestamp() {
             return time.getEpochSecond() + SECONDS_BETWEEN_NTP_EPOCH_AND_UNIX_EPOCH;
+        }
+
+        public long asUnixTimestamp() {
+            return time.getEpochSecond();
         }
 
         public Instant asInstant() {

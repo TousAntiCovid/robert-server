@@ -23,6 +23,7 @@ class MongodbManager : TestExecutionListener {
 
     companion object {
         private val MONGO_DB_CONTAINER = MongoDBContainer(DockerImageName.parse("mongo:4.2.11"))
+            .withReuse(true)
             .apply { start() }
             .also {
                 val rsUrl = it.getReplicaSetUrl("robert")
@@ -40,7 +41,7 @@ class MongodbManager : TestExecutionListener {
                 .insertOne(
                     Document("_id", idA.toByteArray())
                         .append(
-                            "epochExpositions",
+                            "exposedEpochs",
                             epochExpositions.map { (epochId, scores) ->
                                 mapOf(
                                     "epochId" to epochId,
