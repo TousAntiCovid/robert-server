@@ -12,6 +12,8 @@ import org.assertj.core.api.HamcrestCondition.matching
 import org.hamcrest.Matchers.emptyString
 import org.hamcrest.Matchers.stringContainsInOrder
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junitpioneer.jupiter.cartesian.ArgumentSets
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import org.springframework.beans.factory.annotation.Autowired
@@ -52,11 +54,11 @@ class AuthenticationParamValidationTest(@Autowired private val clock: RobertCloc
             .argumentsForNextParameter("/status", "/deleteExposureHistory", "/unregister")
             .argumentsForNextParameter(
                 "ebid" to null,
-                "ebid" to "non_base64_ebid",
+                "ebid" to "non_base64_value",
                 "time" to null,
-                "time" to "non_base64_time",
+                "time" to "non_base64_value",
                 "mac" to null,
-                "mac" to "non_base64_mac"
+                "mac" to "non_base64_value"
             )
     }
 
@@ -87,15 +89,24 @@ class AuthenticationParamValidationTest(@Autowired private val clock: RobertCloc
             )
     }
 
-    @CartesianTest(name = "when {0} with {1}, then Bad request")
-    @CartesianTest.MethodFactory("malformed_auth_parameters")
-    fun bad_request_on_malformed_auth_parameters(
-        apiResource: String,
-        invalidAuthParam: Pair<String, String?>
-    ) {
+    @ParameterizedTest(name = "when {0} with {1}=null, then Bad request")
+    @CsvSource(
+        value = [
+            "/status,                ebid",
+            "/status,                time",
+            "/status,                mac",
+            "/deleteExposureHistory, ebid",
+            "/deleteExposureHistory, time",
+            "/deleteExposureHistory, mac",
+            "/unregister,            ebid",
+            "/unregister,            time",
+            "/unregister,            mac"
+        ]
+    )
+    fun bad_request_on_null_auth_parameters(apiResource: String, paramName: String) {
         given()
             .contentType(JSON)
-            .body(validAuth + invalidAuthParam)
+            .body(validAuth + (paramName to null))
             .When()
             .post("/api/v6$apiResource")
             .then()
@@ -103,13 +114,34 @@ class AuthenticationParamValidationTest(@Autowired private val clock: RobertCloc
             .body(emptyString())
 
         assertThatInfoLogs()
-            .areExactly(
-                1,
-                matching(
-                    stringContainsInOrder(
-                        "Unacceptable request on POST /api/v6$apiResource: ServerWebInputException 400 BAD_REQUEST \"Failed to read HTTP message\";"
-                    )
-                )
-            )
+            .contains("Request validation failed on POST /api/v6$apiResource: field '$paramName' rejected value [null] should not be null (NotNull)")
+    }
+
+    @ParameterizedTest(name = "when {0} with malformed base64 value for {1}, then Bad request")
+    @CsvSource(
+        value = [
+            "/status,                ebid",
+            "/status,                time",
+            "/status,                mac",
+            "/deleteExposureHistory, ebid",
+            "/deleteExposureHistory, time",
+            "/deleteExposureHistory, mac",
+            "/unregister,            ebid",
+            "/unregister,            time",
+            "/unregister,            mac"
+        ]
+    )
+    fun bad_request_on_malformed_base64_auth_parameters(apiResource: String, paramName: String) {
+        given()
+            .contentType(JSON)
+            .body(validAuth + (paramName to "malformed_base64"))
+            .When()
+            .post("/api/v6$apiResource")
+            .then()
+            .statusCode(BAD_REQUEST.value())
+            .body(emptyString())
+
+        assertThatInfoLogs()
+            .contains("""Request validation failed on POST /api/v6$apiResource: object 'request' Cannot deserialize value of type `byte[]` from String "base64": Failed to decode VALUE_STRING as base64 (MIME-NO-LINEFEEDS): Illegal character '_' (code 0x5f) in base64 content (InvalidFormatException)""")
     }
 }

@@ -28,6 +28,6 @@ object JwtKeysManager : TestExecutionListener {
 
     private fun base64PrivateKey(keys: KeyPair): String {
         return Base64.getEncoder()
-            .encodeToString(keys!!.private.encoded)
+            .encodeToString(keys.private.encoded)
     }
 }

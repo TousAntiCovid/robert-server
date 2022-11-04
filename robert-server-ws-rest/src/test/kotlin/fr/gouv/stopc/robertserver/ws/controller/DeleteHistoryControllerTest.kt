@@ -41,14 +41,14 @@ class DeleteHistoryControllerTest(@Autowired private val clock: RobertClock) {
     @ParameterizedTest
     @MethodSource("acceptableAuthParameters")
     fun can_delete_history(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1", MongoEpochExposition(clock.now().asEpochId(), listOf(1.0, 1.2)))
+        givenRegistrationExistsForIdA("idA_1", MongoEpochExposition(clock.now().asEpochId(), listOf(1.0, 1.2)))
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}"
@@ -62,21 +62,21 @@ class DeleteHistoryControllerTest(@Autowired private val clock: RobertClock) {
             .body("success", equalTo(true))
             .body("message", nullValue())
 
-        assertThatRegistrationForIdA("idA____1")
+        assertThatRegistrationForIdA("idA_1")
             .hasEntrySatisfying("exposedEpochs", matching(emptyIterable<Any>()))
     }
 
     @ParameterizedTest
     @MethodSource("acceptableAuthParameters")
     fun can_delete_empty_history(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1")
+        givenRegistrationExistsForIdA("idA_1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}"
@@ -90,21 +90,21 @@ class DeleteHistoryControllerTest(@Autowired private val clock: RobertClock) {
             .body("success", equalTo(true))
             .body("message", nullValue())
 
-        assertThatRegistrationForIdA("idA____1")
+        assertThatRegistrationForIdA("idA_1")
             .hasEntrySatisfying("exposedEpochs", matching(emptyIterable<Any>()))
     }
 
     @ParameterizedTest
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#unacceptableAuthParameters")
     fun cant_delete_history_with_too_much_time_drift(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1", MongoEpochExposition(433, listOf(1.1, 1.3)))
+        givenRegistrationExistsForIdA("idA_1", MongoEpochExposition(433, listOf(1.1, 1.3)))
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}"
@@ -117,23 +117,23 @@ class DeleteHistoryControllerTest(@Autowired private val clock: RobertClock) {
             .statusCode(BAD_REQUEST.value())
             .body(emptyString())
 
-        verifyExceededTimeDriftIsProperlyHandled("idA____1", auth.timeDrift)
-        assertThatRegistrationForIdA("idA____1")
+        verifyExceededTimeDriftIsProperlyHandled("idA_1", auth.timeDrift)
+        assertThatRegistrationForIdA("idA_1")
             .hasEntrySatisfying("exposedEpochs", matching(not(emptyIterable<Any>())))
     }
 
     @ParameterizedTest
     @MethodSource("acceptableAuthParameters")
     fun cant_delete_history_for_a_key_unknown_by_crypto_server(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1", MongoEpochExposition(444, listOf(1.2, 1.4)))
-        givenCryptoServerRaiseMissingDailyKeyForEbid("idA____1")
+        givenRegistrationExistsForIdA("idA_1", MongoEpochExposition(444, listOf(1.2, 1.4)))
+        givenCryptoServerRaiseMissingDailyKeyForEbid("idA_1eb1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}"
@@ -146,22 +146,22 @@ class DeleteHistoryControllerTest(@Autowired private val clock: RobertClock) {
             .statusCode(430)
             .body(emptyString())
 
-        assertThatRegistrationForIdA("idA____1")
+        assertThatRegistrationForIdA("idA_1")
             .hasEntrySatisfying("exposedEpochs", matching(not(emptyIterable<Any>())))
     }
 
     @ParameterizedTest
     @MethodSource("acceptableAuthParameters")
     fun bad_request_on_mac_validation_error_raised_by_crypto_server(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1", MongoEpochExposition(455, listOf(1.3, 1.5)))
-        givenCryptoServerRaiseError400ForEbid("idA____1")
+        givenRegistrationExistsForIdA("idA_1", MongoEpochExposition(455, listOf(1.3, 1.5)))
+        givenCryptoServerRaiseError400ForEbid("idA_1eb1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}"
@@ -174,7 +174,7 @@ class DeleteHistoryControllerTest(@Autowired private val clock: RobertClock) {
             .statusCode(BAD_REQUEST.value())
             .body(emptyString())
 
-        assertThatRegistrationForIdA("idA____1")
+        assertThatRegistrationForIdA("idA_1")
             .hasEntrySatisfying("exposedEpochs", matching(not(emptyIterable<Any>())))
     }
 
@@ -186,7 +186,7 @@ class DeleteHistoryControllerTest(@Autowired private val clock: RobertClock) {
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}"

@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robertserver.ws.controller.crosscuttingconcerns
 
-import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatWarnLogs
@@ -19,11 +18,10 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.junitpioneer.jupiter.cartesian.ArgumentSets
 import org.junitpioneer.jupiter.cartesian.CartesianTest
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus.BAD_REQUEST
 
 @IntegrationTest
-class AuthenticationErrorsTest(@Autowired private val clock: RobertClock) {
+class AuthenticationErrorsTest {
 
     private val validAuth = AuthDataManager.acceptableAuthParameters().random()
 

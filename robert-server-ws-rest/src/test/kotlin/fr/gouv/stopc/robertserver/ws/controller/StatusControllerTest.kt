@@ -37,7 +37,7 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.OK
 import org.springframework.test.context.TestPropertySource
-import java.time.temporal.ChronoUnit
+import java.time.temporal.ChronoUnit.HOURS
 import kotlin.time.Duration.Companion.seconds
 
 @IntegrationTest
@@ -56,7 +56,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
     @ParameterizedTest
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
     fun can_request_exposure_status_no_risk(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1")
+        givenRegistrationExistsForIdA("idA_1")
 
         val now = clock.now()
         given()
@@ -64,7 +64,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -77,7 +77,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .then()
             .statusCode(OK.value())
             .body("riskLevel", equalTo(0))
-            .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for idA____1")))
+            .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for 'idA_1'")))
             .body("config.size()", equalTo(0))
             .body("lastContactDate", nullValue())
             .body("lastRiskScoringDate", nullValue())
@@ -89,13 +89,13 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
                     .withClaim(
                         "exp",
                         isUnixTimestamp(
-                            now.asInstant().plus(6, ChronoUnit.HOURS).plus(1, ChronoUnit.MINUTES),
+                            now.asInstant().plus(6, HOURS),
                             offset = 60.seconds
                         )
                     )
                     .withClaim("iss", equalTo("robert-server"))
             )
-        assertThatRegistrationForIdA("idA____1")
+        assertThatRegistrationForIdA("idA_1")
             .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", now.asEpochId())
             .hasEntrySatisfying("lastTimestampDrift", timeDriftCloseTo(auth.timeDrift))
         assertThatTodayStatistic("notifiedUsers")
@@ -111,10 +111,10 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
     fun can_request_exposure_status_at_risk(auth: AuthRequestData) {
         givenRegistrationExistsForIdA(
-            "idA____1",
+            "idA_1",
             mapOf(
                 "atRisk" to true,
-                "lastContactTimestamp" to 888,
+                "lastContactTimestamp" to 3849984900L,
                 "latestRiskEpoch" to 999
             )
         )
@@ -125,7 +125,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -138,9 +138,9 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .then()
             .statusCode(OK.value())
             .body("riskLevel", equalTo(4))
-            .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for idA____1")))
+            .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for 'idA_1'")))
             .body("config.size()", equalTo(0))
-            .body("lastContactDate", equalTo("888"))
+            .body("lastContactDate", equalTo("3849984900"))
             .body("lastRiskScoringDate", isNtpTimestamp(clock.atEpoch(999).asInstant()))
             .body(
                 "declarationToken",
@@ -155,7 +155,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
                             isNtpTimestamp(now.truncatedTo(ROBERT_EPOCH).asInstant())
                         )
                     )
-                    .withClaim("lastContactDateTimestamp", equalTo(888L))
+                    .withClaim("lastContactDateTimestamp", equalTo(3849984900L))
             )
             .body(
                 "analyticsToken",
@@ -164,13 +164,13 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
                     .withClaim(
                         "exp",
                         isUnixTimestamp(
-                            now.plus(6, ChronoUnit.HOURS).plus(1, ChronoUnit.MINUTES).asInstant(),
+                            now.plus(6, HOURS).asInstant(),
                             60.seconds
                         )
                     )
                     .withClaim("iss", equalTo("robert-server"))
             )
-        assertThatRegistrationForIdA("idA____1")
+        assertThatRegistrationForIdA("idA_1")
             .hasFieldOrPropertyWithValue("isNotified", true)
             .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", now.asEpochId())
             .hasEntrySatisfying("lastTimestampDrift", timeDriftCloseTo(auth.timeDrift))
@@ -186,14 +186,14 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
     @ParameterizedTest
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#unacceptableAuthParameters")
     fun cant_request_exposure_status_with_too_much_time_drift(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1")
+        givenRegistrationExistsForIdA("idA_1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -208,7 +208,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .body(emptyString())
 
         verifyNoInteractionsWithPushNotifServer()
-        verifyExceededTimeDriftIsProperlyHandled("idA____1", auth.timeDrift)
+        verifyExceededTimeDriftIsProperlyHandled("idA_1", auth.timeDrift)
     }
 
     @ParameterizedTest
@@ -216,7 +216,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
     fun cant_make_too_close_exposure_status_requests(lastStatusEpochSkew: Int, auth: AuthRequestData) {
         val lastStatusRequestEpoch = clock.now().asEpochId() - lastStatusEpochSkew
         givenRegistrationExistsForIdA(
-            "idA____1",
+            "idA_1",
             mapOf(
                 "lastStatusRequestEpoch" to lastStatusRequestEpoch
             )
@@ -228,7 +228,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -261,7 +261,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -283,15 +283,15 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
     @ParameterizedTest
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
     fun http_430_on_unknown_key(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1")
-        givenCryptoServerRaiseMissingDailyKeyForEbid("idA____1")
+        givenRegistrationExistsForIdA("idA_1")
+        givenCryptoServerRaiseMissingDailyKeyForEbid("idA_1eb1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -317,10 +317,10 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
         fun dont_increment_notifiedUsers_statistics_when_already_notified(auth: AuthRequestData) {
             // given idA____1 is "at risk"
             givenRegistrationExistsForIdA(
-                "idA____1",
+                "idA_1",
                 mapOf(
                     "atRisk" to true,
-                    "lastContactTimestamp" to 888,
+                    "lastContactTimestamp" to 3849984900L,
                     "latestRiskEpoch" to 999
                 )
             )
@@ -332,7 +332,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
                 .body(
                     """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -348,7 +348,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
                 .body(
                     """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",

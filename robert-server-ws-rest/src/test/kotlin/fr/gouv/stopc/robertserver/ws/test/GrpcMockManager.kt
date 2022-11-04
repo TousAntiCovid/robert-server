@@ -86,11 +86,11 @@ class GrpcMockManager : TestExecutionListener {
             request: CreateRegistrationRequest,
             responseObserver: StreamObserver<CreateRegistrationResponse>
         ) {
-            val clientPublicKey = request.clientPublicKey.toStringUtf8()
+            val idA = request.clientPublicKey.toStringUtf8().takeLast(5)
             responseObserver.onNext(
                 CreateRegistrationResponse.newBuilder()
-                    .setIdA(ByteString.copyFromUtf8("fake idA for $clientPublicKey"))
-                    .setTuples(ByteString.copyFromUtf8("fake encrypted tuples for $clientPublicKey"))
+                    .setIdA(ByteString.copyFromUtf8(idA))
+                    .setTuples(ByteString.copyFromUtf8("fake encrypted tuples for '$idA'"))
                     .build()
             )
             responseObserver.onCompleted()
@@ -108,7 +108,7 @@ class GrpcMockManager : TestExecutionListener {
             } else {
                 GetIdFromAuthResponse.newBuilder()
                     .setEpochId(request.epochId)
-                    .setIdA(request.ebid)
+                    .setIdA(request.ebid.take(5))
                     .build()
             }
             responseObserver.onNext(response)
@@ -125,13 +125,12 @@ class GrpcMockManager : TestExecutionListener {
                     .setError(err)
                     .build()
             } else {
+                val idA = request.ebid.take(5)
                 GetIdFromStatusResponse.newBuilder()
                     .setEpochId(request.epochId)
-                    .setIdA(request.ebid)
+                    .setIdA(idA)
                     .setTuples(
-                        ByteString.copyFromUtf8(
-                            "fake encrypted tuples for " + request.ebid.toStringUtf8()
-                        )
+                        ByteString.copyFromUtf8("fake encrypted tuples for '${idA.toStringUtf8()}'")
                     )
                     .build()
             }
@@ -147,11 +146,13 @@ class GrpcMockManager : TestExecutionListener {
                     .build()
             } else {
                 DeleteIdResponse.newBuilder()
-                    .setIdA(request.ebid)
+                    .setIdA(request.ebid.take(5))
                     .build()
             }
             responseObserver.onNext(response)
             responseObserver.onCompleted()
         }
+
+        private fun ByteString.take(n: Int) = ByteString.copyFrom(this.toByteArray().take(n).toByteArray())
     }
 }

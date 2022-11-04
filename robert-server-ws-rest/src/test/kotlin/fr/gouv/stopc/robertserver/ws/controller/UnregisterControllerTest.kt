@@ -27,14 +27,14 @@ class UnregisterControllerTest {
     @ParameterizedTest
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
     fun can_unregister(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1")
+        givenRegistrationExistsForIdA("idA_1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -57,14 +57,14 @@ class UnregisterControllerTest {
     @ParameterizedTest
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#unacceptableAuthParameters")
     fun cant_unregister_with_too_much_time_drift(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1")
+        givenRegistrationExistsForIdA("idA_1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -78,25 +78,25 @@ class UnregisterControllerTest {
             .statusCode(BAD_REQUEST.value())
             .body(emptyString())
 
-        verifyExceededTimeDriftIsProperlyHandled("idA____1", auth.timeDrift)
+        verifyExceededTimeDriftIsProperlyHandled("idA_1", auth.timeDrift)
         assertThatRegistrationCollection()
             .extracting("permanentIdentifier")
-            .containsExactly("idA____1")
+            .containsExactly("idA_1")
         verifyNoInteractionsWithPushNotifServer()
     }
 
     @ParameterizedTest
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
     fun cant_unregister_for_a_key_unknown_by_crypto_server(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1")
-        givenCryptoServerRaiseMissingDailyKeyForEbid("idA____1")
+        givenRegistrationExistsForIdA("idA_1")
+        givenCryptoServerRaiseMissingDailyKeyForEbid("idA_1eb1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -114,15 +114,15 @@ class UnregisterControllerTest {
     @ParameterizedTest
     @MethodSource("fr.gouv.stopc.robertserver.ws.test.AuthDataManager#acceptableAuthParameters")
     fun bad_request_on_mac_validation_error_raised_by_crypto_server(auth: AuthRequestData) {
-        givenRegistrationExistsForIdA("idA____1")
-        givenCryptoServerRaiseError400ForEbid("idA____1")
+        givenRegistrationExistsForIdA("idA_1")
+        givenCryptoServerRaiseError400ForEbid("idA_1eb1")
 
         given()
             .contentType(JSON)
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",
@@ -138,7 +138,7 @@ class UnregisterControllerTest {
 
         assertThatRegistrationCollection()
             .extracting("permanentIdentifier")
-            .containsExactly("idA____1")
+            .containsExactly("idA_1")
     }
 
     @ParameterizedTest
@@ -149,7 +149,7 @@ class UnregisterControllerTest {
             .body(
                 """
                     {
-                      "ebid":    "${"idA____1".base64Encode()}",
+                      "ebid":    "${"idA_1eb1".base64Encode()}",
                       "epochId": "${auth.epochId()}",
                       "time":    "${auth.base64Time32()}",
                       "mac":     "${auth.base64Mac()}",

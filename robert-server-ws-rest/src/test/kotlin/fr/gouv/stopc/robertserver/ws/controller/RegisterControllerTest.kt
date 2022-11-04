@@ -36,7 +36,7 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
                     {
                       "captcha": "valid challenge answer",
                       "captchaId": "captcha-id",
-                      "clientPublicECDHKey": "${"fake public key".base64Encode()}"
+                      "clientPublicECDHKey": "${"public key for idA_1".base64Encode()}"
                     }
                 """.trimIndent()
             )
@@ -47,7 +47,7 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
             .body("timeStart", equalTo(clock.atEpoch(0).asNtpTimestamp()))
             .body("message", nullValue())
             .body("config.size()", equalTo(0))
-            .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for fake public key")))
+            .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for 'idA_1'")))
 
         verifyNoInteractionsWithPushNotifServer()
     }
@@ -61,7 +61,7 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
                     {
                       "captcha": "valid challenge answer",
                       "captchaId": "captcha-id",
-                      "clientPublicECDHKey": "${"fake public key".base64Encode()}",
+                      "clientPublicECDHKey": "${"public key for idA_1".base64Encode()}",
                       "pushInfo": {
                         "token": "valid-device-id",
                         "locale": "fr-FR",
@@ -77,7 +77,7 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
             .body("timeStart", equalTo(clock.atEpoch(0).asNtpTimestamp()))
             .body("message", nullValue())
             .body("config.size()", equalTo(0))
-            .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for fake public key")))
+            .body("tuples", isBase64Encoded(equalTo("fake encrypted tuples for 'idA_1'")))
 
         verifyPushNotifServerReceivedRegisterForToken(
             token = "valid-device-id",
@@ -95,7 +95,7 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
                     {
                       "captcha": "wrong challenge answer",
                       "captchaId": "captcha-id",
-                      "clientPublicECDHKey": "${"fake public key".base64Encode()}",
+                      "clientPublicECDHKey": "${"public key for idA_1".base64Encode()}",
                       "pushInfo": {
                         "token": "valid-device-id",
                         "locale": "fr-FR",
@@ -127,7 +127,7 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
                     {
                       "captcha": "$captchaChallengeResponse",
                       "captchaId": "$captchaId",
-                      "clientPublicECDHKey": "${"fake public key".base64Encode()}",
+                      "clientPublicECDHKey": "${"public key for idA_1".base64Encode()}",
                       "pushInfo": {
                         "token": "valid-device-id",
                         "locale": "fr-FR",
@@ -156,7 +156,7 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
                     {
                       "captcha": "valid challenge answer",
                       "captchaId": "captcha-id",
-                      "clientPublicECDHKey": "${"fake public key".base64Encode()}",
+                      "clientPublicECDHKey": "${"public key for idA_1".base64Encode()}",
                       "pushInfo": {
                         "token": "valid-device-id",
                         "locale": "fr-FR",
@@ -188,7 +188,7 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
                     {
                       "captcha": "valid challenge answer",
                       "captchaId": "captcha-id",
-                      "clientPublicECDHKey": "${"fake public key".base64Encode()}",
+                      "clientPublicECDHKey": "${"public key for idA_1".base64Encode()}",
                       "pushInfo": {
                         "token": "valid-device-id",
                         "locale": "fr-FR",
