@@ -2,7 +2,7 @@
 
 # 👇 this ensures libfaketime is not active while generating keys
 export LD_PRELOAD=""
-date --iso-8601=seconds -u
+date -I'seconds' -u
 
 function generate_aes_key() {
   local size=$1
@@ -13,8 +13,10 @@ function generate_aes_key() {
 
 generate_aes_key 256 federation-key
 generate_aes_key 256 key-encryption-key
+now=$(date +%s)
 for i in {-20..5} ; do
-  generate_aes_key 192 "server-key-$(date --date "$i days" +%Y%m%d)"
+  timestamp=$(( $now + $i * 24 * 60 * 60 ))
+  generate_aes_key 192 "server-key-$(date -d "@$timestamp" +%Y%m%d)"
 done
 
 exec "$@"
