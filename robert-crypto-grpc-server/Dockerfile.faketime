@@ -1,11 +1,8 @@
-FROM eclipse-temurin:11-jre-focal
+FROM eclipse-temurin:11-jre-alpine
+COPY --from=trajano/alpine-libfaketime  /faketime.so /lib/faketime.so
+ENV LD_PRELOAD=/lib/faketime.so
 
-RUN apt-get update && apt-get install -y \
-    libfaketime \
-    wget \
- && rm -rf /var/lib/apt/lists
-
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1
+RUN apk add --no-cache bash
 
 COPY ./src/main/docker/keystore.p12 /
 COPY ./src/main/docker/entrypoint.sh /entrypoint.sh
