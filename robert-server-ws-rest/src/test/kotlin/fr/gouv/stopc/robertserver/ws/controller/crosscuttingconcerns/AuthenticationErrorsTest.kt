@@ -2,7 +2,6 @@ package fr.gouv.stopc.robertserver.ws.controller.crosscuttingconcerns
 
 import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatWarnLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.givenRegistrationExistsForIdA
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData
@@ -80,16 +79,14 @@ class AuthenticationErrorsTest {
             .statusCode(BAD_REQUEST.value())
             .body(emptyString())
 
-        assertThatWarnLogs()
+        assertThatInfoLogs()
             .areExactly(
                 1,
                 matching(
                     matchesPattern(
-                        "Witnessing abnormal time difference ${-auth.timeDrift.inWholeSeconds} between client: [0-9-T:.Z=E]+ and server: [0-9-T:.Z=E]+"
+                        "Auth denied on POST /api/v6/[^ ]+: Too much clock skew [^ ]+ between client \\([0-9-T:.Z=E]+\\) and server \\([0-9-T:.Z=E]+\\)"
                     )
                 )
             )
-        assertThatInfoLogs()
-            .contains("Discarding authenticated request because provided time is too far from current server time")
     }
 }

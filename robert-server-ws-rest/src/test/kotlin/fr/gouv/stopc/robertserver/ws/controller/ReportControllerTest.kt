@@ -1,8 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
 import fr.gouv.stopc.robertserver.common.base64Encode
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatErrorLogs
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatWarnLogs
+import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.assertThatContactsToProcessCollection
 import fr.gouv.stopc.robertserver.test.MongodbManager.HelloMessageToProcess
@@ -18,10 +17,9 @@ import fr.gouv.stopc.robertserver.ws.test.When
 import io.restassured.RestAssured.given
 import io.restassured.http.ContentType.JSON
 import org.assertj.core.api.HamcrestCondition.matching
-import org.hamcrest.Matchers
+import org.hamcrest.Matchers.emptyString
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasSize
-import org.hamcrest.Matchers.matchesRegex
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -109,7 +107,7 @@ class ReportControllerTest {
                   "rssiCalibrated": 10,
                   "timeCollectedOnDevice": $it,
                   "timeFromHelloMessage": ${it + 1},
-                  "mac": "${"fake mac $it".base64Encode()}"
+                  "mac": "${"mac $it".base64Encode()}"
                 }
             """.trimIndent()
         }
@@ -249,10 +247,8 @@ class ReportControllerTest {
             .post("/api/v6/report")
             .then()
             .statusCode(BAD_REQUEST.value())
-            .body(Matchers.emptyString())
+            .body(emptyString())
 
-        assertThatWarnLogs()
-            .contains("Contacts are null. They could be empty([]) but not null")
         verifyNoInteractionsWithSubmissionCodeServer()
     }
 
@@ -272,10 +268,10 @@ class ReportControllerTest {
             .post("/api/v6/report")
             .then()
             .statusCode(BAD_REQUEST.value())
-            .body("message", equalTo("Invalid data"))
+            .body(emptyString())
 
-        assertThatErrorLogs()
-            .areExactly(1, matching(matchesRegex("Validation failed for argument .* \\[token\\].*")))
+        assertThatInfoLogs()
+            .contains("Request validation failed on POST /api/v6/report: field 'token' rejected value [null] should not be null (NotNull)")
         verifyNoInteractionsWithSubmissionCodeServer()
     }
 
@@ -296,10 +292,10 @@ class ReportControllerTest {
             .post("/api/v6/report")
             .then()
             .statusCode(UNAUTHORIZED.value())
-            .body("message", equalTo("Unrecognized token of length: " + invalidToken.length))
+            .body(emptyString())
 
-        assertThatWarnLogs()
-            .containsOnlyOnce("Unrecognized token of length: " + invalidToken.length)
+        assertThatInfoLogs()
+            .containsOnlyOnce("Invalid report token of length ${invalidToken.length}")
     }
 
     @IntegrationTest

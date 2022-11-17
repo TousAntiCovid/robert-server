@@ -1,51 +1,17 @@
-controller:
-  path.prefix: /api
-  internal.path.prefix: /internal/api
+robert-ws:
+  country-code: 33
+  service-start-date: 2020-06-01
+  captcha-server.enabled: yes
+  max-auth-request-clock-skew: 1m
+  min-epochs-between-status-requests: 2
+  ephemeral-tuples-bundle-days: 4
+  report-validation-jwt.validity-duration: 5m
+  analytics-jwt.validity-duration: 6h
 
-push:
-  api.path: /push-token
-  api.path.token: /{token}
-  api.version: ${PUSH_API_VERSION:/v1}
-  server:
-    host: ${PUSH_SERVER_HOST:localhost}
-    port: ${PUSH_SERVER_PORT:9096}
-    connection.timeout-millis: ${PUSH_SERVER_CONNECTION_TIMEOUT_MILLIS:10000}
-    global.timeout: ${PUSH_SERVER_READ_TIMEOUT:10}
-
-server.port: ${ROBERT_SERVER_PORT:8086}
-
-robert:
-  crypto.server.host: ${ROBERT_CRYPTO_SERVER_HOST:localhost}
-  crypto.server.port: ${ROBERT_CRYPTO_SERVER_PORT:9090}
-  esr.limit: ${ESR_LIMIT:1}
-  epoch-bundle-duration-in-days: 4
-  server:
-    country-code: ${ROBERT_SERVER_COUNTRY_CODE:0x21}
-    request-time-delta-tolerance: ${ROBERT_SERVER_REQUEST_TIME_DELTA_TOLERANCE:60}
-    time-start: ${ROBERT_SERVER_TIMESTART:2020-06-01}
-    disable-check-token: false
-  captcha:
-    enabled: true
-    public-base-url: http://localhost/private/api/v1
-    private-base-url: http://localhost/private/api/v1
-    success-code: SUCCESS
-  jwt:
-    lifetime: ${ROBERT_JWT_TOKEN_LIFETIME:5}
-    privatekey: ${ROBERT_JWT_PRIVATE_KEY}
-    declare:
-      public-kid: ${ROBERT_JWT_TOKEN_DECLARE_PUBLIC_KID}
-      private-key: ${ROBERT_JWT_TOKEN_DECLARE_PRIVATE_KEY}
-    analytics.token:
-      private-key: ${ROBERT_JWT_TOKEN_ANALYTICS_PRIVATE_KEY}
-      lifetime: ${ROBERT_JWT_TOKEN_ANALYTICS_LIFETIME:360}
-
-submission.code.server:
-  url: ${SUBMISSION_CODE_SERVER_URL:http://localhost:8087}
-  verify.path: /api/v1/verify
+spring:
+  codec.max-in-memory-size: 20MB
+  cloud.vault.enabled: false
 
 management:
   server.port: 8081
-  endpoints.web.exposure.include: info,health,metrics,prometheus
-spring.cloud:
-  consul.enabled: false
-  vault.enabled: false
+  endpoints.web.exposure.include: health,info,prometheus

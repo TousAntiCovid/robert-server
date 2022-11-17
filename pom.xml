@@ -281,6 +281,21 @@
         </profile>
     </profiles>
 
+    <repositories>
+        <repository>
+            <id>push-server</id>
+            <url>
+                https://gitlab.inria.fr/api/v4/projects/stopcovid19%2Frobert-push-notif-server/packages/maven
+            </url>
+        </repository>
+        <repository>
+            <id>submission-server</id>
+            <url>
+                https://gitlab.inria.fr/api/v4/projects/stopcovid19%2Fsubmission-code-server/packages/maven
+            </url>
+        </repository>
+    </repositories>
+
     <distributionManagement>
         <repository>
             <id>gitlab-maven</id>

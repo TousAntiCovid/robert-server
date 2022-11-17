@@ -4,7 +4,6 @@ import fr.gouv.stopc.robert.client.ApiClient;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.KpiApi;
 import fr.gouv.stopc.robert.client.api.RobertApi;
-import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,11 +29,6 @@ public class RestApiClientConfiguration {
     @Bean
     public CaptchaApi captchaApi() {
         return new CaptchaApi(apiClient());
-    }
-
-    @Bean
-    public RobertLegacyApi robertLegacyApi() {
-        return new RobertLegacyApi(apiClient());
     }
 
     @Bean

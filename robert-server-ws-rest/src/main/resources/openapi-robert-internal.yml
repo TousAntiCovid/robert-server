@@ -1,19 +1,23 @@
 openapi: 3.0.0
 info:
   description: "#STOPCOVID, Robert Proximity Tracing Client API"
-  version: 3.0.0
+  version: "2"
   title: "#STOPCOVID, Robert Proximity Tracing"
   termsOfService: https://github.com/ROBERT-proximity-tracing/
   contact:
     email: stopcovid@inria.fr
   license:
     name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+externalDocs:
+  description: Find out more about ROBERT
+  url: https://github.com/ROBERT-proximity-tracing/
+servers:
+  - url: /internal/api/v2
 paths:
   /kpis:
     get:
-      tags:
-        - KPI
+      tags: ["Kpi"]
       summary: Get KPIs
       description: >-
         Get current kpis produced
@@ -29,11 +33,6 @@ paths:
                 $ref: "#/components/schemas/RobertServerKpi"
         "400":
           description: bad request
-externalDocs:
-  description: Find out more about ROBERT
-  url: https://github.com/ROBERT-proximity-tracing/
-servers:
-  - url: http://localhost:8080/internal/api/v2
 components:
   schemas:
     RobertServerKpi:

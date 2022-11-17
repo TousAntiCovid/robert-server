@@ -169,10 +169,10 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
             .post("/api/v6/register")
             .then()
             .statusCode(INTERNAL_SERVER_ERROR.value())
-            .body("message", equalTo("An error occured"))
+            .body(emptyString())
 
         assertThatErrorLogs()
-            .contains("Timeout while receiving message; nested exception is com.mongodb.MongoSocketReadTimeoutException: Timeout while receiving message")
+            .contains("Unexpected error on POST /api/v6/register: DataAccessResourceFailureException Timeout while receiving message; nested exception is com.mongodb.MongoSocketReadTimeoutException: Timeout while receiving message")
 
         verifyNoInteractionsWithPushNotifServer()
     }
@@ -201,13 +201,10 @@ class RegisterControllerTest(@Autowired private val clock: RobertClock) {
             .post("/api/v6/register")
             .then()
             .statusCode(INTERNAL_SERVER_ERROR.value())
-            .body("message", equalTo("An error occured"))
+            .body(emptyString())
 
         assertThatErrorLogs()
-            .containsSequence(
-                "RPC failed: UNKNOWN",
-                "Unable to generate an identity for the client"
-            )
+            .containsSequence("Unexpected error on POST /api/v6/register: StatusRuntimeException UNKNOWN")
 
         verifyNoInteractionsWithPushNotifServer()
     }

@@ -35,8 +35,7 @@ class GrpcMockManager : TestExecutionListener {
             .build()
             .apply {
                 start()
-                System.setProperty("robert.crypto.server.host", "localhost")
-                System.setProperty("robert.crypto.server.port", "$port")
+                System.setProperty("robert-ws.crypto-server-uri", "dns:///localhost:$port")
             }
 
         fun givenCryptoServerIsOffline() {

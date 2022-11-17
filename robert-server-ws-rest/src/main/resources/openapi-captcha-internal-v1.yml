@@ -1,0 +1,57 @@
+openapi: 3.0.0
+info:
+  version: "1"
+  title: "#STOPCOVID, Robert Proximity Tracing"
+  description: "#STOPCOVID, Robert Proximity Tracing Captcha API"
+  termsOfService: https://github.com/ROBERT-proximity-tracing/
+  contact:
+    email: stopcovid@inria.fr
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: /internal/api/v1
+paths:
+  /captcha/{captchaId}/checkAnswer:
+    post:
+      tags: ["Captcha"]
+      summary: Verify captcha response
+      description: >-
+      operationId: verify
+      parameters:
+        - name: captchaId
+          in: path
+          description: The identifier of the captcha to verify
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaptchaVerifyRequest"
+      responses:
+        "200":
+          description: The validation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptchaVerifyResponse"
+components:
+  schemas:
+    CaptchaVerifyRequest:
+      type: object
+      properties:
+        answer:
+          type: string
+      required:
+        - answer
+    CaptchaVerifyResponse:
+      type: object
+      properties:
+        result:
+          type: string
+          enum: [SUCCESS, FAILED]
+      required:
+        - result

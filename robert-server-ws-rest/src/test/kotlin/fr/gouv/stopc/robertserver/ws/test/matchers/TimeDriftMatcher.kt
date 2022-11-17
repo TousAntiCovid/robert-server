@@ -1,7 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.test.matchers
 
 import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatWarnLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.assertThatRegistrationForIdA
 import org.assertj.core.api.HamcrestCondition.matching
 import org.assertj.core.condition.VerboseCondition
@@ -15,16 +14,14 @@ import kotlin.time.Duration.Companion.seconds
  * in the user registration.
  */
 fun verifyExceededTimeDriftIsProperlyHandled(user: String, timeDrift: Duration) {
-    assertThatWarnLogs().areExactly(
+    assertThatInfoLogs().areExactly(
         1,
         matching(
             matchesPattern(
-                "Witnessing abnormal time difference -?\\d+ between client: [0-9-T:.Z=E]+ and server: [0-9-T:.Z=E]+"
+                "Auth denied on POST /api/v6/[^ ]+: Too much clock skew [^ ]+ between client \\([0-9-T:.Z=E]+\\) and server \\([0-9-T:.Z=E]+\\)"
             )
         )
     )
-    assertThatInfoLogs()
-        .contains("Discarding authenticated request because provided time is too far from current server time")
 
     assertThatRegistrationForIdA(user)
         .hasEntrySatisfying("lastTimestampDrift", timeDriftCloseTo(timeDrift))

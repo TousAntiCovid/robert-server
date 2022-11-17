@@ -20,7 +20,7 @@ services:
           - GET
 
   - name: ws-rest
-    url: http://ws-rest:8086
+    url: http://ws-rest:8080
     path: /api/v6
     routes:
       - name: robert-api

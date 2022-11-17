@@ -243,12 +243,12 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .body(emptyString())
 
         assertThatInfoLogs()
-            .containsOnlyOnce("Discarding ESR request because epochs are too close: $lastStatusEpochSkew < 2 (tolerance)")
-        assertThatRegistrationForIdA("idA____1")
+            .contains("Rejected POST /api/v6/status: Number of requests exceeded the limit of 1 over time window of 2 epochs")
+        assertThatRegistrationForIdA("idA_1")
             .hasFieldOrPropertyWithValue("lastFailedStatusRequestEpoch", clock.now().asEpochId())
             .hasFieldOrPropertyWithValue(
                 "lastFailedStatusRequestMessage",
-                "Discarding ESR request because epochs are too close: last ESR request epoch $lastStatusRequestEpoch vs current epoch ${now.asEpochId()} => $lastStatusEpochSkew < 2 (tolerance)"
+                "Discarding ESR request because it is too close to the previous one: previous ESR request epoch $lastStatusRequestEpoch vs now ${now.asEpochId()} < 2 epochs"
             )
         verifyNoInteractionsWithPushNotifServer()
     }
@@ -276,7 +276,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .body(emptyString())
 
         assertThatInfoLogs()
-            .containsOnlyOnce("Discarding status request because id unknown (fake or was deleted)")
+            .containsOnlyOnce("Missing registration on POST /api/v6/status: ${"idA_1".base64Encode()}")
         verifyNoInteractionsWithPushNotifServer()
     }
 
@@ -309,7 +309,7 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
     }
 
     @IntegrationTest
-    @TestPropertySource(properties = ["robert.esr.limit=0"])
+    @TestPropertySource(properties = ["robert-ws.min-epochs-between-status-requests=0"])
     class StatisticsTest() {
 
         @ParameterizedTest

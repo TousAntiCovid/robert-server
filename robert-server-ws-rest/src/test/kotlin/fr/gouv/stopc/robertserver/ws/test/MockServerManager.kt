@@ -30,19 +30,17 @@ class MockServerManager : TestExecutionListener {
     companion object {
         private val CAPTCHA = startMockServer("captcha.json") { container ->
             mapOf(
-                "robert.captcha.public-base-url" to "${container.endpoint}/public/api/v1",
-                "robert.captcha.private-base-url" to "${container.endpoint}/private/api/v1"
+                "robert-ws.captcha-server.base-url" to "${container.endpoint}/private/api/v1"
             )
         }
         private val PUSH_NOTIF_SERVER = startMockServer("push-notif-server.json") { container ->
             mapOf(
-                "push.server.host" to container.host,
-                "push.server.port" to container.serverPort.toString()
+                "robert-ws.push-server-base-url" to "${container.endpoint}/internal/api/v1"
             )
         }
         private val SUBMISSION_CODE_SERVER = startMockServer("submission-code-server.json") { container ->
             mapOf(
-                "submission.code.server.url" to container.endpoint
+                "robert-ws.submission-code-server-base-url" to "${container.endpoint}/api/v1"
             )
         }
 

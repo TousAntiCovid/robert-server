@@ -1,19 +1,23 @@
 openapi: 3.0.0
 info:
   description: "#STOPCOVID, Robert Proximity Tracing Client API"
-  version: 3.0.0
+  version: "6"
   title: "#STOPCOVID, Robert Proximity Tracing"
   termsOfService: https://github.com/ROBERT-proximity-tracing/
   contact:
     email: stopcovid@inria.fr
   license:
     name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-tags: []
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+externalDocs:
+  description: Find out more about ROBERT
+  url: https://github.com/ROBERT-proximity-tracing/
+servers:
+  - url: /api/v6
 paths:
   /captcha:
     post:
-      tags: ["captcha"]
+      tags: ["robert", "captcha"]
       summary: Create a CAPTCHA
       description: |-
         Request the creation of a CAPTCHA challenge. A CAPTCHA Id is returned.
@@ -44,7 +48,7 @@ paths:
       security: []
   /captcha/{captchaId}.png:
     get:
-      tags: ["captcha"]
+      tags: ["robert", "captcha"]
       summary: Get image CAPTCHA
       description: Get image version of the CAPTCHA challenge
       operationId: captchaChallengeImage
@@ -72,7 +76,7 @@ paths:
       security: []
   /captcha/{captchaId}.wav:
     get:
-      tags: ["captcha"]
+      tags: ["robert", "captcha"]
       summary: Get audio CAPTCHA
       description: Get audio version of the CAPTCHA challenge
       operationId: captchaChallengeAudio
@@ -100,7 +104,7 @@ paths:
       security: []
   /register:
     post:
-      tags: ["robert-legacy"]
+      tags: ["robert", "register"]
       summary: Register app
       description: |-
         Register the app to the ROBERT service.
@@ -112,6 +116,7 @@ paths:
         To be called once during app first startup.
       operationId: register
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -130,7 +135,7 @@ paths:
       security: []
   /status:
     post:
-      tags: ["robert-legacy"]
+      tags: ["robert", "status"]
       summary: Exposure Status Request
       description: >-
         App requests if its user has been exposed
@@ -145,6 +150,7 @@ paths:
         This request must the '0x02' salt when creating its MAC digest
       operationId: ESR
       requestBody:
+        required: true
         $ref: "#/components/requestBodies/ExposureStatusRequest"
       responses:
         "200":
@@ -164,7 +170,7 @@ paths:
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /report:
     post:
-      tags: ["robert-legacy"]
+      tags: ["robert", "report"]
       summary: Report contact history
       description: >-
         Report contacts from the last X days stored by the app once user has
@@ -177,6 +183,7 @@ paths:
         Once the app has successfully reported its data, it should call the /unregister endpoint to remove its id from the server.
       operationId: ReportBatch
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -195,7 +202,7 @@ paths:
       security: []
   /unregister:
     post:
-      tags: ["robert-legacy"]
+      tags: ["robert", "unregister"]
       summary: Unregister app
       description: >-
         User wants to stop using the ROBERT service. Delete all data related to this user from the server
@@ -220,7 +227,7 @@ paths:
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /deleteExposureHistory:
     post:
-      tags: ["robert-legacy"]
+      tags: ["robert", "delete-exposure-history"]
       summary: Delete exposure history
       description: >-
         User wants to delete his exposure history from the back-end. User must still have a valid EBID
@@ -245,8 +252,7 @@ paths:
           description: No server key was found to decrypt Encrypted Bluetooth IDentifier
   /clock:
     get:
-      tags:
-        - robert
+      tags: ["robert", "clock"]
       summary: Return server instant for apps sync purposes
       operationId: clock
       responses:
@@ -258,24 +264,22 @@ paths:
                 $ref: "#/components/schemas/ClockResponse"
         400:
           description: bad request
-externalDocs:
-  description: Find out more about ROBERT
-  url: https://github.com/ROBERT-proximity-tracing/
-servers:
-  - url: https://yourrobertserver.org/v5
 components:
   requestBodies:
     AuthentifiedRequest:
+      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/AuthentifiedRequest"
     ExposureStatusRequest:
+      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ExposureStatusRequest"
     UnregisterRequest:
+      required: true
       content:
         application/json:
           schema:

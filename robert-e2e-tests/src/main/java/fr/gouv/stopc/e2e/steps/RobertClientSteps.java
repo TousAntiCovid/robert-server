@@ -112,7 +112,7 @@ public class RobertClientSteps {
     public void accountDataIsRemoved(final String userName) {
         final var mobile = mobilePhonesEmulator.getMobileApplication(userName);
         assertThatThrownBy(mobile::requestStatus)
-                .hasMessage("430 : [no body]")
+                .hasMessage("430 Client Error (430): [no body]")
                 .isInstanceOf(UnknownHttpStatusCodeException.class);
         assertThatThrownBy(mobile::getRegistration)
                 .hasMessage("No value present")
