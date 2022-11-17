@@ -42,7 +42,7 @@ paths:
         "400":
           description: bad request
       security: []
-  /captcha/{captchaId}/image:
+  /captcha/{captchaId}.png:
     get:
       tags: ["captcha"]
       summary: Get image CAPTCHA
@@ -70,7 +70,7 @@ paths:
         "410":
           description: CAPTCHA Id already used
       security: []
-  /captcha/{captchaId}/audio:
+  /captcha/{captchaId}.wav:
     get:
       tags: ["captcha"]
       summary: Get audio CAPTCHA

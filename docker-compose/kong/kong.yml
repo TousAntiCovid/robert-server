@@ -1,0 +1,65 @@
+_format_version: "3.0"
+
+services:
+  - name: captcha-create
+    url: http://mock-captcha:1080/private/api/v1/captcha
+    routes:
+      - name: captcha-create-api
+        paths:
+          - /api/v6/captcha
+        methods:
+          - POST
+
+  - name: captcha-view
+    url: http://mock-captcha:1080/public/api/v1/captcha
+    routes:
+      - name: captcha-view-api
+        paths:
+          - /api/v6/captcha
+        methods:
+          - GET
+
+  - name: ws-rest
+    url: http://ws-rest:8086
+    path: /api/v6
+    routes:
+      - name: robert-api
+        paths:
+          - /api/v6
+          - /internal/api/v2
+        strip_path: false
+
+  - name: push
+    url: http://mock-push-notif-server:1080
+    path: /internal/api/v1/push-token
+    routes:
+      - name: push-api
+        paths:
+          - /internal/api/v1/push-token
+        strip_path: false
+
+  - name: submission
+    url: http://mock-submission-code-server:1080
+    path: /api/v1/verify
+    routes:
+      - name: push-api
+        paths:
+          - /api/v1/verify
+        strip_path: false
+
+  - name: grafana
+    url: http://grafana:3000
+    path: /grafana
+    routes:
+      - name: grafana
+        paths:
+          - /grafana
+
+  - name: prometheus
+    url: http://prometheus:9090
+    path: /prometheus
+    routes:
+      - name: prometheus
+        paths:
+          - /prometheus
+        strip_path: false
