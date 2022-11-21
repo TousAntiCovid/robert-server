@@ -9,7 +9,7 @@ robert-ws:
   analytics-jwt.validity-duration: 6h
 
 spring:
-  codec.max-in-memory-size: 20MB
+  codec.max-in-memory-size: 250MB
   cloud.vault.enabled: false
 
 management:
