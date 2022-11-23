@@ -1,9 +1,7 @@
 version: "3.5"
 services:
   crypto-server:
-    build:
-      context: ./robert-crypto-grpc-server
-      dockerfile: Dockerfile.faketime
+    build: robert-crypto-grpc-server
     healthcheck:
       test: wget -qO - localhost:8081/actuator/health | grep UP
     environment:

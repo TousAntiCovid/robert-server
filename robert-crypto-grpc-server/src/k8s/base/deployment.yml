@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robert-crypto-deployment
+spec:
+  selector:
+    matchLabels:
+      app: robert-crypto
+  template:
+    metadata:
+      labels:
+        app: robert-crypto # Bind by service selector>app:
+    spec:
+      containers:
+        - name: robert-crypto-app
+          image: crypto-image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_FILE
+              value: "file:/keystore.p12"
+            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE
+              value: "PKCS12"
+            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_PASSWORD
+              value: "1234"
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: SPRING_DATASOURCE_USERNAME
+              value: pocinit
+            - name: SPRING_FLYWAY_BASELINE_ON_MIGRATE
+              value: "true"
+            - name: SPRING_FLYWAY_BASELINE_VERSION
+              value: "0"
+      imagePullSecrets:
+        - name: poc-inttac-poc-img-push-pull-secret
+      nodeSelector:
+        cce.cloud.com/cce-nodepool: "caascad-inttac-ju-pod-tac-dashing-boa"

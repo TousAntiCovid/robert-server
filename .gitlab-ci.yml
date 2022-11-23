@@ -10,7 +10,7 @@ build-docker-crypto:
   tags:
     - caascad
   variables:
-    K8S_REGISTRY_IMAGE: $K8S_REGISTRY/robert:$CI_COMMIT_SHORT_SHA
+    K8S_REGISTRY_IMAGE: $K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
   script:
     - echo -n $K8S_REGISTRY_PASSWORD | docker login -u $K8S_REGISTRY_USER --password-stdin $K8S_REGISTRY
     - cd ./robert-crypto-grpc-server
@@ -24,6 +24,19 @@ e2e-tests-docker:
     # wait for services to be healthy but exclude 'flyway' and 'batch' which are short-lived services and may lead --wait option to deadlock
     - docker-compose up --wait $(docker-compose ps --services | grep -v flyway | grep -v batch)
     - java -jar robert-e2e-tests/target/robert-e2e-tests-*.jar
+
+publish-deployment:
+  stage: publish
+  variables:
+    ENVIRONMENT: "int"
+  script:
+    - cd ./robert-crypto-grpc-server/src/k8s/base
+    - kustomize edit set image crypto-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
+    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
+    - cd /tmp/deployments
+    - git add ./$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 deploy-int:
   stage: deploy
