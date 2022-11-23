@@ -13,8 +13,7 @@ import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.ALERTED_USERS
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.NOTIFIED_USERS
 import fr.gouv.stopc.robertserver.ws.repository.model.Registration
 import fr.gouv.stopc.robertserver.ws.service.model.IdA
-import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.awaitSingleOrNull
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
 /**
@@ -35,8 +34,8 @@ class RegistrationService(
      * @param idA the application identifier
      * @param pushInfo optional _push informations_ for Apple device
      */
-    suspend fun register(idA: IdA, pushInfo: PushInfo?) {
-        registrationRepository.save(Registration(idA.toByteArray())).awaitSingleOrNull()
+    fun register(idA: IdA, pushInfo: PushInfo?) {
+        registrationRepository.save(Registration(idA.toByteArray()))
         createOrUpdatePushInfo(pushInfo)
     }
 
@@ -46,8 +45,8 @@ class RegistrationService(
      * @param idA the application identifier
      * @param pushInfo optional _push informations_ for Apple device
      */
-    suspend fun status(idA: IdA, pushInfo: PushInfo?): RiskStatus {
-        val registration = registrationRepository.findById(idA.toByteArray()).awaitSingleOrNull()
+    fun status(idA: IdA, pushInfo: PushInfo?): RiskStatus {
+        val registration = registrationRepository.findByIdOrNull(idA.toByteArray())
             ?: throw MissingRegistrationException(idA)
 
         validateStatusRequestThrottling(registration)
@@ -58,7 +57,7 @@ class RegistrationService(
                 isNotified = registration.isNotified || registration.atRisk,
                 notifiedForCurrentRisk = registration.notifiedForCurrentRisk || registration.atRisk
             )
-        ).awaitSingle()
+        )
 
         createOrUpdatePushInfo(pushInfo)
 
@@ -83,7 +82,7 @@ class RegistrationService(
      * Ensure no /status request has been made during last X epochs, X being a configuration parameter.
      * @throws RequestRateExceededException when the request rate is exceeded
      */
-    private suspend fun validateStatusRequestThrottling(registration: Registration) {
+    private fun validateStatusRequestThrottling(registration: Registration) {
         val now = clock.now()
         val previousEsr = clock.atEpoch(registration.lastStatusRequestEpoch)
         val epochsSinceLastStatusRequest = previousEsr.until(now)
@@ -95,7 +94,7 @@ class RegistrationService(
                     lastFailedStatusRequestEpoch = now.asEpochId(),
                     lastFailedStatusRequestMessage = "Discarding ESR request because it is too close to the previous one: previous ESR request epoch ${previousEsr.asEpochId()} vs now ${now.asEpochId()} < ${config.minEpochsBetweenStatusRequests} epochs"
                 )
-            ).awaitSingle()
+            )
             throw RequestRateExceededException(1, config.minEpochsBetweenStatusRequests)
         }
     }
@@ -103,14 +102,14 @@ class RegistrationService(
     /**
      * Send _push informations_ to the Push Notification service.
      */
-    private suspend inline fun createOrUpdatePushInfo(pushInfo: PushInfo?) {
+    private inline fun createOrUpdatePushInfo(pushInfo: PushInfo?) {
         if (null != pushInfo) {
             pushTokenApi.registerPushToken(
                 PushRequest()
                     .token(pushInfo.token)
                     .locale(pushInfo.locale)
                     .timezone(pushInfo.timezone)
-            ).awaitSingleOrNull()
+            )
         }
     }
 
@@ -119,12 +118,12 @@ class RegistrationService(
      *
      * @param idA the application identifier
      */
-    suspend fun deleteExposureHistory(idA: IdA) {
-        val registration = registrationRepository.findById(idA.toByteArray()).awaitSingleOrNull()
+    fun deleteExposureHistory(idA: IdA) {
+        val registration = registrationRepository.findByIdOrNull(idA.toByteArray())
             ?: throw MissingRegistrationException(idA)
         registrationRepository.save(
             registration.copy(exposedEpochs = emptyList())
-        ).awaitSingle()
+        )
     }
 
     /**
@@ -132,10 +131,10 @@ class RegistrationService(
      *
      * @param idA the application identifier
      */
-    suspend fun unregister(idA: IdA) {
-        val registration = registrationRepository.findById(idA.toByteArray()).awaitSingleOrNull()
+    fun unregister(idA: IdA) {
+        val registration = registrationRepository.findByIdOrNull(idA.toByteArray())
             ?: throw MissingRegistrationException(idA)
-        registrationRepository.delete(registration).awaitSingleOrNull()
+        registrationRepository.delete(registration)
     }
 }
 

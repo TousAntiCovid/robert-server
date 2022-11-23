@@ -20,7 +20,7 @@ class StatusController(
     private val jwtService: JwtService
 ) : StatusApi {
 
-    override suspend fun eSR(exposureStatusRequest: ExposureStatusRequest): ResponseEntity<ExposureStatusResponse> {
+    override fun eSR(exposureStatusRequest: ExposureStatusRequest): ResponseEntity<ExposureStatusResponse> {
         val credentials = RobertCredentials(
             requestType = STATUS,
             ebid = exposureStatusRequest.ebid.asList(),

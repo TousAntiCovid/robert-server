@@ -2,7 +2,6 @@ package fr.gouv.stopc.robertserver.ws.service
 
 import fr.gouv.stopc.robertserver.ws.common.logger
 import fr.gouv.stopc.submissioncode.api.SubmissionCodeApi
-import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.stereotype.Service
 
 /**
@@ -13,9 +12,9 @@ class SubmissionCodeService(private val submissionCodeApi: SubmissionCodeApi) {
 
     private val log = logger()
 
-    suspend fun verify(code: String): Boolean {
+    fun verify(code: String): Boolean {
         return try {
-            val response = submissionCodeApi.verify(code, null).awaitSingle()
+            val response = submissionCodeApi.verify(code, null)
             if (!response.valid) {
                 log.info("Invalid report token of length ${code.length}")
             }

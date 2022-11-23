@@ -6,7 +6,6 @@ import fr.gouv.stopc.robertserver.ws.api.model.ReportBatchResponse
 import fr.gouv.stopc.robertserver.ws.service.JwtService
 import fr.gouv.stopc.robertserver.ws.service.ReportContactsService
 import fr.gouv.stopc.robertserver.ws.service.SubmissionCodeService
-import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.http.HttpStatus.UNAUTHORIZED
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
@@ -15,11 +14,10 @@ import org.springframework.web.bind.annotation.RestController
 class ReportController(
     private val submissionCodeService: SubmissionCodeService,
     private val reportContactsService: ReportContactsService,
-    private val jwtService: JwtService,
-    meterRegistry: MeterRegistry
+    private val jwtService: JwtService
 ) : ReportApi {
 
-    override suspend fun reportBatch(reportBatchRequest: ReportBatchRequest): ResponseEntity<ReportBatchResponse> {
+    override fun reportBatch(reportBatchRequest: ReportBatchRequest): ResponseEntity<ReportBatchResponse> {
         return if (submissionCodeService.verify(reportBatchRequest.token)) {
             reportContactsService.report(reportBatchRequest.contacts)
             ResponseEntity.ok(

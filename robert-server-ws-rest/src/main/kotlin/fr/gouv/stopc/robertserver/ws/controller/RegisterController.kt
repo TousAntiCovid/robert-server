@@ -21,7 +21,7 @@ class RegisterController(
     private val registrationService: RegistrationService
 ) : RegisterApi {
 
-    override suspend fun register(registerRequest: RegisterRequest): ResponseEntity<RegisterSuccessResponse> {
+    override fun register(registerRequest: RegisterRequest): ResponseEntity<RegisterSuccessResponse> {
         return if (captchaService.verify(registerRequest.captchaId, registerRequest.captcha)) {
             val tuplesBundle = identityService.register(registerRequest.clientPublicECDHKey.base64Decode())
             registrationService.register(tuplesBundle.idA, registerRequest.pushInfo)

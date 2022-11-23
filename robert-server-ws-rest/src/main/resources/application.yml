@@ -8,9 +8,7 @@ robert-ws:
   report-validation-jwt.validity-duration: 5m
   analytics-jwt.validity-duration: 6h
 
-spring:
-  codec.max-in-memory-size: 250MB
-  cloud.vault.enabled: false
+spring.cloud.vault.enabled: false
 
 management:
   server.port: 8081

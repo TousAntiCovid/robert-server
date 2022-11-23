@@ -2,7 +2,7 @@ package fr.gouv.stopc.robertserver.ws.service
 
 import com.google.protobuf.ByteString
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationRequest
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplFutureStub
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplBlockingStub
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest
@@ -13,7 +13,6 @@ import fr.gouv.stopc.robertserver.ws.RobertWsProperties
 import fr.gouv.stopc.robertserver.ws.common.RequestType
 import fr.gouv.stopc.robertserver.ws.repository.RegistrationRepository
 import fr.gouv.stopc.robertserver.ws.service.model.IdA
-import kotlinx.coroutines.guava.await
 import org.springframework.stereotype.Service
 import org.springframework.validation.BindException
 
@@ -23,7 +22,7 @@ import org.springframework.validation.BindException
 @Service
 class IdentityService(
     private val clock: RobertClock,
-    private val cryptoGrpcService: CryptoGrpcServiceImplFutureStub,
+    private val cryptoGrpcService: CryptoGrpcServiceImplBlockingStub,
     private val registrationRepository: RegistrationRepository,
     private val config: RobertWsProperties
 ) {
@@ -31,14 +30,14 @@ class IdentityService(
     /**
      * Exchange captcha challenge for a new [IdA] _"application identifier"_.
      */
-    suspend fun register(publicEcdhKey: ByteArray): EncryptedEphemeralTuplesBundle {
+    fun register(publicEcdhKey: ByteArray): EncryptedEphemeralTuplesBundle {
         val createRequest = CreateRegistrationRequest.newBuilder()
             .setServerCountryCode(ByteString.copyFrom(byteArrayOf(config.countryCode.toByte())))
             .setClientPublicKey(ByteString.copyFrom(publicEcdhKey))
             .setFromEpochId(clock.now().asEpochId())
             .setNumberOfDaysForEpochBundles(config.ephemeralTuplesBundleDays)
             .build()
-        val response = cryptoGrpcService.createRegistration(createRequest).await()
+        val response = cryptoGrpcService.createRegistration(createRequest)
         if (response.hasError()) {
             handleGrpcError(response.error)
         }
@@ -51,7 +50,7 @@ class IdentityService(
     /**
      * Exchange credentials for an [IdA] _"application identifier"_.
      */
-    suspend fun authenticate(credentials: RobertCredentials): IdA {
+    fun authenticate(credentials: RobertCredentials): IdA {
         validateAttributes(credentials)
         val getIdRequest = GetIdFromAuthRequest.newBuilder()
             .setRequestType(credentials.requestType.code)
@@ -60,7 +59,7 @@ class IdentityService(
             .setTime(clock.atTime32(credentials.time.toByteArray()).asNtpTimestamp())
             .setMac(credentials.mac.toByteString())
             .build()
-        val response = cryptoGrpcService.getIdFromAuth(getIdRequest).await()
+        val response = cryptoGrpcService.getIdFromAuth(getIdRequest)
         validateTimeSync(credentials, response.idA)
         if (response.hasError()) {
             handleGrpcError(response.error)
@@ -71,7 +70,7 @@ class IdentityService(
     /**
      * Exchange credentials for an [IdA] _"application identifier"_ and a fresh ephemeral tuples bundle.
      */
-    suspend fun authenticateAndRenewTuples(credentials: RobertCredentials): EncryptedEphemeralTuplesBundle {
+    fun authenticateAndRenewTuples(credentials: RobertCredentials): EncryptedEphemeralTuplesBundle {
         validateAttributes(credentials)
         val statusRequest = GetIdFromStatusRequest.newBuilder()
             .setServerCountryCode(ByteString.copyFrom(byteArrayOf(config.countryCode.toByte())))
@@ -82,7 +81,7 @@ class IdentityService(
             .setTime(clock.atTime32(credentials.time.toByteArray()).asNtpTimestamp())
             .setMac(credentials.mac.toByteString())
             .build()
-        val response = cryptoGrpcService.getIdFromStatus(statusRequest).await()
+        val response = cryptoGrpcService.getIdFromStatus(statusRequest)
         validateTimeSync(credentials, response.idA)
         if (response.hasError()) {
             handleGrpcError(response.error)
@@ -96,7 +95,7 @@ class IdentityService(
     /**
      * Exchange credentials for an [IdA] _"application identifier"_ and delete crypto identity.
      */
-    suspend fun authenticateAndDeleteIdentity(credentials: RobertCredentials): IdA {
+    fun authenticateAndDeleteIdentity(credentials: RobertCredentials): IdA {
         validateAttributes(credentials)
         val deleteRequest = DeleteIdRequest.newBuilder()
             .setEbid(credentials.ebid.toByteString())
@@ -104,7 +103,7 @@ class IdentityService(
             .setTime(clock.atTime32(credentials.time.toByteArray()).asNtpTimestamp())
             .setMac(credentials.mac.toByteString())
             .build()
-        val response = cryptoGrpcService.deleteId(deleteRequest).await()
+        val response = cryptoGrpcService.deleteId(deleteRequest)
         validateTimeSync(credentials, response.idA)
         if (response.hasError()) {
             handleGrpcError(response.error)
@@ -135,7 +134,7 @@ class IdentityService(
     /**
      * Client and server time skew must not exceed parameterized threshold.
      */
-    private suspend fun validateTimeSync(credentials: RobertCredentials, idA: ByteString) {
+    private fun validateTimeSync(credentials: RobertCredentials, idA: ByteString) {
         val maxDifference = config.maxAuthRequestClockSkew.abs().seconds
         val serverTime = clock.now()
         val requestTime = clock.atTime32(credentials.time.toByteArray())

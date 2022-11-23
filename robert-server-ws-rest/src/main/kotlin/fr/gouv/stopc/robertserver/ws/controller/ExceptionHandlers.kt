@@ -11,6 +11,7 @@ import fr.gouv.stopc.robertserver.ws.service.RequestRateExceededException
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.validation.BindException
 import org.springframework.validation.BindingResult
 import org.springframework.validation.MapBindingResult
@@ -20,10 +21,9 @@ import org.springframework.web.server.MethodNotAllowedException
 import org.springframework.web.server.NotAcceptableStatusException
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
-import org.springframework.web.server.ServerWebExchange
 import org.springframework.web.server.ServerWebInputException
 import org.springframework.web.server.UnsupportedMediaTypeStatusException
-import reactor.core.publisher.Mono
+import javax.servlet.http.HttpServletRequest
 
 /**
  * Exception handling requirement from ANSSI is to avoid giving information in error messages.
@@ -35,7 +35,7 @@ import reactor.core.publisher.Mono
  */
 
 @RestControllerAdvice
-class ExceptionHandlers() {
+class ExceptionHandlers(private val request: HttpServletRequest) {
 
     private val log = logger()
 
@@ -44,12 +44,9 @@ class ExceptionHandlers() {
      * @return an empty HTTP 500 response
      */
     @ExceptionHandler(Throwable::class)
-    fun handleAnyException(ex: Throwable, exchange: ServerWebExchange): Mono<ResponseEntity<Void>> {
-        log.error(
-            "Unexpected error on ${exchange.request.methodValue} ${exchange.request.path}: ${ex::class.simpleName} ${ex.message}",
-            ex
-        )
-        return Mono.just(ResponseEntity.status(INTERNAL_SERVER_ERROR).build())
+    fun handleAnyException(ex: Throwable): ResponseEntity<Void> {
+        log.error("Unexpected error on ${request.method} ${request.requestURI}: ${ex::class.simpleName} ${ex.message}", ex)
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).build()
     }
 
     /**
@@ -58,6 +55,7 @@ class ExceptionHandlers() {
      */
     @ExceptionHandler(
         value = [
+            HttpMessageNotReadableException::class,
             MethodNotAllowedException::class,
             NotAcceptableStatusException::class,
             UnsupportedMediaTypeStatusException::class,
@@ -66,23 +64,23 @@ class ExceptionHandlers() {
             ResponseStatusException::class
         ]
     )
-    fun handleUnacceptableRequest(ex: Exception, exchange: ServerWebExchange): Mono<ResponseEntity<Void>> {
-        return when (val cause = ex.cause?.cause) {
+    fun handleUnacceptableRequest(ex: Exception): ResponseEntity<Void> {
+        return when (val cause = ex.cause) {
             is MissingKotlinParameterException -> {
                 val errors = MapBindingResult(mutableMapOf<String, Any>(), "request")
                 errors.rejectValue(cause.parameter.name ?: "", "NotNull", "should not be null")
-                handleValidationError(errors, exchange)
+                handleValidationError(errors)
             }
 
             is DatabindException -> {
                 val errors = MapBindingResult(mutableMapOf<String, Any>(), "request")
                 errors.reject(cause.javaClass.simpleName, cause.originalMessage)
-                handleValidationError(errors, exchange)
+                handleValidationError(errors)
             }
 
             else -> {
-                log.info("Unacceptable request on ${exchange.request.methodValue} ${exchange.request.path}: ${ex::class.simpleName} ${ex.message}")
-                return Mono.just(ResponseEntity.badRequest().build())
+                log.info("Unacceptable request on ${request.method} ${request.requestURI}: ${ex::class.simpleName} ${ex.message}")
+                return ResponseEntity.badRequest().build()
             }
         }
     }
@@ -92,13 +90,13 @@ class ExceptionHandlers() {
      * @return an empty HTTP 400 response
      */
     @ExceptionHandler(BindException::class)
-    fun handleValidationError(validation: BindingResult, exchange: ServerWebExchange): Mono<ResponseEntity<Void>> {
+    fun handleValidationError(validation: BindingResult): ResponseEntity<Void> {
         val globalErrors = validation.globalErrors.map { "object '${it.objectName}' ${it.defaultMessage} (${it.code})" }
         val fieldErrors =
             validation.fieldErrors.map { "field '${it.field}' rejected value [${it.rejectedValue?.toPrettyString()}] ${it.defaultMessage} (${it.code})" }
         val errors = (globalErrors + fieldErrors).joinToString(" and ")
-        log.info("Request validation failed on ${exchange.request.methodValue} ${exchange.request.path}: $errors")
-        return Mono.just(ResponseEntity.badRequest().build())
+        log.info("Request validation failed on ${request.method} ${request.requestURI}: $errors")
+        return ResponseEntity.badRequest().build()
     }
 
     /**
@@ -111,14 +109,14 @@ class ExceptionHandlers() {
      * @return an empty HTTP 430 or 400 response
      */
     @ExceptionHandler(GrpcClientErrorException::class)
-    fun handleGrpcClientError(ex: GrpcClientErrorException, exchange: ServerWebExchange): Mono<ResponseEntity<Void>> {
-        log.info("Request authentication failed on ${exchange.request.methodValue} ${exchange.request.path}: ${ex.message}")
+    fun handleGrpcClientError(ex: GrpcClientErrorException): ResponseEntity<Void> {
+        log.info("Request authentication failed on ${request.method} ${request.requestURI}: ${ex.message}")
         val code = when (ex.code) {
             404 -> 430
             430 -> 430
             else -> HttpResponseStatus.BAD_REQUEST.code()
         }
-        return Mono.just(ResponseEntity.status(code).build())
+        return ResponseEntity.status(code).build()
     }
 
     /**
@@ -126,10 +124,10 @@ class ExceptionHandlers() {
      * @return an empty HTTP 400 response
      */
     @ExceptionHandler(AuthenticationClockSkewException::class)
-    fun handleClockSkew(ex: AuthenticationClockSkewException, exchange: ServerWebExchange): Mono<ResponseEntity<Void>> {
+    fun handleClockSkew(ex: AuthenticationClockSkewException): ResponseEntity<Void> {
         val diff = ex.serverTime.until(ex.requestTime)
-        log.info("Auth denied on ${exchange.request.methodValue} ${exchange.request.path}: Too much clock skew $diff between client (${ex.requestTime}) and server (${ex.serverTime})")
-        return Mono.just(ResponseEntity.badRequest().build())
+        log.info("Auth denied on ${request.method} ${request.requestURI}: Too much clock skew $diff between client (${ex.requestTime}) and server (${ex.serverTime})")
+        return ResponseEntity.badRequest().build()
     }
 
     /**
@@ -137,24 +135,18 @@ class ExceptionHandlers() {
      * @return an empty HTTP 404 response
      */
     @ExceptionHandler(MissingRegistrationException::class)
-    fun handleMissingRegistration(
-        ex: MissingRegistrationException,
-        exchange: ServerWebExchange
-    ): Mono<ResponseEntity<Void>> {
-        log.info("Missing registration on ${exchange.request.methodValue} ${exchange.request.path}: ${ex.idA}")
-        return Mono.just(ResponseEntity.notFound().build())
+    fun handleMissingRegistration(ex: MissingRegistrationException): ResponseEntity<Void> {
+        log.info("Missing registration on ${request.method} ${request.requestURI}: ${ex.idA}")
+        return ResponseEntity.notFound().build()
     }
 
     /**
      * Request is rejected because throttling is exceeded.
      */
     @ExceptionHandler(RequestRateExceededException::class)
-    fun handleRequestThrottleExceeded(
-        ex: RequestRateExceededException,
-        exchange: ServerWebExchange
-    ): Mono<ResponseEntity<Void>> {
-        log.info("Rejected ${exchange.request.methodValue} ${exchange.request.path}: ${ex.message}")
-        return Mono.just(ResponseEntity.badRequest().build())
+    fun handleRequestThrottleExceeded(ex: RequestRateExceededException): ResponseEntity<Void> {
+        log.info("Rejected ${request.method} ${request.requestURI}: ${ex.message}")
+        return ResponseEntity.badRequest().build()
     }
 
     /**
@@ -173,6 +165,7 @@ class ExceptionHandlers() {
         } else {
             this.toString()
         }
+
         else -> this.toString()
     }
 }

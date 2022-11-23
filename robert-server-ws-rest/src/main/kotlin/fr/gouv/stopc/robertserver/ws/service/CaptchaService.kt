@@ -5,7 +5,6 @@ import fr.gouv.stopc.captchaserver.api.model.CaptchaVerifyRequest
 import fr.gouv.stopc.captchaserver.api.model.CaptchaVerifyResponse.ResultEnum.SUCCESS
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
 import fr.gouv.stopc.robertserver.ws.common.logger
-import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.stereotype.Service
 
 /**
@@ -19,13 +18,13 @@ class CaptchaService(
 
     private val log = logger()
 
-    suspend fun verify(id: String, answer: String): Boolean {
+    fun verify(id: String, answer: String): Boolean {
         if (!config.captchaServer.enabled) {
             log.warn("Captcha protection is disabled")
             return true
         }
         return try {
-            val response = captchaApi.verify(id, CaptchaVerifyRequest().answer(answer)).awaitSingle()
+            val response = captchaApi.verify(id, CaptchaVerifyRequest().answer(answer))
             response.result == SUCCESS
         } catch (e: Exception) {
             log.info("Captcha server error: ${e.message}")

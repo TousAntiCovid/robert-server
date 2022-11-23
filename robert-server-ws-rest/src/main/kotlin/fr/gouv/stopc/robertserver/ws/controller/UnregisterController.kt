@@ -16,7 +16,7 @@ class UnregisterController(
     private val registrationService: RegistrationService
 ) : UnregisterApi {
 
-    override suspend fun unregister(unregisterRequest: UnregisterRequest): ResponseEntity<UnregisterResponse> {
+    override fun unregister(unregisterRequest: UnregisterRequest): ResponseEntity<UnregisterResponse> {
         val credentials = RobertCredentials(
             requestType = UNREGISTER,
             ebid = unregisterRequest.ebid.asList(),

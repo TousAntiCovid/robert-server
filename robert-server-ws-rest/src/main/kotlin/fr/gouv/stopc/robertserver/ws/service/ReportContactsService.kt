@@ -8,10 +8,6 @@ import fr.gouv.stopc.robertserver.ws.repository.model.HelloMessageDetail
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.REPORTS_COUNT
 import io.micrometer.core.instrument.DistributionSummary
 import io.micrometer.core.instrument.MeterRegistry
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.reactive.awaitLast
-import kotlinx.coroutines.reactor.asFlux
 import org.springframework.stereotype.Service
 import java.time.Duration
 
@@ -34,10 +30,9 @@ class ReportContactsService(
     /**
      * Saves reported contacts into the database.
      */
-    suspend fun report(contacts: List<Contact>) {
+    fun report(contacts: List<Contact>) {
         if (contacts.isNotEmpty()) {
             val contactsToProcess = contacts
-                .asFlow()
                 .map { contact ->
                     ContactToProcess(
                         ebid = contact.ebid.asList(),
@@ -52,7 +47,7 @@ class ReportContactsService(
                         }
                     )
                 }
-            contactToProcessRepository.saveAll(contactsToProcess.asFlux()).awaitLast()
+            contactToProcessRepository.saveAll(contactsToProcess)
         }
         kpiRepository.incrementKpi(REPORTS_COUNT)
         val helloMessageCount = contacts

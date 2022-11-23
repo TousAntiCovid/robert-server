@@ -40,18 +40,6 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-coroutines-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-coroutines-guava</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-coroutines-reactor</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -60,11 +48,15 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -191,8 +183,6 @@
                         <dateLibrary>java8</dateLibrary>
                         <interfaceOnly>true</interfaceOnly>
                         <useTags>true</useTags>
-                        <useBeanValidation>false</useBeanValidation>
-                        <reactive>true</reactive>
                         <openApiNullable>false</openApiNullable>
                     </configOptions>
                 </configuration>
@@ -244,7 +234,7 @@
                         </goals>
                         <configuration>
                             <generatorName>java</generatorName>
-                            <library>webclient</library>
+                            <library>resttemplate</library>
                             <inputSpec>
                                 ${project.basedir}/src/main/resources/openapi-captcha-internal-v1.yml
                             </inputSpec>
@@ -268,7 +258,7 @@
                         </goals>
                         <configuration>
                             <generatorName>java</generatorName>
-                            <library>webclient</library>
+                            <library>resttemplate</library>
                             <inputSpec>
                                 ${project.build.directory}/dependency/BOOT-INF/classes/openapi-submission-v1.yml
                             </inputSpec>
@@ -292,7 +282,7 @@
                         </goals>
                         <configuration>
                             <generatorName>java</generatorName>
-                            <library>webclient</library>
+                            <library>resttemplate</library>
                             <inputSpec>
                                 ${project.build.directory}/dependency/BOOT-INF/classes/openapi-push-notif-server-v1.yml
                             </inputSpec>

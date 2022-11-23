@@ -16,7 +16,7 @@ class DeleteHistoryController(
     private val registrationService: RegistrationService
 ) : DeleteExposureHistoryApi {
 
-    override suspend fun deleteExposureHistory(authentifiedRequest: AuthentifiedRequest): ResponseEntity<UnregisterResponse> {
+    override fun deleteExposureHistory(authentifiedRequest: AuthentifiedRequest): ResponseEntity<UnregisterResponse> {
         val credentials = RobertCredentials(
             requestType = DELETE_EXPOSURE_HISTORY,
             ebid = authentifiedRequest.ebid.asList(),

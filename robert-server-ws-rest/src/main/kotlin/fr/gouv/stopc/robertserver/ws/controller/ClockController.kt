@@ -10,7 +10,7 @@ import java.time.ZoneOffset.UTC
 @RestController
 class ClockController(private val clock: RobertClock) : ClockApi {
 
-    override suspend fun clock(): ResponseEntity<ClockResponse> {
+    override fun clock(): ResponseEntity<ClockResponse> {
         val now = clock.now()
         return ResponseEntity.ok(
             ClockResponse(

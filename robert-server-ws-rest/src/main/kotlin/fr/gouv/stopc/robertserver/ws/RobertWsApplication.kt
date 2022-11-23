@@ -3,7 +3,7 @@ package fr.gouv.stopc.robertserver.ws
 import fr.gouv.stopc.captchaserver.api.CaptchaApi
 import fr.gouv.stopc.pushserver.api.PushTokenApi
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc
-import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplFutureStub
+import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplBlockingStub
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.submissioncode.api.SubmissionCodeApi
 import io.grpc.ManagedChannelBuilder
@@ -11,13 +11,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
-import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import fr.gouv.stopc.captchaserver.ApiClient as CaptchaApiClient
 import fr.gouv.stopc.pushserver.ApiClient as PushApiClient
 import fr.gouv.stopc.submissioncode.ApiClient as SubmissionApiClient
 
 @SpringBootApplication
-@EnableReactiveMongoRepositories
+@EnableMongoRepositories
 @EnableConfigurationProperties(RobertWsProperties::class)
 class RobertWsApplication(
     private val config: RobertWsProperties
@@ -26,11 +26,11 @@ class RobertWsApplication(
     fun robertClock() = RobertClock(config.serviceStartDate)
 
     @Bean
-    fun cryptoGrpcService(): CryptoGrpcServiceImplFutureStub {
+    fun cryptoGrpcService(): CryptoGrpcServiceImplBlockingStub {
         val channel = ManagedChannelBuilder.forTarget(config.cryptoServerUri.toString())
             .usePlaintext()
             .build()
-        return CryptoGrpcServiceImplGrpc.newFutureStub(channel)
+        return CryptoGrpcServiceImplGrpc.newBlockingStub(channel)
     }
 
     @Bean
