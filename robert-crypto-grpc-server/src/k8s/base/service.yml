@@ -3,10 +3,10 @@ kind: Service
 metadata:
   labels:
     application: tac # do not delete, used for billing
-  name: crypto-server-service # Service name
+  name: robert-crypto-service # Service name
 spec:
   selector:
-    app: crypto-server # Defines app that will be targeted
+    app: robert-crypto # Defines app that will be targeted
   ports:
     - name: grpc
       port: 9090

@@ -3,19 +3,27 @@ include:
     ref: master
     file: gitlab/gitlab-ci-java-template.yml
 
-build-docker-crypto:
+build-docker:
   image: docker:20.10.17
   needs: ["build"]
   stage: build
   tags:
     - caascad
   variables:
-    K8S_REGISTRY_IMAGE: $K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
+    K8S_REGISTRY_IMAGE_CRYPTO: $K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
+    K8S_REGISTRY_IMAGE_BATCH: $K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
   script:
+    # Connects to remote k8s registry
     - echo -n $K8S_REGISTRY_PASSWORD | docker login -u $K8S_REGISTRY_USER --password-stdin $K8S_REGISTRY
+    # Build robert-crypto image
     - cd ./robert-crypto-grpc-server
-    - docker build -f Dockerfile.k8s -t $K8S_REGISTRY_IMAGE .
-    - docker push $K8S_REGISTRY_IMAGE
+    - docker build -f Dockerfile.k8s -t $K8S_REGISTRY_IMAGE_CRYPTO .
+    # Build robert-batch image
+    - cd ../robert-server-batch
+    - docker build -f Dockerfile.k8s -t $K8S_REGISTRY_IMAGE_BATCH .
+    # Push all images to registry
+    - docker push $K8S_REGISTRY_IMAGE_CRYPTO
+    - docker push $K8S_REGISTRY_IMAGE_BATCH
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
@@ -30,11 +38,20 @@ publish-deployment:
   variables:
     ENVIRONMENT: "int"
   script:
+    # Configure robert-crypto deployment
     - cd ./robert-crypto-grpc-server/src/k8s/base
     - kustomize edit set image crypto-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
     - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
+    # Configure robert-batch deployment
+    - cd ./robert-server-batch/src/k8s/base
+    - kustomize edit set image batch-image=$K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
+    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-server-batch/deployment.yml
+    # Add deployments to push
     - cd /tmp/deployments
     - git add ./$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
+    - git add ./$ENVIRONMENT/robert-server-batch/deployment.yml
+    - git commit -m "$CI_COMMIT_SHORT_SHA"
+    - git push origin master
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
