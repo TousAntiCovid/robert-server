@@ -7,7 +7,7 @@ import fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
 import fr.gouv.stopc.robertserver.ws.api.model.PushInfo
-import fr.gouv.stopc.robertserver.ws.kpis.KpiRepository
+import fr.gouv.stopc.robertserver.ws.repository.KpiRepository
 import fr.gouv.stopc.robertserver.ws.repository.RegistrationRepository
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.ALERTED_USERS
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.NOTIFIED_USERS
@@ -16,8 +16,10 @@ import fr.gouv.stopc.robertserver.ws.service.model.IdA
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.stereotype.Service
-import java.time.Duration
 
+/**
+ * Manages client application state.
+ */
 @Service
 class RegistrationService(
     private val clock: RobertClock,
@@ -27,11 +29,23 @@ class RegistrationService(
     private val config: RobertWsProperties
 ) {
 
+    /**
+     * Creates a client application.
+     *
+     * @param idA the application identifier
+     * @param pushInfo optional _push informations_ for Apple device
+     */
     suspend fun register(idA: IdA, pushInfo: PushInfo?) {
         registrationRepository.save(Registration(idA.toByteArray())).awaitSingleOrNull()
         createOrUpdatePushInfo(pushInfo)
     }
 
+    /**
+     * Returns the [RiskStatus] of a client application.
+     *
+     * @param idA the application identifier
+     * @param pushInfo optional _push informations_ for Apple device
+     */
     suspend fun status(idA: IdA, pushInfo: PushInfo?): RiskStatus {
         val registration = registrationRepository.findById(idA.toByteArray()).awaitSingleOrNull()
             ?: throw MissingRegistrationException(idA)
@@ -67,14 +81,14 @@ class RegistrationService(
 
     /**
      * Ensure no /status request has been made during last X epochs, X being a configuration parameter.
-     * @throws RequestRateExceededException
+     * @throws RequestRateExceededException when the request rate is exceeded
      */
     private suspend fun validateStatusRequestThrottling(registration: Registration) {
         val now = clock.now()
         val previousEsr = clock.atEpoch(registration.lastStatusRequestEpoch)
         val epochsSinceLastStatusRequest = previousEsr.until(now)
             .abs()
-            .toRobertEpochs()
+            .dividedBy(ROBERT_EPOCH.duration)
         if (epochsSinceLastStatusRequest < config.minEpochsBetweenStatusRequests) {
             registrationRepository.save(
                 registration.copy(
@@ -86,6 +100,9 @@ class RegistrationService(
         }
     }
 
+    /**
+     * Send _push informations_ to the Push Notification service.
+     */
     private suspend inline fun createOrUpdatePushInfo(pushInfo: PushInfo?) {
         if (null != pushInfo) {
             pushTokenApi.registerPushToken(
@@ -97,6 +114,11 @@ class RegistrationService(
         }
     }
 
+    /**
+     * Clear exposure history for the given _application identifier_.
+     *
+     * @param idA the application identifier
+     */
     suspend fun deleteExposureHistory(idA: IdA) {
         val registration = registrationRepository.findById(idA.toByteArray()).awaitSingleOrNull()
             ?: throw MissingRegistrationException(idA)
@@ -105,13 +127,16 @@ class RegistrationService(
         ).awaitSingle()
     }
 
+    /**
+     * Removes all data related to an _application identifier_.
+     *
+     * @param idA the application identifier
+     */
     suspend fun unregister(idA: IdA) {
         val registration = registrationRepository.findById(idA.toByteArray()).awaitSingleOrNull()
             ?: throw MissingRegistrationException(idA)
         registrationRepository.delete(registration).awaitSingleOrNull()
     }
-
-    private fun Duration.toRobertEpochs() = this.dividedBy(ROBERT_EPOCH.duration)
 }
 
 class MissingRegistrationException(val idA: IdA) : RuntimeException("Missing registration for idA '$idA'")
@@ -119,11 +144,34 @@ class MissingRegistrationException(val idA: IdA) : RuntimeException("Missing reg
 class RequestRateExceededException(limit: Int, epochWindow: Int) :
     RuntimeException("Number of requests exceeded the limit of $limit over time window of $epochWindow epochs")
 
+/**
+ * Represents the risk status of a registered application.
+ */
 sealed class RiskStatus {
+
+    /**
+     * Means the registered application is not at risk.
+     */
     data class None(private val none: Any = Any()) : RiskStatus()
+
+    /**
+     * Means the registered application **is** at risk and contains relevant informations to be sent the application
+     */
     data class High(
+
+        /**
+         * The instant the application was evaluated _at risk_ by the batch application.
+         */
         val lastRiskScoringDate: RobertInstant,
+
+        /**
+         * The last instant a _risked contact_ was detected for the application.
+         */
         val lastContactDate: RobertInstant,
+
+        /**
+         * The last known status instant.
+         */
         val lastStatusRequest: RobertInstant
     ) : RiskStatus()
 }

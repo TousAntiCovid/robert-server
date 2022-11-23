@@ -5,7 +5,7 @@ import fr.gouv.stopc.robertserver.ws.common.base64Encode
 import java.io.Serializable
 
 /**
- * An application identifier is an 8 byte value.
+ * An application identifier is a 5 byte value.
  */
 data class IdA(
     val byteValue: List<Byte>

@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robertserver.ws.kpis
+package fr.gouv.stopc.robertserver.ws.repository
 
 import fr.gouv.stopc.robertserver.ws.repository.model.Kpi
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName
@@ -11,6 +11,9 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import reactor.core.publisher.Flux
 
+/**
+ * Stores KPIs about application usages.
+ */
 interface KpiRepository : ReactiveMongoRepository<Kpi, String>, KpiCustomRepository {
     fun findByNameIn(names: List<String>): Flux<Kpi>
 }

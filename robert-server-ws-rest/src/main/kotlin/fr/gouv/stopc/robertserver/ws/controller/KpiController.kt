@@ -2,7 +2,7 @@ package fr.gouv.stopc.robertserver.ws.controller
 
 import fr.gouv.stopc.robertserver.ws.api.KpiApi
 import fr.gouv.stopc.robertserver.ws.api.model.RobertServerKpi
-import fr.gouv.stopc.robertserver.ws.kpis.KpiRepository
+import fr.gouv.stopc.robertserver.ws.repository.KpiRepository
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.ALERTED_USERS
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.EXPOSED_BUT_NOT_AT_RISK_USERS
