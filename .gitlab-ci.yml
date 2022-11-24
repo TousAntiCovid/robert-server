@@ -13,15 +13,9 @@ build-docker:
     K8S_REGISTRY_IMAGE_CRYPTO: $K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
     K8S_REGISTRY_IMAGE_BATCH: $K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
   script:
-    # Connects to remote k8s registry
     - echo -n $K8S_REGISTRY_PASSWORD | docker login -u $K8S_REGISTRY_USER --password-stdin $K8S_REGISTRY
-    # Build robert-crypto image
-    - cd ./robert-crypto-grpc-server
-    - docker build -f Dockerfile.k8s -t $K8S_REGISTRY_IMAGE_CRYPTO .
-    # Build robert-batch image
-    - cd ../robert-server-batch
-    - docker build -f Dockerfile.k8s -t $K8S_REGISTRY_IMAGE_BATCH .
-    # Push all images to registry
+    - docker build -t $K8S_REGISTRY_IMAGE_CRYPTO -f robert-crypto-grpc-server/Dockerfile.k8s robert-crypto-grpc-server
+    - docker build -t $K8S_REGISTRY_IMAGE_BATCH -f robert-server-batch/Dockerfile.k8s robert-server-batch
     - docker push $K8S_REGISTRY_IMAGE_CRYPTO
     - docker push $K8S_REGISTRY_IMAGE_BATCH
   rules:
