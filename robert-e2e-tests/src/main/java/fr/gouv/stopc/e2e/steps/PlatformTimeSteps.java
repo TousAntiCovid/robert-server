@@ -22,7 +22,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.awaitility.Awaitility.given;
+import static org.awaitility.Awaitility.await;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
 @RequiredArgsConstructor
@@ -52,8 +52,7 @@ public class PlatformTimeSteps {
     private void verifyServiceClock(final String containerName, final Duration duration) {
 
         final var expectedFakedInstant = now().minus(duration);
-        given()
-                .await("Wait for faked time to be set in service " + containerName)
+        await("Wait for faked time to be set in service " + containerName)
                 .atMost(1, MINUTES)
                 .pollInterval(fibonacci(MILLISECONDS))
                 .and()

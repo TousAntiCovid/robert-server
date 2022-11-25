@@ -7,6 +7,15 @@ import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.e2e.mobileapplication.model.*;
+import fr.gouv.stopc.e2e.mobileapplication.model.CaptchaSolution;
+import fr.gouv.stopc.e2e.mobileapplication.model.ClientKeys;
+import fr.gouv.stopc.e2e.mobileapplication.model.ContactTuple;
+import fr.gouv.stopc.e2e.mobileapplication.model.ExposureStatus;
+import fr.gouv.stopc.e2e.mobileapplication.model.HelloMessage;
+import fr.gouv.stopc.e2e.mobileapplication.model.RobertRequestBuilder;
+import fr.gouv.stopc.e2e.mobileapplication.repository.ClientIdentifierRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.model.Registration;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
@@ -78,25 +87,21 @@ public class MobileApplication {
     }
 
     private CaptchaSolution resolveMockedCaptchaChallenge() {
-        // We simulate the user visual captcha resolution and we call the robert
-        // endpoint
-
-        // The mobile application ask a captcha id challenge from the captcha server
+        // We don't really need it, but for the demonstration...
+        // The mobile application asks a captcha challenge
         final var captchaChallenge = captchaApi.captcha(
                 CaptchaGenerationRequest.builder()
                         .locale("fr")
                         .type("IMAGE")
                         .build()
         );
-
-        // The mobile application ask for an image captcha with the received captcha id
-        // challenge
+        // Then fetch the associated image
         final var response = captchaApi.captchaChallengeImageWithHttpInfo(captchaChallenge.getId());
         assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
         assertThat("image content", response.getBody(), notNullValue());
-
-        // The user reads the image content
-        return new CaptchaSolution(captchaChallenge.getId(), "valid challenge answer");
+        // Then the user should type in its answer,
+        // And it is sent back with the register request but we set a mocked response
+        return new CaptchaSolution("challengeId", "valid");
     }
 
     private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {

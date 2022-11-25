@@ -1,8 +1,8 @@
 package fr.gouv.stopc.e2e.mobileapplication;
 
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.ClientIdentifierRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.RegistrationRepository;
 import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.RobertApi;

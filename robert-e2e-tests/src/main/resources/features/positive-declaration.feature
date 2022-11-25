@@ -6,14 +6,16 @@ Fonctionnalité: Covid-19 positive declaration
   Dans le but de limiter la propagation du Covid19
 
   Contexte:
-    Etant donné que John, Sarah et Paul ont l'application TAC depuis 18 jours
+    Etant donné que John, Sarah et Paul ont l'application TAC
 
+  @RealTimeEnvironment
   Scénario: Une personne est prévenue si un de ses contacts se déclare malade
     Etant donné que John et Sarah sont à proximité 60 minutes
     Lorsque John se déclare malade
     Et que le batch robert est exécuté
     Alors Sarah est à risque
 
+  @RealTimeEnvironment
   Scénario: Deux personnes sont prévenues si elles croisent une personne qui se déclare malade
     Etant donné que John, Sarah et Paul sont à proximité 60 minutes
     Lorsque John se déclare malade
@@ -21,6 +23,7 @@ Fonctionnalité: Covid-19 positive declaration
     Alors Sarah est à risque
     Et Paul est à risque
 
+  @RealTimeEnvironment
   Scénario: Personne ne croise la personne qui se déclare malade
     Etant donné que Sarah et Paul sont à proximité 60 minutes
     Lorsque John se déclare malade
@@ -28,12 +31,14 @@ Fonctionnalité: Covid-19 positive declaration
     Alors Sarah n'est pas à risque
     Et Paul n'est pas à risque
 
+  @RealTimeEnvironment
   Scénario: La personne qui se déclare malade n'est pas à risque
     Etant donné que John et Sarah sont à proximité 60 minutes
     Lorsque John se déclare malade
     Et que le batch robert est exécuté
     Alors John n'est pas à risque
 
+  @RealTimeEnvironment
   Scénario: Pas d'alerte si des personnes croisent furtivement une personne qui se déclare malade
     Etant donné que John, Sarah et Paul sont à proximité 5 minutes
     Lorsque John se déclare malade
@@ -42,10 +47,11 @@ Fonctionnalité: Covid-19 positive declaration
     Et Paul n'est pas à risque
 
   Plan du Scénario: On passe à risque lorsque notre dernier contact date d'il y a 7 jours ou moins (exemple avec il y a <date de visite>)
-    Etant donné que John et Sarah étaient à proximité 60 minutes il y a <date de visite>
-    Lorsque Sarah se déclare malade aujourd'hui
+    Etant donné que Marc et Serge ont l'application TAC depuis 18 jours
+    Et que Marc et Serge étaient à proximité 60 minutes il y a <date de visite>
+    Lorsque Serge se déclare malade aujourd'hui
     Et que le batch robert est exécuté
-    Alors John est à risque
+    Alors Marc est à risque
     Exemples:
       | date de visite     |
       | 1 jour             |
@@ -58,10 +64,11 @@ Fonctionnalité: Covid-19 positive declaration
       | 7 jours 30 minutes |
 
   Plan du Scénario: Pas d'alerte si le dernier contact date d'il y a plus de 7 jours (exemple avec il y a <date de visite>)
-    Etant donné que John et Sarah étaient à proximité 60 minutes il y a <date de visite>
-    Lorsque Sarah se déclare malade aujourd'hui
+    Etant donné que Marc et Serge ont l'application TAC depuis 18 jours
+    Et que Marc et Serge étaient à proximité 60 minutes il y a <date de visite>
+    Lorsque Serge se déclare malade aujourd'hui
     Et que le batch robert est exécuté
-    Alors John n'est pas à risque
+    Alors Marc n'est pas à risque
     Exemples:
       | date de visite              |
       | 7 jours 1 heures 15 minutes |
@@ -75,8 +82,9 @@ Fonctionnalité: Covid-19 positive declaration
       | 15 jours                    |
       | 16 jours                    |
 
+  @RealTimeEnvironment
   Scénario: Une personne infectée par la Covid19 a un contact prolongé avec d'autres personnes
-    Etant donné que John, Sarah et Paul étaient à proximité 48 heures il y a 3 jours
+    Etant donné que John, Sarah et Paul sont à proximité 48 heures
     Lorsque Sarah se déclare malade aujourd'hui
     Et que le batch robert est exécuté
     Alors John est à risque
