@@ -2,6 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: robert-crypto-deployment
+  namespace: robert-crypto
+  labels:
+    app: robert-crypto # do not delete, used for billing
 spec:
   selector:
     matchLabels:

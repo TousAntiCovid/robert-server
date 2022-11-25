@@ -1,0 +1,5 @@
+FROM eclipse-temurin:11-jre-alpine
+
+CMD ["java", "-jar", "/app.jar"]
+
+COPY ./target/robert-server-batch-*.jar /app.jar
