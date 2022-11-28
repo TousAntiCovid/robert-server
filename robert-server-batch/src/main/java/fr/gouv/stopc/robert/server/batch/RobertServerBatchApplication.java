@@ -1,11 +1,14 @@
 package fr.gouv.stopc.robert.server.batch;
 
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
@@ -23,6 +26,11 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @SpringBootApplication
 @EnableConfigurationProperties(RobertServerBatchProperties.class)
 public class RobertServerBatchApplication {
+
+    @Bean
+    public RobertClock clock(@Value("${robert.server.time-start}") String serviceStartTime) {
+        return new RobertClock(serviceStartTime);
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(RobertServerBatchApplication.class, args);

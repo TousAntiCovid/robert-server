@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.batch.test;
 
 import com.mongodb.client.MongoCollection;
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.model.Registration.RegistrationBuilder;
 import org.springframework.data.mongodb.core.MongoOperations;

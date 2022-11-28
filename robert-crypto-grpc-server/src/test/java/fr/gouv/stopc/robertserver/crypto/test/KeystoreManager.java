@@ -74,7 +74,7 @@ public class KeystoreManager implements TestExecutionListener {
         }
 
         System.setProperty("robert.crypto.server.keystore.password", KEYSTORE_PASSWORD);
-        System.setProperty("robert.server.time-start", "20200601");
+        System.setProperty("robert.server.time-start", "2020-06-01");
         System.setProperty("robert.protocol.hello-message-timestamp-tolerance", "180");
         System.setProperty("robert.crypto.server.keystore.file", format("file:%s", KEYSTORE_PATH));
         System.setProperty("robert.crypto.server.keystore.type", "PKCS12");

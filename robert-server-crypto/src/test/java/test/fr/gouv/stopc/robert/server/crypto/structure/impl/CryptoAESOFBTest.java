@@ -2,19 +2,15 @@ package test.fr.gouv.stopc.robert.server.crypto.structure.impl;
 
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESOFB;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Slf4j
-@ExtendWith(SpringExtension.class)
 public class CryptoAESOFBTest {
+
     @Test
     public void testCryptoAESOFBEncryptDecryptSucceeds() throws RobertServerCryptoException {
         byte[] key = new byte[32];

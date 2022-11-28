@@ -12,5 +12,4 @@ public class RobertServerBatchConfiguration {
         cryptoServerClient
                 .init(propertyLoader.getCryptoServerHost(), Integer.parseInt(propertyLoader.getCryptoServerPort()));
     }
-
 }

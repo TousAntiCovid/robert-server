@@ -7,7 +7,7 @@ import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
 import fr.gouv.stopc.robert.server.batch.model.ScoringResult;
 import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyV2ServiceImpl;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.SneakyThrows;
@@ -27,7 +27,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
-import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
+import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;

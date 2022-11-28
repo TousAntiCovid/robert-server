@@ -29,11 +29,12 @@
     <description>Projet principal</description>
 
     <modules>
+        <module>robert-server-common</module>
+        <module>robert-server-test</module>
         <module>robert-server-ws-rest</module>
         <module>robert-server-batch</module>
         <module>robert-server-database</module>
         <module>robert-server-crypto</module>
-        <module>robert-server-common</module>
         <module>robert-crypto-grpc-server</module>
         <module>robert-crypto-grpc-server-messaging</module>
         <module>robert-crypto-grpc-server-storage</module>
@@ -44,8 +45,10 @@
 
     <properties>
         <java.version>11</java.version>
-        <grpc.version>1.29.0</grpc.version>
-        <protobuf.version>3.21.7</protobuf.version>
+        <kotlin.version>1.7.20</kotlin.version>
+        <grpc.version>1.50.2</grpc.version>
+        <protoc.version>3.21.8</protoc.version>
+        <protobuf.version>3.21.8</protobuf.version>
         <error_prone_annotations.version>2.16</error_prone_annotations.version>
         <bountycastle.version>1.65</bountycastle.version>
         <grpcmock.version>0.8.0</grpcmock.version>
@@ -68,6 +71,12 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>fr.gouv.stopc</groupId>
+                <artifactId>robert-server-test</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-bom</artifactId>
                 <version>${grpc.version}</version>
@@ -78,6 +87,11 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java-util</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-kotlin</artifactId>
                 <version>${protobuf.version}</version>
             </dependency>
 
@@ -113,6 +127,32 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-maven-plugin</artifactId>
+                    <version>${kotlin.version}</version>
+                    <configuration>
+                        <jvmTarget>${java.version}</jvmTarget>
+                        <args>
+                            <arg>-Xjsr305=strict</arg>
+                        </args>
+                        <compilerPlugins>
+                            <plugin>spring</plugin>
+                        </compilerPlugins>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.jetbrains.kotlin</groupId>
+                            <artifactId>kotlin-maven-allopen</artifactId>
+                            <version>${kotlin.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.jetbrains.kotlin</groupId>
+                            <artifactId>kotlin-maven-noarg</artifactId>
+                            <version>${kotlin.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <executions>
@@ -147,7 +187,7 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.11.1</version>
+                <version>2.25.0</version>
                 <configuration>
                     <ratchetFrom>
                         7ce5d21af5410159743da75c1429497518ab735d
@@ -161,6 +201,9 @@
                             <file>.etc/eclipse-formatter-java.xml</file>
                         </eclipse>
                     </java>
+                    <kotlin>
+                        <ktlint />
+                    </kotlin>
                 </configuration>
             </plugin>
             <plugin>
@@ -186,6 +229,9 @@
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
+                <configuration>
+                    <verbose>false</verbose>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -236,9 +282,21 @@
 
     <repositories>
         <repository>
-            <id>gitlab-maven</id>
+            <id>robert-server</id>
             <url>
-                https://gitlab.inria.fr/api/v4/projects/20766/packages/maven
+                https://gitlab.inria.fr/api/v4/projects/stopcovid19%2Frobert-server/packages/maven
+            </url>
+        </repository>
+        <repository>
+            <id>push-server</id>
+            <url>
+                https://gitlab.inria.fr/api/v4/projects/stopcovid19%2Frobert-push-notif-server/packages/maven
+            </url>
+        </repository>
+        <repository>
+            <id>submission-server</id>
+            <url>
+                https://gitlab.inria.fr/api/v4/projects/stopcovid19%2Fsubmission-code-server/packages/maven
             </url>
         </repository>
     </repositories>

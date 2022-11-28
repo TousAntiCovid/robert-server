@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.HelloMessageDetail;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactRequest;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
-import fr.gouv.stopc.robert.server.common.service.RobertClock.RobertInstant;
+import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
