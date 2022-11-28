@@ -4,6 +4,7 @@ metadata:
   labels:
     app: robert-crypto # do not delete, used for billing
   name: robert-crypto-service # Service name
+  namespace: robert-crypto
 spec:
   selector:
     app: robert-crypto # Defines app that will be targeted

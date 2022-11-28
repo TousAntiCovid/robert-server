@@ -33,11 +33,11 @@ publish-deployment:
     ENVIRONMENT: "int"
   script:
     # Configure robert-crypto deployment
-    - cd ~/robert-crypto-grpc-server/src/k8s/base
+    - cd /robert-crypto-grpc-server/src/k8s/base
     - kustomize edit set image crypto-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
     - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
     # Configure robert-batch deployment
-    - cd ~/robert-server-batch/src/k8s/base
+    - cd /robert-server-batch/src/k8s/base
     - kustomize edit set image batch-image=$K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
     - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-server-batch/deployment.yml
     # Add deployments and push
