@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestPropertySource(properties = {
         "robert.scoring.algo-version=2",
         "robert.scoring.batch-mode=FULL_REGISTRATION_SCAN_COMPUTE_RISK",
-        "robert.server.time-start=20210101"
+        "robert.server.time-start=2021-01-01"
 })
 class RiskEvaluationProcessorTest {
 

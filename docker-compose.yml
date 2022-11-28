@@ -1,5 +1,17 @@
 version: "3.5"
 services:
+  gateway:
+    image: kong:3.0
+    environment:
+      - KONG_DATABASE=off
+      - KONG_DECLARATIVE_CONFIG=/etc/kong/kong.yml
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+    volumes:
+      - ./docker-compose/kong:/etc/kong
+    ports:
+      - "8000:8000"
+
   crypto-server:
     build: robert-crypto-grpc-server
     healthcheck:
@@ -22,17 +34,15 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/protectedRobertDB
-      - ROBERT_CRYPTO_SERVER_HOST=crypto-server
-      - SUBMISSION_CODE_SERVER_URL=http://mock-submission-code-server:1080
-      - ROBERT_CAPTCHA_PRIVATEBASEURL=http://mock-captcha:1080/private/api/v1
-      - ROBERT_CAPTCHA_PUBLICBASEURL=http://mock-captcha:1080/public/api/v1
-      - PUSH_SERVER_HOST=mock-push-notif-server
-      - PUSH_SERVER_PORT=1080
-      - ESR_LIMIT=0
-      - ROBERT_EPOCHBUNDLEDURATIONINDAYS=20
+      - ROBERTWS_COUNTRYCODE=33
+      - ROBERTWS_SERVICESTARTDATE=2020-06-01
+      - ROBERTWS_CRYPTOSERVERURI=dns:///crypto-server:9090
+      - ROBERTWS_PUSHSERVERBASEURL=http://mock-push-notif-server:1080/internal/api/v1
+      - ROBERTWS_CAPTCHASERVER_BASEURL=http://mock-captcha:1080/private/api/v1
+      - ROBERTWS_SUBMISSIONCODESERVERBASEURL=http://mock-submission-code-server:1080/api/v1
+      - ROBERTWS_MINEPOCHSBETWEENSTATUSREQUESTS=0
+      - ROBERTWS_EPHEMERALTUPLESBUNDLEDAYS=20
       - FAKETIME_TIMESTAMP_FILE=/etc/faketime.d/faketime
-    ports:
-      - "8086:8086"
     depends_on:
       - mongo
       - crypto-server
@@ -116,8 +126,8 @@ services:
     image: prom/prometheus:v2.32.1
     command:
       - --config.file=/etc/prometheus/config.yml
-    ports:
-      - "9090:9090"
+      - --web.external-url=/prometheus
+      - --web.route-prefix=/prometheus
     volumes:
       - ./docker-compose/prometheus/config.yml:/etc/prometheus/config.yml:ro
 
@@ -133,9 +143,8 @@ services:
     volumes:
       - ./docker-compose/grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
+      - GF_SERVER_ROOT_URL=/grafana
       - GF_AUTH_ANONYMOUS_ENABLED=true
-    ports:
-      - "3000:3000"
 
 volumes:
   faketime:

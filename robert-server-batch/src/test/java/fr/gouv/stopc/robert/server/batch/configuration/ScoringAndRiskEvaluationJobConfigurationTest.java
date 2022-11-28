@@ -9,7 +9,6 @@ import fr.gouv.stopc.robert.server.batch.configuration.job.ScoringAndRiskEvaluat
 import fr.gouv.stopc.robert.server.batch.listener.LogHelloMessageCountToProcessJobExecutionListener;
 import fr.gouv.stopc.robert.server.batch.utils.ProcessorTestUtils;
 import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
@@ -18,6 +17,8 @@ import fr.gouv.stopc.robert.server.crypto.structure.CryptoAES;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
+import fr.gouv.stopc.robertserver.batch.test.MongodbManager;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
@@ -39,6 +40,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.CollectionUtils;
@@ -54,6 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
 @Slf4j
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
@@ -63,7 +66,10 @@ import static org.mockito.Mockito.*;
 @TestPropertySource(locations = "classpath:application-legacy.properties", properties = {
         "robert.scoring.algo-version=2",
         "robert.scoring.batch-mode=SCORE_CONTACTS_AND_COMPUTE_RISK" })
+@TestExecutionListeners(listeners = { MongodbManager.class }, mergeMode = MERGE_WITH_DEFAULTS)
 class ScoringAndRiskEvaluationJobConfigurationTest {
+
+    private RobertClock robertClock = new RobertClock("2020-06-01");
 
     @Autowired
     JobLauncherTestUtils jobLauncherTestUtils;
@@ -517,7 +523,6 @@ class ScoringAndRiskEvaluationJobConfigurationTest {
     void testResetAtRisk() throws Exception {
 
         // Given
-        final var robertClock = new RobertClock(serverConfigurationService.getServiceTimeStart());
         final var nowMinus7Days = robertClock.now().minus(7, DAYS);
         final var nowMinus8Days = robertClock.now().minus(8, DAYS);
 

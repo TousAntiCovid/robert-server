@@ -5,14 +5,16 @@ import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifi
 import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
 import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
-import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
+import fr.gouv.stopc.robert.client.api.RobertApi;
 import io.cucumber.spring.ScenarioScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @Service
@@ -22,7 +24,7 @@ public class MobilePhonesEmulator {
 
     private final ApplicationProperties applicationProperties;
 
-    private final RobertLegacyApi robertLegacyApi;
+    private final RobertApi robertApi;
 
     private final CaptchaApi captchaApi;
 
@@ -43,7 +45,7 @@ public class MobilePhonesEmulator {
                 userName,
                 applicationProperties,
                 captchaApi,
-                robertLegacyApi,
+                robertApi,
                 clientIdentifierRepository,
                 registrationRepository,
                 platformTimeSteps

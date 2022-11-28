@@ -3,7 +3,7 @@ package fr.gouv.stopc.robertserver.crypto;
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.impl.CryptoServerGrpcClient;
-import fr.gouv.stopc.robert.server.common.service.RobertClock.RobertInstant;
+import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant;
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.crypto.test.ValidateContactRequestBuilder;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +15,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.time.Duration;
 import java.util.List;
 
-import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
+import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
 import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
 import static fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE;
 import static fr.gouv.stopc.robertserver.crypto.test.CountryCode.GERMANY;

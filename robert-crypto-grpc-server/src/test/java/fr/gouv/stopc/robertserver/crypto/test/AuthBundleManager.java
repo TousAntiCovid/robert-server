@@ -2,8 +2,8 @@ package fr.gouv.stopc.robertserver.crypto.test;
 
 import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
