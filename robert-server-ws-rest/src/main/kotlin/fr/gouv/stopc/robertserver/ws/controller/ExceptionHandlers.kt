@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
 import com.fasterxml.jackson.databind.DatabindException
+import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
 import fr.gouv.stopc.robertserver.ws.common.base64Encode
 import fr.gouv.stopc.robertserver.ws.common.logger
@@ -9,6 +10,8 @@ import fr.gouv.stopc.robertserver.ws.service.GrpcClientErrorException
 import fr.gouv.stopc.robertserver.ws.service.MissingRegistrationException
 import fr.gouv.stopc.robertserver.ws.service.RequestRateExceededException
 import io.netty.handler.codec.http.HttpResponseStatus
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -17,12 +20,8 @@ import org.springframework.validation.BindingResult
 import org.springframework.validation.MapBindingResult
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import org.springframework.web.server.MethodNotAllowedException
-import org.springframework.web.server.NotAcceptableStatusException
-import org.springframework.web.server.ResponseStatusException
-import org.springframework.web.server.ServerErrorException
-import org.springframework.web.server.ServerWebInputException
-import org.springframework.web.server.UnsupportedMediaTypeStatusException
+import org.springframework.web.context.request.WebRequest
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import javax.servlet.http.HttpServletRequest
 
 /**
@@ -35,68 +34,81 @@ import javax.servlet.http.HttpServletRequest
  */
 
 @RestControllerAdvice
-class ExceptionHandlers(private val request: HttpServletRequest) {
+class ExceptionHandlers(private val request: HttpServletRequest) : ResponseEntityExceptionHandler() {
 
     private val log = logger()
 
-    /**
-     * Default action on unexpected exception is to log the full stacktrace.
-     * @return an empty HTTP 500 response
-     */
-    @ExceptionHandler(Throwable::class)
-    fun handleAnyException(ex: Throwable): ResponseEntity<Void> {
-        log.error("Unexpected error on ${request.method} ${request.requestURI}: ${ex::class.simpleName} ${ex.message}", ex)
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).build()
+    override fun handleExceptionInternal(
+        ex: java.lang.Exception,
+        body: Any?,
+        headers: HttpHeaders,
+        status: HttpStatus,
+        r: WebRequest
+    ): ResponseEntity<Any> {
+        if (status.is4xxClientError) {
+            log.info("Unacceptable request on ${request.method} ${request.requestURI}: ${ex::class.simpleName} ${ex.message}")
+        } else {
+            log.error(
+                "Unexpected error on ${request.method} ${request.requestURI}: ${ex::class.simpleName} ${ex.message}",
+                ex
+            )
+        }
+        return ResponseEntity.status(status).build()
+    }
+
+    override fun handleBindException(
+        ex: BindException,
+        headers: HttpHeaders,
+        status: HttpStatus,
+        r: WebRequest
+    ): ResponseEntity<Any> = handleValidationError(ex)
+
+    override fun handleHttpMessageNotReadable(
+        ex: HttpMessageNotReadableException,
+        headers: HttpHeaders,
+        status: HttpStatus,
+        r: WebRequest
+    ): ResponseEntity<Any> = when (val cause = ex.cause) {
+        is InvalidFormatException -> {
+            val errors = MapBindingResult(mutableMapOf<String, Any>(), "request")
+            val field = cause.path.joinToString(".") { it.fieldName }
+            errors.rejectValue(field, "InvalidFormatException", cause.originalMessage)
+            handleValidationError(errors)
+        }
+        is MissingKotlinParameterException -> {
+            val errors = MapBindingResult(mutableMapOf<String, Any>(), "request")
+            errors.rejectValue(cause.parameter.name ?: "", "NotNull", "should not be null")
+            handleValidationError(errors)
+        }
+        is DatabindException -> {
+            val errors = MapBindingResult(mutableMapOf<String, Any>(), "request")
+            errors.reject(cause.javaClass.simpleName, cause.originalMessage)
+            handleValidationError(errors)
+        }
+        else -> handleExceptionInternal(ex, null, headers, status, r)
     }
 
     /**
      * Error on unexpected malformed request result in an INFO log message.
-     * @return an empty HTTP 400 response
-     */
-    @ExceptionHandler(
-        value = [
-            HttpMessageNotReadableException::class,
-            MethodNotAllowedException::class,
-            NotAcceptableStatusException::class,
-            UnsupportedMediaTypeStatusException::class,
-            ServerErrorException::class,
-            ServerWebInputException::class,
-            ResponseStatusException::class
-        ]
-    )
-    fun handleUnacceptableRequest(ex: Exception): ResponseEntity<Void> {
-        return when (val cause = ex.cause) {
-            is MissingKotlinParameterException -> {
-                val errors = MapBindingResult(mutableMapOf<String, Any>(), "request")
-                errors.rejectValue(cause.parameter.name ?: "", "NotNull", "should not be null")
-                handleValidationError(errors)
-            }
-
-            is DatabindException -> {
-                val errors = MapBindingResult(mutableMapOf<String, Any>(), "request")
-                errors.reject(cause.javaClass.simpleName, cause.originalMessage)
-                handleValidationError(errors)
-            }
-
-            else -> {
-                log.info("Unacceptable request on ${request.method} ${request.requestURI}: ${ex::class.simpleName} ${ex.message}")
-                return ResponseEntity.badRequest().build()
-            }
-        }
-    }
-
-    /**
      * We use Spring's [BindException] for data validation: [BindingResult] errors are logged.
      * @return an empty HTTP 400 response
      */
-    @ExceptionHandler(BindException::class)
-    fun handleValidationError(validation: BindingResult): ResponseEntity<Void> {
+    private fun handleValidationError(validation: BindingResult): ResponseEntity<Any> {
         val globalErrors = validation.globalErrors.map { "object '${it.objectName}' ${it.defaultMessage} (${it.code})" }
         val fieldErrors =
             validation.fieldErrors.map { "field '${it.field}' rejected value [${it.rejectedValue?.toPrettyString()}] ${it.defaultMessage} (${it.code})" }
         val errors = (globalErrors + fieldErrors).joinToString(" and ")
         log.info("Request validation failed on ${request.method} ${request.requestURI}: $errors")
         return ResponseEntity.badRequest().build()
+    }
+
+    /**
+     * Default action on unexpected exception is to log the full stacktrace.
+     * @return an empty HTTP 500 response
+     */
+    @ExceptionHandler(Exception::class)
+    fun handleAnyException(ex: Exception, r: WebRequest): ResponseEntity<Any> {
+        return handleExceptionInternal(ex, null, HttpHeaders(), INTERNAL_SERVER_ERROR, r)
     }
 
     /**
