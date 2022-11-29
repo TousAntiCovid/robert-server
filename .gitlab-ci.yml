@@ -12,12 +12,15 @@ build-docker:
   variables:
     K8S_REGISTRY_IMAGE_CRYPTO: $K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
     K8S_REGISTRY_IMAGE_BATCH: $K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
+    K8S_REGISTRY_IMAGE_WS: $K8S_REGISTRY/robert-ws:$CI_COMMIT_SHORT_SHA
   script:
     - echo -n $K8S_REGISTRY_PASSWORD | docker login -u $K8S_REGISTRY_USER --password-stdin $K8S_REGISTRY
     - docker build -t $K8S_REGISTRY_IMAGE_CRYPTO -f robert-crypto-grpc-server/Dockerfile.k8s robert-crypto-grpc-server
     - docker build -t $K8S_REGISTRY_IMAGE_BATCH -f robert-server-batch/Dockerfile.k8s robert-server-batch
+    - docker build -t $K8S_REGISTRY_IMAGE_WS -f robert-server-ws-rest/Dockerfile.k8s robert-server-ws-rest
     - docker push $K8S_REGISTRY_IMAGE_CRYPTO
     - docker push $K8S_REGISTRY_IMAGE_BATCH
+    - docker push $K8S_REGISTRY_IMAGE_WS
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
@@ -41,10 +44,15 @@ publish-deployment:
     - cd $basepath/robert-server-batch/src/k8s/base
     - kustomize edit set image batch-image=$K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
     - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-server-batch/deployment.yml
+    # Configure robert-ws deployment
+    - cd $basepath/robert-server-ws-rest/src/k8s/base
+    - kustomize edit set image ws-image=$K8S_REGISTRY/robert-ws:$CI_COMMIT_SHORT_SHA
+    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-server-ws-rest/deployment.yml
     # Add deployments and push
     - cd /tmp/deployments
     - git add ./$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
     - git add ./$ENVIRONMENT/robert-server-batch/deployment.yml
+    - git add ./$ENVIRONMENT/robert-server-ws-rest/deployment.yml
     - git commit -m "$CI_COMMIT_SHORT_SHA"
     - git push origin master
   rules:
