@@ -33,8 +33,6 @@ public class MobileApplication {
 
     private final String username;
 
-    private final ApplicationProperties applicationProperties;
-
     private final ClientKeys clientKeys;
 
     private final Map<Integer, ContactTuple> contactTupleByEpochId = new HashMap<>();
@@ -63,7 +61,6 @@ public class MobileApplication {
             final PlatformTimeSteps platformTime) {
         this.platformTime = platformTime;
         this.username = username;
-        this.applicationProperties = applicationProperties;
         this.registrationRepository = registrationRepository;
         this.captchaApi = captchaApi;
         this.robertApi = robertApi;
