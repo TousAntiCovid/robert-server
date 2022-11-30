@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: robert-ws
+  name: robert-ws-service
+  namespace: robert-ws
+spec:
+  selector:
+    app: robert-ws
+  ports:
+    - port: 80
+      targetPort: 8080
