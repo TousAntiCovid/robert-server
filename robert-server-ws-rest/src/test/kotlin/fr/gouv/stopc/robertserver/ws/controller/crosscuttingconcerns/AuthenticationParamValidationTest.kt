@@ -142,6 +142,6 @@ class AuthenticationParamValidationTest(@Autowired private val clock: RobertCloc
             .body(emptyString())
 
         assertThatInfoLogs()
-            .contains("""Request validation failed on POST /api/v6$apiResource: object 'request' Cannot deserialize value of type `byte[]` from String "base64": Failed to decode VALUE_STRING as base64 (MIME-NO-LINEFEEDS): Illegal character '_' (code 0x5f) in base64 content (InvalidFormatException)""")
+            .contains("""Request validation failed on POST /api/v6$apiResource: field '$paramName' rejected value [null] Cannot deserialize value of type `byte[]` from String "base64": Failed to decode VALUE_STRING as base64 (MIME-NO-LINEFEEDS): Illegal character '_' (code 0x5f) in base64 content (InvalidFormatException)""")
     }
 }
