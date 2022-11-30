@@ -17,13 +17,13 @@ public class RestApiClientConfiguration {
     @Bean
     public ApiClient apiClient() {
         return new ApiClient()
-                .setBasePath(applicationProperties.getWsRestBaseUrl() + "/api/v6");
+                .setBasePath(applicationProperties.getWsRestBaseUrl().toString());
     }
 
     @Bean
     public ApiClient kpiClient() {
         return new ApiClient()
-                .setBasePath(applicationProperties.getWsRestBaseUrl() + "/internal/api/v2/");
+                .setBasePath(applicationProperties.getWsRestInternalBaseUrl().toString());
     }
 
     @Bean
