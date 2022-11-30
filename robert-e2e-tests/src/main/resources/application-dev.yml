@@ -1,5 +1,6 @@
 robert:
-  ws-rest-base-url: http://localhost:8000
+  ws-rest-base-url: http://localhost:8000/api/v6
+  ws-rest-internal-base-url: http://localhost:8000/internal/api/v2
 
 spring:
   data:

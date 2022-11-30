@@ -19,6 +19,8 @@ public class ApplicationProperties {
 
     private final String cryptoPublicKey;
 
+    private final String submissionJwtSigningKey;
+
     private final String batchCommand;
 
     private final String batchCommandDown;

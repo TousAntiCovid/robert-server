@@ -157,10 +157,10 @@ public class MobileApplication {
         );
     }
 
-    public void reportContacts() {
+    public void reportContacts(final String reportCode) {
         final var reportResponse = robertApi.reportBatch(
                 ReportBatchRequest.builder()
-                        .token("validaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                        .token(reportCode)
                         .contacts(new ArrayList<>(receivedHelloMessages.values()))
                         .build()
         );

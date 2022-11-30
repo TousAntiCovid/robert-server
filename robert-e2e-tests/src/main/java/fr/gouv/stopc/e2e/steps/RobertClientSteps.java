@@ -66,7 +66,9 @@ public class RobertClientSteps {
 
     @Etantdonnéque("{word} se déclare malade")
     public void reportContacts(final String userName) {
-        mobilePhonesEmulator.getMobileApplication(userName).reportContacts();
+        final var reportCode = mobilePhonesEmulator.generateReportCode();
+        mobilePhonesEmulator.getMobileApplication(userName)
+                .reportContacts(reportCode);
     }
 
     @Etantdonnéque("{word} se déclare malade {relativeTime}")
