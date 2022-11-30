@@ -24,12 +24,12 @@ public class SaveKpisTasklet implements Tasklet {
 
         log.info("Updating batch kpis");
 
-        final var exposedUsersNotAtRisk = registrationRepository.countNbExposedUsersButNotAtRisk();
+        final var exposedButNotAtRiskUsers = registrationRepository.countNbExposedUsersButNotAtRisk();
         final var infectedUsersNotNotified = registrationRepository.countNbUsersAtRiskAndNotNotified();
         final var notifiedUsersScoredAgain = registrationRepository.countNbNotifiedUsersScoredAgain();
 
-        kpiRepository.upsert("exposedUsersNotAtRisk", exposedUsersNotAtRisk);
-        log.info("Updated {} kpi to {}", "exposedUsersNotAtRisk", exposedUsersNotAtRisk);
+        kpiRepository.upsert("exposedButNotAtRiskUsers", exposedButNotAtRiskUsers);
+        log.info("Updated {} kpi to {}", "exposedButNotAtRiskUsers", exposedButNotAtRiskUsers);
         kpiRepository.upsert("infectedUsersNotNotified", infectedUsersNotNotified);
         log.info("Updated {} kpi to {}", "infectedUsersNotNotified", infectedUsersNotNotified);
         kpiRepository.upsert("notifiedUsersScoredAgain", notifiedUsersScoredAgain);
