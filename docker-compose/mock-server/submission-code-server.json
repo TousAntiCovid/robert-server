@@ -1,6 +1,6 @@
 [
   {
-    "id": "By default, any call to the verify endpoint of submission-code-server-ws-rest containing a 6, 12 or 38 characters code starting with 'valid' must succeed",
+    "id": "Any call to the verify endpoint containing a 6, 12 or 38 characters code starting with 'valid' succeeds",
     "httpRequest": {
       "method": "GET",
       "path": "/api/v1/verify",
@@ -10,21 +10,36 @@
     },
     "httpResponse": {
       "headers": {
-          "Content-Type": ["application/json"]
-        },
+        "Content-Type": ["application/json"]
+      },
       "statusCode": 200,
       "body": "{\"valid\":true}"
     }
   },
   {
-    "id": "By default, any call to the verify endpoint of submission-code-server-ws-rest containing a code not starting with 'valid' must fail",
+    "id": "Any call to the verify endpoint looking like a JWT succeeds",
     "httpRequest": {
       "method": "GET",
       "path": "/api/v1/verify",
       "queryStringParameters": {
-        "code": [
-          ".*"
-        ]
+        "code": [".+[.].+[.].+"]
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "statusCode": 200,
+      "body": "{\"valid\":true}"
+    }
+  },
+  {
+    "id": "By default, any call to the verify endpoint must fail",
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/v1/verify",
+      "queryStringParameters": {
+        "code": [".*"]
       }
     },
     "httpResponse": {

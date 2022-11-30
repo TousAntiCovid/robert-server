@@ -1,6 +1,6 @@
-package fr.gouv.stopc.e2e.mobileapplication.timemachine.repository;
+package fr.gouv.stopc.e2e.mobileapplication.repository;
 
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
+import fr.gouv.stopc.e2e.mobileapplication.repository.model.Registration;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

@@ -15,7 +15,11 @@ public class ApplicationProperties {
 
     private final URL wsRestBaseUrl;
 
+    private final URL wsRestInternalBaseUrl;
+
     private final String cryptoPublicKey;
+
+    private final String submissionJwtSigningKey;
 
     private final String batchCommand;
 
