@@ -54,4 +54,4 @@ spec:
       imagePullSecrets:
         - name: poc-inttac-poc-img-push-pull-secret
       nodeSelector:
-        cce.cloud.com/cce-nodepool: "caascad-inttac-ju-pod-tac-dashing-boa"
+        caascad.io/nodepool: "pod-tac"

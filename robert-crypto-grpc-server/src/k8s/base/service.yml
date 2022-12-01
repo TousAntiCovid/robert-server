@@ -2,12 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: robert-crypto # do not delete, used for billing
-  name: robert-crypto-service # Service name
+    app: robert-crypto
+  name: robert-crypto-service
   namespace: robert-crypto
 spec:
   selector:
-    app: robert-crypto # Defines app that will be targeted
+    app: robert-crypto
   ports:
     - name: grpc
       port: 9090

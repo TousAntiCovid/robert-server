@@ -4,7 +4,7 @@ metadata:
   name: robert-crypto-deployment
   namespace: robert-crypto
   labels:
-    app: robert-crypto # do not delete, used for billing
+    app: robert-crypto
 spec:
   selector:
     matchLabels:
@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       labels:
-        app: robert-crypto # Bind by service selector>app:
+        app: robert-crypto
     spec:
       containers:
         - name: robert-crypto-app
@@ -46,4 +46,4 @@ spec:
       imagePullSecrets:
         - name: poc-inttac-poc-img-push-pull-secret
       nodeSelector:
-        cce.cloud.com/cce-nodepool: "caascad-inttac-ju-pod-tac-dashing-boa"
+        caascad.io/nodepool: "pod-tac"
