@@ -14,6 +14,23 @@ spec:
       labels:
         app: robert-crypto
     spec:
+      initContainers:
+        - name: robert-crypto-db-initializer
+          image: flyway-image
+          command: ["flyway", "migrate"]
+          env:
+            - name: FLYWAY_USER
+              value: pocinit
+            - name: FLYWAY_URL
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: SPRING_DATASOURCE_URL
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
       containers:
         - name: robert-crypto-app
           image: crypto-image

@@ -11,11 +11,13 @@ build-docker:
     - caascad
   variables:
     K8S_REGISTRY_IMAGE_CRYPTO: $K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
+    K8S_REGISTRY_IMAGE_CRYPTO_FLYWAY: $K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA-flyway
     K8S_REGISTRY_IMAGE_BATCH: $K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
     K8S_REGISTRY_IMAGE_WS: $K8S_REGISTRY/robert-ws:$CI_COMMIT_SHORT_SHA
   script:
     - echo -n $K8S_REGISTRY_PASSWORD | docker login -u $K8S_REGISTRY_USER --password-stdin $K8S_REGISTRY
     - docker build -t $K8S_REGISTRY_IMAGE_CRYPTO -f robert-crypto-grpc-server/Dockerfile.k8s robert-crypto-grpc-server
+    - docker build -t $K8S_REGISTRY_IMAGE_CRYPTO_FLYWAY -f robert-crypto-grpc-server-storage/Dockerfile.flyway robert-crypto-grpc-server-storage
     - docker build -t $K8S_REGISTRY_IMAGE_BATCH -f robert-server-batch/Dockerfile.k8s robert-server-batch
     - docker build -t $K8S_REGISTRY_IMAGE_WS -f robert-server-ws-rest/Dockerfile.k8s robert-server-ws-rest
     - docker push $K8S_REGISTRY_IMAGE_CRYPTO
@@ -39,6 +41,7 @@ publish-deployment:
     - basepath=$(pwd)
     - cd $basepath/robert-crypto-grpc-server/src/k8s/base
     - kustomize edit set image crypto-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
+    - kustomize edit set image flyway-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA-flyway
     - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
     # Configure robert-batch deployment
     - cd $basepath/robert-server-batch/src/k8s/base
