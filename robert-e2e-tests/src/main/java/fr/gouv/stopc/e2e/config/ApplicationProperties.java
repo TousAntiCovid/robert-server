@@ -1,6 +1,7 @@
 package fr.gouv.stopc.e2e.config;
 
-import lombok.Data;
+import lombok.Value;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 import org.springframework.validation.annotation.Validated;
@@ -10,19 +11,23 @@ import java.net.URL;
 @Validated
 @ConstructorBinding
 @ConfigurationProperties("robert")
-@Data
+@Value
 public class ApplicationProperties {
 
-    private final URL wsRestBaseUrl;
+    URL wsRestBaseUrl;
 
-    private final URL wsRestInternalBaseUrl;
+    URL wsRestInternalBaseUrl;
 
-    private final String cryptoPublicKey;
+    String cryptoPublicKey;
 
-    private final String submissionJwtSigningKey;
+    DataSourceProperties cryptoDatasource;
 
-    private final String batchCommand;
+    DataSourceProperties captchaDatasource;
 
-    private final String batchCommandDown;
+    String submissionJwtSigningKey;
+
+    String batchCommand;
+
+    String batchCommandDown;
 
 }

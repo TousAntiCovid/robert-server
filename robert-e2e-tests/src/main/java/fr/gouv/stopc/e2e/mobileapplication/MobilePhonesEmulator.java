@@ -5,7 +5,8 @@ import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.e2e.mobileapplication.repository.ClientIdentifierRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.ApplicationIdentityRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.CaptchaRepository;
 import fr.gouv.stopc.e2e.mobileapplication.repository.RegistrationRepository;
 import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
@@ -37,7 +38,9 @@ public class MobilePhonesEmulator {
 
     private final CaptchaApi captchaApi;
 
-    private final ClientIdentifierRepository clientIdentifierRepository;
+    private final Optional<CaptchaRepository> captchaRepository;
+
+    private final ApplicationIdentityRepository applicationIdentityRepository;
 
     private final RegistrationRepository registrationRepository;
 
@@ -55,7 +58,8 @@ public class MobilePhonesEmulator {
                 applicationProperties,
                 captchaApi,
                 robertApi,
-                clientIdentifierRepository,
+                captchaRepository.orElse(null),
+                applicationIdentityRepository,
                 registrationRepository,
                 platformTimeSteps
         );
