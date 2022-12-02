@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: robert-ws-ingress
+  namespace: robert-ws
+  annotations:
+    kubernetes.io/ingress.class: nginx-poc
+spec:
+  rules:
+    - host: $K8S_INGRESS_HOST
+      http:
+        paths:
+          - path: /api/v6
+            pathType: Prefix
+            backend:
+              service:
+                name: robert-ws-service
+                port:
+                  number: 80
