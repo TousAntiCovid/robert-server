@@ -7,8 +7,10 @@ import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
 import fr.gouv.stopc.e2e.mobileapplication.model.*;
-import fr.gouv.stopc.e2e.mobileapplication.repository.ClientIdentifierRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.ApplicationIdentityRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.CaptchaRepository;
 import fr.gouv.stopc.e2e.mobileapplication.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.model.Captcha;
 import fr.gouv.stopc.e2e.mobileapplication.repository.model.Registration;
 import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
@@ -56,7 +58,8 @@ public class MobileApplication {
             final ApplicationProperties applicationProperties,
             final CaptchaApi captchaApi,
             final RobertApi robertApi,
-            final ClientIdentifierRepository clientIdentifierRepository,
+            final CaptchaRepository captchaRepository,
+            final ApplicationIdentityRepository applicationIdentityRepository,
             final RegistrationRepository registrationRepository,
             final PlatformTimeSteps platformTime) {
         this.platformTime = platformTime;
@@ -66,15 +69,19 @@ public class MobileApplication {
         this.robertApi = robertApi;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
-        final var captchaSolution = resolveMockedCaptchaChallenge();
-        final var registerResponse = register(captchaSolution.getId(), captchaSolution.getAnswer());
-        this.applicationId = clientIdentifierRepository.findTopByOrderByIdDesc()
-                .orElseThrow()
-                .getIdA();
+        final Captcha captcha;
+        if (null == captchaRepository) {
+            captcha = new Captcha("challengeId", "valid");
+        } else {
+            captcha = captchaRepository.saveRandomCaptcha();
+        }
+        resolveCaptchaChallenge();
+        final var registerResponse = register(captcha.getId(), captcha.getAnswer());
+        this.applicationId = applicationIdentityRepository.findLastInsertedIdA();
         this.clock = new EpochClock(registerResponse.getTimeStart());
     }
 
-    private CaptchaSolution resolveMockedCaptchaChallenge() {
+    private void resolveCaptchaChallenge() {
         // We don't really need it, but for the demonstration...
         // The mobile application asks a captcha challenge
         final var captchaChallenge = captchaApi.captcha(
@@ -87,18 +94,15 @@ public class MobileApplication {
         final var response = captchaApi.captchaChallengeImageWithHttpInfo(captchaChallenge.getId());
         assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
         assertThat("image content", response.getBody(), notNullValue());
-        // Then the user should type in its answer,
-        // And it is sent back with the register request but we set a mocked response
-        return new CaptchaSolution("challengeId", "valid");
     }
 
-    private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {
+    private RegisterSuccessResponse register(final String captchaId, final String captchaAnswer) {
         final var publicKey = getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
 
         final var registerResponse = robertApi.register(
                 RegisterRequest.builder()
-                        .captcha(captchaSolution)
+                        .captcha(captchaAnswer)
                         .captchaId(captchaId)
                         .clientPublicECDHKey(publicKey)
                         .pushInfo(
@@ -178,7 +182,7 @@ public class MobileApplication {
     }
 
     public ExposureStatus requestStatus() {
-        final var now = clock.at(platformTime.getPlatformTime().toInstant());
+        final var now = clock.at(platformTime.getPlatformTime());
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
         final var exposureStatusResponse = robertApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())

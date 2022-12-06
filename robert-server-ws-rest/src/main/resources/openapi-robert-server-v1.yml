@@ -46,7 +46,7 @@ paths:
         "400":
           description: bad request
       security: []
-  /captcha/{captchaId}.png:
+  /captcha/{captchaId}/image:
     get:
       tags: ["robert", "captcha"]
       summary: Get image CAPTCHA

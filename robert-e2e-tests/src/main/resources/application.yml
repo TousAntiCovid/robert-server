@@ -2,6 +2,10 @@ robert:
   ws-rest-base-url: http://gateway:8000/api/v6
   ws-rest-internal-base-url: http://gateway:8000/internal/api/v2
   crypto-public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7fAxfrLtG5tXyjomCOg9r1wNnr9len4m9sTflJUHDdkwubKyidTtFkVfNLrM91yuffdrpJZe9XOkof8P+zPGDg==
+  crypto-datasource:
+    url: jdbc:postgresql://postgres:5432/robert
+    username: robert
+    password: robert
   submission-jwt-signing-key: MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCBTNNLOcRp7Bksc//nB+6DlOCyCtDlvGHiz9UWVcGZoag==
   batch-command: "docker-compose up --no-recreate batch"
 
@@ -9,10 +13,6 @@ spring:
   data:
     mongodb:
       uri: mongodb://mongo:27017/protectedRobertDB
-  datasource:
-    url: jdbc:postgresql://postgres:5432/robert
-    username: robert
-    password: robert
 
 logging.level:
   root: warn

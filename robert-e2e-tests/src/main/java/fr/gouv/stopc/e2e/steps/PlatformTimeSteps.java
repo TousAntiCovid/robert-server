@@ -9,8 +9,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -30,12 +28,8 @@ public class PlatformTimeSteps {
 
     private final RobertApi robertApi;
 
-    public ZonedDateTime getPlatformTime() {
-        return ZonedDateTime.parse(execInContainer("ws-rest", "date --iso-8601=seconds -u"));
-    }
-
-    public LocalDate getPlatformDate() {
-        return getPlatformTime().toLocalDate();
+    public Instant getPlatformTime() {
+        return robertApi.clock().getTime().toInstant();
     }
 
     @Etantdonnéque("l'on est {relativeTime}")
