@@ -44,7 +44,7 @@ public class RobertClientSteps {
     public void generateContactsBetweenUsers(final List<String> users, final Duration durationOfExchange) {
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
                 users,
-                platformTimeSteps.getPlatformTime().toInstant(),
+                platformTimeSteps.getPlatformTime(),
                 durationOfExchange
         );
     }
