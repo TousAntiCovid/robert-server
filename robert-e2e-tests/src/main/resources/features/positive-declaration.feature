@@ -85,7 +85,7 @@ Fonctionnalité: Covid-19 positive declaration
   @RealTimeEnvironment
   Scénario: Une personne infectée par la Covid19 a un contact prolongé avec d'autres personnes
     Etant donné que John, Sarah et Paul sont à proximité 48 heures
-    Lorsque Sarah se déclare malade aujourd'hui
+    Lorsque Sarah se déclare malade
     Et que le batch robert est exécuté
     Alors John est à risque
     Et Paul est à risque
