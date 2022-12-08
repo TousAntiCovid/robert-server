@@ -3,9 +3,9 @@ package fr.gouv.tac.mobile.emulator.controller;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.tac.mobile.emulator.api.EmulatorApi;
 import fr.gouv.tac.mobile.emulator.api.model.HelloMessageExchangesOrderRequest;
-import fr.gouv.tac.mobile.emulator.api.model.InlineResponse200;
 import fr.gouv.tac.mobile.emulator.api.model.RegisterOrderRequest;
 import fr.gouv.tac.mobile.emulator.api.model.ReportOrderRequest;
+import fr.gouv.tac.mobile.emulator.api.model.Status200Response;
 import fr.gouv.tac.mobile.emulator.service.EmulatorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,11 +56,11 @@ public class EmulatorController implements EmulatorApi {
     }
 
     @Override
-    public ResponseEntity<InlineResponse200> status(String captchaId) {
+    public ResponseEntity<Status200Response> status(String captchaId) {
         log.info("status for the app mobile identified by this captcha id {} ", captchaId);
 
         return ResponseEntity.ok(
-                InlineResponse200.builder()
+                Status200Response.builder()
                         .riskLevel(emulatorService.status(captchaId))
                         .build()
         );
