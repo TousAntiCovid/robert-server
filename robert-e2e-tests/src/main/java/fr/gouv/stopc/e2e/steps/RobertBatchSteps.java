@@ -40,7 +40,7 @@ public class RobertBatchSteps {
         background.submit(new StreamGobbler(process.getInputStream(), processLogs));
         background.submit(new StreamGobbler(process.getErrorStream(), processLogs));
 
-        final var hasExited = process.waitFor(60, SECONDS);
+        final var hasExited = process.waitFor(180, SECONDS);
         background.shutdownNow();
         assertThat(hasExited)
                 .as(
