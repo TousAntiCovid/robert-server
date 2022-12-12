@@ -12,6 +12,7 @@ import fr.gouv.stopc.robertserver.ws.service.RequestRateExceededException
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -85,7 +86,7 @@ class ExceptionHandlers(private val request: HttpServletRequest) : ResponseEntit
             errors.reject(cause.javaClass.simpleName, cause.originalMessage)
             handleValidationError(errors)
         }
-        else -> handleExceptionInternal(ex, null, headers, status, r)
+        else -> handleExceptionInternal(ex, null, headers, BAD_REQUEST, r)
     }
 
     /**
