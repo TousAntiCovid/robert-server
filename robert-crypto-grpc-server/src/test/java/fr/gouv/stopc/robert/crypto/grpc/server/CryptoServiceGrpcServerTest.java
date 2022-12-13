@@ -23,6 +23,8 @@ import fr.gouv.stopc.robert.server.crypto.structure.CryptoAES;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
+import fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager;
+import fr.gouv.stopc.robertserver.crypto.test.CountryCode;
 import io.grpc.ManagedChannel;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
@@ -165,6 +167,9 @@ class CryptoServiceGrpcServerTest {
         server.stop();
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.CreateRegistrationTest#can_create_a_registration_and_return_a_valid_5_days_tuples_bundle(CountryCode)
+     */
     @Test
     void testCreateRegistrationSucceeds() {
         // Given
@@ -204,6 +209,9 @@ class CryptoServiceGrpcServerTest {
         );
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.CreateRegistrationTest#doesnt_generate_tuples_for_unknown_server_keys()
+     */
     @Test
     void testCreateRegistrationFakeClientPublicKeyFails() {
         byte[] fakeKey = new byte[32];
@@ -230,6 +238,10 @@ class CryptoServiceGrpcServerTest {
         assertEquals(400, response.getError().getCode());
     }
 
+    /**
+     * @see CreateRegistrationTest#cant_create_a_registration_with_a_non_ecdh_public_key()
+     *      ()
+     */
     @Test
     void testCreateRegistrationClientPublicKeyNotECDHFails() {
         CreateRegistrationRequest request = CreateRegistrationRequest
@@ -253,6 +265,9 @@ class CryptoServiceGrpcServerTest {
         assertEquals(400, response.getError().getCode());
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.CreateRegistrationTest#cant_create_a_registration_with_a_public_key_having_the_wrong_ec_spec()
+     */
     @Test
     void testCreateRegistrationClientPublicKeyImproperECFails() {
         // Client public key generated with EC curve "secp256k1" instead of server's
@@ -412,6 +427,9 @@ class CryptoServiceGrpcServerTest {
         PREVIOUS;
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#can_authenticate_valid_request(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromAuthRequestSucceeds() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -443,6 +461,10 @@ class CryptoServiceGrpcServerTest {
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#can_authenticate_valid_request(AuthBundleManager.AuthBundle)
+     * @see fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle()
+     */
     @Test
     void testGetIdFromAuthRequestWithOlderEBIDAndEpochSucceeds() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -476,6 +498,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#cant_authenticate_with_malformed_ebid(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromAuthRequestFakeEBIDFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -511,6 +536,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#cant_authenticate_with_incorrect_mac(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromAuthRequestBadMacFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -547,6 +575,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#cant_authenticate_with_incorrect_mac(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromAuthRequestMacWithBadRequestTypeFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -578,6 +609,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#cant_authenticate_with_an_epoch_different_from_ebid(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromAuthRequestEpochIdsDoNotMatchFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -617,6 +651,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#cant_authenticate_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromAuthRequestFailsCauseNoServerKeyFound() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -648,6 +685,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 430);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#cant_authenticate_with_unknown_request_type(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromAuthRequestUnknownRequestTypeFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -710,6 +750,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#cant_authenticate_with_unknown_idA(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromAuthRequestUnknownIdFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -754,6 +797,11 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 404);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#can_authenticate_valid_request(AuthBundleManager.AuthBundle)
+     * @see fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle()
+     *      example with "use current time but epoch-2days"
+     */
     @Test
     void testGetIdFromAuthWithEbidEncodedWithPreviousKSSucceeds() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -796,6 +844,24 @@ class CryptoServiceGrpcServerTest {
         assertArrayEquals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray());
     }
 
+    /**
+     * this test doesn't work as expected :
+     * 
+     * <pre>
+     *     10:46:26.282 [main] INFO fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = 14268600 vs auth request epoch = 88839
+     *     10:46:26.284 [main] WARN fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Epochs do not match for authRequestEpoch = 88839 and adjacentEpochMatchEnum = NONE
+     *     10:46:26.284 [main] WARN fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Could not decrypt ebid content
+     * </pre>
+     * 
+     * Authentication is rejected but not for the right reason.
+     * <p>
+     * See following tests pointing out we can authenticate using an EBID generated
+     * for a future epoch.
+     * 
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromAuthTest#can_authenticate_valid_request(AuthBundleManager.AuthBundle)
+     * @see fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle()
+     *      example with "use current time but epoch+2days"
+     */
     @Test
     void testGetIdFromAuthWithEbidEncodedWithFutureKSFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -829,6 +895,20 @@ class CryptoServiceGrpcServerTest {
         assertEquals(400, response.getError().getCode());
     }
 
+    /**
+     * this test doesn't work as expected : there is no log output but we should
+     * have seen :
+     * 
+     * <pre>
+     *     INFO Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = {} vs auth request epoch = {}
+     *     // because the epoch found in ebid is mis-decrypted, we got some random integer
+     *     WARN Retrying ebid decrypt with previous epoch
+     *     // or
+     *     WARN Retrying ebid decrypt with next epoch
+     * </pre>
+     *
+     * This requirement is not properly implemented.
+     */
     @Test
     void testGetIdFromAuthWithEbidEncodedWithPreviousKSAfterGracePeriodSucceeds() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -862,6 +942,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.DeleteIdTest#can_delete_identity(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testDeleteIdSucceeds() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -892,6 +975,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.DeleteIdTest#cant_unregister_unknown_idA(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testDeleteIdUnknownIdFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -935,6 +1021,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 404);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.DeleteIdTest#cant_unregister_with_malformed_ebid(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testDeleteIdFakeEBIDFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -969,6 +1058,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.DeleteIdTest#cant_unregister_with_incorrect_mac(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testDeleteIdBadMacFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1005,6 +1097,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.DeleteIdTest#cant_unregister_with_an_epoch_different_from_ebid(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testDeleteIdEpochIdsDoNotMatchFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1043,6 +1138,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.DeleteIdTest#cant_unregister_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testDeleteIdFailsCauseNoServerKeyAvailable() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1104,6 +1202,10 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.DeleteIdTest#can_delete_identity(AuthBundleManager.AuthBundle)
+     * @see valid_auth_bundle
+     */
     @Test
     void tesDeleteIdWithEbidEncodedWithPreviousKSSucceeds() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1146,6 +1248,24 @@ class CryptoServiceGrpcServerTest {
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
     }
 
+    /**
+     * this test doesn't work as expected :
+     * 
+     * <pre>
+     *     11:37:50.396 [main] INFO fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = 13277949 vs auth request epoch = 88842
+     *     11:37:50.397 [main] WARN fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Epochs do not match for authRequestEpoch = 88842 and adjacentEpochMatchEnum = NONE
+     *     11:37:50.397 [main] WARN fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Could not decrypt ebid content
+     * </pre>
+     * 
+     * Authentication is rejected but not for the right reason.
+     * <p>
+     * See following tests pointing out we can authenticate using an EBID generated
+     * for a future epoch.
+     * 
+     * @see fr.gouv.stopc.robertserver.crypto.DeleteIdTest#can_delete_identity(AuthBundleManager.AuthBundle)
+     * @see fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle()
+     *      example with "use current time but epoch+2days"
+     */
     @Test
     void testDeleteIdWithEbidEncodedWithFutureKSFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1179,6 +1299,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromStatusTest#can_produce_tuples_bundle(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromStatusSucceeds() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1238,6 +1361,9 @@ class CryptoServiceGrpcServerTest {
         return serverKeys;
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromStatusTest#can_produce_tuples_bundle(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromStatusRequestWithOlderEBIDAndEpochSucceeds() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1282,6 +1408,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(Arrays.equals(clientIdentifierBundle.get().getId(), response.getIdA().toByteArray()));
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromStatusTest#cant_produce_tuples_bundle_for_malformed_ebid(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromStatusFakeEBIDFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1315,6 +1444,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromStatusTest#cant_produce_tuples_bundle_for_incorrect_mac(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromStatusBadMacFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1350,6 +1482,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromStatusTest#cant_produce_tuples_bundle_when_the_epoch_is_different_from_ebid(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromStatusEpochIdsDoNotMatchFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1388,6 +1523,9 @@ class CryptoServiceGrpcServerTest {
         assertTrue(response.getError().getCode() == 400);
     }
 
+    /**
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromStatusTest#cant_produce_tuples_bundle_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(AuthBundleManager.AuthBundle)
+     */
     @Test
     void testGetIdFromStatusFailsCauseNoServerKeyFound() {
 
@@ -1510,6 +1648,24 @@ class CryptoServiceGrpcServerTest {
         );
     }
 
+    /**
+     * this test doesn't work as expected :
+     * 
+     * <pre>
+     *     11:43:34.203 [main] INFO fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Epoch from EBID and accompanying authRequestEpoch do not match: ebid epoch = 15946065 vs auth request epoch = 88842
+     *     11:43:34.205 [main] WARN fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Epochs do not match for authRequestEpoch = 88842 and adjacentEpochMatchEnum = NONE
+     *     11:43:34.205 [main] WARN fr.gouv.stopc.robert.crypto.grpc.server.service.impl.CryptoGrpcServiceBaseImpl - Could not decrypt ebid content
+     * </pre>
+     * 
+     * Authentication is rejected but not for the right reason.
+     * <p>
+     * See following tests pointing out we can authenticate using an EBID generated
+     * for a future epoch.
+     * 
+     * @see fr.gouv.stopc.robertserver.crypto.GetIdFromStatusTest#cant_produce_tuples_bundle_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(AuthBundleManager.AuthBundle)
+     * @see fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle()
+     *      example with "use current time but epoch+2days"
+     */
     @Test
     void testGetIdFromStatusWithEbidEncodedWithFutureKSFails() {
         Optional<ClientIdentifierBundle> clientIdentifierBundle = createId();
@@ -1788,6 +1944,9 @@ class CryptoServiceGrpcServerTest {
         assertEquals(0, response.getEpochId());
     }
 
+    /**
+     * deprecated operation, replaced with ValidateContactTest
+     */
     @Test
     void testGetInfoFromHelloMessageWithEbidEncodedWithPreviousKSSucceeds() {
         byte[][] serverKeys = new byte[4][24];
@@ -1849,6 +2008,9 @@ class CryptoServiceGrpcServerTest {
 
     }
 
+    /**
+     * deprecated operation, replaced with ValidateContactTest
+     */
     @Test
     void testGetInfoFromHelloMessageWithEbidEncodedWithFutureKSFails() {
         byte[][] serverKeys = new byte[4][24];
