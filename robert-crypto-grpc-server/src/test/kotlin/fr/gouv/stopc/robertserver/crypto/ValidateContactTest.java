@@ -31,8 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests server processing that should be done by the crypto server.
  *
  * @see <a href=
- *      "https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert
- *      specification</a> §6.2
+ * "https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert
+ * specification</a> §6.2
  */
 @IntegrationTest
 class ValidateContactTest {

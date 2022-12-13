@@ -116,7 +116,6 @@ public class AuthBundleManager {
          * Assemble and encrypt epochId and idA to return an EBID.
          * <p>
          * The unencrypted EBID is made of 8 bytes.
-         * 
          * <pre>
          *     +---------------------------------+
          *     | Unencrypted EBID                |
@@ -127,8 +126,8 @@ public class AuthBundleManager {
          * </pre>
          *
          * @see <a href=
-         *      "https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert
-         *      Protocol 1.1</a> §4
+         * "https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert
+         * Protocol 1.1</a> §4
          */
         @SneakyThrows
         public ByteString getEbid() {
@@ -142,7 +141,6 @@ public class AuthBundleManager {
 
         /**
          * Computes the MAC for this EBID, epochId and time.
-         * 
          * <pre>
          *     +----------------------------------------------------------------+
          *     |                    MAC structure (128 bits)                    |
@@ -153,8 +151,8 @@ public class AuthBundleManager {
          * </pre>
          *
          * @see <a href=
-         *      "https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert
-         *      Protocol 1.1</a> §7 and §C
+         * "https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert
+         * Protocol 1.1</a> §7 and §C
          */
         @SneakyThrows
         public ByteString getMac() {
