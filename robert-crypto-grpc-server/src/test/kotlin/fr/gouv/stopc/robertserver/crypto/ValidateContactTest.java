@@ -16,14 +16,14 @@ import java.time.Duration;
 import java.util.List;
 
 import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
-import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
+import static fr.gouv.stopc.robertserver.crypto.test.ClockManagerKt.getClock;
 import static fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE;
 import static fr.gouv.stopc.robertserver.crypto.test.CountryCode.GERMANY;
-import static fr.gouv.stopc.robertserver.crypto.test.LogbackManager.assertThatWarnLogs;
-import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.givenIdentityDoesntExistForIdA;
-import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.givenIdentityExistsForIdA;
-import static fr.gouv.stopc.robertserver.crypto.test.ValidateContactRequestBuilder.givenValidateContactRequest;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.*;
+import static fr.gouv.stopc.robertserver.crypto.test.LogbackManagerKt.assertThatWarnLogs;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgresqlManagerKt.givenIdentityDoesntExistForIdA;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgresqlManagerKt.givenIdentityExistsForIdA;
+import static fr.gouv.stopc.robertserver.crypto.test.ValidateContactRequestBuilderKt.givenValidateContactRequest;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcherKt.*;
 import static java.time.temporal.ChronoUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,7 +57,7 @@ class ValidateContactTest {
 
     @Test
     void can_validate_contact() {
-        final var contactInstant = clock().now();
+        final var contactInstant = getClock().now();
 
         givenIdentityExistsForIdA("BCDEF0A=");
 
@@ -78,7 +78,7 @@ class ValidateContactTest {
     void should_reject_unexpected_country_codes() {
         givenIdentityExistsForIdA("BCDEF0A=");
 
-        final var request = givenWellFormedValidateContactRequest(clock().now())
+        final var request = givenWellFormedValidateContactRequest(getClock().now())
                 .andContact()
                 .countryCode(GERMANY)
                 .build();
@@ -96,7 +96,7 @@ class ValidateContactTest {
     void cant_validate_contact_with_misencrypted_country_code() {
         givenIdentityExistsForIdA("BCDEF0A=");
 
-        final var request = givenWellFormedValidateContactRequest(clock().now())
+        final var request = givenWellFormedValidateContactRequest(getClock().now())
                 .buildRequest()
                 .toBuilder()
                 .setEcc(ByteString.copyFrom("💥".getBytes()))
@@ -113,7 +113,7 @@ class ValidateContactTest {
 
     @Test
     void should_reject_contact_with_misencrypted_ebid() {
-        final var contactInstant = clock().now();
+        final var contactInstant = getClock().now();
 
         givenIdentityExistsForIdA("BCDEF0A=");
 
@@ -136,7 +136,7 @@ class ValidateContactTest {
 
     @Test
     void should_reject_hellomessage_with_epochId_related_to_a_missing_serverkey() {
-        final var twentyDaysAgo = clock().now().minus(20, DAYS);
+        final var twentyDaysAgo = getClock().now().minus(20, DAYS);
 
         givenIdentityExistsForIdA("BCDEF0A=");
 
@@ -158,7 +158,7 @@ class ValidateContactTest {
 
     @Test
     void cant_validate_contact_when_all_hellomessages_ebid_decryption_fails() {
-        final var contactInstant = clock().now();
+        final var contactInstant = getClock().now();
 
         givenIdentityExistsForIdA("BCDEF0A=");
 
@@ -186,7 +186,7 @@ class ValidateContactTest {
 
     @Test
     void cant_validate_contact_when_idA_is_unknown() {
-        final var contactInstant = clock().now();
+        final var contactInstant = getClock().now();
 
         givenIdentityExistsForIdA("BCDEF0A=");
 
@@ -205,7 +205,7 @@ class ValidateContactTest {
 
     @Test
     void should_reject_hellomessage_with_invalid_mac() {
-        final var contactInstant = clock().now().truncatedTo(ROBERT_EPOCH);
+        final var contactInstant = getClock().now().truncatedTo(ROBERT_EPOCH);
 
         givenIdentityExistsForIdA("FFFFFFF=");
         givenIdentityExistsForIdA("BCDEF0A=");
@@ -252,7 +252,6 @@ class ValidateContactTest {
     }
 
     @Nested
-    @IntegrationTest
     @DisplayName("Should tolerate 1 epoch drift between epoch in the HelloMessage and epoch of the reception time")
     class StartAndEndOfEpochEdgeCases {
 
@@ -260,7 +259,7 @@ class ValidateContactTest {
         @ValueSource(strings = { "PT-15m", "PT-1s", "PT1s", "PT15m" })
         void should_accept_hellomessage_received_with_some_advance_or_delay__max_is_1_epoch_drift(
                 final Duration acceptableReceptionDelay) {
-            final var contactInstant = clock().now()
+            final var contactInstant = getClock().now()
                     .truncatedTo(DAYS)
                     .plus(12, HOURS)
                     .plus(7, MINUTES);
@@ -292,7 +291,7 @@ class ValidateContactTest {
         @ValueSource(strings = { "PT-5h", "PT-30m", "PT30m", "PT5h" })
         void should_reject_hellomessage_received_with_too_much_advance_or_delay(
                 final Duration unacceptableReceptionDelay) {
-            final var contactInstant = clock().now()
+            final var contactInstant = getClock().now()
                     .truncatedTo(DAYS)
                     .plus(12, HOURS)
                     .plus(7, MINUTES);
@@ -325,7 +324,6 @@ class ValidateContactTest {
     }
 
     @Nested
-    @IntegrationTest
     @DisplayName("Can use previous or next server-key-yyyymmdd when the HelloMessage is received at the early beginning or late end of the day")
     class StartAndEndOfDayEdgeCases {
 
@@ -333,7 +331,7 @@ class ValidateContactTest {
         @ValueSource(strings = { "PT-3m", "PT-30s", "PT30s", "PT2m59s" })
         void should_accept_hellomessage_received_less_than_180_seconds_before_or_after_hellomessage_day(
                 final Duration acceptableReceptionDelay) {
-            final var contactInstant = clock().now()
+            final var contactInstant = getClock().now()
                     .truncatedTo(DAYS)
                     .plus(
                             acceptableReceptionDelay.isNegative()
@@ -369,7 +367,7 @@ class ValidateContactTest {
         void should_reject_hellomessage_received_more_than_180_seconds_before_or_after_hellomessage_day(
                 final Duration unacceptableReceptionDelay) {
 
-            final var contactInstant = clock().now()
+            final var contactInstant = getClock().now()
                     .truncatedTo(DAYS)
                     .plus(
                             unacceptableReceptionDelay.isNegative()

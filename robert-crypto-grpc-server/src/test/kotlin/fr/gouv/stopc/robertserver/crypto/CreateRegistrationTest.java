@@ -13,13 +13,19 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.security.SecureRandom;
 
-import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
+import static fr.gouv.stopc.robertserver.crypto.test.ClockManagerKt.getClock;
 import static fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE;
-import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.getCipherForTuples;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcher.*;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.grpcErrorResponse;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.noGrpcError;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.KeyGenerator.*;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgresqlManagerKt.getCipherForTuples;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcherKt.assertThatTuplesBundle;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcherKt.ebidConstistentWithTupleEpoch;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcherKt.countryCode;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcherKt.aBundleWithEpochs;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcherKt.idA;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcherKt.grpcErrorResponse;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcherKt.noGrpcError;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.KeyGenerator.DH_1024;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.KeyGenerator.ECDH_SECP256K1;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.KeyGenerator.ECDH_SECP256R1;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,8 +46,8 @@ class CreateRegistrationTest {
     private static CreateRegistrationRequest.Builder givenValidCreateRegistrationRequest() {
         return CreateRegistrationRequest
                 .newBuilder()
-                .setClientPublicKey(ByteString.copyFrom(ECDH_secp256r1.generateKeyPair().getPublic().getEncoded()))
-                .setFromEpochId(clock().now().asEpochId())
+                .setClientPublicKey(ByteString.copyFrom(ECDH_SECP256R1.generateKeyPair().getPublic().getEncoded()))
+                .setFromEpochId(getClock().now().asEpochId())
                 .setNumberOfDaysForEpochBundles(5)
                 .setServerCountryCode(FRANCE.asByteString());
     }
@@ -52,7 +58,7 @@ class CreateRegistrationTest {
             "GERMANY"
     })
     void can_create_a_registration_and_return_a_valid_5_days_tuples_bundle(final CountryCode countryCode) {
-        final var now = clock().now();
+        final var now = getClock().now();
 
         final var request = givenValidCreateRegistrationRequest()
                 .setServerCountryCode(countryCode.asByteString())
@@ -87,7 +93,7 @@ class CreateRegistrationTest {
                 .have(countryCode(FRANCE))
                 .have(idA(response.getIdA().toByteArray()))
                 .have(ebidConstistentWithTupleEpoch())
-                .is(aBundleWithEpochs(clock().now(), clock().now().plus(2, DAYS).truncatedTo(DAYS)));
+                .is(aBundleWithEpochs(getClock().now(), getClock().now().plus(2, DAYS).truncatedTo(DAYS)));
     }
 
     @Test
@@ -111,7 +117,7 @@ class CreateRegistrationTest {
                 .have(idA(response.getIdA().toByteArray()))
                 .have(ebidConstistentWithTupleEpoch())
                 .as("a bundle with 5 days of tuples")
-                .is(aBundleWithEpochs(clock().now(), clock().now().plus(5, DAYS).truncatedTo(DAYS)));
+                .is(aBundleWithEpochs(getClock().now(), getClock().now().plus(5, DAYS).truncatedTo(DAYS)));
     }
 
     @Test
@@ -158,7 +164,7 @@ class CreateRegistrationTest {
         // Client public key generated with EC curve "secp256k1" instead of server's
         // choice of "secp256*r*1"
         final var request = givenValidCreateRegistrationRequest()
-                .setClientPublicKey(ByteString.copyFrom(ECDH_secp256k1.generateKeyPair().getPublic().getEncoded()))
+                .setClientPublicKey(ByteString.copyFrom(ECDH_SECP256K1.generateKeyPair().getPublic().getEncoded()))
                 .build();
 
         final var response = robertCryptoClient.createRegistration(request)
@@ -179,7 +185,7 @@ class CreateRegistrationTest {
     void cant_create_a_registration_producing_a_bundle_with_zero_tuples(int bundleStartDayDrift) {
         final var request = givenValidCreateRegistrationRequest()
                 .setNumberOfDaysForEpochBundles(1)
-                .setFromEpochId(clock().now().plus(bundleStartDayDrift, DAYS).asEpochId())
+                .setFromEpochId(getClock().now().plus(bundleStartDayDrift, DAYS).asEpochId())
                 .build();
 
         final var response = robertCryptoClient.createRegistration(request)

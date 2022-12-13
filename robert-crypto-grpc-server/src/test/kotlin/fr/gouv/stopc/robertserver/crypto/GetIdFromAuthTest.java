@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.impl.CryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest;
+import fr.gouv.stopc.robertserver.crypto.test.AuthBundle;
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -11,11 +12,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
-import static fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager.AuthBundle;
-import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
-import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.givenIdentityDoesntExistForIdA;
-import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.givenIdentityExistsForIdA;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.*;
+import static fr.gouv.stopc.robertserver.crypto.test.ClockManagerKt.getClock;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgresqlManagerKt.givenIdentityDoesntExistForIdA;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgresqlManagerKt.givenIdentityExistsForIdA;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcherKt.*;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,7 +37,7 @@ class GetIdFromAuthTest {
     }
 
     @ParameterizedTest
-    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle")
+    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     void can_authenticate_valid_request(final AuthBundle auth) {
         givenIdentityExistsForIdA(auth.getIdA());
 
@@ -55,7 +55,7 @@ class GetIdFromAuthTest {
     }
 
     @ParameterizedTest
-    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle")
+    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     void cant_authenticate_with_unknown_request_type(final AuthBundle auth) {
         givenIdentityExistsForIdA(auth.getIdA());
 
@@ -71,7 +71,7 @@ class GetIdFromAuthTest {
     }
 
     @ParameterizedTest
-    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle")
+    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     void cant_authenticate_with_malformed_ebid(final AuthBundle auth) {
         givenIdentityExistsForIdA(auth.getIdA());
         final var malformedEbid = new byte[8];
@@ -89,7 +89,7 @@ class GetIdFromAuthTest {
     }
 
     @ParameterizedTest
-    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle")
+    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     void cant_authenticate_with_an_epoch_different_from_ebid(final AuthBundle auth) {
         givenIdentityExistsForIdA(auth.getIdA());
         final var inconsistentEpoch = auth.getEpochId() - 1;
@@ -106,13 +106,16 @@ class GetIdFromAuthTest {
     }
 
     @ParameterizedTest
-    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle")
+    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     void cant_authenticate_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(
             final AuthBundle auth) {
-        final var oneMonthOldAuth = auth.toBuilder()
-                .title("30 days in the past: " + auth.getTitle())
-                .timeAndEpoch(clock().now().minus(30, DAYS))
-                .build();
+        final var oneMonthOldAuth = new AuthBundle(
+                "30 days in the past: " + auth.getTitle(),
+                auth.getRequestType(),
+                auth.getIdA(),
+                auth.getTime().minus(30, DAYS),
+                getClock().atEpoch(auth.getEpochId()).minus(30, DAYS).asEpochId()
+        );
         givenIdentityExistsForIdA(oneMonthOldAuth.getIdA());
 
         final var request = givenAuthRequest(oneMonthOldAuth)
@@ -124,14 +127,13 @@ class GetIdFromAuthTest {
         assertThat(response)
                 .is(
                         grpcErrorResponse(
-                                430, "No server key found from cryptographic storage : %s",
-                                oneMonthOldAuth.getEpochId()
+                                430, "No server key found from cryptographic storage : " + oneMonthOldAuth.getEpochId()
                         )
                 );
     }
 
     @ParameterizedTest
-    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle")
+    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     void cant_authenticate_with_unknown_idA(final AuthBundle auth) {
         // create the identity to be able to compute mac with regular tools
         givenIdentityExistsForIdA(auth.getIdA());
@@ -150,7 +152,7 @@ class GetIdFromAuthTest {
     }
 
     @ParameterizedTest
-    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle")
+    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     void cant_authenticate_with_incorrect_mac(final AuthBundle auth) {
         givenIdentityExistsForIdA(auth.getIdA());
 
@@ -167,7 +169,7 @@ class GetIdFromAuthTest {
     }
 
     @ParameterizedTest
-    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager#valid_auth_bundle")
+    @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     void cant_authenticate_with_an_ebid_larger_than_64bits(final AuthBundle auth) {
         givenIdentityExistsForIdA(auth.getIdA());
 

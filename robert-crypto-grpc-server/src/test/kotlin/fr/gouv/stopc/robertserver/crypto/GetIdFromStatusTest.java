@@ -5,24 +5,24 @@ import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcC
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.impl.CryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
-import fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager;
+import fr.gouv.stopc.robertserver.crypto.test.AuthBundle;
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robert.server.common.DigestSaltEnum.STATUS;
-import static fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager.AuthBundle;
-import static fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager.valid_auth_bundle;
-import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
+import static fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt.valid_auth_bundle;
+import static fr.gouv.stopc.robertserver.crypto.test.ClockManagerKt.getClock;
 import static fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE;
-import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.*;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcher.*;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.grpcErrorResponse;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.noGrpcError;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgresqlManagerKt.*;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.EncryptedTuplesBundleMatcherKt.*;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcherKt.grpcErrorResponse;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcherKt.noGrpcError;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,14 +31,14 @@ class GetIdFromStatusTest {
 
     private final ICryptoServerGrpcClient robertCryptoClient = new CryptoServerGrpcClient("localhost", 9090);
 
-    public static Stream<AuthBundle> valid_status_auth_bundle() {
+    public static List<AuthBundle> valid_status_auth_bundle() {
         return valid_auth_bundle(STATUS);
     }
 
     public static Stream<AuthBundle> valid_but_not_status_auth_bundle() {
         return Arrays.stream(DigestSaltEnum.values())
                 .filter(t -> t != STATUS)
-                .flatMap(AuthBundleManager::valid_auth_bundle);
+                .flatMap(t -> valid_auth_bundle(t).stream());
     }
 
     /**
@@ -50,7 +50,7 @@ class GetIdFromStatusTest {
                 .setEpochId(auth.getEpochId())
                 .setTime(auth.getTime().asNtpTimestamp())
                 .setMac(auth.getMac())
-                .setFromEpochId(clock().now().asEpochId())
+                .setFromEpochId(getClock().now().asEpochId())
                 .setNumberOfDaysForEpochBundles(5)
                 .setServerCountryCode(FRANCE.asByteString());
     }
@@ -77,8 +77,8 @@ class GetIdFromStatusTest {
                 .have(ebidConstistentWithTupleEpoch())
                 .is(
                         aBundleWithEpochs(
-                                clock().atEpoch(request.getFromEpochId()),
-                                clock().now().plus(5, DAYS).truncatedTo(DAYS)
+                                getClock().atEpoch(request.getFromEpochId()),
+                                getClock().now().plus(5, DAYS).truncatedTo(DAYS)
                         )
                 );
     }
@@ -137,10 +137,13 @@ class GetIdFromStatusTest {
     @MethodSource("valid_status_auth_bundle")
     void cant_produce_tuples_bundle_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(
             final AuthBundle auth) {
-        final var oneMonthOldAuth = auth.toBuilder()
-                .title("30 days in the past: " + auth.getTitle())
-                .timeAndEpoch(clock().now().minus(30, DAYS))
-                .build();
+        final var oneMonthOldAuth = new AuthBundle(
+                "30 days in the past: " + auth.getTitle(),
+                auth.getRequestType(),
+                auth.getIdA(),
+                auth.getTime().minus(30, DAYS),
+                getClock().atEpoch(auth.getEpochId()).minus(30, DAYS).asEpochId()
+        );
         givenIdentityExistsForIdA(oneMonthOldAuth.getIdA());
 
         final var request = givenValidStatusRequest(oneMonthOldAuth)
@@ -152,8 +155,7 @@ class GetIdFromStatusTest {
         assertThat(response)
                 .is(
                         grpcErrorResponse(
-                                430, "No server key found from cryptographic storage : %s",
-                                oneMonthOldAuth.getEpochId()
+                                430, "No server key found from cryptographic storage : " + oneMonthOldAuth.getEpochId()
                         )
                 );
     }

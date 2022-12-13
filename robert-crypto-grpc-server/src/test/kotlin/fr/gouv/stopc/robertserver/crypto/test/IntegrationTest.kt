@@ -1,0 +1,29 @@
+package fr.gouv.stopc.robertserver.crypto.test
+
+import fr.gouv.stopc.robert.crypto.grpc.server.RobertCryptoGrpcServerApplication
+import org.junit.jupiter.api.DisplayNameGeneration
+import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.TestExecutionListeners
+import org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+import kotlin.annotation.AnnotationRetention.RUNTIME
+import kotlin.annotation.AnnotationTarget.CLASS
+
+@Retention(RUNTIME)
+@Target(CLASS)
+@ActiveProfiles("test")
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes = [RobertCryptoGrpcServerApplication::class])
+@TestExecutionListeners(
+    listeners = [
+        KeystoreManager::class,
+        LogbackManager::class,
+        PostgreSqlManager::class
+    ],
+    mergeMode = MERGE_WITH_DEFAULTS
+)
+@ContextConfiguration(initializers = [PostgreSqlManager::class])
+@DisplayNameGeneration(ReplaceUnderscores::class)
+annotation class IntegrationTest

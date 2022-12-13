@@ -5,21 +5,21 @@ import fr.gouv.stopc.robert.crypto.grpc.server.client.service.ICryptoServerGrpcC
 import fr.gouv.stopc.robert.crypto.grpc.server.client.service.impl.CryptoServerGrpcClient;
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest;
 import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
-import fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager;
+import fr.gouv.stopc.robertserver.crypto.test.AuthBundle;
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static fr.gouv.stopc.robert.server.common.DigestSaltEnum.UNREGISTER;
-import static fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager.AuthBundle;
-import static fr.gouv.stopc.robertserver.crypto.test.AuthBundleManager.valid_auth_bundle;
-import static fr.gouv.stopc.robertserver.crypto.test.ClockManager.clock;
-import static fr.gouv.stopc.robertserver.crypto.test.PostgreSqlManager.*;
-import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcher.*;
+import static fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt.valid_auth_bundle;
+import static fr.gouv.stopc.robertserver.crypto.test.ClockManagerKt.getClock;
+import static fr.gouv.stopc.robertserver.crypto.test.PostgresqlManagerKt.*;
+import static fr.gouv.stopc.robertserver.crypto.test.matchers.GrpcResponseMatcherKt.*;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,14 +28,14 @@ class DeleteIdTest {
 
     private final ICryptoServerGrpcClient robertCryptoClient = new CryptoServerGrpcClient("localhost", 9090);
 
-    public static Stream<AuthBundle> valid_unregister_auth_bundle() {
+    public static List<AuthBundle> valid_unregister_auth_bundle() {
         return valid_auth_bundle(UNREGISTER);
     }
 
     public static Stream<AuthBundle> valid_but_not_unregister_auth_bundle() {
         return Arrays.stream(DigestSaltEnum.values())
                 .filter(t -> t != UNREGISTER)
-                .flatMap(AuthBundleManager::valid_auth_bundle);
+                .flatMap(t -> valid_auth_bundle(t).stream());
     }
 
     /**
@@ -124,10 +124,13 @@ class DeleteIdTest {
     @MethodSource("valid_unregister_auth_bundle")
     void cant_unregister_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(
             final AuthBundle auth) {
-        final var oneMonthOldAuth = auth.toBuilder()
-                .title("30 days in the past: " + auth.getTitle())
-                .timeAndEpoch(clock().now().minus(30, DAYS))
-                .build();
+        final var oneMonthOldAuth = new AuthBundle(
+                "30 days in the past: " + auth.getTitle(),
+                auth.getRequestType(),
+                auth.getIdA(),
+                auth.getTime().minus(30, DAYS),
+                getClock().atEpoch(auth.getEpochId()).minus(30, DAYS).asEpochId()
+        );
         givenIdentityExistsForIdA(oneMonthOldAuth.getIdA());
 
         final var request = givenUnregisterRequest(oneMonthOldAuth)
@@ -139,8 +142,8 @@ class DeleteIdTest {
         assertThat(response)
                 .is(
                         grpcErrorResponse(
-                                430, "No server key found from cryptographic storage : %s",
-                                oneMonthOldAuth.getEpochId()
+                                430, "No server key found from cryptographic storage : " + oneMonthOldAuth.getEpochId()
+
                         )
                 );
     }
