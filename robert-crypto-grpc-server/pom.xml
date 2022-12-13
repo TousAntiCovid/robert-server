@@ -22,13 +22,7 @@
 
     <artifactId>robert-crypto-grpc-server</artifactId>
     <packaging>jar</packaging>
-    <name>robert-crypto-grpc-server</name>
     <description>Cryptography module with a gRPC interface</description>
-
-    <properties>
-        <assertj.version>3.22.0</assertj.version>
-        <testcontainers.version>1.15.3</testcontainers.version>
-    </properties>
 
     <dependencies>
         <dependency>
