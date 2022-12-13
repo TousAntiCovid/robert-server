@@ -1,6 +1,7 @@
 package fr.gouv.stopc.e2e.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class JdbcConfiguration {
@@ -29,6 +31,7 @@ public class JdbcConfiguration {
     @Bean
     @ConditionalOnProperty("robert.captcha-datasource.url")
     public DataSource captchaDataSource() {
+        log.info("Captcha injection is enabled into {}", applicationProperties.getCaptchaDatasource().getUrl());
         return applicationProperties.getCaptchaDatasource()
                 .initializeDataSourceBuilder()
                 .build();
