@@ -15,9 +15,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import static java.time.temporal.ChronoUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.hamcrest.Matchers.iterableWithSize;
 
 @Slf4j
 @AllArgsConstructor
@@ -100,14 +105,22 @@ public class RobertClientSteps {
     @Alors("les données d'exposition de {word} n'existent plus")
     public void expositionDataIsWiped(final String userName) {
         final var mobile = mobilePhonesEmulator.getMobileApplication(userName);
+        // mongodb replication may take some times
+        await(userName + "'s user data deletion replication")
+                .atMost(5, SECONDS)
+                .pollInterval(fibonacci(MILLISECONDS))
+                .until(() -> mobile.getRegistration().getExposedEpochs(), iterableWithSize(0));
+        // verifies user data is no more available
         final var exposureStatus = mobile.requestStatus();
-        assertThat(exposureStatus.getLastContactDate()).isNull();
+        assertThat(exposureStatus.getLastContactDate())
+                .as("User risk level")
+                .isNull();
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
                 .isEqualTo(0);
-        assertThat(mobile.getRegistration().getExposedEpochs().size())
+        assertThat(mobile.getRegistration().getExposedEpochs())
                 .as("Exposed epochs list")
-                .isEqualTo(0);
+                .hasSize(0);
     }
 
     @Alors("le compte de {word} et ses données n'existent plus")
