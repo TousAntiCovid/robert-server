@@ -38,7 +38,7 @@ public class MobilePhonesEmulator {
 
     private final CaptchaApi captchaApi;
 
-    private final Optional<CaptchaRepository> captchaRepository;
+    private final CaptchaRepository captchaRepository;
 
     private final ApplicationIdentityRepository applicationIdentityRepository;
 
@@ -58,7 +58,7 @@ public class MobilePhonesEmulator {
                 applicationProperties,
                 captchaApi,
                 robertApi,
-                captchaRepository.orElse(null),
+                captchaRepository,
                 applicationIdentityRepository,
                 registrationRepository,
                 platformTimeSteps
