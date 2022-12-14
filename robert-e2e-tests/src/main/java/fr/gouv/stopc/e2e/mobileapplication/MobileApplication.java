@@ -10,7 +10,6 @@ import fr.gouv.stopc.e2e.mobileapplication.model.*;
 import fr.gouv.stopc.e2e.mobileapplication.repository.ApplicationIdentityRepository;
 import fr.gouv.stopc.e2e.mobileapplication.repository.CaptchaRepository;
 import fr.gouv.stopc.e2e.mobileapplication.repository.RegistrationRepository;
-import fr.gouv.stopc.e2e.mobileapplication.repository.model.Captcha;
 import fr.gouv.stopc.e2e.mobileapplication.repository.model.Registration;
 import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
@@ -69,13 +68,8 @@ public class MobileApplication {
         this.robertApi = robertApi;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
-        final Captcha captcha;
-        if (null == captchaRepository) {
-            captcha = new Captcha("challengeId", "valid");
-        } else {
-            captcha = captchaRepository.saveRandomCaptcha();
-        }
         resolveCaptchaChallenge();
+        final var captcha = captchaRepository.saveRandomCaptcha();
         final var registerResponse = register(captcha.getId(), captcha.getAnswer());
         this.applicationId = applicationIdentityRepository.findLastInsertedIdA();
         this.clock = new EpochClock(registerResponse.getTimeStart());

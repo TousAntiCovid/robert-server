@@ -15,11 +15,9 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 public class RobertEnd2EndTestsApplication {
 
     public static void main(String[] args) {
-        if (args.length != 0) {
-            final var tags = String.join(" && ", args);
-            System.setProperty("cucumber.filter.tags", tags);
-            log.info("Using cucumber.filter.tags={}", tags);
-        }
+        final var tags = String.join(" && ", args);
+        System.setProperty("cucumber.filter.tags", tags);
+        log.info("Using cucumber.filter.tags={}", tags);
 
         final var launcherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
                 .selectors(selectClass(CucumberTest.class))
