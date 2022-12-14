@@ -6,6 +6,10 @@ robert:
     url: jdbc:postgresql://postgres:5432/robert
     username: robert
     password: robert
+  captcha-datasource:
+    url: jdbc:postgresql://postgres:5432/robert
+    username: robert
+    password: robert
   submission-jwt-signing-key: MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCBTNNLOcRp7Bksc//nB+6DlOCyCtDlvGHiz9UWVcGZoag==
   batch-command: "docker-compose up --no-recreate batch"
 
@@ -17,3 +21,4 @@ spring:
 logging.level:
   root: warn
   fr.gouv: info
+  fr.gouv.stopc.e2e.mobileapplication.repository: debug
