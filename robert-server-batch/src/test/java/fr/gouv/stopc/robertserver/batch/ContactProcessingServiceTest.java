@@ -4,6 +4,7 @@ import fr.gouv.stopc.robertserver.batch.test.CountryCode;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.Kpi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -23,9 +24,9 @@ import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInf
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatWarnLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatContactsToProcess;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenPendingContact;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static org.assertj.core.api.Assertions.tuple;
 
 @IntegrationTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -63,6 +64,14 @@ class ContactProcessingServiceTest {
                 );
 
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -101,6 +110,14 @@ class ContactProcessingServiceTest {
                 .containsOnlyOnce(
                         new EpochExposition(fiveDaysAgo.asEpochId(), List.of(4.3)),
                         new EpochExposition(twoDaysAgo.asEpochId(), List.of(3.0, 1.0))
+                );
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
                 );
     }
 
@@ -151,6 +168,14 @@ class ContactProcessingServiceTest {
                 );
 
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -179,6 +204,14 @@ class ContactProcessingServiceTest {
                 );
         assertThatEpochExpositionsForIdA("user___1").isEmpty();
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -198,6 +231,14 @@ class ContactProcessingServiceTest {
                 .containsOnlyOnce("No messages in contact, discarding contact");
         assertThatEpochExpositionsForIdA("user___1").isEmpty();
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -222,6 +263,14 @@ class ContactProcessingServiceTest {
                         )
                 );
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -244,6 +293,14 @@ class ContactProcessingServiceTest {
                 .containsOnlyOnce("Contact did not contain any valid messages; discarding contact");
         assertThatEpochExpositionsForIdA("user___1").isEmpty();
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @ParameterizedTest
@@ -273,6 +330,14 @@ class ContactProcessingServiceTest {
         assertThatEpochExpositionsForIdA("user___1")
                 .containsOnlyOnce(new EpochExposition(now.asEpochId(), List.of(0.0)));
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @ParameterizedTest
@@ -301,6 +366,14 @@ class ContactProcessingServiceTest {
                 );
         assertThatEpochExpositionsForIdA("user___1").isEmpty();
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -330,5 +403,13 @@ class ContactProcessingServiceTest {
         // version applicative
         assertThatEpochExpositionsForIdA("user___1").isEmpty();
         assertThatContactsToProcess().isEmpty();
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 }

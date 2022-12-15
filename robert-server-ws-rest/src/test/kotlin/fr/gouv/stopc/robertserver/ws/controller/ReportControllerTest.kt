@@ -9,10 +9,18 @@ import fr.gouv.stopc.robertserver.test.MongodbManager.MongoContactToProcess
 import fr.gouv.stopc.robertserver.test.MongodbManager.MongoMessageDetails
 import fr.gouv.stopc.robertserver.test.matchers.isJwtSignedBy
 import fr.gouv.stopc.robertserver.test.matchers.isUnixTimestamp
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.ALERTED_USERS
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.EXPOSED_BUT_NOT_AT_RISK_USERS
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.INFECTED_USERS_NOT_NOTIFIED
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.NOTIFIED_USERS
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.NOTIFIED_USERS_SCORED_AGAIN
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.REPORTS_COUNT
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest
 import fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS
 import fr.gouv.stopc.robertserver.ws.test.MockServerManager.Companion.verifyNoInteractionsWithSubmissionCodeServer
 import fr.gouv.stopc.robertserver.ws.test.StatisticsManager.Companion.assertThatTodayStatistic
+import fr.gouv.stopc.robertserver.ws.test.StatisticsManager.Companion.assertThatTodayStatisticsDidntIncrement
 import fr.gouv.stopc.robertserver.ws.test.When
 import io.restassured.RestAssured.given
 import io.restassured.http.ContentType.JSON
@@ -97,6 +105,18 @@ class ReportControllerTest {
                 HelloMessageToProcess("fake ebid B", "fake ecc", 12, "fake mac B1", 10, 11L),
                 HelloMessageToProcess("fake ebid B", "fake ecc", 22, "fake mac B2", 20, 21L)
             )
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED
+            )
+        )
+        assertThatTodayStatistic(REPORTS_COUNT).isEqualTo(1)
     }
 
     @Test
@@ -147,6 +167,18 @@ class ReportControllerTest {
             .hasSize(1)
             .flatExtracting<HelloMessageToProcess>(MongodbManager::flattenHelloMessage)
             .hasSize(100000)
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED
+            )
+        )
+        assertThatTodayStatistic(REPORTS_COUNT).isEqualTo(1)
     }
 
     @Test
@@ -200,6 +232,18 @@ class ReportControllerTest {
         assertThatContactsToProcessCollection()
             .extracting<List<MongoMessageDetails>>(MongoContactToProcess::messageDetails)
             .areExactly(10000, matching(hasSize<List<MongoMessageDetails>>(10)))
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED
+            )
+        )
+        assertThatTodayStatistic(REPORTS_COUNT).isEqualTo(1)
     }
 
     @Test
@@ -227,8 +271,19 @@ class ReportControllerTest {
                     .withClaim("exp", isUnixTimestamp(Instant.now().plus(5, MINUTES), 1.minutes))
             )
 
-        assertThatContactsToProcessCollection()
-            .isEmpty()
+        assertThatContactsToProcessCollection().isEmpty()
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED
+            )
+        )
+        assertThatTodayStatistic(REPORTS_COUNT).isEqualTo(1)
     }
 
     @Test
@@ -250,6 +305,18 @@ class ReportControllerTest {
             .body(emptyString())
 
         verifyNoInteractionsWithSubmissionCodeServer()
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT
+            )
+        )
     }
 
     @Test
@@ -273,6 +340,18 @@ class ReportControllerTest {
         assertThatInfoLogs()
             .contains("Request validation failed on POST /api/v6/report: field 'token' rejected value [null] should not be null (NotNull)")
         verifyNoInteractionsWithSubmissionCodeServer()
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT
+            )
+        )
     }
 
     @ParameterizedTest
@@ -296,6 +375,18 @@ class ReportControllerTest {
 
         assertThatInfoLogs()
             .containsOnlyOnce("Invalid report token of length ${invalidToken.length}")
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT
+            )
+        )
     }
 
     @IntegrationTest
@@ -319,8 +410,17 @@ class ReportControllerTest {
                 .body("success", equalTo(true))
                 .body("message", equalTo("Successful operation"))
 
-            assertThatTodayStatistic("reportsCount")
-                .isEqualTo(1)
+            assertThatTodayStatisticsDidntIncrement(
+                listOf(
+                    ALERTED_USERS,
+                    EXPOSED_BUT_NOT_AT_RISK_USERS,
+                    INFECTED_USERS_NOT_NOTIFIED,
+                    NOTIFIED_USERS_SCORED_AGAIN,
+                    NOTIFIED_USERS,
+                    USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                    REPORTS_COUNT
+                )
+            )
         }
     }
 }

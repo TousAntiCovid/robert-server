@@ -3,6 +3,7 @@ package fr.gouv.stopc.robertserver.batch;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.Kpi;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.test.JobLauncherTestUtils;
@@ -12,9 +13,9 @@ import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenPendingContact;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static java.time.temporal.ChronoUnit.DAYS;
+import static org.assertj.core.api.Assertions.tuple;
 
 @IntegrationTest
 class BatchTest {
@@ -66,6 +67,14 @@ class BatchTest {
                 .containsOnlyOnce(
                         new EpochExposition(yesterday.asEpochId(), List.of(0.0))
                 );
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -92,6 +101,14 @@ class BatchTest {
         assertThatEpochExpositionsForIdA("user___1")
                 .containsOnlyOnce(
                         new EpochExposition(yesterday.asEpochId(), List.of(0.0))
+                );
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
                 );
     }
 }

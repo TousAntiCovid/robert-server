@@ -4,6 +4,7 @@ import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.Kpi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,10 @@ import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.assertThatEpochExpositionsForIdA;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.assertThatKpis;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @IntegrationTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -86,6 +89,14 @@ class PurgeOldEpochExpositionsServiceTest {
                 .containsOnlyOnce(
                         new EpochExposition(now.asEpochId(), List.of(1.0))
                 );
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @ParameterizedTest
@@ -119,6 +130,14 @@ class PurgeOldEpochExpositionsServiceTest {
                 .containsOnlyOnce(
                         new EpochExposition(now.asEpochId(), List.of(2.0)),
                         new EpochExposition(beforeStartOfContagiousPeriod.asEpochId(), List.of(3.0))
+                );
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
                 );
     }
 }

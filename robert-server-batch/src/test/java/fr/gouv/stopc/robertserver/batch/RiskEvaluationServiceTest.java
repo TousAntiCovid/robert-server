@@ -3,6 +3,7 @@ package fr.gouv.stopc.robertserver.batch;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
 import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
+import fr.gouv.stopc.robertserver.database.model.Kpi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.*;
 import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
 import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
 import static java.time.temporal.ChronoUnit.DAYS;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.within;
 
 @IntegrationTest
@@ -62,6 +64,14 @@ class RiskEvaluationServiceTest {
         // Then
         assertThatRegistrationForIdA("user___1")
                 .hasFieldOrPropertyWithValue("atRisk", false);
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -91,6 +101,14 @@ class RiskEvaluationServiceTest {
                 .hasFieldOrPropertyWithValue("atRisk", false)
                 .hasFieldOrPropertyWithValue("latestRiskEpoch", 0)
                 .hasFieldOrPropertyWithValue("lastContactTimestamp", 0L);
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -121,6 +139,14 @@ class RiskEvaluationServiceTest {
         assertThatInfoLogs()
                 .containsOnlyOnce(
                         "Risk detected. Aggregated risk since 0: 0.13237874351408596 greater than threshold 0.1"
+                );
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 1L),
+                        tuple("notifiedUsersScoredAgain", 0L)
                 );
     }
 
@@ -153,6 +179,14 @@ class RiskEvaluationServiceTest {
         // Then
         assertThatRegistrationForIdA("user___1")
                 .hasFieldOrPropertyWithValue("atRisk", false);
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -186,6 +220,14 @@ class RiskEvaluationServiceTest {
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(twoDaysAgo.asInstant(), within(1, DAYS));
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 1L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -224,6 +266,14 @@ class RiskEvaluationServiceTest {
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(now.asInstant(), within(1, DAYS));
 
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 1L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
+
     }
 
     @Test
@@ -260,6 +310,14 @@ class RiskEvaluationServiceTest {
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(threeDaysAgo.asInstant(), within(1, DAYS));
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 1L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -296,6 +354,14 @@ class RiskEvaluationServiceTest {
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(fiveDaysAgo.asInstant(), within(1, DAYS));
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 1L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -330,6 +396,14 @@ class RiskEvaluationServiceTest {
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(now.asInstant(), within(1, DAYS));
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 1L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -356,6 +430,14 @@ class RiskEvaluationServiceTest {
         assertThatRegistrationForIdA("user___1")
                 .hasFieldOrPropertyWithValue("isNotified", false)
                 .hasFieldOrPropertyWithValue("atRisk", false);
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 1L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -382,6 +464,14 @@ class RiskEvaluationServiceTest {
         assertThatRegistrationForIdA("user___1")
                 .hasFieldOrPropertyWithValue("isNotified", false)
                 .hasFieldOrPropertyWithValue("atRisk", true);
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 1L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -408,6 +498,14 @@ class RiskEvaluationServiceTest {
         assertThatRegistrationForIdA("user___1")
                 .hasFieldOrPropertyWithValue("isNotified", true)
                 .hasFieldOrPropertyWithValue("atRisk", true);
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
     @Test
@@ -434,6 +532,14 @@ class RiskEvaluationServiceTest {
         assertThatRegistrationForIdA("user___1")
                 .hasFieldOrPropertyWithValue("isNotified", true)
                 .hasFieldOrPropertyWithValue("atRisk", false);
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 1L)
+                );
     }
 
     @Test
@@ -453,6 +559,14 @@ class RiskEvaluationServiceTest {
         // Then
         assertThatRegistrationForIdA("user___1")
                 .hasFieldOrPropertyWithValue("atRisk", false);
+
+        assertThatKpis().as("check kpis values")
+                .extracting(Kpi::getName, Kpi::getValue)
+                .containsExactlyInAnyOrder(
+                        tuple("exposedButNotAtRiskUsers", 0L),
+                        tuple("infectedUsersNotNotified", 0L),
+                        tuple("notifiedUsersScoredAgain", 0L)
+                );
     }
 
 }

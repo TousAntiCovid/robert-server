@@ -2,9 +2,12 @@ package fr.gouv.stopc.robertserver.batch.test;
 
 import com.mongodb.client.MongoCollection;
 import fr.gouv.stopc.robertserver.common.RobertClock;
+import fr.gouv.stopc.robertserver.database.model.Kpi;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.model.Registration.RegistrationBuilder;
+import org.assertj.core.api.ListAssert;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.lang.NonNull;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
@@ -14,6 +17,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.util.function.Function;
 
 import static java.util.function.Function.identity;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class MongodbManager implements TestExecutionListener {
 
@@ -56,6 +60,10 @@ public class MongodbManager implements TestExecutionListener {
 
     public static ContactFactory.ContactBuilder givenPendingContact() {
         return new ContactFactory.ContactBuilder(mongoOperations, clock);
+    }
+
+    public static ListAssert<Kpi> assertThatKpis() {
+        return assertThat(mongoOperations.find(new Query(), Kpi.class));
     }
 
 }

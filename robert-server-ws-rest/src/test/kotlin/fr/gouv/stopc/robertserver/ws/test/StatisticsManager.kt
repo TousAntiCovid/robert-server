@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.test
 
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.*
 import io.restassured.RestAssured.given
 import io.restassured.response.ValidatableResponse
 import org.assertj.core.api.AbstractIntegerAssert
@@ -13,11 +15,15 @@ class StatisticsManager : TestExecutionListener {
 
         private lateinit var todaySnapshot: ValidatableResponse
 
-        fun assertThatTodayStatistic(statisticName: String?): AbstractIntegerAssert<*> {
-            val originalValue = todaySnapshot!!.extract().path<Int>(statisticName)
-            val currentValue = getStatistics().extract().path<Int>(statisticName)
+        fun assertThatTodayStatistic(statisticName: KpiName?): AbstractIntegerAssert<*> {
+            val originalValue = todaySnapshot.extract().path<Int>(statisticName?.key)
+            val currentValue = getStatistics().extract().path<Int>(statisticName?.key)
             return assertThat(currentValue - originalValue)
-                .`as`("'$statisticName' statistic value increment")
+                .`as`("'${statisticName?.key}' statistic value increment")
+        }
+
+        fun assertThatTodayStatisticsDidntIncrement(kpis: List<KpiName>) {
+            kpis.map { kpi -> assertThatTodayStatistic(kpi).isEqualTo(0) }
         }
 
         private fun getStatistics() = given()

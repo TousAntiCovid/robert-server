@@ -10,6 +10,13 @@ import fr.gouv.stopc.robertserver.test.matchers.isBase64Encoded
 import fr.gouv.stopc.robertserver.test.matchers.isJwtSignedBy
 import fr.gouv.stopc.robertserver.test.matchers.isNtpTimestamp
 import fr.gouv.stopc.robertserver.test.matchers.isUnixTimestamp
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.ALERTED_USERS
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.EXPOSED_BUT_NOT_AT_RISK_USERS
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.INFECTED_USERS_NOT_NOTIFIED
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.NOTIFIED_USERS
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.NOTIFIED_USERS_SCORED_AGAIN
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.REPORTS_COUNT
+import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.Companion.acceptableAuthParametersForEach
 import fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.Companion.givenCryptoServerRaiseMissingDailyKeyForEbid
@@ -19,6 +26,7 @@ import fr.gouv.stopc.robertserver.ws.test.JwtKeysManager.JWT_KEYS_DECLARATION
 import fr.gouv.stopc.robertserver.ws.test.MockServerManager.Companion.verifyNoInteractionsWithPushNotifServer
 import fr.gouv.stopc.robertserver.ws.test.MockServerManager.Companion.verifyPushNotifServerReceivedRegisterForToken
 import fr.gouv.stopc.robertserver.ws.test.StatisticsManager.Companion.assertThatTodayStatistic
+import fr.gouv.stopc.robertserver.ws.test.StatisticsManager.Companion.assertThatTodayStatisticsDidntIncrement
 import fr.gouv.stopc.robertserver.ws.test.When
 import fr.gouv.stopc.robertserver.ws.test.matchers.timeDriftCloseTo
 import fr.gouv.stopc.robertserver.ws.test.matchers.verifyExceededTimeDriftIsProperlyHandled
@@ -98,8 +106,18 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
         assertThatRegistrationForIdA("idA_1")
             .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", now.asEpochId())
             .hasEntrySatisfying("lastTimestampDrift", timeDriftCloseTo(auth.timeDrift))
-        assertThatTodayStatistic("notifiedUsers")
-            .isEqualTo(0)
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT)
+        )
+
         if (auth.pushInfo == null) {
             verifyNoInteractionsWithPushNotifServer()
         } else {
@@ -174,8 +192,18 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .hasFieldOrPropertyWithValue("isNotified", true)
             .hasFieldOrPropertyWithValue("lastStatusRequestEpoch", now.asEpochId())
             .hasEntrySatisfying("lastTimestampDrift", timeDriftCloseTo(auth.timeDrift))
-        assertThatTodayStatistic("notifiedUsers")
-            .isEqualTo(1)
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT)
+        )
+        assertThatTodayStatistic(NOTIFIED_USERS).isEqualTo(1)
+
         if (auth.pushInfo == null) {
             verifyNoInteractionsWithPushNotifServer()
         } else {
@@ -209,6 +237,17 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
 
         verifyNoInteractionsWithPushNotifServer()
         verifyExceededTimeDriftIsProperlyHandled("idA_1", auth.timeDrift)
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT)
+        )
     }
 
     @ParameterizedTest
@@ -251,6 +290,17 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
                 "Discarding ESR request because it is too close to the previous one: previous ESR request epoch $lastStatusRequestEpoch vs now ${now.asEpochId()} < 2 epochs"
             )
         verifyNoInteractionsWithPushNotifServer()
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT)
+        )
     }
 
     @ParameterizedTest
@@ -278,6 +328,17 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
         assertThatInfoLogs()
             .containsOnlyOnce("Missing registration on POST /api/v6/status: ${"idA_1".base64Encode()}")
         verifyNoInteractionsWithPushNotifServer()
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT)
+        )
     }
 
     @ParameterizedTest
@@ -306,6 +367,17 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
             .body(emptyString())
 
         verifyNoInteractionsWithPushNotifServer()
+
+        assertThatTodayStatisticsDidntIncrement(
+            listOf(
+                ALERTED_USERS,
+                EXPOSED_BUT_NOT_AT_RISK_USERS,
+                INFECTED_USERS_NOT_NOTIFIED,
+                NOTIFIED_USERS_SCORED_AGAIN,
+                NOTIFIED_USERS,
+                USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                REPORTS_COUNT)
+        )
     }
 
     @IntegrationTest
@@ -361,9 +433,16 @@ internal class StatusControllerTest(@Autowired private val clock: RobertClock) {
                 .then()
                 .statusCode(OK.value())
 
-            // then statistics count 1 single new notified user
-            assertThatTodayStatistic("notifiedUsers")
-                .isEqualTo(1)
+            assertThatTodayStatisticsDidntIncrement(
+                listOf(
+                    ALERTED_USERS,
+                    EXPOSED_BUT_NOT_AT_RISK_USERS,
+                    INFECTED_USERS_NOT_NOTIFIED,
+                    NOTIFIED_USERS_SCORED_AGAIN,
+                    NOTIFIED_USERS,
+                    USERS_ABOVE_RISK_THRESHOLD_BUT_RETENTION_PERIOD_EXPIRED,
+                    REPORTS_COUNT)
+            )
         }
     }
 }
