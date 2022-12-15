@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
-import static org.hamcrest.Matchers.iterableWithSize;
 
 @Slf4j
 @AllArgsConstructor
@@ -106,14 +105,21 @@ public class RobertClientSteps {
     public void expositionDataIsWiped(final String userName) {
         final var mobile = mobilePhonesEmulator.getMobileApplication(userName);
         // mongodb replication may take some times
-        await(userName + "'s user data deletion replication")
+        // we wait for data to be updated before continuing so we won't burn the /status
+        // request throttling
+        await(userName + "'s registration data to be removed")
                 .atMost(5, SECONDS)
                 .pollInterval(fibonacci(MILLISECONDS))
-                .until(() -> mobile.getRegistration().getExposedEpochs(), iterableWithSize(0));
+                .untilAsserted(() -> {
+                    final var registration = mobile.getRegistration();
+                    assertThat(registration.isAtRisk()).isFalse();
+                    assertThat(registration.getExposedEpochs()).hasSize(0);
+                });
+
         // verifies user data is no more available
         final var exposureStatus = mobile.requestStatus();
         assertThat(exposureStatus.getLastContactDate())
-                .as("User risk level")
+                .as("User last contact date")
                 .isNull();
         assertThat(exposureStatus.getRiskLevel())
                 .as("User risk level")
