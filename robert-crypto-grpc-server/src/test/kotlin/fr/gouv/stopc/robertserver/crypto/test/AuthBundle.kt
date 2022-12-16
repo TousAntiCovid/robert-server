@@ -74,11 +74,6 @@ data class AuthBundle(
     val epochId: Int = time.asEpochId()
 ) {
 
-    fun witTimeAndEpoch(time: RobertInstant) = this.copy(
-        time = time,
-        epochId = time.asEpochId()
-    )
-
     /**
      * Assemble and encrypt epochId and idA to return an EBID.
      *

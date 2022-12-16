@@ -78,4 +78,8 @@ public class CryptoServiceGrpcServer {
             server.awaitTermination();
         }
     }
+
+    public int getPort() {
+        return server.getPort();
+    }
 }

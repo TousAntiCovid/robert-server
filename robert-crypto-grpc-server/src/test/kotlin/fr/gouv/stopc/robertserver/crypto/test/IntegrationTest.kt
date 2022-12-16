@@ -20,10 +20,16 @@ import kotlin.annotation.AnnotationTarget.CLASS
     listeners = [
         KeystoreManager::class,
         LogbackManager::class,
-        PostgreSqlManager::class
+        PostgreSqlManager::class,
+        RobertCryptoGrpcManager::class
     ],
     mergeMode = MERGE_WITH_DEFAULTS
 )
-@ContextConfiguration(initializers = [PostgreSqlManager::class])
+@ContextConfiguration(
+    initializers = [
+        PostgreSqlManager::class,
+        RobertCryptoGrpcManager::class
+    ]
+)
 @DisplayNameGeneration(ReplaceUnderscores::class)
 annotation class IntegrationTest
