@@ -70,7 +70,7 @@ services:
       - faketime:/etc/faketime.d/
 
   postgres:
-    image: postgres:9.6
+    image: postgres:13
     healthcheck:
       test: psql -U robert -c "select id from identity limit 0"
     ports:
