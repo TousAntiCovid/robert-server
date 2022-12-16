@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import static com.nimbusds.jose.JOSEObjectType.JWT;
 import static com.nimbusds.jose.JWSAlgorithm.ES256;
 import static com.nimbusds.jose.jwk.Curve.P_256;
+import static java.time.temporal.ChronoUnit.HOURS;
 
 @Service
 @ScenarioScope
@@ -96,7 +97,7 @@ public class MobilePhonesEmulator {
                         .build(),
                 new JWTClaimsSet.Builder()
                         .issuer("SIDEP")
-                        .claim("iat", new Date())
+                        .claim("iat", Date.from(Instant.now().minus(1, HOURS)))
                         .claim("jti", UUID.randomUUID())
                         .build()
         );
