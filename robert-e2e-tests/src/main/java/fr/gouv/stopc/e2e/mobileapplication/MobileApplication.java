@@ -70,7 +70,9 @@ public class MobileApplication {
                 .build();
         resolveCaptchaChallenge();
         final var captcha = captchaRepository.saveRandomCaptcha();
-        final var registerResponse = register(captcha.getId(), captcha.getAnswer());
+        final var registerResponse = register(
+                captcha.getId(), captcha.getAnswer(), applicationProperties.getEnablePushServer()
+        );
         this.applicationId = applicationIdentityRepository.findLastInsertedIdA();
         this.clock = new EpochClock(registerResponse.getTimeStart());
     }
@@ -90,22 +92,26 @@ public class MobileApplication {
         assertThat("image content", response.getBody(), notNullValue());
     }
 
-    private RegisterSuccessResponse register(final String captchaId, final String captchaAnswer) {
+    private RegisterSuccessResponse register(final String captchaId, final String captchaAnswer,
+            final Boolean enablePushServerUsage) {
         final var publicKey = getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
+
+        PushInfo pushInfo = null;
+        if (enablePushServerUsage) {
+            pushInfo = PushInfo.builder()
+                    .token("valid-device-" + username)
+                    .locale("fr-FR")
+                    .timezone("Europe/Paris")
+                    .build();
+        }
 
         final var registerResponse = robertApi.register(
                 RegisterRequest.builder()
                         .captcha(captchaAnswer)
                         .captchaId(captchaId)
                         .clientPublicECDHKey(publicKey)
-                        .pushInfo(
-                                PushInfo.builder()
-                                        .token("valid-device-" + username)
-                                        .locale("fr-FR")
-                                        .timezone("Europe/Paris")
-                                        .build()
-                        )
+                        .pushInfo(pushInfo)
                         .build()
         );
 

@@ -30,4 +30,8 @@ public class ApplicationProperties {
 
     String batchCommandDown;
 
+    Boolean enablePushServer;
+
+    Boolean batchLaunchWithKubectl;
+
 }

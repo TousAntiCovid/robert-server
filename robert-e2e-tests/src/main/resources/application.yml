@@ -1,4 +1,6 @@
 robert:
+  batch-launch-with-kubectl: false
+  enable-push-server: true
   ws-rest-base-url: http://gateway:8000/api/v6
   ws-rest-internal-base-url: http://gateway:8000/internal/api/v2
   crypto-public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7fAxfrLtG5tXyjomCOg9r1wNnr9len4m9sTflJUHDdkwubKyidTtFkVfNLrM91yuffdrpJZe9XOkof8P+zPGDg==

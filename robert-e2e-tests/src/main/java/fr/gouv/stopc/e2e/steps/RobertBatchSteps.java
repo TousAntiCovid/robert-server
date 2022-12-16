@@ -7,6 +7,7 @@ import io.cucumber.java.fr.Lorsque;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -32,7 +33,13 @@ public class RobertBatchSteps {
     public void launchBatch() {
         processLogs.clear();
 
-        final var builder = new ProcessBuilder(applicationProperties.getBatchCommand().split(" "));
+        var batchCommand = applicationProperties.getBatchCommand();
+        if (applicationProperties.getBatchLaunchWithKubectl()) {
+            final var randomJobId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
+            batchCommand = batchCommand.replace("randomJobId", randomJobId);
+        }
+        final var builder = new ProcessBuilder("sh", "-c", batchCommand);
+
         builder.directory(Path.of(".").toFile());
         final var process = builder.start();
 
