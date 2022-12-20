@@ -8,7 +8,7 @@ Fonctionnalité: Suppression de l'historique d'exposition
   @RealTimeEnvironment
   Scénario: Une personne supprime son historique d'exposition
     Etant donné que Paul et Sarah ont l'application TAC
-    Et que Paul et Sarah sont à proximité 15 minutes
+    Et que Paul et Sarah sont à proximité 60 minutes
     Et que Paul se déclare malade
     Et que le batch robert est exécuté
     Lorsque Sarah supprime son historique d'exposition
@@ -16,7 +16,7 @@ Fonctionnalité: Suppression de l'historique d'exposition
 
   Scénario: Une personne supprime son historique d'exposition
     Etant donné que Paul et Sarah ont l'application TAC depuis 15 jours
-    Et que Paul et Sarah étaient à proximité 15 minutes il y a 1 heure
+    Et que Paul et Sarah étaient à proximité 60 minutes il y a 1 heure
     Et que Paul se déclare malade maintenant
     Et que le batch robert est exécuté
     Lorsque Sarah supprime son historique d'exposition

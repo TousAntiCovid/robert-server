@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.hamcrest.Matchers.hasSize;
 
 @Slf4j
 @AllArgsConstructor
@@ -105,28 +106,10 @@ public class RobertClientSteps {
     public void expositionDataIsWiped(final String userName) {
         final var mobile = mobilePhonesEmulator.getMobileApplication(userName);
         // mongodb replication may take some times
-        // we wait for data to be updated before continuing so we won't burn the /status
-        // request throttling
         await(userName + "'s registration data to be removed")
                 .atMost(5, SECONDS)
                 .pollInterval(fibonacci(MILLISECONDS))
-                .untilAsserted(() -> {
-                    final var registration = mobile.getRegistration();
-                    assertThat(registration.isAtRisk()).isFalse();
-                    assertThat(registration.getExposedEpochs()).hasSize(0);
-                });
-
-        // verifies user data is no more available
-        final var exposureStatus = mobile.requestStatus();
-        assertThat(exposureStatus.getLastContactDate())
-                .as("User last contact date")
-                .isNull();
-        assertThat(exposureStatus.getRiskLevel())
-                .as("User risk level")
-                .isEqualTo(0);
-        assertThat(mobile.getRegistration().getExposedEpochs())
-                .as("Exposed epochs list")
-                .hasSize(0);
+                .until(() -> mobile.getRegistration().getExposedEpochs(), hasSize(0));
     }
 
     @Alors("le compte de {word} et ses données n'existent plus")
