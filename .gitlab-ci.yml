@@ -23,6 +23,7 @@ build-docker:
     - docker push $K8S_REGISTRY_IMAGE_CRYPTO
     - docker push $K8S_REGISTRY_IMAGE_BATCH
     - docker push $K8S_REGISTRY_IMAGE_WS
+    - docker push $K8S_REGISTRY_IMAGE_CRYPTO_FLYWAY
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
