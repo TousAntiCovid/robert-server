@@ -67,6 +67,8 @@ e2e-tests-kubernetes:
       - "kubernetes*.log.gz"
   tags:
     - kubernetes
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 e2e-tests-docker:
   script:

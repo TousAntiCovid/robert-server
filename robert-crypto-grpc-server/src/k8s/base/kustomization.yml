@@ -3,3 +3,5 @@ kind: Kustomization
 resources:
   - deployment.yml
   - service.yml
+  - role.yml
+  - rolebinding.yml

@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: e2e-robert-ws-logs-role
+  namespace: robert-ws
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: e2e-robert-ws-logs
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: robert-e2e-tests
