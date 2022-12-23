@@ -36,7 +36,7 @@ e2e-tests-kubernetes:
     SPRING_PROFILES_ACTIVE: "real-captcha"
     ROBERT_SUBMISSION_JWT_SIGNING_KEY: $E2E_ROBERT_SUBMISSION_JWT_SIGNING_KEY
     ROBERT_CRYPTO_PUBLIC_KEY: $E2E_ROBERT_CRYPTO_PUBLIC_KEY
-    ROBERT_BATCH_COMMAND: "kubectl create job --from=cronjobs/robert-batch-job robert-end-to-end-batch-job-randomJobId --namespace=robert-batch ; kubectl wait --for=condition=complete job/robert-end-to-end-batch-job-randomJobId --namespace=robert-batch --timeout=3m"
+    ROBERT_BATCH_COMMAND: "ID=$(uuidgen) ; kubectl create job --from=cronjobs/batch-job robert-end-to-end-batch-job-$ID --namespace=robert-batch ; kubectl wait --for=condition=complete job/end-to-end-batch-job-$ID --namespace=robert-batch --timeout=3m"
     ROBERT_BATCH_LAUNCH_WITH_KUBECTL: "true"
     ROBERT_WS_REST_INTERNAL_BASE_URL: $E2E_ROBERT_WS_REST_INTERNAL_BASE_URL
     ROBERT_WS_REST_BASE_URL: $E2E_ROBERT_WS_REST_BASE_URL
@@ -46,9 +46,9 @@ e2e-tests-kubernetes:
     ROBERT_CRYPTODATASOURCE_PASSWORD: $E2E_ROBERT_CRYPTODATASOURCE_PASSWORD
     ROBERT_CRYPTODATASOURCE_USERNAME: "pocinit"
     ROBERT_CRYPTODATASOURCE_URL: $E2E_ROBERT_CRYPTODATASOURCE_URL
-    ROBERT_ENABLE_PUSH_SERVER: "false"
+    ROBERT_CLIENT_DEVICE_TYPES: "ANDROID"
   script:
-    - apk add --no-cache curl
+    - apk add --no-cache curl uuidgen
     - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
     - chmod +x ./kubectl
     - mv ./kubectl /usr/local/bin/kubectl

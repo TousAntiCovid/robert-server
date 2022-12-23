@@ -71,7 +71,7 @@ public class MobileApplication {
         resolveCaptchaChallenge();
         final var captcha = captchaRepository.saveRandomCaptcha();
         final var registerResponse = register(
-                captcha.getId(), captcha.getAnswer(), applicationProperties.getEnablePushServer()
+                captcha.getId(), captcha.getAnswer(), applicationProperties.getClientDeviceTypes()
         );
         this.applicationId = applicationIdentityRepository.findLastInsertedIdA();
         this.clock = new EpochClock(registerResponse.getTimeStart());
@@ -93,12 +93,12 @@ public class MobileApplication {
     }
 
     private RegisterSuccessResponse register(final String captchaId, final String captchaAnswer,
-            final Boolean enablePushServerUsage) {
+            final String clientDeviceTypes) {
         final var publicKey = getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
 
         PushInfo pushInfo = null;
-        if (enablePushServerUsage) {
+        if (clientDeviceTypes.contains("IPHONE")) {
             pushInfo = PushInfo.builder()
                     .token("valid-device-" + username)
                     .locale("fr-FR")
