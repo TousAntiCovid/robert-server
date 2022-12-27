@@ -1,9 +1,9 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
+import fr.gouv.stopc.robertserver.common.RobertRequestType.STATUS
 import fr.gouv.stopc.robertserver.ws.api.StatusApi
 import fr.gouv.stopc.robertserver.ws.api.model.ExposureStatusRequest
 import fr.gouv.stopc.robertserver.ws.api.model.ExposureStatusResponse
-import fr.gouv.stopc.robertserver.ws.common.RequestType.STATUS
 import fr.gouv.stopc.robertserver.ws.service.IdentityService
 import fr.gouv.stopc.robertserver.ws.service.JwtService
 import fr.gouv.stopc.robertserver.ws.service.RegistrationService

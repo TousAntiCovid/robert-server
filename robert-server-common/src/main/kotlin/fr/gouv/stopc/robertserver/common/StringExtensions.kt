@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robertserver.ws.common
+package fr.gouv.stopc.robertserver.common
 
 import java.util.Base64
 

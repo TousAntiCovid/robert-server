@@ -3,8 +3,8 @@ package fr.gouv.stopc.robertserver.ws.controller
 import com.fasterxml.jackson.databind.DatabindException
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
-import fr.gouv.stopc.robertserver.ws.common.base64Encode
-import fr.gouv.stopc.robertserver.ws.common.logger
+import fr.gouv.stopc.robertserver.common.base64Encode
+import fr.gouv.stopc.robertserver.common.logger
 import fr.gouv.stopc.robertserver.ws.service.AuthenticationClockSkewException
 import fr.gouv.stopc.robertserver.ws.service.GrpcClientErrorException
 import fr.gouv.stopc.robertserver.ws.service.MissingRegistrationException

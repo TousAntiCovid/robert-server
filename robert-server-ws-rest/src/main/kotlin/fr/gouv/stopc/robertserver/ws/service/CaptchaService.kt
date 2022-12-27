@@ -3,8 +3,8 @@ package fr.gouv.stopc.robertserver.ws.service
 import fr.gouv.stopc.captchaserver.api.CaptchaApi
 import fr.gouv.stopc.captchaserver.api.model.CaptchaVerifyRequest
 import fr.gouv.stopc.captchaserver.api.model.CaptchaVerifyResponse.ResultEnum.SUCCESS
+import fr.gouv.stopc.robertserver.common.logger
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
-import fr.gouv.stopc.robertserver.ws.common.logger
 import org.springframework.stereotype.Service
 
 /**
