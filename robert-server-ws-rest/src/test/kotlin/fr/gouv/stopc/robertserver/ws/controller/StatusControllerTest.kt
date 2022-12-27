@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
+import fr.gouv.stopc.robertserver.common.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.RobertClock
-import fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.assertThatRegistrationForIdA

@@ -116,7 +116,7 @@ data class AuthBundle(
         get() {
             val ebid = ebid.toByteArray()
             val data = ByteArray(1 + 8 + Integer.BYTES + Integer.BYTES)
-            data[0] = requestType.value
+            data[0] = requestType.salt
             System.arraycopy(ebid, 0, data, 1, 8)
             System.arraycopy(ByteUtils.intToBytes(epochId), 0, data, 1 + ebid.size, Integer.BYTES)
             System.arraycopy(time.asTime32(), 0, data, 1 + ebid.size + Integer.BYTES, Integer.BYTES)

@@ -123,7 +123,7 @@ public class CryptoServiceImpl implements CryptoService {
             final byte[] argument,
             final RobertRequestType salt) throws RobertServerCryptoException {
 
-        final byte[] prefix = new byte[] { salt.getValue() };
+        final byte[] prefix = new byte[] { salt.getSalt() };
 
         // HMAC-SHA256 processing
         return cryptoHMACSHA256S.encrypt(ByteUtils.addAll(prefix, argument));

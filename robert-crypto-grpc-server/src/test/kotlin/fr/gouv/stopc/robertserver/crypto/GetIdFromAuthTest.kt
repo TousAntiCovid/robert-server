@@ -32,7 +32,7 @@ class GetIdFromAuthTest {
             .setEpochId(auth.epochId)
             .setTime(auth.time.asNtpTimestamp())
             .setMac(auth.mac)
-            .setRequestType(auth.requestType.value.toInt())
+            .setRequestType(auth.requestType.salt.toInt())
     }
 
     @ParameterizedTest

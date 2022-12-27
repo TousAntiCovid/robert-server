@@ -27,7 +27,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
-import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
+import static fr.gouv.stopc.robertserver.common.RobertClockKt.getROBERT_EPOCH;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -54,7 +54,7 @@ class ScoringAlgorithmV2Test {
 
             @Override
             public int getEpochDurationSecs() {
-                return (int) ROBERT_EPOCH.getDuration().toSeconds();
+                return (int) getROBERT_EPOCH().getDuration().toSeconds();
             }
         };
 
@@ -105,7 +105,7 @@ class ScoringAlgorithmV2Test {
         // Given
         final var now = CLOCK.now();
         final var exceededTime = now
-                .plus(1, ROBERT_EPOCH)
+                .plus(1, getROBERT_EPOCH())
                 .plus(receptionDelay);
 
         final var contact = Contact.builder()

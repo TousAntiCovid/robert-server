@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.crypto.test.matchers
 
-import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.base64Decode
+import fr.gouv.stopc.robertserver.common.parseRobertInstant
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.GERMANY
 import fr.gouv.stopc.robertserver.crypto.test.KEYSTORE
@@ -20,7 +20,7 @@ private const val SERVER_KEY_BASE64 = "/T2imPBNO8h7IR3avVJpH6frrqSrarkM"
 
 private const val FEDERATION_KEY_BASE64 = "9ZBbyujJnobnh1raCjXpNiAbQ7XnfMyxn17RbuCft7U="
 
-private val TEST_INSTANT = RobertClock.parse("2022-04-28T09:45:00Z=66855E")
+private val TEST_INSTANT = parseRobertInstant("2022-04-28T09:45:00Z=66855E")
 
 private val VALID_EPHEMERAL_TUPLE = EphemeralTuple(
     66855,

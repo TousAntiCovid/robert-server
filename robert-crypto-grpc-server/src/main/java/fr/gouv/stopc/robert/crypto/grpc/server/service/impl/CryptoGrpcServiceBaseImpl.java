@@ -208,7 +208,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "getIdFromAuth" })
     public void getIdFromAuth(GetIdFromAuthRequest request,
             StreamObserver<GetIdFromAuthResponse> responseObserver) {
-        RobertRequestType digestSalt = RobertRequestType.valueOf((byte) request.getRequestType());
+        RobertRequestType digestSalt = RobertRequestType.fromValue(request.getRequestType());
 
         if (Objects.isNull(digestSalt)) {
             String errorMessage = String.format("Unknown request type %d", request.getRequestType());

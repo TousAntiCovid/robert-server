@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
-import fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH
+import fr.gouv.stopc.robertserver.common.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.test.matchers.isoDateTimeNear
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest
 import fr.gouv.stopc.robertserver.ws.test.When

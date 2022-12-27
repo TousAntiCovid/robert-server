@@ -75,8 +75,8 @@ fun aBundleWithEpochs(bundleStart: RobertInstant, bundleEnd: RobertInstant): Con
                 .map { it.epochId }
             actualEpochs == expectedEpochIds
         },
-        "a bundle with all epochs from $bundleStart to $bundleEnd",
-        { ephemeralTuples -> " but is was a bundle containing epochs:[\n${ephemeralTuples.joinToString(",\n  ")}]" }
+        "a bundle with all epochs from $bundleStart to $bundleEnd (${expectedEpochIds.size})",
+        { ephemeralTuples -> " but is was a bundle containing ${ephemeralTuples.size} epochs:[\n${ephemeralTuples.joinToString(",\n  ")}]" }
     )
 }
 

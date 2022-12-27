@@ -201,7 +201,7 @@ public class AppMobile {
             final RobertRequestType salt)
             throws Exception {
 
-        final byte[] prefix = new byte[] { salt.getValue() };
+        final byte[] prefix = new byte[] { salt.getSalt() };
 
         // HMAC-SHA256 processing
         return cryptoHMACSHA256S.encrypt(ByteUtils.addAll(prefix, argument));
