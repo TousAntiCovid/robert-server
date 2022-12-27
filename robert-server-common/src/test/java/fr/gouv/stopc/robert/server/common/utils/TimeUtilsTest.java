@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robert.server.common.utils;
 
-import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +12,6 @@ import java.time.ZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@Slf4j
 public class TimeUtilsTest {
 
     @Test
@@ -53,15 +51,15 @@ public class TimeUtilsTest {
     @Test
     void testGetDateFromEpochTimezone() {
         for (int i = 0; i < 96 * 2; i++) {
-            log.info("{}: {}", i, TimeUtils.getDateFromEpoch(i, getServiceTimeStart()));
-            log.info("{}", 1 + (96 + 87 - (i % 96)) % 96);
+            System.out.printf("%d: %s\n", i, TimeUtils.getDateFromEpoch(i, getServiceTimeStart()));
+            System.out.printf("%d", 1 + (96 + 87 - (i % 96)) % 96);
         }
     }
 
     @Test
     void testGetDateFromEpochBeforeChange() {
         for (int i = 940; i < 1200; i++) {
-            log.info("{}; i={}", TimeUtils.getDateFromEpoch(i, getServiceTimeStart()), i);
+            System.out.printf("%s; i=%d", TimeUtils.getDateFromEpoch(i, getServiceTimeStart()), i);
         }
     }
 
