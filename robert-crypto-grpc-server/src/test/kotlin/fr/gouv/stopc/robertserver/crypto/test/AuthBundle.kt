@@ -1,19 +1,19 @@
 package fr.gouv.stopc.robertserver.crypto.test
 
 import com.google.protobuf.ByteString
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
+import fr.gouv.stopc.robertserver.common.RobertRequestType
 import fr.gouv.stopc.robertserver.common.base64Encode
 import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.Base64
 import kotlin.random.Random.Default
 
-fun valid_auth_bundle(): List<AuthBundle> = DigestSaltEnum.values()
+fun valid_auth_bundle(): List<AuthBundle> = RobertRequestType.values()
     .flatMap(::valid_auth_bundle)
 
-fun valid_auth_bundle(requestType: DigestSaltEnum): List<AuthBundle> {
+fun valid_auth_bundle(requestType: RobertRequestType): List<AuthBundle> {
     val now = clock.now()
     return listOf(
         AuthBundle("regular auth attributes", requestType, time = now),
@@ -68,7 +68,7 @@ fun valid_auth_bundle(requestType: DigestSaltEnum): List<AuthBundle> {
 
 data class AuthBundle(
     val title: String,
-    val requestType: DigestSaltEnum,
+    val requestType: RobertRequestType,
     val idA: String = Default.nextBytes(5).base64Encode(),
     val time: RobertInstant,
     val epochId: Int = time.asEpochId()

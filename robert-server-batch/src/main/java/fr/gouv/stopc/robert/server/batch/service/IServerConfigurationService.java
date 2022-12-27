@@ -1,15 +1,18 @@
-package fr.gouv.stopc.robert.server.common.service;
+package fr.gouv.stopc.robert.server.batch.service;
 
 public interface IServerConfigurationService {
 
     /**
      * TpStart in NTP seconds
-     * @return the time the ROBERT service was started (permanent, never changes, not tied to an instance)
+     * 
+     * @return the time the ROBERT service was started (permanent, never changes,
+     *         not tied to an instance)
      */
     long getServiceTimeStart();
 
     /**
      * Country code of the current application (1 byte)
+     * 
      * @return
      */
     byte getServerCountryCode();

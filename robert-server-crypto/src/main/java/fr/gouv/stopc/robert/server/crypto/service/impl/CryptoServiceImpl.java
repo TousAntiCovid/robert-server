@@ -1,9 +1,14 @@
 package fr.gouv.stopc.robert.server.crypto.service.impl;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
+import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
+import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
+import fr.gouv.stopc.robert.server.crypto.model.EphemeralTuple;
+import fr.gouv.stopc.robert.server.crypto.service.CryptoService;
+import fr.gouv.stopc.robert.server.crypto.structure.CryptoCipherStructureAbstract;
+import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
+import fr.gouv.stopc.robertserver.common.RobertRequestType;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -12,16 +17,10 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.springframework.stereotype.Service;
-
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
-import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
-import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
-import fr.gouv.stopc.robert.server.crypto.model.EphemeralTuple;
-import fr.gouv.stopc.robert.server.crypto.service.CryptoService;
-import fr.gouv.stopc.robert.server.crypto.structure.CryptoCipherStructureAbstract;
-import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
-import lombok.extern.slf4j.Slf4j;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 @Service
 @Slf4j
@@ -37,18 +36,20 @@ public class CryptoServiceImpl implements CryptoService {
             final byte[] idA,
             final byte countryCode) throws RobertServerCryptoException {
 
-        byte[] ebid =  this.generateEBID(cryptoForEBID, epochId, idA);
+        byte[] ebid = this.generateEBID(cryptoForEBID, epochId, idA);
 
         // generate ECC 8-bits MSB method
         byte[] encryptedCountryCode = this.encryptCountryCode(cryptoForECC, ebid, countryCode);
 
-        return  new EphemeralTuple(epochId, ebid, encryptedCountryCode);
+        return new EphemeralTuple(epochId, ebid, encryptedCountryCode);
     }
 
     @Override
-    public byte[] generateEBID(final CryptoCipherStructureAbstract cryptoForEBID, final int epochId, final byte[] idA) throws RobertServerCryptoException {
-        byte[] epoch =  ByteUtils.intToBytes(epochId);
-        byte[] truncatedEpoch = new byte[] { epoch[epoch.length - 3], epoch[epoch.length - 2], epoch[epoch.length - 1] };
+    public byte[] generateEBID(final CryptoCipherStructureAbstract cryptoForEBID, final int epochId, final byte[] idA)
+            throws RobertServerCryptoException {
+        byte[] epoch = ByteUtils.intToBytes(epochId);
+        byte[] truncatedEpoch = new byte[] { epoch[epoch.length - 3], epoch[epoch.length - 2],
+                epoch[epoch.length - 1] };
         this.assertLength("IDa", 40, idA);
 
         // concat epoch (truncate to 24 bits) and IDa (40 bits)
@@ -58,14 +59,16 @@ public class CryptoServiceImpl implements CryptoService {
     }
 
     @Override
-    public byte[] decryptEBID(final CryptoCipherStructureAbstract cryptoForEBID, final byte[] ebid) throws RobertServerCryptoException {
+    public byte[] decryptEBID(final CryptoCipherStructureAbstract cryptoForEBID, final byte[] ebid)
+            throws RobertServerCryptoException {
 
         this.assertLength("ebid", 64, ebid);
         return cryptoForEBID.decrypt(ebid);
     }
 
     @Override
-    public byte[] encryptCountryCode(final CryptoCipherStructureAbstract cryptoForECC, final byte[] ebid, final byte countryCode) throws RobertServerCryptoException {
+    public byte[] encryptCountryCode(final CryptoCipherStructureAbstract cryptoForECC, final byte[] ebid,
+            final byte countryCode) throws RobertServerCryptoException {
         this.assertLength("ebid", 64, ebid);
         this.assertLength("country code", 8, countryCode);
 
@@ -83,7 +86,8 @@ public class CryptoServiceImpl implements CryptoService {
     }
 
     @Override
-    public byte[] decryptCountryCode(final CryptoCipherStructureAbstract cryptoForECC, final byte[] ebid, final byte encryptedCountryCode) throws RobertServerCryptoException {
+    public byte[] decryptCountryCode(final CryptoCipherStructureAbstract cryptoForECC, final byte[] ebid,
+            final byte encryptedCountryCode) throws RobertServerCryptoException {
         this.assertLength("ebid", 64, ebid);
         this.assertLength("encrypted country code", 8, encryptedCountryCode);
 
@@ -92,14 +96,16 @@ public class CryptoServiceImpl implements CryptoService {
     }
 
     @Override
-    public byte[] generateMACHello(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] hello) throws RobertServerCryptoException {
+    public byte[] generateMACHello(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] hello)
+            throws RobertServerCryptoException {
         this.assertLength("hello message", 128, hello);
 
-        // get the first 88-bits of hello message. ==> (ECC | EBID | Time) also called M_a,i in spec
+        // get the first 88-bits of hello message. ==> (ECC | EBID | Time) also called
+        // M_a,i in spec
         final byte[] mai = Arrays.copyOfRange(hello, 0, 11);
         this.assertLength("(ECC | EBID | Time) or M_a,i", 88, mai);
 
-        byte[] generatedMAC = this.generateHMAC(cryptoHMACSHA256S, mai, DigestSaltEnum.HELLO);
+        byte[] generatedMAC = this.generateHMAC(cryptoHMACSHA256S, mai, RobertRequestType.HELLO);
 
         // truncate the result from 0 to 40-bits
         generatedMAC = Arrays.copyOfRange(generatedMAC, 0, 5);
@@ -108,15 +114,14 @@ public class CryptoServiceImpl implements CryptoService {
     }
 
     /**
-     *
      * @param cryptoHMACSHA256S CryptoStructure uses to encrypt HMAC-SHA256
-     * @param argument data to be processed
-     * @param salt prefixes the data to be processed
+     * @param argument          data to be processed
+     * @param salt              prefixes the data to be processed
      * @return the HMAC-SHA256 encrypted, truncated value.
      */
     private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S,
             final byte[] argument,
-            final DigestSaltEnum salt) throws RobertServerCryptoException {
+            final RobertRequestType salt) throws RobertServerCryptoException {
 
         final byte[] prefix = new byte[] { salt.getValue() };
 
@@ -125,7 +130,8 @@ public class CryptoServiceImpl implements CryptoService {
     }
 
     @Override
-    public boolean macHelloValidation(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] hello) throws RobertServerCryptoException {
+    public boolean macHelloValidation(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] hello)
+            throws RobertServerCryptoException {
         this.assertLength("hello message", 128, hello);
 
         // Generate HMAC-SHA256 from hello message in parameter
@@ -141,29 +147,33 @@ public class CryptoServiceImpl implements CryptoService {
     public boolean macESRValidation(final CryptoHMACSHA256 cryptoHMACSHA256S,
             final byte[] toBeEncrypted,
             final byte[] macToVerify) throws RobertServerCryptoException {
-        return macValidationForType(cryptoHMACSHA256S, toBeEncrypted, macToVerify, DigestSaltEnum.STATUS);
+        return macValidationForType(cryptoHMACSHA256S, toBeEncrypted, macToVerify, RobertRequestType.STATUS);
     }
 
     @Override
     public boolean macValidationForType(final CryptoHMACSHA256 cryptoHMACSHA256S,
             final byte[] toBeEncrypted,
             final byte[] macToVerify,
-            final DigestSaltEnum salt) throws RobertServerCryptoException {
-        this.assertLength("concat(EBID | Time)", 64+32+32, toBeEncrypted);
+            final RobertRequestType salt) throws RobertServerCryptoException {
+        this.assertLength("concat(EBID | Time)", 64 + 32 + 32, toBeEncrypted);
         byte[] generatedMAC = this.generateHMAC(cryptoHMACSHA256S, toBeEncrypted, salt);
         return Arrays.equals(macToVerify, generatedMAC);
     }
 
     /**
      * Method asserting the size in bits of an array of bytes
-     * @param bytes data to check
-     * @param size size in bits (ex 24-bits -> 3-bytes)
+     * 
+     * @param bytes        data to check
+     * @param size         size in bits (ex 24-bits -> 3-bytes)
      * @param propertyName property name to return in message
      * @throws RobertServerCryptoException argument should be at the right size
      */
     protected void assertLength(String propertyName, int size, byte... bytes) throws RobertServerCryptoException {
         if (bytes == null || bytes.length != size / 8) {
-            String message = String.format("%s should be %s-bits sized but is %s-bits sized", propertyName, size, bytes == null ? 0 : bytes.length * 8);
+            String message = String.format(
+                    "%s should be %s-bits sized but is %s-bits sized", propertyName, size,
+                    bytes == null ? 0 : bytes.length * 8
+            );
             throw new RobertServerCryptoException(message);
         }
     }
@@ -180,9 +190,8 @@ public class CryptoServiceImpl implements CryptoService {
 
             return cipher.doFinal(data);
 
-        } catch (NoSuchPaddingException |  NoSuchAlgorithmException |
-                InvalidKeyException |
-                IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | IllegalBlockSizeException
+                | BadPaddingException | InvalidAlgorithmParameterException e) {
 
             log.error("Unable to decrypt with AES cryptographic algorithm due to {}", e);
         }

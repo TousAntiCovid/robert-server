@@ -1,7 +1,7 @@
-package fr.gouv.stopc.robert.server.common.service.impl;
+package fr.gouv.stopc.robertserver.dataset.injector.service.impl;
 
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import fr.gouv.stopc.robertserver.dataset.injector.service.IServerConfigurationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

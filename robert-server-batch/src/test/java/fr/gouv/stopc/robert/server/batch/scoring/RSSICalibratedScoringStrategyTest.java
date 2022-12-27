@@ -3,8 +3,8 @@ package fr.gouv.stopc.robert.server.batch.scoring;
 import fr.gouv.stopc.robert.server.batch.IntegrationLegacyTest;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.exception.RobertScoringException;
+import fr.gouv.stopc.robert.server.batch.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.batch.service.impl.ScoringStrategyServiceImpl;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
@@ -23,10 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @Slf4j

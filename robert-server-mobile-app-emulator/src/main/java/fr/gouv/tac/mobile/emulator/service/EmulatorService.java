@@ -1,7 +1,7 @@
 package fr.gouv.tac.mobile.emulator.service;
 
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
+import fr.gouv.stopc.robertserver.common.RobertRequestType;
 import fr.gouv.tac.mobile.emulator.api.model.HelloMessageExchangesOrderRequest;
 import fr.gouv.tac.mobile.emulator.api.model.RegisterOrderRequest;
 import fr.gouv.tac.mobile.emulator.api.model.ReportOrderRequest;
@@ -65,7 +65,7 @@ public class EmulatorService {
 
         Objects.requireNonNull(appMobile);
 
-        AuthentifiedRequest authentifiedRequest = appMobile.prepareAuthRequest(0, DigestSaltEnum.UNREGISTER);
+        AuthentifiedRequest authentifiedRequest = appMobile.prepareAuthRequest(0, RobertRequestType.UNREGISTER);
 
         UnregisterRequest unregisterRequest = new UnregisterRequest();
         unregisterRequest.setEbid(authentifiedRequest.getEbid());
@@ -83,7 +83,7 @@ public class EmulatorService {
         AppMobile appMobile = appMobileMap.get(captchaId);
         Objects.requireNonNull(appMobile);
 
-        AuthentifiedRequest authentifiedRequest = appMobile.prepareAuthRequest(0, DigestSaltEnum.DELETE_HISTORY);
+        AuthentifiedRequest authentifiedRequest = appMobile.prepareAuthRequest(0, RobertRequestType.DELETE_HISTORY);
 
         robertApiClient.deleteExposureHistory(authentifiedRequest);
 
@@ -95,7 +95,7 @@ public class EmulatorService {
         AppMobile appMobile = appMobileMap.get(captchaId);
         Objects.requireNonNull(appMobile);
 
-        AuthentifiedRequest authentifiedRequest = appMobile.prepareAuthRequest(0, DigestSaltEnum.STATUS);
+        AuthentifiedRequest authentifiedRequest = appMobile.prepareAuthRequest(0, RobertRequestType.STATUS);
 
         ExposureStatusRequest exposureStatusRequest = new ExposureStatusRequest();
         exposureStatusRequest.setEbid(authentifiedRequest.getEbid());

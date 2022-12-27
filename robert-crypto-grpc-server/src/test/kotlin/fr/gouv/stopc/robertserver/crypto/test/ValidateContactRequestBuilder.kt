@@ -3,8 +3,8 @@ package fr.gouv.stopc.robertserver.crypto.test
 import com.google.protobuf.ByteString
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.HelloMessageDetail
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactRequest
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum.HELLO
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
+import fr.gouv.stopc.robertserver.common.RobertRequestType.HELLO
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import java.nio.ByteBuffer
 import java.time.Duration
