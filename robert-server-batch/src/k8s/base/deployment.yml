@@ -19,22 +19,8 @@ spec:
               image: batch-image
               imagePullPolicy: Always
               env:
-                - name: ROBERT_PROTOCOL_SCORING_ALGO_RSSI
-                  value: "-40"
-                - name: ROBERT_PROTOCOL_RISK_THRESHOLD
-                  value: "0.1"
-                - name: ROBERT_PROTOCOL_HELLO_TOLERANCE
-                  value: "480"
-                - name: ROBERT_SCORING_DELTAS
-                  value: "39.0,27.0,23.0,21.0,20.0,15.0"
-                - name: ROBERT_SCORING_RSSI_MAX
-                  value: "-35"
-                - name: ROBERT_PROTOCOL_CONTAGIOUS_PERIOD
-                  value: "14"
-                - name: ROBERT_SCORING_SCORING_ALGO_R0
-                  value: "0.0071"
-                - name: ROBERT_PROTOCOL_RISK_FLAG_RETENTION_PERIOD
-                  value: "7"
+                - name: SPRING_PROFILES_ACTIVE
+                  value: "dev"
                 - name: ROBERT_CRYPTO_SERVER_HOST
                   value: "robert-crypto-service.robert-crypto.svc.cluster.local"
                 - name: ROBERT_CRYPTO_SERVER_PORT

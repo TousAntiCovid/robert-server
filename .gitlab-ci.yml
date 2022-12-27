@@ -23,6 +23,50 @@ build-docker:
     - docker push $K8S_REGISTRY_IMAGE_CRYPTO
     - docker push $K8S_REGISTRY_IMAGE_BATCH
     - docker push $K8S_REGISTRY_IMAGE_WS
+    - docker push $K8S_REGISTRY_IMAGE_CRYPTO_FLYWAY
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
+e2e-tests-kubernetes:
+  image: eclipse-temurin:11-jre-alpine
+  stage: build
+  needs: ["build"]
+  variables:
+    SPRING_DATA_MONGODB_URI: $E2E_SPRING_DATA_MONGODB_URI
+    SPRING_PROFILES_ACTIVE: "real-captcha"
+    ROBERT_SUBMISSION_JWT_SIGNING_KEY: $E2E_ROBERT_SUBMISSION_JWT_SIGNING_KEY
+    ROBERT_CRYPTO_PUBLIC_KEY: $E2E_ROBERT_CRYPTO_PUBLIC_KEY
+    ROBERT_BATCH_COMMAND: "ID=$(uuidgen) ; kubectl create job --from=cronjobs/batch-job robert-end-to-end-batch-job-$ID --namespace=robert-batch ; kubectl wait --for=condition=complete job/end-to-end-batch-job-$ID --namespace=robert-batch --timeout=3m"
+    ROBERT_BATCH_LAUNCH_WITH_KUBECTL: "true"
+    ROBERT_WS_REST_INTERNAL_BASE_URL: $E2E_ROBERT_WS_REST_INTERNAL_BASE_URL
+    ROBERT_WS_REST_BASE_URL: $E2E_ROBERT_WS_REST_BASE_URL
+    ROBERT_CAPTCHADATASOURCE_PASSWORD: $E2E_ROBERT_CAPTCHADATASOURCE_PASSWORD
+    ROBERT_CAPTCHADATASOURCE_USERNAME: "pocinit"
+    ROBERT_CAPTCHADATASOURCE_URL: $E2E_ROBERT_CAPTCHADATASOURCE_URL
+    ROBERT_CRYPTODATASOURCE_PASSWORD: $E2E_ROBERT_CRYPTODATASOURCE_PASSWORD
+    ROBERT_CRYPTODATASOURCE_USERNAME: "pocinit"
+    ROBERT_CRYPTODATASOURCE_URL: $E2E_ROBERT_CRYPTODATASOURCE_URL
+    ROBERT_CLIENT_DEVICE_TYPES: "ANDROID"
+  script:
+    - apk add --no-cache curl uuidgen
+    - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
+    - kubectl version --short
+    - java -jar robert-e2e-tests/target/robert-e2e-tests-*.jar @RealTimeEnvironment
+  after_script:
+    - kubectl logs -l app=robert-ws --prefix=true --since=1h --all-containers --ignore-errors -n=robert-ws | gzip > kubernetes-ws.log.gz
+    - kubectl logs -l app=robert-crypto --prefix=true --since=1h --all-containers --ignore-errors -n=robert-crypto | gzip > kubernetes-crypto.log.gz
+    - kubectl logs -l app=submission-code-server --prefix=true --since=1h --all-containers --ignore-errors -n=submission-code | gzip > kubernetes-submission.log.gz
+    - kubectl logs -l app=captcha-server --prefix=true --since=1h --all-containers --ignore-errors -n=captcha | gzip > kubernetes-captcha.log.gz
+    - kubectl logs -l app=robert-batch --prefix=true --since=1h --all-containers --ignore-errors -n=robert-batch | gzip > kubernetes-batch.log.gz
+  artifacts:
+    when: always
+    paths:
+      - "**/target/cucumber-reports.html"
+      - "kubernetes*.log.gz"
+  tags:
+    - kubernetes
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 

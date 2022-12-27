@@ -32,7 +32,8 @@ public class RobertBatchSteps {
     public void launchBatch() {
         processLogs.clear();
 
-        final var builder = new ProcessBuilder(applicationProperties.getBatchCommand().split(" "));
+        final var builder = new ProcessBuilder("sh", "-c", applicationProperties.getBatchCommand());
+
         builder.directory(Path.of(".").toFile());
         final var process = builder.start();
 
