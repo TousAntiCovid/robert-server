@@ -30,4 +30,8 @@ public class ApplicationProperties {
 
     String batchCommandDown;
 
+    Boolean batchLaunchWithKubectl;
+
+    String clientDeviceTypes;
+
 }
