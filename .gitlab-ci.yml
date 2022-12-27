@@ -36,7 +36,7 @@ e2e-tests-kubernetes:
     SPRING_PROFILES_ACTIVE: "real-captcha"
     ROBERT_SUBMISSION_JWT_SIGNING_KEY: $E2E_ROBERT_SUBMISSION_JWT_SIGNING_KEY
     ROBERT_CRYPTO_PUBLIC_KEY: $E2E_ROBERT_CRYPTO_PUBLIC_KEY
-    ROBERT_BATCH_COMMAND: "ID=$(uuidgen) ; kubectl create job --from=cronjobs/batch-job robert-end-to-end-batch-job-$ID --namespace=robert-batch ; kubectl wait --for=condition=complete job/end-to-end-batch-job-$ID --namespace=robert-batch --timeout=3m"
+    ROBERT_BATCH_COMMAND: "ID=$(uuidgen) ; kubectl create job --from=cronjobs/robert-batch-job end-to-end-batch-job-$ID --namespace=robert-batch ; kubectl wait --for=condition=complete job/end-to-end-batch-job-$ID --namespace=robert-batch --timeout=3m"
     ROBERT_BATCH_LAUNCH_WITH_KUBECTL: "true"
     ROBERT_WS_REST_INTERNAL_BASE_URL: $E2E_ROBERT_WS_REST_INTERNAL_BASE_URL
     ROBERT_WS_REST_BASE_URL: $E2E_ROBERT_WS_REST_BASE_URL
