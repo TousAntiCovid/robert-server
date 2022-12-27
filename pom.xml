@@ -57,7 +57,7 @@
         <logcaptor.version>2.7.10</logcaptor.version>
         <mockserver.version>5.14.0</mockserver.version>
         <rest-assured.version>5.2.0</rest-assured.version>
-        <testcontainers.version>1.17.5</testcontainers.version>
+        <testcontainers.version>1.17.6</testcontainers.version>
     </properties>
 
     <dependencies>

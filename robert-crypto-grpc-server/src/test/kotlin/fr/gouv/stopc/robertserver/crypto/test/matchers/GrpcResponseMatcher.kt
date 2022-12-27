@@ -6,6 +6,8 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ErrorMessage
 import fr.gouv.stopc.robertserver.common.base64Encode
 import org.assertj.core.api.Condition
 import org.assertj.core.condition.VerboseCondition.verboseCondition
+import org.hamcrest.Matcher
+import org.hamcrest.Matchers.equalTo
 
 fun grpcField(name: String): Condition<GeneratedMessageV3> = verboseCondition(
     { response -> extractField(response, name) != null },
@@ -37,12 +39,15 @@ fun noGrpcError(): Condition<GeneratedMessageV3> = verboseCondition(
     { response -> " but it has error '${extractErrorAttribute(response)}'" }
 )
 
-fun grpcErrorResponse(code: Int, description: String): Condition<GeneratedMessageV3> = verboseCondition(
+fun grpcErrorResponse(code: Int, description: String): Condition<GeneratedMessageV3> =
+    grpcErrorResponse(code, equalTo(description))
+
+fun grpcErrorResponse(code: Int, descriptionMatcher: Matcher<String>): Condition<GeneratedMessageV3> = verboseCondition(
     { response ->
         val err = extractErrorAttribute(response)
-        err != null && err.code == code && err.description == description
+        err != null && err.code == code && descriptionMatcher.matches(err.description)
     },
-    "an error $code '$description'",
+    "an error $code with description $descriptionMatcher",
     { response ->
         val actualCode = extractErrorAttribute(response)?.code
         val actualDescription = extractErrorAttribute(response)?.description

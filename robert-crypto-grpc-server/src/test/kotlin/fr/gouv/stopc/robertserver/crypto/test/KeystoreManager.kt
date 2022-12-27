@@ -56,11 +56,11 @@ object KeystoreManager : TestExecutionListener {
             .forEach { generateAESKey("server-key-$it", 192) }
         FileOutputStream(KEYSTORE_PATH.toString())
             .use { fos -> KEYSTORE.store(fos, KEYSTORE_PASSWORD.toCharArray()) }
-        System.setProperty("robert.crypto.server.keystore.password", KEYSTORE_PASSWORD)
-        System.setProperty("robert.server.time-start", "2020-06-01")
-        System.setProperty("robert.protocol.hello-message-timestamp-tolerance", "180")
-        System.setProperty("robert.crypto.server.keystore.file", String.format("file:%s", KEYSTORE_PATH))
-        System.setProperty("robert.crypto.server.keystore.type", "PKCS12")
+
+        System.setProperty("robert-crypto.service-start-date", "2020-06-01")
+        System.setProperty("robert-crypto.keystore-password", KEYSTORE_PASSWORD)
+        System.setProperty("robert-crypto.keystore-configuration-uri", "file:$KEYSTORE_PATH")
+        System.setProperty("robert-crypto.hello-message-timestamp-tolerance", "180")
     }
 
     private fun generateRegisterKey() = KEYSTORE.setKeyEntry(

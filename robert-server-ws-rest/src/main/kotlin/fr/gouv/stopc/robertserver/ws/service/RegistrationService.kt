@@ -12,7 +12,7 @@ import fr.gouv.stopc.robertserver.ws.repository.RegistrationRepository
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.ALERTED_USERS
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.NOTIFIED_USERS
 import fr.gouv.stopc.robertserver.ws.repository.model.Registration
-import fr.gouv.stopc.robertserver.ws.service.model.IdA
+import fr.gouv.stopc.robertserver.common.model.IdA
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 

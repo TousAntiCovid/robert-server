@@ -12,7 +12,7 @@ import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
 import fr.gouv.stopc.robertserver.common.RobertRequestType
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
 import fr.gouv.stopc.robertserver.ws.repository.RegistrationRepository
-import fr.gouv.stopc.robertserver.ws.service.model.IdA
+import fr.gouv.stopc.robertserver.common.model.IdA
 import org.springframework.stereotype.Service
 import org.springframework.validation.BindException
 
@@ -42,7 +42,7 @@ class IdentityService(
             handleGrpcError(response.error)
         }
         return EncryptedEphemeralTuplesBundle(
-            IdA(response.idA),
+            IdA(response.idA.toList()),
             response.tuples.toList()
         )
     }
@@ -64,7 +64,7 @@ class IdentityService(
         if (response.hasError()) {
             handleGrpcError(response.error)
         }
-        return IdA(response.idA)
+        return IdA(response.idA.toList())
     }
 
     /**
@@ -87,7 +87,7 @@ class IdentityService(
             handleGrpcError(response.error)
         }
         return EncryptedEphemeralTuplesBundle(
-            IdA(response.idA),
+            IdA(response.idA.toList()),
             response.tuples.toList()
         )
     }
@@ -108,7 +108,7 @@ class IdentityService(
         if (response.hasError()) {
             handleGrpcError(response.error)
         }
-        return IdA(response.idA)
+        return IdA(response.idA.toList())
     }
 
     /**

@@ -1,6 +1,5 @@
 package fr.gouv.stopc.robertserver.crypto.test
 
-import fr.gouv.stopc.robert.crypto.grpc.server.RobertCryptoGrpcServerApplication
 import org.junit.jupiter.api.DisplayNameGeneration
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores
 import org.springframework.boot.test.context.SpringBootTest
@@ -14,8 +13,8 @@ import kotlin.annotation.AnnotationTarget.CLASS
 
 @Retention(RUNTIME)
 @Target(CLASS)
-@ActiveProfiles("test")
-@SpringBootTest(webEnvironment = RANDOM_PORT, classes = [RobertCryptoGrpcServerApplication::class])
+@ActiveProfiles("test", "jks")
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners(
     listeners = [
         KeystoreManager::class,

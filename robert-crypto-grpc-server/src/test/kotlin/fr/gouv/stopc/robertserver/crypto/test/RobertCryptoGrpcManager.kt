@@ -1,10 +1,10 @@
 package fr.gouv.stopc.robertserver.crypto.test
 
-import fr.gouv.stopc.robert.crypto.grpc.server.CryptoServiceGrpcServer
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplBlockingStub
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import io.grpc.Server
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.test.context.TestContext
@@ -29,7 +29,7 @@ class RobertCryptoGrpcManager : TestExecutionListener, ApplicationContextInitial
 
     override fun beforeTestClass(testContext: TestContext) {
         val serverPort = testContext.applicationContext
-            .getBean(CryptoServiceGrpcServer::class.java)
+            .getBean(Server::class.java)
             .port
 
         val channel = ManagedChannelBuilder.forTarget("dns:///localhost:$serverPort")

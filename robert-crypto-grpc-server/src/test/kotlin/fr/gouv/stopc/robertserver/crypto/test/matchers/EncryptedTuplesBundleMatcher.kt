@@ -68,6 +68,7 @@ fun ebidConstistentWithTupleEpoch(): Condition<EphemeralTuple> = verboseConditio
 fun aBundleWithEpochs(bundleStart: RobertInstant, bundleEnd: RobertInstant): Condition<Array<EphemeralTuple>> {
     val expectedEpochIds = bundleStart.epochsUntil(bundleEnd)
         .map(RobertInstant::asEpochId)
+        .sorted()
         .toList()
     return verboseCondition(
         { ephemeralTuples ->
@@ -76,7 +77,7 @@ fun aBundleWithEpochs(bundleStart: RobertInstant, bundleEnd: RobertInstant): Con
             actualEpochs == expectedEpochIds
         },
         "a bundle with all epochs from $bundleStart to $bundleEnd (${expectedEpochIds.size})",
-        { ephemeralTuples -> " but is was a bundle containing ${ephemeralTuples.size} epochs:[\n${ephemeralTuples.joinToString(",\n  ")}]" }
+        { ephemeralTuples -> " but it was a bundle containing ${ephemeralTuples.size} epochs:[\n${ephemeralTuples.joinToString(",\n  ")}]" }
     )
 }
 

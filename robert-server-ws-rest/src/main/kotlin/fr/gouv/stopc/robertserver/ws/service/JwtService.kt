@@ -11,7 +11,7 @@ import fr.gouv.stopc.robertserver.common.base64Decode
 import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.common.sha256
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
-import fr.gouv.stopc.robertserver.ws.service.model.IdA
+import fr.gouv.stopc.robertserver.common.model.IdA
 import org.springframework.stereotype.Service
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec

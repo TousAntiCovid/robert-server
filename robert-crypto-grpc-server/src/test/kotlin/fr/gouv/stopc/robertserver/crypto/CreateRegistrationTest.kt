@@ -6,6 +6,8 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationReque
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
+import fr.gouv.stopc.robertserver.crypto.test.assertThatInfoLogs
+import fr.gouv.stopc.robertserver.crypto.test.assertThatWarnLogs
 import fr.gouv.stopc.robertserver.crypto.test.clock
 import fr.gouv.stopc.robertserver.crypto.test.getCipherForTuples
 import fr.gouv.stopc.robertserver.crypto.test.matchers.KeyGenerator.DH_1024
@@ -19,12 +21,16 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcErrorResponse
 import fr.gouv.stopc.robertserver.crypto.test.matchers.idA
 import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
+import fr.gouv.stopc.robertserver.test.assertj.containsPattern
 import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.Matchers.matchesPattern
+import org.hamcrest.Matchers.startsWith
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 import java.security.SecureRandom
+import java.time.LocalDate
 import java.time.temporal.ChronoUnit.DAYS
 
 @IntegrationTest
@@ -81,11 +87,11 @@ class CreateRegistrationTest {
 
     @Test
     fun doesnt_generate_tuples_for_unknown_server_keys() {
-        // given a request for a 20 days bundle
+        // given a request for a 9 days bundle
         // then the response contains a bundle for 5 days
-        // because the server doesn't have keys for the following 15 days
+        // because the server doesn't have keys for the following 4 days
         val request = givenValidCreateRegistrationRequest()
-            .setNumberOfDaysForEpochBundles(20)
+            .setNumberOfDaysForEpochBundles(9)
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         val tuplesCipherForNewlyCreatedIdentity = getCipherForTuples(response.idA)
@@ -97,6 +103,16 @@ class CreateRegistrationTest {
             .have(ebidConstistentWithTupleEpoch())
             .describedAs("a bundle with 5 days of tuples")
             .`is`(aBundleWithEpochs(clock.now(), clock.now().plus(5, DAYS).truncatedTo(DAYS)))
+        val today = LocalDate.now()
+        val end = today.plusDays(8)
+        val missingKey1 = today.plusDays(5)
+        val missingKey2 = today.plusDays(6)
+        val missingKey3 = today.plusDays(7)
+        val missingKey4 = today.plusDays(8)
+        assertThatWarnLogs()
+            .containsPattern(
+                    "Tuples request from $today[0-9T:Z=E]+ until ${end}T23:45:00Z=\\d+E can't be honored: missing server-keys $missingKey1, $missingKey2, $missingKey3, $missingKey4"
+            )
     }
 
     @Test
@@ -109,11 +125,10 @@ class CreateRegistrationTest {
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
             .`is`(
-                grpcErrorResponse(
-                    400,
-                    "Unable to derive keys from provided client public key for client registration"
-                )
+                grpcErrorResponse(400, startsWith("Unable to load client public key: "))
             )
+        assertThatInfoLogs()
+            .containsPattern("Status 400: Unable to load client public key: .*")
     }
 
     @Test
@@ -126,9 +141,11 @@ class CreateRegistrationTest {
             .`is`(
                 grpcErrorResponse(
                     400,
-                    "Unable to derive keys from provided client public key for client registration"
+                    "Unable to load client public key: java.security.InvalidKeyException: EC domain parameters must be encoded in the algorithm identifier"
                 )
             )
+        assertThatInfoLogs()
+            .contains("Status 400: Unable to load client public key: java.security.InvalidKeyException: EC domain parameters must be encoded in the algorithm identifier")
     }
 
     @Test
@@ -143,9 +160,11 @@ class CreateRegistrationTest {
             .`is`(
                 grpcErrorResponse(
                     400,
-                    "Unable to derive keys from provided client public key for client registration"
+                    "Unable to derive keys from client public key for client registration: point is not on curve"
                 )
             )
+        assertThatInfoLogs()
+            .contains("Status 400: Unable to derive keys from client public key for client registration: point is not on curve")
     }
 
     @ParameterizedTest
@@ -157,7 +176,9 @@ class CreateRegistrationTest {
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(500, "Unhandled exception while creating registration"))
+            .`is`(grpcErrorResponse(500, "0 ephemeral tuples were generated"))
+        assertThatWarnLogs()
+            .contains("Status 500: 0 ephemeral tuples were generated")
     }
 
     @Test
@@ -167,6 +188,7 @@ class CreateRegistrationTest {
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(500, "Unhandled exception while creating registration"))
+            .`is`(grpcErrorResponse(500, "0 ephemeral tuples were generated"))
+        assertThatWarnLogs().contains("Status 500: 0 ephemeral tuples were generated")
     }
 }
