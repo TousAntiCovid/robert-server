@@ -15,9 +15,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import static java.time.temporal.ChronoUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.hamcrest.Matchers.hasSize;
 
 @Slf4j
 @AllArgsConstructor
@@ -44,7 +49,7 @@ public class RobertClientSteps {
     public void generateContactsBetweenUsers(final List<String> users, final Duration durationOfExchange) {
         mobilePhonesEmulator.exchangeHelloMessagesBetween(
                 users,
-                platformTimeSteps.getPlatformTime().toInstant(),
+                platformTimeSteps.getPlatformTime(),
                 durationOfExchange
         );
     }
@@ -66,7 +71,9 @@ public class RobertClientSteps {
 
     @Etantdonnéque("{word} se déclare malade")
     public void reportContacts(final String userName) {
-        mobilePhonesEmulator.getMobileApplication(userName).reportContacts();
+        final var reportCode = mobilePhonesEmulator.generateReportCode();
+        mobilePhonesEmulator.getMobileApplication(userName)
+                .reportContacts(reportCode);
     }
 
     @Etantdonnéque("{word} se déclare malade {relativeTime}")
@@ -98,14 +105,11 @@ public class RobertClientSteps {
     @Alors("les données d'exposition de {word} n'existent plus")
     public void expositionDataIsWiped(final String userName) {
         final var mobile = mobilePhonesEmulator.getMobileApplication(userName);
-        final var exposureStatus = mobile.requestStatus();
-        assertThat(exposureStatus.getLastContactDate()).isNull();
-        assertThat(exposureStatus.getRiskLevel())
-                .as("User risk level")
-                .isEqualTo(0);
-        assertThat(mobile.getRegistration().getExposedEpochs().size())
-                .as("Exposed epochs list")
-                .isEqualTo(0);
+        // mongodb replication may take some times
+        await(userName + "'s registration data to be removed")
+                .atMost(5, SECONDS)
+                .pollInterval(fibonacci(MILLISECONDS))
+                .until(() -> mobile.getRegistration().getExposedEpochs(), hasSize(0));
     }
 
     @Alors("le compte de {word} et ses données n'existent plus")

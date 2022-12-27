@@ -37,13 +37,16 @@ public class ClientKeys {
         private final byte[] backendPublicKey;
 
         public ClientKeys build() {
-            final var keyPair = generateKeyPair();
-            final var sharedSecret = generateSharedSecret(backendPublicKey, keyPair.getPrivate());
+            return build(generateKeyPair());
+        }
+
+        public ClientKeys build(KeyPair clientKeys) {
+            final var sharedSecret = generateSharedSecret(backendPublicKey, clientKeys.getPrivate());
             final var hmacSha256 = new CryptoHMACSHA256(sharedSecret);
             try {
                 final var kaMac = hmacSha256.encrypt(HASH_MAC.getBytes());
                 final var kaTuples = hmacSha256.encrypt(HASH_TUPLES.getBytes());
-                return new ClientKeys(keyPair, kaMac, kaTuples);
+                return new ClientKeys(clientKeys, kaMac, kaTuples);
             } catch (RobertServerCryptoException e) {
                 throw new IllegalStateException("Unable to generate client keys", e);
             }

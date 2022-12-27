@@ -27,171 +27,195 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>robert-crypto-grpc-server-messaging</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>robert-server-database</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>robert-server-crypto</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>robert-server-common</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>${testcontainers.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>mockserver</artifactId>
-            <version>${testcontainers.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>mongodb</artifactId>
-            <version>${testcontainers.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-
-        <!-- Micrometer core dependecy -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-core</artifactId>
-        </dependency>
-
-        <!-- Micrometer Prometheus registry -->
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-vault-config-consul</artifactId>
+            <artifactId>spring-cloud-starter-vault-config</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-consul-config</artifactId>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>9.25.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-kotlin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>${jjwt.version}</version>
+            <groupId>fr.gouv.stopc</groupId>
+            <artifactId>robert-server-test</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>${jjwt.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>${jjwt.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mockserver</artifactId>
+            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
 
+        <!--
+        unused dependency, but required by openapi generated code at compile time.
+        FIXME: with openapi-codegen 6.3.0 we should be able to remove this dependency using:
+        <annotationLibrary>none</annotationLibrary>.
+        See https://github.com/OpenAPITools/openapi-generator/pull/13869
+        -->
         <dependency>
-            <groupId>io.github.hakky54</groupId>
-            <artifactId>logcaptor</artifactId>
-            <version>${logcaptor.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.exparity</groupId>
-            <artifactId>hamcrest-date</artifactId>
-            <version>2.0.8</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-client-java</artifactId>
-            <version>${mockserver.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.grpcmock</groupId>
-            <artifactId>grpcmock-core</artifactId>
-            <version>${grpcmock.version}</version>
-            <scope>test</scope>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>1.6.8</version>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
     <build>
+        <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
+        <testSourceDirectory>
+            ${project.basedir}/src/test/kotlin
+        </testSourceDirectory>
         <plugins>
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>fr.gouv.stopc</groupId>
+                                    <artifactId>
+                                        robert-push-notif-server-ws-rest
+                                    </artifactId>
+                                    <version>1.5.0</version>
+                                    <includes>
+                                        **/openapi-push-notif-server-v1.yml
+                                    </includes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>fr.gouv.stopc</groupId>
+                                    <artifactId>
+                                        submission-code-server
+                                    </artifactId>
+                                    <version>2.2.1</version>
+                                    <includes>
+                                        **/openapi-submission-v1.yml,**/openapi-errors-v1.yml
+                                    </includes>
+                                </artifactItem>
+                            </artifactItems>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>5.4.0</version>
+                <version>6.2.1</version>
                 <configuration>
-                    <generatorName>spring</generatorName>
+                    <generatorName>kotlin-spring</generatorName>
                     <configOptions>
-                        <skipDefaultInterface>true</skipDefaultInterface>
-                        <annotationLibrary>none</annotationLibrary>
                         <documentationProvider>none</documentationProvider>
-                        <openApiNullable>false</openApiNullable>
+                        <dateLibrary>java8</dateLibrary>
                         <interfaceOnly>true</interfaceOnly>
                         <useTags>true</useTags>
-                        <additionalModelTypeAnnotations>
-                            @lombok.Builder
-                            @lombok.AllArgsConstructor
-                            @lombok.NoArgsConstructor
-                        </additionalModelTypeAnnotations>
+                        <openApiNullable>false</openApiNullable>
                     </configOptions>
                 </configuration>
                 <executions>
+                    <execution>
+                        <id>generate-robert-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <configOptions>
+                                <sourceFolder>src/main/kotlin</sourceFolder>
+                            </configOptions>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi-robert-server-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.robertserver.ws.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.robertserver.ws.api.model
+                            </modelPackage>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>generate-internal-api</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
+                            <configOptions>
+                                <sourceFolder>src/main/kotlin</sourceFolder>
+                            </configOptions>
                             <inputSpec>
                                 ${project.basedir}/src/main/resources/openapi-robert-internal.yml
                             </inputSpec>
@@ -204,21 +228,101 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>generate-external-api</id>
+                        <id>generate-captcha-client</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
+                            <generatorName>java</generatorName>
+                            <library>resttemplate</library>
                             <inputSpec>
-                                ${project.basedir}/src/main/resources/openapi-robert-server-v1.yml
+                                ${project.basedir}/src/main/resources/openapi-captcha-internal-v1.yml
                             </inputSpec>
                             <apiPackage>
-                                fr.gouv.stopc.robertserver.ws.api
+                                fr.gouv.stopc.captchaserver.api
                             </apiPackage>
                             <modelPackage>
-                                fr.gouv.stopc.robertserver.ws.api.model
+                                fr.gouv.stopc.captchaserver.api.model
                             </modelPackage>
+                            <configOptions>
+                                <testOutput>
+                                    ${project.build.directory}/generated-test-sources/openapi
+                                </testOutput>
+                            </configOptions>
                         </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-submission-code-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <generatorName>java</generatorName>
+                            <library>resttemplate</library>
+                            <inputSpec>
+                                ${project.build.directory}/dependency/BOOT-INF/classes/openapi-submission-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.submissioncode.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.submissioncode.api.model
+                            </modelPackage>
+                            <configOptions>
+                                <testOutput>
+                                    ${project.build.directory}/generated-test-sources/openapi
+                                </testOutput>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-push-notif-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <generatorName>java</generatorName>
+                            <library>resttemplate</library>
+                            <inputSpec>
+                                ${project.build.directory}/dependency/BOOT-INF/classes/openapi-push-notif-server-v1.yml
+                            </inputSpec>
+                            <apiPackage>
+                                fr.gouv.stopc.pushserver.api
+                            </apiPackage>
+                            <modelPackage>
+                                fr.gouv.stopc.pushserver.api.model
+                            </modelPackage>
+                            <configOptions>
+                                <testOutput>
+                                    ${project.build.directory}/generated-test-sources/openapi
+                                </testOutput>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.xolstice.maven.plugins</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>0.6.1</version>
+                <configuration>
+                    <protocArtifact>
+                        com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}
+                    </protocArtifact>
+                    <pluginId>grpc-kotlin</pluginId>
+                    <pluginArtifact>
+                        io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
+                    </pluginArtifact>
+                    <protoSourceRoot>
+                        ../robert-crypto-grpc-server-messaging/src/main/proto
+                    </protoSourceRoot>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>compile-custom</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

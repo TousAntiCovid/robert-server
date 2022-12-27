@@ -9,8 +9,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -22,7 +20,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.awaitility.Awaitility.given;
+import static org.awaitility.Awaitility.await;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
 @RequiredArgsConstructor
@@ -30,12 +28,8 @@ public class PlatformTimeSteps {
 
     private final RobertApi robertApi;
 
-    public ZonedDateTime getPlatformTime() {
-        return ZonedDateTime.parse(execInContainer("ws-rest", "date --iso-8601=seconds -u"));
-    }
-
-    public LocalDate getPlatformDate() {
-        return getPlatformTime().toLocalDate();
+    public Instant getPlatformTime() {
+        return robertApi.clock().getTime().toInstant();
     }
 
     @Etantdonnéque("l'on est {relativeTime}")
@@ -52,8 +46,7 @@ public class PlatformTimeSteps {
     private void verifyServiceClock(final String containerName, final Duration duration) {
 
         final var expectedFakedInstant = now().minus(duration);
-        given()
-                .await("Wait for faked time to be set in service " + containerName)
+        await("Wait for faked time to be set in service " + containerName)
                 .atMost(1, MINUTES)
                 .pollInterval(fibonacci(MILLISECONDS))
                 .and()

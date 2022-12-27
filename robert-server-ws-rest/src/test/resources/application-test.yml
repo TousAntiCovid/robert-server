@@ -1,7 +1,3 @@
-robert.server:
-  disable-check-token: false
-  status-request-minimum-epoch-gap: 2
-
 spring.cloud:
   vault.enabled: false
   consul.enabled: false

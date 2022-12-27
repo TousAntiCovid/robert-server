@@ -1,19 +1,32 @@
 package fr.gouv.stopc.e2e.mobileapplication;
 
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import fr.gouv.stopc.e2e.config.ApplicationProperties;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.ApplicationIdentityRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.CaptchaRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.RegistrationRepository;
 import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
-import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
+import fr.gouv.stopc.robert.client.api.RobertApi;
 import io.cucumber.spring.ScenarioScope;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
+import java.security.KeyFactory;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
+
+import static com.nimbusds.jose.JOSEObjectType.JWT;
+import static com.nimbusds.jose.JWSAlgorithm.ES256;
+import static com.nimbusds.jose.jwk.Curve.P_256;
+import static java.time.temporal.ChronoUnit.HOURS;
 
 @Service
 @ScenarioScope
@@ -22,11 +35,13 @@ public class MobilePhonesEmulator {
 
     private final ApplicationProperties applicationProperties;
 
-    private final RobertLegacyApi robertLegacyApi;
+    private final RobertApi robertApi;
 
     private final CaptchaApi captchaApi;
 
-    private final ClientIdentifierRepository clientIdentifierRepository;
+    private final CaptchaRepository captchaRepository;
+
+    private final ApplicationIdentityRepository applicationIdentityRepository;
 
     private final RegistrationRepository registrationRepository;
 
@@ -43,8 +58,9 @@ public class MobilePhonesEmulator {
                 userName,
                 applicationProperties,
                 captchaApi,
-                robertLegacyApi,
-                clientIdentifierRepository,
+                robertApi,
+                captchaRepository,
+                applicationIdentityRepository,
                 registrationRepository,
                 platformTimeSteps
         );
@@ -67,5 +83,25 @@ public class MobilePhonesEmulator {
                                     .forEach(mobileApp -> mobileApp.receiveHelloMessage(hello))
                     );
         }
+    }
+
+    @SneakyThrows
+    public String generateReportCode() {
+        final var key = Base64.getDecoder().decode(applicationProperties.getSubmissionJwtSigningKey());
+        final var privateKey = KeyFactory.getInstance("EC")
+                .generatePrivate(new PKCS8EncodedKeySpec(key));
+        final var jwt = new SignedJWT(
+                new JWSHeader.Builder(ES256)
+                        .type(JWT)
+                        .keyID("E2E_TESTS_KEY")
+                        .build(),
+                new JWTClaimsSet.Builder()
+                        .issuer("SIDEP")
+                        .claim("iat", Date.from(Instant.now().minus(1, HOURS)))
+                        .claim("jti", UUID.randomUUID())
+                        .build()
+        );
+        jwt.sign(new ECDSASigner(privateKey, P_256));
+        return jwt.serialize();
     }
 }

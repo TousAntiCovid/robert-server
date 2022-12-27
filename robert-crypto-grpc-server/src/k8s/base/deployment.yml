@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robert-crypto-deployment
+  namespace: robert-crypto
+  labels:
+    app: robert-crypto
+spec:
+  selector:
+    matchLabels:
+      app: robert-crypto
+  template:
+    metadata:
+      labels:
+        app: robert-crypto
+    spec:
+      initContainers:
+        - name: robert-crypto-db-initializer
+          image: flyway-image
+          command: ["flyway", "migrate"]
+          env:
+            - name: FLYWAY_USER
+              value: pocinit
+            - name: FLYWAY_URL
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: SPRING_DATASOURCE_URL
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+      containers:
+        - name: robert-crypto-app
+          image: crypto-image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_FILE
+              value: "file:/keystore.p12"
+            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE
+              value: "PKCS12"
+            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_PASSWORD
+              value: "1234"
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: SPRING_DATASOURCE_USERNAME
+              value: pocinit
+            - name: SPRING_FLYWAY_BASELINE_ON_MIGRATE
+              value: "true"
+            - name: SPRING_FLYWAY_BASELINE_VERSION
+              value: "0"
+      imagePullSecrets:
+        - name: poc-inttac-poc-img-push-pull-secret
+      nodeSelector:
+        caascad.io/nodepool: "pod-tac"

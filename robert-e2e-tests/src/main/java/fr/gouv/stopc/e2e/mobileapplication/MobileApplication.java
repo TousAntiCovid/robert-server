@@ -6,34 +6,20 @@ import fr.gouv.stopc.e2e.external.common.utils.ByteUtils;
 import fr.gouv.stopc.e2e.external.crypto.CryptoAESGCM;
 import fr.gouv.stopc.e2e.external.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.e2e.external.crypto.model.EphemeralTupleJson;
-import fr.gouv.stopc.e2e.mobileapplication.model.CaptchaSolution;
-import fr.gouv.stopc.e2e.mobileapplication.model.ClientKeys;
-import fr.gouv.stopc.e2e.mobileapplication.model.ContactTuple;
-import fr.gouv.stopc.e2e.mobileapplication.model.ExposureStatus;
-import fr.gouv.stopc.e2e.mobileapplication.model.HelloMessage;
-import fr.gouv.stopc.e2e.mobileapplication.model.RobertRequestBuilder;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.model.Registration;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.ClientIdentifierRepository;
-import fr.gouv.stopc.e2e.mobileapplication.timemachine.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.mobileapplication.model.*;
+import fr.gouv.stopc.e2e.mobileapplication.repository.ApplicationIdentityRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.CaptchaRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.RegistrationRepository;
+import fr.gouv.stopc.e2e.mobileapplication.repository.model.Registration;
 import fr.gouv.stopc.e2e.steps.PlatformTimeSteps;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
-import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
-import fr.gouv.stopc.robert.client.model.CaptchaGenerationRequest;
-import fr.gouv.stopc.robert.client.model.Contact;
-import fr.gouv.stopc.robert.client.model.HelloMessageDetail;
-import fr.gouv.stopc.robert.client.model.PushInfo;
-import fr.gouv.stopc.robert.client.model.RegisterRequest;
-import fr.gouv.stopc.robert.client.model.RegisterSuccessResponse;
-import fr.gouv.stopc.robert.client.model.ReportBatchRequest;
+import fr.gouv.stopc.robert.client.api.RobertApi;
+import fr.gouv.stopc.robert.client.model.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static fr.gouv.stopc.e2e.external.common.enums.DigestSaltEnum.HELLO;
@@ -48,8 +34,6 @@ public class MobileApplication {
 
     private final String username;
 
-    private final ApplicationProperties applicationProperties;
-
     private final ClientKeys clientKeys;
 
     private final Map<Integer, ContactTuple> contactTupleByEpochId = new HashMap<>();
@@ -60,7 +44,7 @@ public class MobileApplication {
 
     private final CaptchaApi captchaApi;
 
-    private final RobertLegacyApi robertLegacyApi;
+    private final RobertApi robertApi;
 
     private final String applicationId;
 
@@ -72,61 +56,53 @@ public class MobileApplication {
             final String username,
             final ApplicationProperties applicationProperties,
             final CaptchaApi captchaApi,
-            final RobertLegacyApi robertLegacyApi,
-            final ClientIdentifierRepository clientIdentifierRepository,
+            final RobertApi robertApi,
+            final CaptchaRepository captchaRepository,
+            final ApplicationIdentityRepository applicationIdentityRepository,
             final RegistrationRepository registrationRepository,
             final PlatformTimeSteps platformTime) {
         this.platformTime = platformTime;
         this.username = username;
-        this.applicationProperties = applicationProperties;
         this.registrationRepository = registrationRepository;
         this.captchaApi = captchaApi;
-        this.robertLegacyApi = robertLegacyApi;
+        this.robertApi = robertApi;
         this.clientKeys = ClientKeys.builder(applicationProperties.getCryptoPublicKey())
                 .build();
-        final var captchaSolution = resolveMockedCaptchaChallenge();
-        final var registerResponse = register(captchaSolution.getId(), captchaSolution.getAnswer());
-        this.applicationId = clientIdentifierRepository.findTopByOrderByIdDesc()
-                .orElseThrow()
-                .getIdA();
+        resolveCaptchaChallenge();
+        final var captcha = captchaRepository.saveRandomCaptcha();
+        final var registerResponse = register(captcha.getId(), captcha.getAnswer());
+        this.applicationId = applicationIdentityRepository.findLastInsertedIdA();
         this.clock = new EpochClock(registerResponse.getTimeStart());
     }
 
-    private CaptchaSolution resolveMockedCaptchaChallenge() {
-        // We simulate the user visual captcha resolution and we call the robert
-        // endpoint
-
-        // The mobile application ask a captcha id challenge from the captcha server
+    private void resolveCaptchaChallenge() {
+        // We don't really need it, but for the demonstration...
+        // The mobile application asks a captcha challenge
         final var captchaChallenge = captchaApi.captcha(
                 CaptchaGenerationRequest.builder()
                         .locale("fr")
                         .type("IMAGE")
                         .build()
         );
-
-        // The mobile application ask for an image captcha with the received captcha id
-        // challenge
+        // Then fetch the associated image
         final var response = captchaApi.captchaChallengeImageWithHttpInfo(captchaChallenge.getId());
         assertThat("Content-type header", response.getHeaders().get(CONTENT_TYPE), contains("image/png"));
         assertThat("image content", response.getBody(), notNullValue());
-
-        // The user reads the image content
-        return new CaptchaSolution(captchaChallenge.getId(), "valid challenge answer");
     }
 
-    private RegisterSuccessResponse register(final String captchaId, final String captchaSolution) {
+    private RegisterSuccessResponse register(final String captchaId, final String captchaAnswer) {
         final var publicKey = getEncoder()
                 .encodeToString(clientKeys.getKeyPair().getPublic().getEncoded());
 
-        final var registerResponse = robertLegacyApi.register(
+        final var registerResponse = robertApi.register(
                 RegisterRequest.builder()
-                        .captcha(captchaSolution)
+                        .captcha(captchaAnswer)
                         .captchaId(captchaId)
                         .clientPublicECDHKey(publicKey)
                         .pushInfo(
                                 PushInfo.builder()
                                         .token("valid-device-" + username)
-                                        .locale("fr")
+                                        .locale("fr-FR")
                                         .timezone("Europe/Paris")
                                         .build()
                         )
@@ -176,10 +152,10 @@ public class MobileApplication {
         );
     }
 
-    public void reportContacts() {
-        final var reportResponse = robertLegacyApi.reportBatch(
+    public void reportContacts(final String reportCode) {
+        final var reportResponse = robertApi.reportBatch(
                 ReportBatchRequest.builder()
-                        .token("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+                        .token(reportCode)
                         .contacts(new ArrayList<>(receivedHelloMessages.values()))
                         .build()
         );
@@ -200,9 +176,9 @@ public class MobileApplication {
     }
 
     public ExposureStatus requestStatus() {
-        final var now = clock.at(platformTime.getPlatformTime().toInstant());
+        final var now = clock.at(platformTime.getPlatformTime());
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
-        final var exposureStatusResponse = robertLegacyApi.eSR(
+        final var exposureStatusResponse = robertApi.eSR(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .exposureStatusRequest(currentEpochTuple.getEbid(), now)
                         .build()
@@ -215,7 +191,7 @@ public class MobileApplication {
     public void deleteExposureHistory() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
-        final var deleteResponse = robertLegacyApi.deleteExposureHistory(
+        final var deleteResponse = robertApi.deleteExposureHistory(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .deleteExposureHistory(currentEpochTuple.getEbid(), now)
                         .build()
@@ -226,7 +202,7 @@ public class MobileApplication {
     public void unregister() {
         final var now = clock.now();
         final var currentEpochTuple = contactTupleByEpochId.get(now.asEpochId());
-        final var deleteResponse = robertLegacyApi.unregister(
+        final var deleteResponse = robertApi.unregister(
                 RobertRequestBuilder.withMacKey(clientKeys.getKeyForMac())
                         .unregisterRequest(currentEpochTuple.getEbid(), now)
                         .build()

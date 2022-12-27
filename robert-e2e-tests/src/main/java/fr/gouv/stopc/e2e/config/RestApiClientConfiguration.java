@@ -4,7 +4,6 @@ import fr.gouv.stopc.robert.client.ApiClient;
 import fr.gouv.stopc.robert.client.api.CaptchaApi;
 import fr.gouv.stopc.robert.client.api.KpiApi;
 import fr.gouv.stopc.robert.client.api.RobertApi;
-import fr.gouv.stopc.robert.client.api.RobertLegacyApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,23 +17,18 @@ public class RestApiClientConfiguration {
     @Bean
     public ApiClient apiClient() {
         return new ApiClient()
-                .setBasePath(applicationProperties.getWsRestBaseUrl() + "/api/v6");
+                .setBasePath(applicationProperties.getWsRestBaseUrl().toString());
     }
 
     @Bean
     public ApiClient kpiClient() {
         return new ApiClient()
-                .setBasePath(applicationProperties.getWsRestBaseUrl() + "/internal/api/v2/");
+                .setBasePath(applicationProperties.getWsRestInternalBaseUrl().toString());
     }
 
     @Bean
     public CaptchaApi captchaApi() {
         return new CaptchaApi(apiClient());
-    }
-
-    @Bean
-    public RobertLegacyApi robertLegacyApi() {
-        return new RobertLegacyApi(apiClient());
     }
 
     @Bean

@@ -1,9 +1,9 @@
 robert:
-  ws-rest-base-url: http://localhost:8086
+  ws-rest-base-url: http://localhost:8000/api/v6
+  ws-rest-internal-base-url: http://localhost:8000/internal/api/v2
+  crypto-datasource.url: jdbc:postgresql://localhost:5432/robert
 
 spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/protectedRobertDB
-  datasource:
-    url: jdbc:postgresql://localhost:5432/robert

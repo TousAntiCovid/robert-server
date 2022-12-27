@@ -44,14 +44,14 @@
         "Content-Type": ["application/json"]
       },
       "statusCode": 201,
-      "body": "{\"id\":\"5227b11ff4bf44dbbbbec7fd777bd022\",\"captchaId\":\"5227b11ff4bf44dbbbbec7fd777bd022\"}",
+      "body": "{\"id\":\"5227b11ff4bf44dbbbbec7fd777bd022\",\"captchaId\":\"5227b11ff4bf44dbbbbec7fd777bd022\"}"
     }
   },
   {
     "id": "By default, calling the captcha/.* endpoint of Orange Captcha return this result",
     "httpRequest": {
       "method": "GET",
-      "path": "/public/api/v1/captcha/.*.png"
+      "path": "/public/api/v1/captcha/.*/image"
     },
     "httpResponse": {
       "headers": {

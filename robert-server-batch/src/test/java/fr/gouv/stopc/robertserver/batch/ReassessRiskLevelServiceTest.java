@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.batch;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
 import fr.gouv.stopc.robertserver.batch.test.IntegrationTest;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;

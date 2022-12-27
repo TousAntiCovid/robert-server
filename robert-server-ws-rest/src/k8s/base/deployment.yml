@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robert-ws-deployment
+  namespace: robert-ws
+  labels:
+    app: robert-ws
+spec:
+  selector:
+    matchLabels:
+      app: robert-ws
+  template:
+    metadata:
+      labels:
+        app: robert-ws
+    spec:
+      containers:
+        - name: robert-ws-app
+          image: ws-image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: robert-ws-secrets
+                  key: SPRING_DATA_MONGODB_URI
+            - name: ROBERTWS_CRYPTOSERVERURI
+              value: dns:///robert-crypto-service.robert-crypto:9090
+            - name: ROBERTWS_PUSHSERVERBASEURL
+              value: http://fake/private/api/v1
+            - name: ROBERTWS_CAPTCHASERVER_BASEURL
+              value: http://captcha-server-service.captcha.svc.cluster.local/private/api/v1
+            - name: ROBERTWS_SUBMISSIONCODESERVERBASEURL
+              value: http://submission-code-server-service.submission-code.svc.cluster.local/api/v1
+            - name: ROBERTWS_REPORTVALIDATIONJWT_SIGNINGKEY
+              valueFrom:
+                secretKeyRef:
+                  name: robert-ws-secrets
+                  key: ROBERTWS_REPORTVALIDATIONJWT_SIGNINGKEY
+            - name: ROBERTWS_DECLARATIONJWT_SIGNINGKEY
+              valueFrom:
+                secretKeyRef:
+                  name: robert-ws-secrets
+                  key: ROBERTWS_DECLARATIONJWT_SIGNINGKEY
+            - name: ROBERTWS_DECLARATIONJWT_KID
+              value: public-kid
+            - name: ROBERTWS_ANALYTICSJWT_SIGNINGKEY
+              valueFrom:
+                secretKeyRef:
+                  name: robert-ws-secrets
+                  key: ROBERTWS_ANALYTICSJWT_SIGNINGKEY
+      imagePullSecrets:
+        - name: poc-inttac-poc-img-push-pull-secret
+      nodeSelector:
+        caascad.io/nodepool: "pod-tac"

@@ -1,17 +1,15 @@
 package fr.gouv.stopc.robert.server.common.service.impl;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-
-import javax.annotation.PostConstruct;
-
+import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
-import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
+import javax.annotation.PostConstruct;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 /**
  * Facade for server configuration parameters and keys
@@ -19,7 +17,7 @@ import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 @Service
 public class ServerConfigurationServiceImpl implements IServerConfigurationService {
 
-    @Value("${robert.server.time-start:20200601}")
+    @Value("${robert.server.time-start:2020-06-01}")
     private String timeStart;
 
     @Value("${robert.server.country-code:0x21}")
@@ -32,7 +30,7 @@ public class ServerConfigurationServiceImpl implements IServerConfigurationServi
      */
     @PostConstruct
     private void initTimeStartNtp() {
-        final LocalDate ld = LocalDate.parse(this.timeStart, DateTimeFormatter.BASIC_ISO_DATE);
+        final LocalDate ld = LocalDate.parse(this.timeStart);
         final ZonedDateTime zdt = ld.atStartOfDay().atZone(ZoneId.of("UTC"));
         timeStartNtp = TimeUtils.convertUnixMillistoNtpSeconds(zdt.toInstant().toEpochMilli());
 

@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.crypto.test;
 
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 

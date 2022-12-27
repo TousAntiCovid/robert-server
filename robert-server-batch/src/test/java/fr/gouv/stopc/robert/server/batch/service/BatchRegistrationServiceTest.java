@@ -5,7 +5,7 @@ import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties;
 import fr.gouv.stopc.robert.server.batch.RobertServerBatchProperties.RiskThreshold;
 import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.service.impl.BatchRegistrationServiceImpl;
-import fr.gouv.stopc.robert.server.common.service.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClock;
 import fr.gouv.stopc.robertserver.database.model.EpochExposition;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.repository.KpiRepository;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static fr.gouv.stopc.robert.server.common.service.RobertClock.ROBERT_EPOCH;
+import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
 import static java.time.temporal.ChronoUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
