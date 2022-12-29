@@ -33,7 +33,6 @@ public class RobertBatchSteps {
         processLogs.clear();
 
         final var builder = new ProcessBuilder("sh", "-c", applicationProperties.getBatchCommand());
-        builder.environment().put("ID", "$(uuidgen)");
 
         builder.directory(Path.of(".").toFile());
         final var process = builder.start();

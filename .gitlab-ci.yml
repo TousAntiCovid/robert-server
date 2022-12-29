@@ -36,7 +36,7 @@ e2e-tests-kubernetes:
     SPRING_PROFILES_ACTIVE: "real-captcha"
     ROBERT_SUBMISSION_JWT_SIGNING_KEY: $E2E_ROBERT_SUBMISSION_JWT_SIGNING_KEY
     ROBERT_CRYPTO_PUBLIC_KEY: $E2E_ROBERT_CRYPTO_PUBLIC_KEY
-    ROBERT_BATCH_COMMAND: "kubectl create job --from=cronjobs/robert-batch-job end-to-end-batch-job-$ID --namespace=robert-batch ; kubectl wait --for=condition=complete job/end-to-end-batch-job-$ID --namespace=robert-batch --timeout=3m"
+    ROBERT_BATCH_COMMAND: "ID=$(uuidgen) ; kubectl create job --from=cronjobs/robert-batch-job end-to-end-batch-job-$ID --namespace=robert-batch ; kubectl wait --for=condition=complete job/end-to-end-batch-job-$ID --namespace=robert-batch --timeout=3m"
     ROBERT_BATCH_LAUNCH_WITH_KUBECTL: "true"
     ROBERT_WS_REST_INTERNAL_BASE_URL: $E2E_ROBERT_WS_REST_INTERNAL_BASE_URL
     ROBERT_WS_REST_BASE_URL: $E2E_ROBERT_WS_REST_BASE_URL
@@ -53,7 +53,6 @@ e2e-tests-kubernetes:
     - chmod +x ./kubectl
     - mv ./kubectl /usr/local/bin/kubectl
     - kubectl version --short
-    - ID=$(uuidgen) ; echo test-$ID
     - java -jar robert-e2e-tests/target/robert-e2e-tests-*.jar @RealTimeEnvironment
   after_script:
     - kubectl logs -l app=robert-ws --prefix=true --since=1h --all-containers --ignore-errors -n=robert-ws | gzip > kubernetes-ws.log.gz
