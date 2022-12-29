@@ -3,8 +3,8 @@ package fr.gouv.stopc.robertserver.crypto
 import com.google.protobuf.ByteString
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest.Builder
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum.UNREGISTER
+import fr.gouv.stopc.robertserver.common.RobertRequestType
+import fr.gouv.stopc.robertserver.common.RobertRequestType.UNREGISTER
 import fr.gouv.stopc.robertserver.crypto.test.AuthBundle
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
 import fr.gouv.stopc.robertserver.crypto.test.assertThatAllIdentities
@@ -32,7 +32,7 @@ class DeleteIdTest {
         fun valid_unregister_auth_bundle() = valid_auth_bundle(UNREGISTER)
 
         @JvmStatic
-        fun valid_but_not_unregister_auth_bundle() = DigestSaltEnum.values()
+        fun valid_but_not_unregister_auth_bundle() = RobertRequestType.values()
             .filter { it != UNREGISTER }
             .flatMap(::valid_auth_bundle)
     }

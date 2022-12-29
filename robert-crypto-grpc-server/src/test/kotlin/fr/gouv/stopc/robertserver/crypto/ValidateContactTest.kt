@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.crypto
 
 import com.google.protobuf.ByteString
-import fr.gouv.stopc.robertserver.common.RobertClock
+import fr.gouv.stopc.robertserver.common.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.GERMANY
@@ -180,7 +180,7 @@ class ValidateContactTest {
 
     @Test
     fun should_reject_hellomessage_with_invalid_mac() {
-        val contactInstant = clock.now().truncatedTo(RobertClock.ROBERT_EPOCH)
+        val contactInstant = clock.now().truncatedTo(ROBERT_EPOCH)
         givenIdentityExistsForIdA("FFFFFFF=")
         givenIdentityExistsForIdA("BCDEF0A=")
         val otherContact = givenValidateContactRequest()

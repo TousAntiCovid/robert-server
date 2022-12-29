@@ -12,7 +12,6 @@ import fr.gouv.stopc.robert.crypto.grpc.server.storage.cryptographic.service.ICr
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.model.ClientIdentifierBundle;
 import fr.gouv.stopc.robert.crypto.grpc.server.storage.service.IClientKeyStorageService;
 import fr.gouv.stopc.robert.crypto.grpc.server.utils.PropertyLoader;
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.callable.TupleGenerator;
@@ -23,6 +22,7 @@ import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoSkinny64;
+import fr.gouv.stopc.robertserver.common.RobertRequestType;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.annotation.Timed;
 import lombok.*;
@@ -208,7 +208,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
     @Timed(value = "robert.crypto.rpc", extraTags = { "operation", "getIdFromAuth" })
     public void getIdFromAuth(GetIdFromAuthRequest request,
             StreamObserver<GetIdFromAuthResponse> responseObserver) {
-        DigestSaltEnum digestSalt = DigestSaltEnum.valueOf((byte) request.getRequestType());
+        RobertRequestType digestSalt = RobertRequestType.fromValue(request.getRequestType());
 
         if (Objects.isNull(digestSalt)) {
             String errorMessage = String.format("Unknown request type %d", request.getRequestType());
@@ -303,7 +303,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     request.getEpochId(),
                     request.getTime(),
                     request.getMac().toByteArray(),
-                    DigestSaltEnum.STATUS
+                    RobertRequestType.STATUS
             );
         } catch (NoServerKeyFoundException e) {
             log.warn(e.getMessage());
@@ -712,7 +712,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
                     request.getEpochId(),
                     request.getTime(),
                     request.getMac().toByteArray(),
-                    DigestSaltEnum.UNREGISTER
+                    RobertRequestType.UNREGISTER
             );
         } catch (NoServerKeyFoundException e) {
             log.warn(e.getMessage());
@@ -759,7 +759,7 @@ public class CryptoGrpcServiceBaseImpl extends CryptoGrpcServiceImplImplBase {
             int epochId,
             long time,
             byte[] mac,
-            DigestSaltEnum type) throws NoServerKeyFoundException {
+            RobertRequestType type) throws NoServerKeyFoundException {
         try {
             EbidContent ebidContent = decryptEBIDAndCheckEpoch(encryptedEbid, epochId);
 

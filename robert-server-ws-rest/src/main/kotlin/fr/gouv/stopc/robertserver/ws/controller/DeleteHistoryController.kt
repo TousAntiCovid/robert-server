@@ -1,9 +1,9 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
+import fr.gouv.stopc.robertserver.common.RobertRequestType.DELETE_HISTORY
 import fr.gouv.stopc.robertserver.ws.api.DeleteExposureHistoryApi
 import fr.gouv.stopc.robertserver.ws.api.model.AuthentifiedRequest
 import fr.gouv.stopc.robertserver.ws.api.model.UnregisterResponse
-import fr.gouv.stopc.robertserver.ws.common.RequestType.DELETE_EXPOSURE_HISTORY
 import fr.gouv.stopc.robertserver.ws.service.IdentityService
 import fr.gouv.stopc.robertserver.ws.service.RegistrationService
 import fr.gouv.stopc.robertserver.ws.service.RobertCredentials
@@ -18,7 +18,7 @@ class DeleteHistoryController(
 
     override fun deleteExposureHistory(authentifiedRequest: AuthentifiedRequest): ResponseEntity<UnregisterResponse> {
         val credentials = RobertCredentials(
-            requestType = DELETE_EXPOSURE_HISTORY,
+            requestType = DELETE_HISTORY,
             ebid = authentifiedRequest.ebid.asList(),
             epochId = authentifiedRequest.epochId,
             time = authentifiedRequest.time.asList(),

@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.ws.service
 
-import fr.gouv.stopc.robertserver.ws.common.logger
+import fr.gouv.stopc.robertserver.common.logger
 import fr.gouv.stopc.submissioncode.api.SubmissionCodeApi
 import org.springframework.stereotype.Service
 

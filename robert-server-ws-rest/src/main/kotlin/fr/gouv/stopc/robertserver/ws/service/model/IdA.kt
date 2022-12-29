@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.service.model
 
 import com.google.protobuf.ByteString
-import fr.gouv.stopc.robertserver.ws.common.base64Encode
+import fr.gouv.stopc.robertserver.common.base64Encode
 import java.io.Serializable
 
 /**

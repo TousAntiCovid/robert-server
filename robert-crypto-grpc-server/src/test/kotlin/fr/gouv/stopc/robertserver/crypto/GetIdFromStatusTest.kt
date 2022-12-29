@@ -3,8 +3,8 @@ package fr.gouv.stopc.robertserver.crypto
 import com.google.protobuf.ByteString
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest.Builder
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum.STATUS
+import fr.gouv.stopc.robertserver.common.RobertRequestType
+import fr.gouv.stopc.robertserver.common.RobertRequestType.STATUS
 import fr.gouv.stopc.robertserver.crypto.test.AuthBundle
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
@@ -37,7 +37,7 @@ class GetIdFromStatusTest {
         fun valid_status_auth_bundle(): List<AuthBundle> = valid_auth_bundle(STATUS)
 
         @JvmStatic
-        fun valid_but_not_status_auth_bundle() = DigestSaltEnum.values()
+        fun valid_but_not_status_auth_bundle() = RobertRequestType.values()
             .filter { it != STATUS }
             .flatMap(::valid_auth_bundle)
     }

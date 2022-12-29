@@ -2,8 +2,8 @@ package fr.gouv.stopc.robertserver.ws.service
 
 import fr.gouv.stopc.pushserver.api.PushTokenApi
 import fr.gouv.stopc.pushserver.api.model.PushRequest
+import fr.gouv.stopc.robertserver.common.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.RobertClock
-import fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
 import fr.gouv.stopc.robertserver.ws.api.model.PushInfo

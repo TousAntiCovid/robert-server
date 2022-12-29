@@ -16,8 +16,8 @@ import java.util.List;
 
 import static fr.gouv.stopc.robertserver.batch.test.LogbackManager.assertThatInfoLogs;
 import static fr.gouv.stopc.robertserver.batch.test.MessageMatcher.*;
-import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.*;
-import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
+import static fr.gouv.stopc.robertserver.batch.test.MongodbManager.givenRegistrationExistsForIdA;
+import static fr.gouv.stopc.robertserver.common.RobertClockKt.getROBERT_EPOCH;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.within;
 
@@ -182,7 +182,7 @@ class RiskEvaluationServiceTest {
                 .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatLatestRiskEpochForIdA("user___1")
-                .isCloseTo(now.truncatedTo(ROBERT_EPOCH).asInstant(), within(1, ROBERT_EPOCH));
+                .isCloseTo(now.truncatedTo(getROBERT_EPOCH()).asInstant(), within(1, getROBERT_EPOCH()));
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(twoDaysAgo.asInstant(), within(1, DAYS));
@@ -219,7 +219,7 @@ class RiskEvaluationServiceTest {
                 .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatLatestRiskEpochForIdA("user___1")
-                .isCloseTo(now.asInstant(), within(1, ROBERT_EPOCH));
+                .isCloseTo(now.asInstant(), within(1, getROBERT_EPOCH()));
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(now.asInstant(), within(1, DAYS));
@@ -256,7 +256,7 @@ class RiskEvaluationServiceTest {
                 .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatLatestRiskEpochForIdA("user___1")
-                .isCloseTo(now.asInstant(), within(1, ROBERT_EPOCH));
+                .isCloseTo(now.asInstant(), within(1, getROBERT_EPOCH()));
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(threeDaysAgo.asInstant(), within(1, DAYS));
@@ -292,7 +292,7 @@ class RiskEvaluationServiceTest {
                 .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatLatestRiskEpochForIdA("user___1")
-                .isCloseTo(now.asInstant(), within(1, ROBERT_EPOCH));
+                .isCloseTo(now.asInstant(), within(1, getROBERT_EPOCH()));
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(fiveDaysAgo.asInstant(), within(1, DAYS));
@@ -326,7 +326,7 @@ class RiskEvaluationServiceTest {
                 .hasFieldOrPropertyWithValue("atRisk", true);
 
         assertThatLatestRiskEpochForIdA("user___1")
-                .isCloseTo(now.asInstant(), within(1, ROBERT_EPOCH));
+                .isCloseTo(now.asInstant(), within(1, getROBERT_EPOCH()));
 
         assertThatLastContactTimestampForIdA("user___1")
                 .isCloseTo(now.asInstant(), within(1, DAYS));

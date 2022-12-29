@@ -2,7 +2,7 @@ package fr.gouv.stopc.robert.server.batch.configuration;
 
 import fr.gouv.stopc.robert.server.batch.partitioner.RangePartitioner;
 import fr.gouv.stopc.robert.server.batch.reader.MongoItemReaderFactory;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.batch.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;

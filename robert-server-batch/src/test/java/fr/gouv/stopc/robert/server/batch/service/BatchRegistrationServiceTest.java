@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static fr.gouv.stopc.robertserver.common.RobertClock.ROBERT_EPOCH;
+import static fr.gouv.stopc.robertserver.common.RobertClockKt.getROBERT_EPOCH;
 import static java.time.temporal.ChronoUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -213,7 +213,7 @@ class BatchRegistrationServiceTest {
         // GIVEN
         final var currentEpoch = robertClock.now().asEpochId();
         final var lastContactDateFromExposedEpoch = currentEpoch;
-        final var lastContactDateFromRegistration = robertClock.now().minus(2, ROBERT_EPOCH).asNtpTimestamp();
+        final var lastContactDateFromRegistration = robertClock.now().minus(2, getROBERT_EPOCH()).asNtpTimestamp();
         final var latestRiskEpoch = currentEpoch - 5;
 
         final var registration = Registration.builder()

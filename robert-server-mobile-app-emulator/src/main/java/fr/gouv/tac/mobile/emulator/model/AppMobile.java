@@ -2,12 +2,12 @@ package fr.gouv.tac.mobile.emulator.model;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.gouv.stopc.robert.server.common.DigestSaltEnum;
 import fr.gouv.stopc.robert.server.common.utils.ByteUtils;
 import fr.gouv.stopc.robert.server.common.utils.TimeUtils;
 import fr.gouv.stopc.robert.server.crypto.exception.RobertServerCryptoException;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM;
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoHMACSHA256;
+import fr.gouv.stopc.robertserver.common.RobertRequestType;
 import fr.gouv.tac.mobile.emulator.robert.api.model.AuthentifiedRequest;
 import fr.gouv.tac.mobile.emulator.robert.api.model.Contact;
 import fr.gouv.tac.mobile.emulator.robert.api.model.ExposureStatusResponse;
@@ -79,7 +79,7 @@ public class AppMobile {
         return Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
     }
 
-    public AuthentifiedRequest prepareAuthRequest(final int adjustTimeInSeconds, final DigestSaltEnum saltEnum) {
+    public AuthentifiedRequest prepareAuthRequest(final int adjustTimeInSeconds, final RobertRequestType saltEnum) {
 
         EphemeralTupleJson tuple = getCurrentTuple();
 
@@ -177,7 +177,7 @@ public class AppMobile {
         return time;
     }
 
-    private byte[] generateMAC(byte[] ebid, int epochId, byte[] time, DigestSaltEnum saltEnum) {
+    private byte[] generateMAC(byte[] ebid, int epochId, byte[] time, RobertRequestType saltEnum) {
         // Merge arrays
         // HMAC-256
         // return hash
@@ -198,10 +198,10 @@ public class AppMobile {
     }
 
     private byte[] generateHMAC(final CryptoHMACSHA256 cryptoHMACSHA256S, final byte[] argument,
-            final DigestSaltEnum salt)
+            final RobertRequestType salt)
             throws Exception {
 
-        final byte[] prefix = new byte[] { salt.getValue() };
+        final byte[] prefix = new byte[] { salt.getSalt() };
 
         // HMAC-SHA256 processing
         return cryptoHMACSHA256S.encrypt(ByteUtils.addAll(prefix, argument));
@@ -294,7 +294,7 @@ public class AppMobile {
         try {
             encryptedMac = this.generateHMAC(
                     new CryptoHMACSHA256(getClientIdentifierBundleWithPublicKey().get().getKeyForMac()), mai,
-                    DigestSaltEnum.HELLO
+                    RobertRequestType.HELLO
             );
         } catch (Exception e) {
             log.info("Problem generating SHA256");

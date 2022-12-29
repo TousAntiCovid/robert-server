@@ -4,7 +4,7 @@ import fr.gouv.stopc.robert.server.batch.configuration.PropertyLoader;
 import fr.gouv.stopc.robert.server.batch.configuration.StepConfigurationBase;
 import fr.gouv.stopc.robert.server.batch.listener.ResetIdMappingTableListener;
 import fr.gouv.stopc.robert.server.batch.processor.RegistrationIdMappingProcessor;
-import fr.gouv.stopc.robert.server.common.service.IServerConfigurationService;
+import fr.gouv.stopc.robert.server.batch.service.IServerConfigurationService;
 import fr.gouv.stopc.robertserver.database.model.ItemIdMapping;
 import fr.gouv.stopc.robertserver.database.model.Registration;
 import fr.gouv.stopc.robertserver.database.service.ItemIdMappingService;
