@@ -5,3 +5,4 @@ resources:
   - service.yml
   - role.yml
   - rolebinding.yml
+  - serviceMonitor.yml
