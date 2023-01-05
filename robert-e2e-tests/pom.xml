@@ -116,6 +116,8 @@
                 <version>5.2.1</version>
                 <configuration>
                     <generatorName>java</generatorName>
+                    <generateApiTests>false</generateApiTests>
+                    <generateModelTests>false</generateModelTests>
                     <configOptions>
                         <library>resttemplate</library>
                         <dateLibrary>java8</dateLibrary>
