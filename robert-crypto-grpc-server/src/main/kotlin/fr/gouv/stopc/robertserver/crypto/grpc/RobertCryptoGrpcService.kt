@@ -23,8 +23,9 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.RobertRequestType
+import fr.gouv.stopc.robertserver.common.RobertRequestType.STATUS
+import fr.gouv.stopc.robertserver.common.RobertRequestType.UNREGISTER
 import fr.gouv.stopc.robertserver.common.logger
-import fr.gouv.stopc.robertserver.common.model.IdA
 import fr.gouv.stopc.robertserver.crypto.repository.KeyRepository
 import fr.gouv.stopc.robertserver.crypto.service.IdentityService
 import fr.gouv.stopc.robertserver.crypto.service.model.AuthMac
@@ -90,36 +91,42 @@ class RobertCryptoGrpcService(
     ) = responseObserver.singleItemAnswer {
         val credentials =
             validateCredentials(request.requestType, request.epochId, request.time, request.ebid, request.mac)
-        val idA = identityService.authenticate(credentials)
+        val identity = identityService.authenticate(credentials)
         GetIdFromAuthResponse.newBuilder()
-            .setIdA(idA.toByteArray().toByteString())
+            .setIdA(identity.idA.toByteArray().toByteString())
             .setEpochId(request.epochId)
             .build()
     }
 
     @Timed(value = "robert.crypto.rpc", extraTags = ["operation", "getIdFromStatus"])
     override fun getIdFromStatus(
-        request: GetIdFromStatusRequest?,
-        responseObserver: StreamObserver<GetIdFromStatusResponse>?
-    ) {
-        super.getIdFromStatus(request, responseObserver)
+        request: GetIdFromStatusRequest,
+        responseObserver: StreamObserver<GetIdFromStatusResponse>
+    ) = responseObserver.singleItemAnswer {
+        val credentials = validateCredentials(STATUS, request.epochId, request.time, request.ebid, request.mac)
+        val identity = identityService.authenticate(credentials)
+        val tuplesBundle = identityService.generateEncryptedTuplesBundle(
+            identity,
+            request.serverCountryCode.toByteArray().first().toInt(),
+            request.fromEpochId,
+            request.numberOfDaysForEpochBundles.toLong()
+        )
+        GetIdFromStatusResponse.newBuilder()
+            .setIdA(identity.idA.toByteArray().toByteString())
+            .setEpochId(request.epochId)
+            .setTuples(tuplesBundle.toByteString())
+            .build()
     }
 
     @Timed(value = "robert.crypto.rpc", extraTags = ["operation", "deleteId"])
     override fun deleteId(request: DeleteIdRequest, responseObserver: StreamObserver<DeleteIdResponse>) =
         responseObserver.singleItemAnswer {
-            val credentials = validateCredentials(
-                RobertRequestType.UNREGISTER,
-                request.epochId,
-                request.time,
-                request.ebid,
-                request.mac
-            )
-            val idA: IdA = identityService.authenticate(credentials)
-            identityService.delete(idA)
+            val credentials = validateCredentials(UNREGISTER, request.epochId, request.time, request.ebid, request.mac)
+            val identity = identityService.authenticate(credentials)
+            identityService.delete(identity.idA)
 
             DeleteIdResponse.newBuilder()
-                .setIdA(idA.toByteArray().toByteString())
+                .setIdA(identity.idA.toByteArray().toByteString())
                 .build()
         }
 
@@ -213,6 +220,7 @@ class RobertCryptoGrpcService(
             val errorResponse = when (V::class) {
                 CreateRegistrationResponse::class -> CreateRegistrationResponse.newBuilder().setError(err).build()
                 GetIdFromAuthResponse::class -> GetIdFromAuthResponse.newBuilder().setError(err).build()
+                GetIdFromStatusResponse::class -> GetIdFromStatusResponse.newBuilder().setError(err).build()
                 DeleteIdResponse::class -> DeleteIdResponse.newBuilder().setError(err).build()
                 else -> throw Exception(e)
             }

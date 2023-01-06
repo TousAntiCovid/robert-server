@@ -75,8 +75,9 @@ class DeleteIdTest {
             .build()
         val response = whenRobertCryptoClient().deleteId(request)
         assertThat(response).has(grpcErrorResponse(400, "Invalid MAC"))
+        val base64Mac = invalidAuth.mac.toByteArray().base64Encode()
         assertThatInfoLogs()
-            .contains("Status 400: Invalid MAC: ${invalidAuth.mac} don't match expected checksum")
+            .contains("Status 400: Invalid MAC: $base64Mac don't match expected checksum")
     }
 
     @ParameterizedTest

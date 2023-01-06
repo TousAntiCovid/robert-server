@@ -68,7 +68,7 @@ class IdentityService(
             .encryptUsingAesGcm(identity.keyForTuples)
     }
 
-    fun authenticate(credentials: Credentials): IdA {
+    fun authenticate(credentials: Credentials): Identity {
         val date = clock.atEpoch(credentials.epochId).toUtcLocalDate()
         val serverKey = keyRepository.getServerKey(date)
             ?: throw RobertGrpcException(430, "Missing server key", "No server key for $date")
@@ -91,7 +91,7 @@ class IdentityService(
         if (!credentials.hasValidChecksum(identity.keyForMac)) {
             throw RobertGrpcException(400, "Invalid MAC", "${credentials.mac} don't match expected checksum")
         }
-        return identity.idA
+        return identity
     }
 
     fun delete(idA: IdA) = identityRepository.deleteByIdA(idA.toBase64String())

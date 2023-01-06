@@ -23,7 +23,6 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
 import fr.gouv.stopc.robertserver.test.assertj.containsPattern
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.Matchers.startsWith
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -124,7 +123,7 @@ class CreateRegistrationTest {
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
             .`is`(
-                grpcErrorResponse(400, startsWith("Unable to load client public key: "))
+                grpcErrorResponse(400, "Unable to load client public key")
             )
         assertThatInfoLogs()
             .containsPattern("Status 400: Unable to load client public key: .*")
@@ -137,12 +136,7 @@ class CreateRegistrationTest {
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(
-                grpcErrorResponse(
-                    400,
-                    "Unable to load client public key: java.security.InvalidKeyException: EC domain parameters must be encoded in the algorithm identifier"
-                )
-            )
+            .has(grpcErrorResponse(400, "Unable to load client public key"))
         assertThatInfoLogs()
             .contains("Status 400: Unable to load client public key: java.security.InvalidKeyException: EC domain parameters must be encoded in the algorithm identifier")
     }
@@ -156,14 +150,9 @@ class CreateRegistrationTest {
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(
-                grpcErrorResponse(
-                    400,
-                    "Unable to derive keys from client public key for client registration: point is not on curve"
-                )
-            )
+            .has(grpcErrorResponse(400, "Unable to derive keys from client public key"))
         assertThatInfoLogs()
-            .contains("Status 400: Unable to derive keys from client public key for client registration: point is not on curve")
+            .contains("Status 400: Unable to derive keys from client public key: point is not on curve")
     }
 
     @ParameterizedTest
@@ -175,9 +164,9 @@ class CreateRegistrationTest {
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(500, "0 ephemeral tuples were generated"))
+            .`is`(grpcErrorResponse(500, "Internal error"))
         assertThatWarnLogs()
-            .contains("Status 500: 0 ephemeral tuples were generated")
+            .contains("Status 500: Internal error: 0 ephemeral tuples were generated")
     }
 
     @Test
@@ -187,7 +176,7 @@ class CreateRegistrationTest {
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(500, "0 ephemeral tuples were generated"))
-        assertThatWarnLogs().contains("Status 500: 0 ephemeral tuples were generated")
+            .`is`(grpcErrorResponse(500, "Internal error"))
+        assertThatWarnLogs().contains("Status 500: Internal error: 0 ephemeral tuples were generated")
     }
 }

@@ -5,9 +5,11 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest.Builder
 import fr.gouv.stopc.robertserver.common.RobertRequestType
 import fr.gouv.stopc.robertserver.common.RobertRequestType.STATUS
+import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.crypto.test.AuthBundle
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
+import fr.gouv.stopc.robertserver.crypto.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.crypto.test.clock
 import fr.gouv.stopc.robertserver.crypto.test.getCipherForTuples
 import fr.gouv.stopc.robertserver.crypto.test.givenIdentityDoesntExistForIdA
@@ -21,6 +23,7 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.idA
 import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.valid_auth_bundle
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
+import fr.gouv.stopc.robertserver.test.assertj.containsPattern
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -86,6 +89,9 @@ class GetIdFromStatusTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromStatus(request)
         assertThat(response).has(grpcErrorResponse(400, "Invalid MAC"))
+        val base64Mac = invalidAuth.mac.toByteArray().base64Encode()
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid MAC: $base64Mac don't match expected checksum")
     }
 
     @ParameterizedTest
@@ -99,7 +105,9 @@ class GetIdFromStatusTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromStatus(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(400, "Could not decrypt ebid content"))
+            .`is`(grpcErrorResponse(400, "Could not decrypt EBID content"))
+        assertThatInfoLogs()
+            .containsPattern("Status 400: Could not decrypt EBID content: .*")
     }
 
     @ParameterizedTest
@@ -112,7 +120,9 @@ class GetIdFromStatusTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromStatus(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(400, "Could not decrypt ebid content"))
+            .`is`(grpcErrorResponse(400, "Could not decrypt EBID content"))
+        assertThatInfoLogs()
+            .containsPattern("Status 400: Could not decrypt EBID content: .*")
     }
 
     @ParameterizedTest
@@ -132,12 +142,10 @@ class GetIdFromStatusTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromStatus(request)
         assertThat(response)
-            .`is`(
-                grpcErrorResponse(
-                    430,
-                    "No server key found from cryptographic storage : " + oneMonthOldAuth.epochId
-                )
-            )
+            .has(grpcErrorResponse(430, "Missing server key"))
+        val oneMonthOldTime = clock.atEpoch(auth.epochId).minus(30, DAYS)
+        assertThatInfoLogs()
+            .contains("Status 430: Missing server key: No server key for ${oneMonthOldTime.toUtcLocalDate()}")
     }
 
     @ParameterizedTest
@@ -152,7 +160,7 @@ class GetIdFromStatusTest {
         givenIdentityDoesntExistForIdA(auth.idA)
         val response = whenRobertCryptoClient().getIdFromStatus(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(404, "Could not find id"))
+            .`is`(grpcErrorResponse(404, "Could not find idA"))
     }
 
     @ParameterizedTest
@@ -165,6 +173,8 @@ class GetIdFromStatusTest {
         val response = whenRobertCryptoClient().getIdFromStatus(request)
         assertThat(response)
             .`is`(grpcErrorResponse(400, "Invalid MAC"))
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid MAC")
     }
 
     @ParameterizedTest
@@ -177,6 +187,8 @@ class GetIdFromStatusTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromStatus(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(500, "Error validating authenticated request"))
+            .`is`(grpcErrorResponse(400, "Invalid EBID"))
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid EBID")
     }
 }
