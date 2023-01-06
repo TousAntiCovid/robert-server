@@ -89,8 +89,10 @@ class IdentityService(
             ?: throw RobertGrpcException(404, "Could not find idA", "IdA contained in EBID(${credentials.ebid}) was not found in database")
         // 6. verifies that macA,i == HMAC − SHA256(KauthA , c2 | ebidA | iA | tA)
         if (!credentials.hasValidChecksum(identity.keyForMac)) {
-            throw RobertGrpcException(400, "Invalid checksum", "${credentials.mac} don't match expected checksum")
+            throw RobertGrpcException(400, "Invalid MAC", "${credentials.mac} don't match expected checksum")
         }
         return identity.idA
     }
+
+    fun delete(idA: IdA) = identityRepository.deleteByIdA(idA.toBase64String())
 }

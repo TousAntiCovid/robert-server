@@ -24,6 +24,7 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.ValidateContactResponse
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.RobertRequestType
 import fr.gouv.stopc.robertserver.common.logger
+import fr.gouv.stopc.robertserver.common.model.IdA
 import fr.gouv.stopc.robertserver.crypto.repository.KeyRepository
 import fr.gouv.stopc.robertserver.crypto.service.IdentityService
 import fr.gouv.stopc.robertserver.crypto.service.model.AuthMac
@@ -96,32 +97,6 @@ class RobertCryptoGrpcService(
             .build()
     }
 
-    private fun validateCredentials(
-        requestType: Int,
-        epochId: Int,
-        ntpTimestampSeconds: Long,
-        ebid: ByteString,
-        mac: ByteString
-    ): Credentials {
-        val type = RobertRequestType.fromValue(requestType)
-            ?: throw RobertGrpcException(400, "Unknown request type: $requestType")
-        if (epochId < 0) {
-            throw RobertGrpcException(400, "Negative epoch id: $epochId")
-        }
-        val instant = clock.atNtpTimestamp(ntpTimestampSeconds)
-        val ebid = try {
-            Ebid(ebid.toByteArray().toList())
-        } catch (e: IllegalArgumentException) {
-            throw RobertGrpcException(400, "Invalid EBID")
-        }
-        val mac = try {
-            AuthMac(mac.toByteArray().toList())
-        } catch (e: IllegalArgumentException) {
-            throw RobertGrpcException(400, "Invalid MAC")
-        }
-        return Credentials(type, epochId, instant, ebid, mac)
-    }
-
     @Timed(value = "robert.crypto.rpc", extraTags = ["operation", "getIdFromStatus"])
     override fun getIdFromStatus(
         request: GetIdFromStatusRequest?,
@@ -131,9 +106,22 @@ class RobertCryptoGrpcService(
     }
 
     @Timed(value = "robert.crypto.rpc", extraTags = ["operation", "deleteId"])
-    override fun deleteId(request: DeleteIdRequest?, responseObserver: StreamObserver<DeleteIdResponse>?) {
-        super.deleteId(request, responseObserver)
-    }
+    override fun deleteId(request: DeleteIdRequest, responseObserver: StreamObserver<DeleteIdResponse>) =
+        responseObserver.singleItemAnswer {
+            val credentials = validateCredentials(
+                RobertRequestType.UNREGISTER,
+                request.epochId,
+                request.time,
+                request.ebid,
+                request.mac
+            )
+            val idA: IdA = identityService.authenticate(credentials)
+            identityService.delete(idA)
+
+            DeleteIdResponse.newBuilder()
+                .setIdA(idA.toByteArray().toByteString())
+                .build()
+        }
 
     @Timed(value = "robert.crypto.rpc", extraTags = ["operation", "validateContact"])
     override fun validateContact(
@@ -154,6 +142,48 @@ class RobertCryptoGrpcService(
     )
 
     /**
+     * Surface validation for credentials.
+     */
+    private fun validateCredentials(
+        requestType: Int,
+        epochId: Int,
+        ntpTimestampSeconds: Long,
+        ebid: ByteString,
+        mac: ByteString
+    ): Credentials {
+        val type = RobertRequestType.fromValue(requestType)
+            ?: throw RobertGrpcException(400, "Unknown request type: $requestType")
+        return validateCredentials(type, epochId, ntpTimestampSeconds, ebid, mac)
+    }
+
+    /**
+     * Surface validation for credentials.
+     */
+    private fun validateCredentials(
+        type: RobertRequestType,
+        epochId: Int,
+        ntpTimestampSeconds: Long,
+        ebid: ByteString,
+        mac: ByteString
+    ): Credentials {
+        if (epochId < 0) {
+            throw RobertGrpcException(400, "Negative epoch id: $epochId")
+        }
+        val instant = clock.atNtpTimestamp(ntpTimestampSeconds)
+        val ebid = try {
+            Ebid(ebid.toByteArray().toList())
+        } catch (e: IllegalArgumentException) {
+            throw RobertGrpcException(400, "Invalid EBID")
+        }
+        val mac = try {
+            AuthMac(mac.toByteArray().toList())
+        } catch (e: IllegalArgumentException) {
+            throw RobertGrpcException(400, "Invalid MAC")
+        }
+        return Credentials(type, epochId, instant, ebid, mac)
+    }
+
+    /**
      * Returns this [String] as a GRPC [ByteString].
      */
     private fun String.toByteString() = ByteString.copyFromUtf8(this)
@@ -164,7 +194,7 @@ class RobertCryptoGrpcService(
     private fun ByteArray.toByteString() = ByteString.copyFrom(this)
 
     /**
-     * Boilerplate to response a single item to a GRPC request and handle [RobertGrpcException].
+     * Boilerplate to respond a single item to a GRPC request and handle [RobertGrpcException].
      */
     private inline fun <reified V : GeneratedMessageV3> StreamObserver<V>.singleItemAnswer(handler: () -> V) =
         try {
@@ -183,6 +213,7 @@ class RobertCryptoGrpcService(
             val errorResponse = when (V::class) {
                 CreateRegistrationResponse::class -> CreateRegistrationResponse.newBuilder().setError(err).build()
                 GetIdFromAuthResponse::class -> GetIdFromAuthResponse.newBuilder().setError(err).build()
+                DeleteIdResponse::class -> DeleteIdResponse.newBuilder().setError(err).build()
                 else -> throw Exception(e)
             }
             onNext(errorResponse as V)

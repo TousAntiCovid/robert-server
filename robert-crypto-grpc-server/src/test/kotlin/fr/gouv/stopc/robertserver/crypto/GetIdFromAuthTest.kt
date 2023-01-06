@@ -61,6 +61,8 @@ class GetIdFromAuthTest {
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
             .has(grpcErrorResponse(400, "Unknown request type: 0"))
+        assertThatInfoLogs()
+            .contains("Status 400: Unknown request type: 0")
     }
 
     @ParameterizedTest
@@ -99,7 +101,6 @@ class GetIdFromAuthTest {
     fun cant_authenticate_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(
         auth: AuthBundle
     ) {
-        val oneMonthOldTime = clock.atEpoch(auth.epochId).minus(30, DAYS)
         val oneMonthOldAuth = AuthBundle(
             "30 days in the past: " + auth.title,
             auth.requestType,
@@ -115,6 +116,7 @@ class GetIdFromAuthTest {
             .has(
                 grpcErrorResponse(430, "Missing server key")
             )
+        val oneMonthOldTime = clock.atEpoch(auth.epochId).minus(30, DAYS)
         assertThatInfoLogs()
             .contains("Status 430: Missing server key: No server key for ${oneMonthOldTime.toUtcLocalDate()}")
     }

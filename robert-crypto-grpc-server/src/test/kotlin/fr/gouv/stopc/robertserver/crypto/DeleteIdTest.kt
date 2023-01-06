@@ -5,9 +5,11 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.DeleteIdRequest.Builder
 import fr.gouv.stopc.robertserver.common.RobertRequestType
 import fr.gouv.stopc.robertserver.common.RobertRequestType.UNREGISTER
+import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.crypto.test.AuthBundle
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
 import fr.gouv.stopc.robertserver.crypto.test.assertThatAllIdentities
+import fr.gouv.stopc.robertserver.crypto.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.crypto.test.clock
 import fr.gouv.stopc.robertserver.crypto.test.givenIdentityDoesntExistForIdA
 import fr.gouv.stopc.robertserver.crypto.test.givenIdentityExistsForIdA
@@ -16,6 +18,7 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcErrorResponse
 import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.valid_auth_bundle
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
+import fr.gouv.stopc.robertserver.test.assertj.containsPattern
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -72,6 +75,8 @@ class DeleteIdTest {
             .build()
         val response = whenRobertCryptoClient().deleteId(request)
         assertThat(response).has(grpcErrorResponse(400, "Invalid MAC"))
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid MAC: ${invalidAuth.mac} don't match expected checksum")
     }
 
     @ParameterizedTest
@@ -85,7 +90,9 @@ class DeleteIdTest {
             .build()
         val response = whenRobertCryptoClient().deleteId(request)
         assertThat(response)
-            .has(grpcErrorResponse(400, "Could not decrypt ebid content"))
+            .has(grpcErrorResponse(400, "Could not decrypt EBID content"))
+        assertThatInfoLogs()
+            .containsPattern("Status 400: Could not decrypt EBID content: .*")
     }
 
     @ParameterizedTest
@@ -98,7 +105,9 @@ class DeleteIdTest {
             .build()
         val response = whenRobertCryptoClient().deleteId(request)
         assertThat(response)
-            .has(grpcErrorResponse(400, "Could not decrypt ebid content"))
+            .has(grpcErrorResponse(400, "Could not decrypt EBID content"))
+        assertThatInfoLogs()
+            .contains("Status 400: Could not decrypt EBID content: Request epoch $inconsistentEpoch and EBID epoch ${auth.epochId} don't match")
     }
 
     @ParameterizedTest
@@ -118,12 +127,10 @@ class DeleteIdTest {
             .build()
         val response = whenRobertCryptoClient().deleteId(request)
         assertThat(response)
-            .has(
-                grpcErrorResponse(
-                    430,
-                    "No server key found from cryptographic storage : " + oneMonthOldAuth.epochId
-                )
-            )
+            .has(grpcErrorResponse(430, "Missing server key"))
+        val oneMonthOldTime = clock.atEpoch(auth.epochId).minus(30, DAYS)
+        assertThatInfoLogs()
+            .contains("Status 430: Missing server key: No server key for ${oneMonthOldTime.toUtcLocalDate()}")
     }
 
     @ParameterizedTest
@@ -138,7 +145,10 @@ class DeleteIdTest {
         givenIdentityDoesntExistForIdA(auth.idA)
         val response = whenRobertCryptoClient().deleteId(request)
         assertThat(response)
-            .has(grpcErrorResponse(404, "Could not find id"))
+            .has(grpcErrorResponse(404, "Could not find idA"))
+        val base64Ebid = request.ebid.toByteArray().base64Encode()
+        assertThatInfoLogs()
+            .contains("Status 404: Could not find idA: IdA contained in EBID($base64Ebid) was not found in database")
     }
 
     @ParameterizedTest
@@ -151,6 +161,8 @@ class DeleteIdTest {
         val response = whenRobertCryptoClient().deleteId(request)
         assertThat(response)
             .has(grpcErrorResponse(400, "Invalid MAC"))
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid MAC")
     }
 
     @ParameterizedTest
@@ -163,6 +175,8 @@ class DeleteIdTest {
             .build()
         val response = whenRobertCryptoClient().deleteId(request)
         assertThat(response)
-            .has(grpcErrorResponse(500, "Error validating authenticated request"))
+            .has(grpcErrorResponse(400, "Invalid EBID"))
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid EBID")
     }
 }
