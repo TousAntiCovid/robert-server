@@ -1,5 +1,6 @@
 package fr.gouv.stopc.robertserver.crypto.test
 
+import fr.gouv.stopc.robertserver.test.LogbackManager
 import org.junit.jupiter.api.DisplayNameGeneration
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores
 import org.springframework.boot.test.context.SpringBootTest

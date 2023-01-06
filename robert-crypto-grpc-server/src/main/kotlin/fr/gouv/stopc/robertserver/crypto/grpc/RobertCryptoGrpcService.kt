@@ -211,7 +211,7 @@ class RobertCryptoGrpcService(
             if (e.code < 500) {
                 log.info(e.message + if (e.details != "") e.details.prependIndent(": ") else "")
             } else {
-                log.warn(e.message + if (e.details != "") e.details.prependIndent(": ") else "")
+                log.error(e.message + if (e.details != "") e.details.prependIndent(": ") else "")
             }
             val err = ErrorMessage.newBuilder()
                 .setCode(e.code)

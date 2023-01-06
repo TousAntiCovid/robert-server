@@ -1,7 +1,7 @@
 package fr.gouv.stopc.robertserver.ws.test.matchers
 
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.assertThatRegistrationForIdA
+import fr.gouv.stopc.robertserver.test.assertThatInfoLogs
 import org.assertj.core.api.HamcrestCondition.matching
 import org.assertj.core.condition.VerboseCondition
 import org.assertj.core.condition.VerboseCondition.verboseCondition

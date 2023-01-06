@@ -1,8 +1,8 @@
 package fr.gouv.stopc.robertserver.ws.controller.crosscuttingconcerns
 
 import fr.gouv.stopc.robertserver.common.base64Encode
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.givenRegistrationExistsForIdA
+import fr.gouv.stopc.robertserver.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager.AuthRequestData
 import fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.Companion.givenCryptoServerRaiseMissingIdentityForEbid

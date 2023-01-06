@@ -7,7 +7,6 @@ import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.GERMANY
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
 import fr.gouv.stopc.robertserver.crypto.test.ValidateContactRequestBuilder.HelloMessageBuilder
-import fr.gouv.stopc.robertserver.crypto.test.assertThatWarnLogs
 import fr.gouv.stopc.robertserver.crypto.test.clock
 import fr.gouv.stopc.robertserver.crypto.test.givenIdentityDoesntExistForIdA
 import fr.gouv.stopc.robertserver.crypto.test.givenIdentityExistsForIdA
@@ -16,6 +15,7 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcBinaryField
 import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcField
 import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
+import fr.gouv.stopc.robertserver.test.assertThatWarnLogs
 import io.grpc.StatusRuntimeException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

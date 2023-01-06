@@ -2,7 +2,7 @@ package fr.gouv.stopc.robertserver.ws.controller.crosscuttingconcerns
 
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.base64Encode
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
+import fr.gouv.stopc.robertserver.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.ws.test.AuthDataManager
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest
 import fr.gouv.stopc.robertserver.ws.test.When

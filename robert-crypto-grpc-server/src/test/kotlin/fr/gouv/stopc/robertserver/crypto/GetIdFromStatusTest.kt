@@ -9,7 +9,6 @@ import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.crypto.test.AuthBundle
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
-import fr.gouv.stopc.robertserver.crypto.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.crypto.test.clock
 import fr.gouv.stopc.robertserver.crypto.test.getCipherForTuples
 import fr.gouv.stopc.robertserver.crypto.test.givenIdentityDoesntExistForIdA
@@ -23,11 +22,14 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.idA
 import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.valid_auth_bundle
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
+import fr.gouv.stopc.robertserver.test.assertThatErrorLogs
+import fr.gouv.stopc.robertserver.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.assertj.containsPattern
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.security.SecureRandom
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit.DAYS
 import java.util.Arrays
 
@@ -146,6 +148,9 @@ class GetIdFromStatusTest {
         val oneMonthOldTime = clock.atEpoch(auth.epochId).minus(30, DAYS)
         assertThatInfoLogs()
             .contains("Status 430: Missing server key: No server key for ${oneMonthOldTime.toUtcLocalDate()}")
+        val date = oneMonthOldTime.toUtcLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE)
+        assertThatErrorLogs()
+            .contains("Keystore does not contain key for alias 'server-key-$date'")
     }
 
     @ParameterizedTest

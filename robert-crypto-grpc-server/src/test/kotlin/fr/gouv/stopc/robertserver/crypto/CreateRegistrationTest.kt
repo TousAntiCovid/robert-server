@@ -6,8 +6,6 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CreateRegistrationReque
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
-import fr.gouv.stopc.robertserver.crypto.test.assertThatInfoLogs
-import fr.gouv.stopc.robertserver.crypto.test.assertThatWarnLogs
 import fr.gouv.stopc.robertserver.crypto.test.clock
 import fr.gouv.stopc.robertserver.crypto.test.getCipherForTuples
 import fr.gouv.stopc.robertserver.crypto.test.matchers.KeyGenerator.DH_1024
@@ -21,6 +19,9 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcErrorResponse
 import fr.gouv.stopc.robertserver.crypto.test.matchers.idA
 import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
+import fr.gouv.stopc.robertserver.test.assertThatErrorLogs
+import fr.gouv.stopc.robertserver.test.assertThatInfoLogs
+import fr.gouv.stopc.robertserver.test.assertThatWarnLogs
 import fr.gouv.stopc.robertserver.test.assertj.containsPattern
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -29,6 +30,7 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 import java.security.SecureRandom
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter.BASIC_ISO_DATE
 import java.time.temporal.ChronoUnit.DAYS
 
 @IntegrationTest
@@ -111,6 +113,13 @@ class CreateRegistrationTest {
             .containsPattern(
                 "Tuples request from $today[0-9T:Z=E]+ until ${end}T23:45:00Z=\\d+E can't be honored: missing server-keys $missingKey1, $missingKey2, $missingKey3, $missingKey4"
             )
+        assertThatErrorLogs()
+            .contains(
+                "Keystore does not contain key for alias 'server-key-${missingKey1.format(BASIC_ISO_DATE)}'",
+                "Keystore does not contain key for alias 'server-key-${missingKey2.format(BASIC_ISO_DATE)}'",
+                "Keystore does not contain key for alias 'server-key-${missingKey3.format(BASIC_ISO_DATE)}'",
+                "Keystore does not contain key for alias 'server-key-${missingKey4.format(BASIC_ISO_DATE)}'"
+            )
     }
 
     @Test
@@ -122,9 +131,7 @@ class CreateRegistrationTest {
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(
-                grpcErrorResponse(400, "Unable to load client public key")
-            )
+            .has(grpcErrorResponse(400, "Unable to load client public key"))
         assertThatInfoLogs()
             .containsPattern("Status 400: Unable to load client public key: .*")
     }
@@ -158,15 +165,20 @@ class CreateRegistrationTest {
     @ParameterizedTest
     @ValueSource(ints = [-25, -15, -10, -9, -8, -7, -6, 5, 6, 7, 8, 9, 10, 15, 25])
     fun cant_create_a_registration_producing_a_bundle_with_zero_tuples(bundleStartDayDrift: Int) {
+        val begin = clock.now().plus(bundleStartDayDrift.toLong(), DAYS)
         val request = givenValidCreateRegistrationRequest()
             .setNumberOfDaysForEpochBundles(1)
-            .setFromEpochId(clock.now().plus(bundleStartDayDrift.toLong(), DAYS).asEpochId())
+            .setFromEpochId(begin.asEpochId())
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(500, "Internal error"))
-        assertThatWarnLogs()
+            .has(grpcErrorResponse(500, "Internal error"))
+        val date = begin.toUtcLocalDate().format(BASIC_ISO_DATE)
+        assertThatErrorLogs()
             .contains("Status 500: Internal error: 0 ephemeral tuples were generated")
+            .contains("Keystore does not contain key for alias 'server-key-$date'")
+        assertThatWarnLogs()
+            .containsPattern("Tuples request from [0-9-:TZ=E]+ until [0-9-:TZ=E]+ can't be honored: missing server-keys [0-9-]+")
     }
 
     @Test
@@ -176,7 +188,7 @@ class CreateRegistrationTest {
             .build()
         val response = whenRobertCryptoClient().createRegistration(request)
         assertThat(response)
-            .`is`(grpcErrorResponse(500, "Internal error"))
-        assertThatWarnLogs().contains("Status 500: Internal error: 0 ephemeral tuples were generated")
+            .has(grpcErrorResponse(500, "Internal error"))
+        assertThatErrorLogs().contains("Status 500: Internal error: 0 ephemeral tuples were generated")
     }
 }

@@ -3,9 +3,9 @@ package fr.gouv.stopc.robertserver.ws.controller
 import fr.gouv.stopc.robertserver.common.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.base64Encode
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.assertThatRegistrationForIdA
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.givenRegistrationExistsForIdA
+import fr.gouv.stopc.robertserver.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.matchers.isBase64Encoded
 import fr.gouv.stopc.robertserver.test.matchers.isJwtSignedBy
 import fr.gouv.stopc.robertserver.test.matchers.isNtpTimestamp
