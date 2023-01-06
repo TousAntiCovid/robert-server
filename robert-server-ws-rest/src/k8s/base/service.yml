@@ -2,12 +2,18 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    application: robert-ws
+    app: robert-ws
   name: robert-ws-service
   namespace: robert-ws
 spec:
   selector:
     app: robert-ws
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8080
+      protocol: TCP
+    - name: management
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
