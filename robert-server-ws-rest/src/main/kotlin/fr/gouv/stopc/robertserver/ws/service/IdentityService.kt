@@ -10,9 +10,9 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
 import fr.gouv.stopc.robertserver.common.RobertRequestType
+import fr.gouv.stopc.robertserver.common.model.IdA
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
 import fr.gouv.stopc.robertserver.ws.repository.RegistrationRepository
-import fr.gouv.stopc.robertserver.common.model.IdA
 import org.springframework.stereotype.Service
 import org.springframework.validation.BindException
 

@@ -1,16 +1,12 @@
 package fr.gouv.stopc.robertserver.crypto.cipher
 
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESECB
-import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM
 import fr.gouv.stopc.robertserver.common.base64Decode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import javax.crypto.AEADBadTagException
 import javax.crypto.spec.SecretKeySpec
-import kotlin.experimental.xor
 import kotlin.random.Random
 import kotlin.random.nextInt
 

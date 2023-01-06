@@ -23,7 +23,7 @@ data class BluetoothIdentifier(val epochId: Int, val idA: IdA) {
     /**
      * Encrypts this _Bluetooth IDentifier_ making it an EBID.
      */
-    fun encrypt(serverKey: Key) : Ebid {
+    fun encrypt(serverKey: Key): Ebid {
         val bid = ByteBuffer.allocate(8)
             // 01234567
             // ........
@@ -31,11 +31,8 @@ data class BluetoothIdentifier(val epochId: Int, val idA: IdA) {
             .putInt(epochId)
             // iiii....
             // ____⬆
-            .rewind()
+            .position(1)
             // iiii....
-            // ⬆
-            .put(0)
-            // 0iii....
             // _⬆
             .compact()
             // iii.....

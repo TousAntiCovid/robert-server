@@ -42,7 +42,7 @@ interface KeyRepository {
 @Repository
 class KeystoreKeyRepository(
     config: RobertCryptoProperties,
-    private val keystore: KeyStore,
+    private val keystore: KeyStore
 ) : KeyRepository {
 
     private val log = logger()
@@ -78,7 +78,7 @@ class KeystoreKeyRepository(
         val minDate = dates.min()
         val maxDate = dates.max()
         val missingKeys = minDate.datesUntil(maxDate).toList() - dates.toSet()
-        log.warn("The server key repository is missing {} keys: ", missingKeys.size, missingKeys.joinToString(","))
+        log.warn("The server key repository is missing {} keys: {}", missingKeys.size, missingKeys.joinToString(","))
     }
 
     override fun getServerKeyPair(): KeyPair {

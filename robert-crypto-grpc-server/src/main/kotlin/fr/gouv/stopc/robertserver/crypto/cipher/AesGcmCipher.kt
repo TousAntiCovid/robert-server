@@ -15,7 +15,7 @@ fun String.encryptUsingAesGcm(secretKey: SecretKey) = this.toByteArray().encrypt
 
 fun ByteArray.decryptUsingAesGcm(secretKey: Key) = AesGcmCipher(secretKey).decrypt(this)
 
-class AesGcmCipher(private val secretKey: Key):RobertCipher {
+class AesGcmCipher(private val secretKey: Key) : RobertCipher {
 
     override fun encrypt(clearData: ByteArray): ByteArray {
         val cipher = Cipher.getInstance(AES_GCM_CIPHER_SCHEME).apply {

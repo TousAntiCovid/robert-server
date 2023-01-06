@@ -3,7 +3,6 @@ package fr.gouv.stopc.robertserver.crypto.cipher
 import fr.gouv.stopc.robert.server.crypto.structure.impl.CryptoAESGCM
 import fr.gouv.stopc.robertserver.common.base64Decode
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test

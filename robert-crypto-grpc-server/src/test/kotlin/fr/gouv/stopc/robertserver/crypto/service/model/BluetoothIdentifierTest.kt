@@ -21,7 +21,7 @@ class BluetoothIdentifierTest {
             arguments(4532, IdA("BAEFBAU="), "s5MNHJaWmiM="),
             arguments(12345, IdA("+EOzTrc="), "zQH3eRyVxCo="),
             arguments(25843, IdA("9TLsIUk="), "BoxOmm+vcnA="),
-            arguments(65432, IdA("ANxLqVE="), "QEp/r7cIHAw="),
+            arguments(65432, IdA("ANxLqVE="), "QEp/r7cIHAw=")
         )
     }
 

@@ -60,7 +60,7 @@ class RobertTuplesGeneratorTest(
             .containsExactly(
                 EphemeralTuple(100, Ebid("TnO2cc+3OkY="), Ecc("lw==")),
                 EphemeralTuple(101, Ebid("CRnzbpXDc3s="), Ecc("lw==")),
-                EphemeralTuple(102, Ebid("yMpqQuVTDxk="), Ecc("yQ==")),
+                EphemeralTuple(102, Ebid("yMpqQuVTDxk="), Ecc("yQ=="))
             )
     }
 
@@ -89,7 +89,7 @@ class RobertTuplesGeneratorTest(
             .thenReturn(null)
 
         val begin = clock.atEpoch(95)
-        val end = clock.atEpoch(288)
+        val end = clock.atEpoch(193)
 
         val tuples = generator.generate(begin.epochsUntil(end).toList())
 

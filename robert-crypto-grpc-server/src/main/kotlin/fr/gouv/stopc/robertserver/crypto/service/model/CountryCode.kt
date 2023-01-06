@@ -5,7 +5,6 @@ import java.nio.ByteBuffer
 import java.security.Key
 import kotlin.experimental.xor
 
-
 data class CountryCode(val countryCode: Int) {
 
     /**
@@ -24,7 +23,7 @@ data class CountryCode(val countryCode: Int) {
             // ebidebid........
             // ________⬆
             .array()
-            // ebidebid00000000
+        // ebidebid00000000
 
         val firstByteOfEncryptedEbid = zeroPaddedEbid.encryptUsingAesEcb(federationKey)
             .first()

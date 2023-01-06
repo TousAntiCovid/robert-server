@@ -5,6 +5,7 @@ import fr.gouv.stopc.pushserver.api.model.PushRequest
 import fr.gouv.stopc.robertserver.common.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
+import fr.gouv.stopc.robertserver.common.model.IdA
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
 import fr.gouv.stopc.robertserver.ws.api.model.PushInfo
 import fr.gouv.stopc.robertserver.ws.repository.KpiRepository
@@ -12,7 +13,6 @@ import fr.gouv.stopc.robertserver.ws.repository.RegistrationRepository
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.ALERTED_USERS
 import fr.gouv.stopc.robertserver.ws.repository.model.KpiName.NOTIFIED_USERS
 import fr.gouv.stopc.robertserver.ws.repository.model.Registration
-import fr.gouv.stopc.robertserver.common.model.IdA
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 

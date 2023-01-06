@@ -1,5 +1,7 @@
 package fr.gouv.stopc.robertserver.crypto.repository
 
+import fr.gouv.stopc.robertserver.crypto.grpc.model.EncryptedIdentity
+import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert
 import org.springframework.stereotype.Repository
@@ -13,17 +15,33 @@ class IdentityRepository(private val jdbcTemplate: JdbcTemplate) {
         .withTableName("identity")
         .usingColumns("ida", "key_for_mac", "key_for_tuples", "creation_time", "last_update")
 
-    fun save(base64IdA: String, encryptedKeyForMac: String, encryptedKeyForTuples: String) {
+    fun save(encryptedIdentity: EncryptedIdentity) {
         val now = Instant.now()
         insert.execute(
             mapOf(
-                "ida" to base64IdA,
-                "key_for_mac" to encryptedKeyForMac,
-                "key_for_tuples" to encryptedKeyForTuples,
+                "ida" to encryptedIdentity.base64IdA,
+                "key_for_mac" to encryptedIdentity.encryptedKeyForMac,
+                "key_for_tuples" to encryptedIdentity.encryptedKeyForTuples,
                 "creation_time" to Timestamp.from(now),
                 "last_update" to Timestamp.from(now)
             )
         )
+    }
+
+    fun findByIdA(base64IdA: String): EncryptedIdentity? = try {
+        jdbcTemplate.queryForObject("select ida, key_for_mac, key_for_tuples from identity where ida = ?", { rs, _ ->
+            EncryptedIdentity(
+                base64IdA = rs.getString("ida"),
+                encryptedKeyForMac = rs.getString("key_for_mac"),
+                encryptedKeyForTuples = rs.getString("key_for_tuples")
+            )
+        }, base64IdA)
+    } catch (e: IncorrectResultSizeDataAccessException) {
+        if (e.actualSize == 0) {
+            null
+        } else {
+            throw e
+        }
     }
 
     fun deleteByIdA(base64IdA: String) {

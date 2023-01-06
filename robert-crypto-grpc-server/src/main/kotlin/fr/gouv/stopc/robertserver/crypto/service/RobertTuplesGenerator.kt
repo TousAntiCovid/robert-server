@@ -22,7 +22,6 @@ class RobertTuplesGenerator(countryCode: Int, private val idA: IdA, private val 
     private val federationKey = keyRepository.getFederationKey()
 
     fun generate(range: List<RobertInstant>): List<EphemeralTuple> {
-        val skippedDays = mutableListOf<LocalDate>()
         val dailyGenerators = range
             // group epochs by day
             .groupBy { it.asInstant().atZone(UTC).toLocalDate() }
@@ -51,9 +50,9 @@ class RobertTuplesGenerator(countryCode: Int, private val idA: IdA, private val 
     }
 
     inner class DailyTuplesGenerator(
-         val date: LocalDate,
-         val serverKey: Key?,
-         val epochs: List<RobertInstant>,
+        val date: LocalDate,
+        val serverKey: Key?,
+        val epochs: List<RobertInstant>
     ) {
 
         fun generate() = epochs

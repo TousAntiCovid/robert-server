@@ -6,5 +6,6 @@ import org.hamcrest.Matchers.matchesPattern
 
 fun ListAssert<String>.containsPattern(pattern: String): ListAssert<String> =
     this.haveExactly(
-        1, matching(matchesPattern(pattern))
+        1,
+        matching(matchesPattern(pattern))
     )

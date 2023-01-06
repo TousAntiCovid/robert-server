@@ -7,6 +7,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset.UTC
 import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.ChronoUnit.SECONDS
 import java.time.temporal.Temporal
 import java.time.temporal.TemporalAmount
@@ -73,7 +74,7 @@ class RobertClock private constructor(private val start: Instant) {
 
     fun atEpoch(epochId: Int): RobertInstant = RobertInstant(start, start.plus(epochId.toLong(), ROBERT_EPOCH))
 
-    fun atTime32(ntpTimestamp32bitByteArray: ByteArray?): RobertInstant {
+    fun atTime32(ntpTimestamp32bitByteArray: ByteArray): RobertInstant {
         val ntpTimestamp = ByteBuffer.allocate(java.lang.Long.BYTES)
             .position(4)
             .put(ntpTimestamp32bitByteArray)
@@ -131,6 +132,8 @@ class RobertClock private constructor(private val start: Instant) {
                 .position(4)[time32]
             return time32
         }
+
+        fun toUtcLocalDate() = time.truncatedTo(DAYS).atZone(UTC).toLocalDate()
 
         override fun minus(amountToSubtract: Long, unit: TemporalUnit) = at(time.minus(amountToSubtract, unit))
 

@@ -2,9 +2,8 @@ package fr.gouv.stopc.robertserver.crypto.cipher
 
 import java.security.Key
 import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
 
-private const val AES_ECB_CIPHER_SCHEME = "AES/ECB/NoPadding";
+private const val AES_ECB_CIPHER_SCHEME = "AES/ECB/NoPadding"
 private const val AES_ECB_IV_LENGTH = 96 / 8
 private const val AES_ECB_AUTH_TAG_LENGTH = 128 / 8
 
@@ -27,5 +26,4 @@ class AesEcbCipher(private val key: Key) : RobertCipher {
         }
         return cipher.doFinal(encryptedData)
     }
-
 }

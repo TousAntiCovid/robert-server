@@ -3,8 +3,10 @@ package fr.gouv.stopc.robertserver.crypto
 import com.google.protobuf.ByteString
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest.Builder
+import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.crypto.test.AuthBundle
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
+import fr.gouv.stopc.robertserver.crypto.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.crypto.test.clock
 import fr.gouv.stopc.robertserver.crypto.test.givenIdentityDoesntExistForIdA
 import fr.gouv.stopc.robertserver.crypto.test.givenIdentityExistsForIdA
@@ -13,6 +15,7 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcErrorResponse
 import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcField
 import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
+import fr.gouv.stopc.robertserver.test.assertj.containsPattern
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -57,7 +60,7 @@ class GetIdFromAuthTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
-            .has(grpcErrorResponse(400, "Unknown request type 0"))
+            .has(grpcErrorResponse(400, "Unknown request type: 0"))
     }
 
     @ParameterizedTest
@@ -71,7 +74,9 @@ class GetIdFromAuthTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
-            .has(grpcErrorResponse(400, "Could not decrypt ebid content"))
+            .has(grpcErrorResponse(400, "Could not decrypt EBID content"))
+        assertThatInfoLogs()
+            .containsPattern("Status 400: Could not decrypt EBID content: .*")
     }
 
     @ParameterizedTest
@@ -84,7 +89,9 @@ class GetIdFromAuthTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
-            .has(grpcErrorResponse(400, "Could not decrypt ebid content"))
+            .has(grpcErrorResponse(400, "Could not decrypt EBID content"))
+        assertThatInfoLogs()
+            .contains("Status 400: Could not decrypt EBID content: Request epoch $inconsistentEpoch and EBID epoch ${auth.epochId} don't match")
     }
 
     @ParameterizedTest
@@ -92,6 +99,7 @@ class GetIdFromAuthTest {
     fun cant_authenticate_when_the_ebid_belongs_to_an_epoch_at_a_date_the_server_is_missing_the_serverkey(
         auth: AuthBundle
     ) {
+        val oneMonthOldTime = clock.atEpoch(auth.epochId).minus(30, DAYS)
         val oneMonthOldAuth = AuthBundle(
             "30 days in the past: " + auth.title,
             auth.requestType,
@@ -105,11 +113,10 @@ class GetIdFromAuthTest {
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
             .has(
-                grpcErrorResponse(
-                    430,
-                    "No server key found from cryptographic storage : " + oneMonthOldAuth.epochId
-                )
+                grpcErrorResponse(430, "Missing server key")
             )
+        assertThatInfoLogs()
+            .contains("Status 430: Missing server key: No server key for ${oneMonthOldTime.toUtcLocalDate()}")
     }
 
     @ParameterizedTest
@@ -124,7 +131,10 @@ class GetIdFromAuthTest {
         givenIdentityDoesntExistForIdA(auth.idA)
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
-            .has(grpcErrorResponse(404, "Could not find id"))
+            .has(grpcErrorResponse(404, "Could not find idA"))
+        val base64Ebid = request.ebid.toByteArray().base64Encode()
+        assertThatInfoLogs()
+            .contains("Status 404: Could not find idA: IdA contained in EBID($base64Ebid) was not found in database")
     }
 
     @ParameterizedTest
@@ -137,6 +147,8 @@ class GetIdFromAuthTest {
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
             .has(grpcErrorResponse(400, "Invalid MAC"))
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid MAC")
     }
 
     @ParameterizedTest
@@ -149,6 +161,8 @@ class GetIdFromAuthTest {
             .build()
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
-            .has(grpcErrorResponse(500, "Error validating authenticated request"))
+            .has(grpcErrorResponse(400, "Invalid EBID"))
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid EBID")
     }
 }

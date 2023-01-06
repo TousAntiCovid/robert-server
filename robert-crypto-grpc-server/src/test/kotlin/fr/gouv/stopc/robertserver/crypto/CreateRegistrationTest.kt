@@ -23,7 +23,6 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
 import fr.gouv.stopc.robertserver.test.assertj.containsPattern
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.startsWith
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -111,7 +110,7 @@ class CreateRegistrationTest {
         val missingKey4 = today.plusDays(8)
         assertThatWarnLogs()
             .containsPattern(
-                    "Tuples request from $today[0-9T:Z=E]+ until ${end}T23:45:00Z=\\d+E can't be honored: missing server-keys $missingKey1, $missingKey2, $missingKey3, $missingKey4"
+                "Tuples request from $today[0-9T:Z=E]+ until ${end}T23:45:00Z=\\d+E can't be honored: missing server-keys $missingKey1, $missingKey2, $missingKey3, $missingKey4"
             )
     }
 

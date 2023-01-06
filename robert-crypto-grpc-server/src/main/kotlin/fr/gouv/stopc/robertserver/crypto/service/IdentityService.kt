@@ -1,24 +1,22 @@
 package fr.gouv.stopc.robertserver.crypto.service
 
 import fr.gouv.stopc.robertserver.common.RobertClock
-import fr.gouv.stopc.robertserver.common.base64Encode
-import fr.gouv.stopc.robertserver.common.logger
+import fr.gouv.stopc.robertserver.common.model.IdA
 import fr.gouv.stopc.robertserver.common.model.randomIdA
 import fr.gouv.stopc.robertserver.crypto.cipher.encryptUsingAesGcm
-import fr.gouv.stopc.robertserver.crypto.grpc.RobertCryptoException
+import fr.gouv.stopc.robertserver.crypto.grpc.RobertGrpcException
 import fr.gouv.stopc.robertserver.crypto.repository.IdentityRepository
 import fr.gouv.stopc.robertserver.crypto.repository.KeyRepository
+import fr.gouv.stopc.robertserver.crypto.service.model.Credentials
 import fr.gouv.stopc.robertserver.crypto.service.model.Identity
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.springframework.stereotype.Service
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
-import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
 import java.time.Duration
 import java.time.temporal.ChronoUnit.DAYS
-
 
 @Service
 class IdentityService(
@@ -26,36 +24,29 @@ class IdentityService(
     private val keyRepository: KeyRepository,
     private val identityRepository: IdentityRepository
 ) {
+
     fun createIdentity(rawClientPublicKey: ByteArray): Identity {
         val clientPublicKey = try {
             KeyFactory.getInstance("EC")
                 .generatePublic(X509EncodedKeySpec(rawClientPublicKey))
         } catch (e: GeneralSecurityException) {
-            throw RobertCryptoException(400, "Unable to load client public key: ${e.message}")
+            throw RobertGrpcException(400, "Unable to load client public key", "${e.message}")
         }
-        return createIdentity(clientPublicKey)
-    }
 
-    private fun createIdentity(clientPublicKey: PublicKey): Identity {
         val idA = randomIdA()
 
         val serverPrivateKey = keyRepository.getServerKeyPair().private
         val keyGenerator = try {
             SecretKeyGenerator(clientPublicKey, serverPrivateKey)
         } catch (e: Exception) {
-            throw RobertCryptoException(400, "Unable to derive keys from client public key for client registration: ${e.message}")
+            throw RobertGrpcException(400, "Unable to derive keys from client public key", "${e.message}")
         }
 
+        val identity = Identity(idA, keyGenerator.keyForMac, keyGenerator.keyForTuples)
+
         val kek = keyRepository.getKeyEncryptionKey()
-        identityRepository.save(
-            idA.toBase64String(),
-            keyGenerator.keyForMac.encoded
-                .encryptUsingAesGcm(kek)
-                .base64Encode(),
-            keyGenerator.keyForTuples.encoded
-                .encryptUsingAesGcm(kek)
-                .base64Encode()
-        )
+        val encryptedIdentity = identity.encrypt(kek)
+        identityRepository.save(encryptedIdentity)
 
         return Identity(idA, keyGenerator.keyForMac, keyGenerator.keyForTuples)
     }
@@ -71,10 +62,35 @@ class IdentityService(
         val tuples = RobertTuplesGenerator(countryCode, identity.idA, keyRepository)
             .generate(begin.epochsUntil(end).toList())
         if (tuples.isEmpty()) {
-            throw RobertCryptoException(500, "0 ephemeral tuples were generated")
+            throw RobertGrpcException(500, "Internal error", "0 ephemeral tuples were generated")
         }
         return Json.encodeToString(tuples)
             .encryptUsingAesGcm(identity.keyForTuples)
     }
 
+    fun authenticate(credentials: Credentials): IdA {
+        val date = clock.atEpoch(credentials.epochId).toUtcLocalDate()
+        val serverKey = keyRepository.getServerKey(date)
+            ?: throw RobertGrpcException(430, "Missing server key", "No server key for $date")
+        // 3. retrieves the permanent identifier idA and epoch i'A by decrypting ebidA
+        val bid = credentials.ebid.decrypt(serverKey)
+        // 4. verifies that iA == i'A
+        if (bid.epochId != credentials.epochId) {
+            throw RobertGrpcException(
+                400,
+                "Could not decrypt EBID content",
+                "Request epoch ${credentials.epochId} and EBID epoch ${bid.epochId} don't match"
+            )
+        }
+        // 5. uses idA to retrieve from IDTable the associated entries: KauthA , UNA, SREA, LEEA
+        val kek = keyRepository.getKeyEncryptionKey()
+        val identity = identityRepository.findByIdA(bid.idA.toBase64String())
+            ?.decrypt(kek)
+            ?: throw RobertGrpcException(404, "Could not find idA", "IdA contained in EBID(${credentials.ebid}) was not found in database")
+        // 6. verifies that macA,i == HMAC − SHA256(KauthA , c2 | ebidA | iA | tA)
+        if (!credentials.hasValidChecksum(identity.keyForMac)) {
+            throw RobertGrpcException(400, "Invalid checksum", "${credentials.mac} don't match expected checksum")
+        }
+        return identity.idA
+    }
 }

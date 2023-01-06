@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class EphemeralTuple(
     val epochId: Int,
-    val key: TupleKey,
+    val key: TupleKey
 ) {
 
     constructor(epochId: Int, ebid: Ebid, ecc: Ecc) : this(epochId, TupleKey(ebid, ecc))
@@ -19,6 +19,6 @@ data class EphemeralTuple(
     @Serializable
     data class TupleKey(
         val ebid: Ebid,
-        val ecc: Ecc,
+        val ecc: Ecc
     )
 }
