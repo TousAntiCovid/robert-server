@@ -51,6 +51,10 @@ spec:
                 secretKeyRef:
                   name: robert-ws-secrets
                   key: ROBERTWS_ANALYTICSJWT_SIGNINGKEY
+            - name: MANAGEMENT_SERVER_PORT
+              value: "8081"
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: health,info,prometheus
       imagePullSecrets:
         - name: poc-inttac-poc-img-push-pull-secret
       nodeSelector:

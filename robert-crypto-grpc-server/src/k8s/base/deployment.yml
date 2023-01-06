@@ -19,6 +19,10 @@ spec:
           image: flyway-image
           command: ["flyway", "migrate"]
           env:
+            - name: FLYWAY_BASELINE_ON_MIGRATE
+              value: "true"
+            - name: FLYWAY_BASELINE_VERSION
+              value: "0"
             - name: FLYWAY_USER
               value: pocinit
             - name: FLYWAY_URL
@@ -56,10 +60,10 @@ spec:
                   key: SPRING_DATASOURCE_PASSWORD
             - name: SPRING_DATASOURCE_USERNAME
               value: pocinit
-            - name: SPRING_FLYWAY_BASELINE_ON_MIGRATE
-              value: "true"
-            - name: SPRING_FLYWAY_BASELINE_VERSION
-              value: "0"
+            - name: MANAGEMENT_SERVER_PORT
+              value: "8081"
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: info,health,metrics,prometheus
       imagePullSecrets:
         - name: poc-inttac-poc-img-push-pull-secret
       nodeSelector:

@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: robert-crypto-monitor-prometheus
+  namespace: robert-crypto
+  labels:
+    caascad.com/prometheus-monitor: "caascad"
+spec:
+  endpoints:
+    - interval: 5s
+      port: management # Service port name (and not number)
+      path: /actuator/prometheus
+      relabelings:
+        - replacement: app
+          targetLabel: caascad_com_prometheus_monitor_scope
+      namespaceSelector:
+        matchNames:
+          - "robert-crypto"
+  selector: # Select by labels which service are scraped
+    matchLabels:
+      app: robert-crypto
