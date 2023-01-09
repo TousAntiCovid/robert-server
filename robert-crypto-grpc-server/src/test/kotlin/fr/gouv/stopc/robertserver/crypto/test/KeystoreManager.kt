@@ -60,7 +60,6 @@ object KeystoreManager : TestExecutionListener {
         System.setProperty("robert-crypto.service-start-date", "2020-06-01")
         System.setProperty("robert-crypto.keystore-password", KEYSTORE_PASSWORD)
         System.setProperty("robert-crypto.keystore-configuration-uri", "file:$KEYSTORE_PATH")
-        System.setProperty("robert-crypto.hello-message-timestamp-tolerance", "180")
     }
 
     private fun generateRegisterKey() = KEYSTORE.setKeyEntry(

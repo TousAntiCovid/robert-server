@@ -124,7 +124,7 @@ class ValidateContactRequestBuilder {
             return this
         }
 
-        fun build(): HelloMessageDetail? {
+        fun build(): HelloMessageDetail {
             val macInput: ByteArray = ByteBuffer.allocate(12)
                 .putInt(8, productionInstant.as16LessSignificantBits())
                 .put(HELLO.salt)

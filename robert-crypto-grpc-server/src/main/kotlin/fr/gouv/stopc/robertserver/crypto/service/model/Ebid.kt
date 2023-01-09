@@ -26,7 +26,7 @@ data class Ebid(val value: List<Byte>) {
 
     init {
         if (value.size != EBID_SIZE) {
-            throw IllegalArgumentException("EBID should be 64 bits/8 bytes long but is has ${value.size} bytes: $this")
+            throw IllegalArgumentException("EBID should be 64 bits/8 bytes long but it has ${value.size} bytes: $this")
         }
     }
 

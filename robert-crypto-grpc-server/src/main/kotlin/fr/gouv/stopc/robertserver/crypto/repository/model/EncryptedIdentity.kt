@@ -1,4 +1,4 @@
-package fr.gouv.stopc.robertserver.crypto.grpc.model
+package fr.gouv.stopc.robertserver.crypto.repository.model
 
 import fr.gouv.stopc.robertserver.common.base64Decode
 import fr.gouv.stopc.robertserver.common.model.IdA

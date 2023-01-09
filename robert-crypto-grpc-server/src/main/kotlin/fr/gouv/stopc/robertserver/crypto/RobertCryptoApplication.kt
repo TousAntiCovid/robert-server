@@ -5,29 +5,34 @@ import fr.gouv.stopc.robertserver.crypto.grpc.RobertCryptoGrpcService
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.autoconfigure.web.ServerProperties
+import org.springframework.boot.autoconfigure.netty.NettyAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
 import java.security.KeyStore
 import java.security.Security
+import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.io.path.toPath
 
-@SpringBootApplication
+@SpringBootApplication(exclude = [NettyAutoConfiguration::class])
 @EnableConfigurationProperties(RobertCryptoProperties::class)
 class RobertCryptoApplication(
     private val config: RobertCryptoProperties
 ) {
+
     @Bean
     fun robertClock() = RobertClock(config.serviceStartDate)
 
-    @Bean
-    fun grpcServer(serverProperties: ServerProperties, robertCryptoGrpcService: RobertCryptoGrpcService): Server =
-        ServerBuilder.forPort(serverProperties.port)
+    @Bean(destroyMethod = "shutdown")
+    fun grpcServer(robertCryptoGrpcService: RobertCryptoGrpcService): Server =
+        ServerBuilder.forPort(config.serverPort)
             .addService(robertCryptoGrpcService)
             .build()
             .start()
+            .apply {
+                awaitTermination(30, SECONDS)
+            }
 
     @Bean("keystore")
     @Profile("!jks")

@@ -102,7 +102,7 @@ class RegistrationService(
     /**
      * Send _push informations_ to the Push Notification service.
      */
-    private inline fun createOrUpdatePushInfo(pushInfo: PushInfo?) {
+    private fun createOrUpdatePushInfo(pushInfo: PushInfo?) {
         if (null != pushInfo) {
             pushTokenApi.registerPushToken(
                 PushRequest()

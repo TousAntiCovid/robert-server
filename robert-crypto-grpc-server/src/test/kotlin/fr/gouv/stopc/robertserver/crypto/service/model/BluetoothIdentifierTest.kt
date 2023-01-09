@@ -33,4 +33,15 @@ class BluetoothIdentifierTest {
         assertThat(ebid.toString())
             .isEqualTo(base64Ebid)
     }
+
+    @ParameterizedTest
+    @MethodSource("ebid_examples")
+    fun can_decrypt_ebid(epochId: Int, idA: IdA, base64Ebid: String) {
+        val bluetoothIdentifier = Ebid(base64Ebid)
+            .decrypt(serverKeyYYMMAAAA)
+        assertThat(bluetoothIdentifier.epochId)
+            .isEqualTo(epochId)
+        assertThat(bluetoothIdentifier.idA)
+            .isEqualTo(idA)
+    }
 }

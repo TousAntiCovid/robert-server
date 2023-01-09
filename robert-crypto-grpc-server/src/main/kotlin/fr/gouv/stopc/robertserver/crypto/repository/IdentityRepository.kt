@@ -1,6 +1,6 @@
 package fr.gouv.stopc.robertserver.crypto.repository
 
-import fr.gouv.stopc.robertserver.crypto.grpc.model.EncryptedIdentity
+import fr.gouv.stopc.robertserver.crypto.repository.model.EncryptedIdentity
 import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert

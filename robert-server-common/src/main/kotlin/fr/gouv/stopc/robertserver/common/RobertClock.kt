@@ -125,6 +125,11 @@ class RobertClock private constructor(private val start: Instant) {
             return less16SignificantBits.toInt()
         }
 
+        fun withNtp16LeastSignificantBits(time16LeastSignificantBits: UShort): RobertInstant {
+            val thisInstant16MostSignificantBits = asNtpTimestamp() and 0xFFFF0000L
+            return atNtpTimestamp(thisInstant16MostSignificantBits or time16LeastSignificantBits.toLong())
+        }
+
         fun asTime32(): ByteArray {
             val time32 = ByteArray(4)
             ByteBuffer.allocate(java.lang.Long.BYTES)
@@ -133,11 +138,11 @@ class RobertClock private constructor(private val start: Instant) {
             return time32
         }
 
-        fun toUtcLocalDate() = time.truncatedTo(DAYS).atZone(UTC).toLocalDate()
+        fun toUtcLocalDate(): LocalDate = time.truncatedTo(DAYS).atZone(UTC).toLocalDate()
 
         override fun minus(amountToSubtract: Long, unit: TemporalUnit) = at(time.minus(amountToSubtract, unit))
 
-        override fun until(endExclusive: Temporal, unit: TemporalUnit) = unit.between(this, endExclusive)
+        override fun until(endExclusive: Temporal, unit: TemporalUnit) = time.until(endExclusive, unit)
 
         override fun plus(amountToAdd: Long, unit: TemporalUnit) = at(time.plus(amountToAdd, unit))
 

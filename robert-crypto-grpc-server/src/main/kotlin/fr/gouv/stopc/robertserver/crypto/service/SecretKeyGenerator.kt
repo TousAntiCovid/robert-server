@@ -14,10 +14,27 @@ const val GENERATED_KEY_ALGORITHM_AES = "AES"
 private const val HASH_MAC = "mac"
 private const val HASH_TUPLES = "tuples"
 
+/**
+ * Derives secret keys for an application requesting to register.
+ *
+ * The keys are derived from a shared secret obtained using ECDH key exchange.
+ *
+ * @see [Robert Protocol 1.1](https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf) §3.3. Application Registration (Application Side)
+ */
 class SecretKeyGenerator(clientPublicKey: PublicKey, serverPrivateKey: PrivateKey) {
 
+    /**
+     * The secret key to use to generate checksums for authentication requests and hello messages.
+     *
+     *     hmacSha256(sharedSecret, "mac")
+     */
     val keyForMac: SecretKey
 
+    /**
+     * The secret key used to encrypt/decrypt the tuples bundle.
+     *
+     *      hmacSha256(sharedSecret, "tuples")
+     */
     val keyForTuples: SecretKey
 
     init {

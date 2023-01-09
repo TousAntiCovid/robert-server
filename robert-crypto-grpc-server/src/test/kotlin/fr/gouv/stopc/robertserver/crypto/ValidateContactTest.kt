@@ -3,6 +3,7 @@ package fr.gouv.stopc.robertserver.crypto
 import com.google.protobuf.ByteString
 import fr.gouv.stopc.robertserver.common.ROBERT_EPOCH
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
+import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.FRANCE
 import fr.gouv.stopc.robertserver.crypto.test.CountryCode.GERMANY
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
@@ -15,7 +16,7 @@ import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcBinaryField
 import fr.gouv.stopc.robertserver.crypto.test.matchers.grpcField
 import fr.gouv.stopc.robertserver.crypto.test.matchers.noGrpcError
 import fr.gouv.stopc.robertserver.crypto.test.whenRobertCryptoClient
-import fr.gouv.stopc.robertserver.test.assertThatWarnLogs
+import fr.gouv.stopc.robertserver.test.assertThatInfoLogs
 import io.grpc.StatusRuntimeException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -85,17 +86,19 @@ class ValidateContactTest {
     @Test
     fun cant_validate_contact_with_misencrypted_country_code() {
         givenIdentityExistsForIdA("BCDEF0A=")
+        val misencryptedEcc = "💥".toByteArray()
         val request = givenWellFormedValidateContactRequest(clock.now())
             .buildRequest()
             .toBuilder()
-            .setEcc(ByteString.copyFrom("💥".toByteArray()))
+            .setEcc(ByteString.copyFrom(misencryptedEcc))
             .build()
-        val response = whenRobertCryptoClient().validateContact(request)
-        assertThat(response)
-            .has(noGrpcError())
-            .doesNotHave(grpcField("idA"))
-            .doesNotHave(grpcField("epochId"))
-            .has(grpcField("countryCode"))
+        assertThatThrownBy {
+            whenRobertCryptoClient().validateContact(request)
+        }
+            .isExactlyInstanceOf(StatusRuntimeException::class.java)
+            .hasMessage("UNKNOWN")
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid ECC: ECC should be 8 bits/1 byte long but it has 4 bytes: ${misencryptedEcc.base64Encode()}")
     }
 
     @Test
@@ -112,8 +115,8 @@ class ValidateContactTest {
         }
             .isExactlyInstanceOf(StatusRuntimeException::class.java)
             .hasMessage("UNKNOWN")
-        assertThatWarnLogs()
-            .contains("Could not decrypt ECC")
+        assertThatInfoLogs()
+            .contains("Status 400: Invalid EBID: EBID should be 64 bits/8 bytes long but it has 4 bytes: ${"💥".base64Encode()}")
     }
 
     @Test
@@ -174,8 +177,8 @@ class ValidateContactTest {
         }
             .isExactlyInstanceOf(StatusRuntimeException::class.java)
             .hasMessage("UNKNOWN")
-        assertThatWarnLogs()
-            .contains("Could not find keys for id")
+        assertThatInfoLogs()
+            .contains("Status 400: Could not find keys for idA")
     }
 
     @Test
@@ -215,7 +218,7 @@ class ValidateContactTest {
             .has(grpcField("epochId", contactInstant.asEpochId()))
             .has(grpcField("invalidHelloMessageDetails", otherContact.helloMessageDetailsList))
 
-        assertThatWarnLogs()
+        assertThatInfoLogs()
             .contains("MAC is invalid")
     }
 

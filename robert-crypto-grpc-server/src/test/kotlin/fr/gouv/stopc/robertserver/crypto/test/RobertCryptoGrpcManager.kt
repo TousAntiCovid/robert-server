@@ -24,7 +24,7 @@ fun whenRobertCryptoClient(): CryptoGrpcServiceImplBlockingStub = client
 class RobertCryptoGrpcManager : TestExecutionListener, ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     override fun initialize(applicationContext: ConfigurableApplicationContext) {
-        TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext, "robert.crypto.server.port=0")
+        TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext, "robert-crypto.server-port=0")
     }
 
     override fun beforeTestClass(testContext: TestContext) {

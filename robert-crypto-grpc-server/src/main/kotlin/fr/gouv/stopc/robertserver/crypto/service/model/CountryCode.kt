@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import java.security.Key
 import kotlin.experimental.xor
 
-data class CountryCode(val countryCode: Int) {
+data class CountryCode(val numericValue: Int) {
 
     /**
      * Country code is encrypted using the federation key _KG_ and the EBID of the same epoch.
@@ -28,6 +28,6 @@ data class CountryCode(val countryCode: Int) {
         val firstByteOfEncryptedEbid = zeroPaddedEbid.encryptUsingAesEcb(federationKey)
             .first()
 
-        return Ecc(firstByteOfEncryptedEbid xor countryCode.toByte())
+        return Ecc(firstByteOfEncryptedEbid xor numericValue.toByte())
     }
 }

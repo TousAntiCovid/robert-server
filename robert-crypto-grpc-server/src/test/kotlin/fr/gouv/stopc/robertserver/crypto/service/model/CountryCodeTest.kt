@@ -26,8 +26,18 @@ class CountryCodeTest {
     @ParameterizedTest
     @MethodSource("country_codes_examples")
     fun can_encrypt_country_code(countryCode: Int, ebid: Ebid, base64Ecc: String) {
-        val ecc = CountryCode(countryCode).encrypt(federationKey, ebid)
+        val ecc = CountryCode(countryCode)
+            .encrypt(federationKey, ebid)
         assertThat(ecc.toString())
             .isEqualTo(base64Ecc)
+    }
+
+    @ParameterizedTest
+    @MethodSource("country_codes_examples")
+    fun can_decrypt_country_code(countryCodeNumeric: Int, ebid: Ebid, base64Ecc: String) {
+        val countryCode = Ecc(base64Ecc)
+            .decrypt(federationKey, ebid)
+        assertThat(countryCode.numericValue)
+            .isEqualTo(countryCodeNumeric)
     }
 }

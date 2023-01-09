@@ -26,11 +26,17 @@ import fr.gouv.stopc.robertserver.common.RobertRequestType
 import fr.gouv.stopc.robertserver.common.RobertRequestType.STATUS
 import fr.gouv.stopc.robertserver.common.RobertRequestType.UNREGISTER
 import fr.gouv.stopc.robertserver.common.logger
+import fr.gouv.stopc.robertserver.common.model.IdA
 import fr.gouv.stopc.robertserver.crypto.repository.KeyRepository
+import fr.gouv.stopc.robertserver.crypto.service.HelloMessageService
 import fr.gouv.stopc.robertserver.crypto.service.IdentityService
 import fr.gouv.stopc.robertserver.crypto.service.model.AuthMac
+import fr.gouv.stopc.robertserver.crypto.service.model.ContactValidationResult.UnsupportedCountry
+import fr.gouv.stopc.robertserver.crypto.service.model.ContactValidationResult.ValidContactValidationResult
+import fr.gouv.stopc.robertserver.crypto.service.model.CountryCode
 import fr.gouv.stopc.robertserver.crypto.service.model.Credentials
 import fr.gouv.stopc.robertserver.crypto.service.model.Ebid
+import fr.gouv.stopc.robertserver.crypto.service.model.Ecc
 import io.grpc.stub.ServerCalls
 import io.grpc.stub.StreamObserver
 import io.micrometer.core.annotation.Timed
@@ -40,7 +46,8 @@ import org.springframework.stereotype.Service
 class RobertCryptoGrpcService(
     private val clock: RobertClock,
     private val keyRepository: KeyRepository,
-    private val identityService: IdentityService
+    private val identityService: IdentityService,
+    private val helloMessageService: HelloMessageService
 ) : CryptoGrpcServiceImplImplBase() {
 
     private val log = logger()
@@ -79,7 +86,7 @@ class RobertCryptoGrpcService(
         )
 
         CreateRegistrationResponse.newBuilder()
-            .setIdA(identity.idA.toByteArray().toByteString())
+            .setIdA(identity.idA.toByteString())
             .setTuples(tuplesBundle.toByteString())
             .build()
     }
@@ -93,7 +100,7 @@ class RobertCryptoGrpcService(
             validateCredentials(request.requestType, request.epochId, request.time, request.ebid, request.mac)
         val identity = identityService.authenticate(credentials)
         GetIdFromAuthResponse.newBuilder()
-            .setIdA(identity.idA.toByteArray().toByteString())
+            .setIdA(identity.idA.toByteString())
             .setEpochId(request.epochId)
             .build()
     }
@@ -112,7 +119,7 @@ class RobertCryptoGrpcService(
             request.numberOfDaysForEpochBundles.toLong()
         )
         GetIdFromStatusResponse.newBuilder()
-            .setIdA(identity.idA.toByteArray().toByteString())
+            .setIdA(identity.idA.toByteString())
             .setEpochId(request.epochId)
             .setTuples(tuplesBundle.toByteString())
             .build()
@@ -126,16 +133,42 @@ class RobertCryptoGrpcService(
             identityService.delete(identity.idA)
 
             DeleteIdResponse.newBuilder()
-                .setIdA(identity.idA.toByteArray().toByteString())
+                .setIdA(identity.idA.toByteString())
                 .build()
         }
 
     @Timed(value = "robert.crypto.rpc", extraTags = ["operation", "validateContact"])
     override fun validateContact(
-        request: ValidateContactRequest?,
-        responseObserver: StreamObserver<ValidateContactResponse>?
-    ) {
-        super.validateContact(request, responseObserver)
+        request: ValidateContactRequest,
+        responseObserver: StreamObserver<ValidateContactResponse>
+    ) = responseObserver.singleItemAnswer {
+        val serverCountryCode = CountryCode(request.serverCountryCode.first().toInt())
+        val ebid = try {
+            Ebid(request.ebid.toByteArray().toList())
+        } catch (e: IllegalArgumentException) {
+            throw RobertGrpcException(400, "Invalid EBID", "${e.message}")
+        }
+        val ecc = try {
+            Ecc(request.ecc.toByteArray())
+        } catch (e: IllegalArgumentException) {
+            throw RobertGrpcException(400, "Invalid ECC", "${e.message}")
+        }
+
+        val validatedContact =
+            helloMessageService.validate(serverCountryCode, ebid, ecc, request.helloMessageDetailsList)
+
+        when (validatedContact) {
+            is UnsupportedCountry -> ValidateContactResponse.newBuilder()
+                .setCountryCode(validatedContact.countryCode.toByteString())
+                .build()
+
+            is ValidContactValidationResult -> ValidateContactResponse.newBuilder()
+                .setCountryCode(validatedContact.countryCode.toByteString())
+                .setIdA(validatedContact.bluetoothIdentifier.idA.toByteString())
+                .setEpochId(validatedContact.bluetoothIdentifier.epochId)
+                .addAllInvalidHelloMessageDetails(validatedContact.invalidHelloMessageDetails)
+                .build()
+        }
     }
 
     @Deprecated("to be removed due to performance issues", replaceWith = ReplaceWith("validateContact"))
@@ -170,22 +203,22 @@ class RobertCryptoGrpcService(
         type: RobertRequestType,
         epochId: Int,
         ntpTimestampSeconds: Long,
-        ebid: ByteString,
-        mac: ByteString
+        rawEbid: ByteString,
+        rawMac: ByteString
     ): Credentials {
         if (epochId < 0) {
             throw RobertGrpcException(400, "Negative epoch id: $epochId")
         }
         val instant = clock.atNtpTimestamp(ntpTimestampSeconds)
         val ebid = try {
-            Ebid(ebid.toByteArray().toList())
+            Ebid(rawEbid.toByteArray().toList())
         } catch (e: IllegalArgumentException) {
-            throw RobertGrpcException(400, "Invalid EBID")
+            throw RobertGrpcException(400, "Invalid EBID", "${e.message}")
         }
         val mac = try {
-            AuthMac(mac.toByteArray().toList())
+            AuthMac(rawMac.toByteArray().toList())
         } catch (e: IllegalArgumentException) {
-            throw RobertGrpcException(400, "Invalid MAC")
+            throw RobertGrpcException(400, "Invalid MAC", "${e.message}")
         }
         return Credentials(type, epochId, instant, ebid, mac)
     }
@@ -199,6 +232,16 @@ class RobertCryptoGrpcService(
      * Returns this [ByteArray] as a GRPC [ByteString].
      */
     private fun ByteArray.toByteString() = ByteString.copyFrom(this)
+
+    /**
+     * Returns this [CountryCode] as a GRPC [ByteString].
+     */
+    private fun CountryCode.toByteString() = byteArrayOf(this.numericValue.toByte()).toByteString()
+
+    /**
+     * Returns this [IdA] as a GRPC [ByteString].
+     */
+    private fun IdA.toByteString() = this.toByteArray().toByteString()
 
     /**
      * Boilerplate to respond a single item to a GRPC request and handle [RobertGrpcException].
@@ -222,10 +265,14 @@ class RobertCryptoGrpcService(
                 GetIdFromAuthResponse::class -> GetIdFromAuthResponse.newBuilder().setError(err).build()
                 GetIdFromStatusResponse::class -> GetIdFromStatusResponse.newBuilder().setError(err).build()
                 DeleteIdResponse::class -> DeleteIdResponse.newBuilder().setError(err).build()
-                else -> throw Exception(e)
+                else -> null
             }
-            onNext(errorResponse as V)
-            onCompleted()
+            if (errorResponse != null) {
+                onNext(errorResponse as V)
+                onCompleted()
+            } else {
+                onError(e)
+            }
         } catch (e: Exception) {
             log.error("An exception occurred while handling response", e)
             onError(e)

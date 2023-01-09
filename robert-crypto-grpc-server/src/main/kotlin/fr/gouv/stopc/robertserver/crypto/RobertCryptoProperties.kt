@@ -8,6 +8,12 @@ import java.time.Duration
 @ConstructorBinding
 @ConfigurationProperties(prefix = "robert-crypto")
 data class RobertCryptoProperties(
+
+    /**
+     * The port the GRPC service should listen to.
+     */
+    val serverPort: Int,
+
     /**
      * The service start date, ex: `2020-06-01`.
      */

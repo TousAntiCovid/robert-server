@@ -3,6 +3,7 @@ package fr.gouv.stopc.robertserver.crypto
 import com.google.protobuf.ByteString
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest.Builder
+import fr.gouv.stopc.robertserver.common.base64Decode
 import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.crypto.test.AuthBundle
 import fr.gouv.stopc.robertserver.crypto.test.IntegrationTest
@@ -148,14 +149,15 @@ class GetIdFromAuthTest {
     @MethodSource("fr.gouv.stopc.robertserver.crypto.test.AuthBundleKt#valid_auth_bundle")
     fun cant_authenticate_with_incorrect_mac(auth: AuthBundle) {
         givenIdentityExistsForIdA(auth.idA)
+        val incorrectMac = "Incorrect MAC value".base64Encode()
         val request = givenAuthRequest(auth)
-            .setMac(ByteString.copyFromUtf8("Incorrect MAC value"))
+            .setMac(ByteString.copyFrom(incorrectMac.base64Decode()))
             .build()
         val response = whenRobertCryptoClient().getIdFromAuth(request)
         assertThat(response)
             .has(grpcErrorResponse(400, "Invalid MAC"))
         assertThatInfoLogs()
-            .contains("Status 400: Invalid MAC")
+            .contains("Status 400: Invalid MAC: Authentication MAC should be 256 bits/32 bytes long but is has 19 bytes: $incorrectMac")
     }
 
     @ParameterizedTest
@@ -170,6 +172,6 @@ class GetIdFromAuthTest {
         assertThat(response)
             .has(grpcErrorResponse(400, "Invalid EBID"))
         assertThatInfoLogs()
-            .contains("Status 400: Invalid EBID")
+            .contains("Status 400: Invalid EBID: EBID should be 64 bits/8 bytes long but it has 9 bytes: ${largerEbid.base64Encode()}")
     }
 }

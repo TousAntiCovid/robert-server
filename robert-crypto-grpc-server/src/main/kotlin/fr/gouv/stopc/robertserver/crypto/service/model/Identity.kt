@@ -3,7 +3,7 @@ package fr.gouv.stopc.robertserver.crypto.service.model
 import fr.gouv.stopc.robertserver.common.base64Encode
 import fr.gouv.stopc.robertserver.common.model.IdA
 import fr.gouv.stopc.robertserver.crypto.cipher.encryptUsingAesGcm
-import fr.gouv.stopc.robertserver.crypto.grpc.model.EncryptedIdentity
+import fr.gouv.stopc.robertserver.crypto.repository.model.EncryptedIdentity
 import java.security.Key
 import javax.crypto.SecretKey
 
