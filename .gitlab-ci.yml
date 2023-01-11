@@ -35,6 +35,7 @@ e2e-tests-docker:
 
 deploy-int:
   stage: deploy
+  needs: ["e2e-tests-docker"]
   variables:
     APP_VERSION: develop-SNAPSHOT
   trigger:
@@ -44,8 +45,9 @@ deploy-int:
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
-publish-deployment:
-  stage: publish
+deploy-kubernetes:
+  stage: deploy
+  needs: ["build-docker"]
   variables:
     ENVIRONMENT: "int"
   script:
@@ -74,8 +76,8 @@ publish-deployment:
 
 e2e-tests-kubernetes:
   image: eclipse-temurin:11-jre-alpine
-  stage: build
-  needs: ["build-docker"]
+  stage: deploy
+  needs: ["deploy-kubernetes"]
   variables:
     SPRING_DATA_MONGODB_URI: $E2E_SPRING_DATA_MONGODB_URI
     SPRING_PROFILES_ACTIVE: "real-captcha"
