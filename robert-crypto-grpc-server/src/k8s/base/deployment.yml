@@ -41,6 +41,13 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              cpu: "2"
+              memory: 2Gi
+            limit:
+              cpu: "2"
+              memory: 2Gi
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "jks"

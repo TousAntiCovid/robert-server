@@ -24,7 +24,7 @@ spec:
                 - name: ROBERT_CRYPTO_SERVER_HOST
                   value: "robert-crypto-service.robert-crypto.svc.cluster.local"
                 - name: ROBERT_CRYPTO_SERVER_PORT
-                  value: "9090"
+                  value: "8080"
                 - name: SPRING_DATA_MONGODB_URI
                   valueFrom:
                     secretKeyRef:
@@ -34,6 +34,13 @@ spec:
                   value: "true"
                 - name: SPRING_FLYWAY_BASELINE_VERSION
                   value: "0"
+              resources:
+                limits:
+                  cpu: "2"
+                  memory: 4Gi
+                requests:
+                  cpu: "1"
+                  memory: 2Gi
           restartPolicy: Never
           imagePullSecrets:
             - name: poc-inttac-poc-img-push-pull-secret

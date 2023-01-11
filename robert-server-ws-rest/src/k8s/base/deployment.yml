@@ -20,14 +20,27 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              cpu: "2"
+              memory: 2Gi
+            limit:
+              cpu: "2"
+              memory: 2Gi
           env:
+            - name: ROBERTWS_EPHEMERALTUPLESBUNDLEDAYS
+              value: "4"
+            - name: ROBERTWS_MINEPOCHSBETWEENSTATUSREQUESTS
+              value: "0"
+            - name: ROBERTWS_MAXAUTHREQUESTCLOCKSKEW
+              value: 10d
             - name: SPRING_DATA_MONGODB_URI
               valueFrom:
                 secretKeyRef:
                   name: robert-ws-secrets
                   key: SPRING_DATA_MONGODB_URI
             - name: ROBERTWS_CRYPTOSERVERURI
-              value: dns:///robert-crypto-service.robert-crypto:9090
+              value: dns:///robert-crypto-service.robert-crypto:8080
             - name: ROBERTWS_PUSHSERVERBASEURL
               value: http://fake/private/api/v1
             - name: ROBERTWS_CAPTCHASERVER_BASEURL
