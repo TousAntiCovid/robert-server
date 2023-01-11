@@ -27,6 +27,51 @@ build-docker:
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
+e2e-tests-docker:
+  script:
+    # wait for services to be healthy but exclude 'flyway' and 'batch' which are short-lived services and may lead --wait option to deadlock
+    - docker-compose up --wait $(docker-compose ps --services | grep -v flyway | grep -v batch)
+    - java -jar robert-e2e-tests/target/robert-e2e-tests-*.jar
+
+deploy-int:
+  stage: deploy
+  variables:
+    APP_VERSION: develop-SNAPSHOT
+  trigger:
+    project: stemcovid19/infrastructure/functional-zone/services/robert/robert-ansible
+    branch: master
+    strategy: depend
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
+publish-deployment:
+  stage: publish
+  variables:
+    ENVIRONMENT: "int"
+  script:
+    # Configure robert-crypto deployment
+    - basepath=$(pwd)
+    - cd $basepath/robert-crypto-grpc-server/src/k8s/base
+    - kustomize edit set image crypto-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
+    - kustomize edit set image flyway-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA-flyway
+    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
+    # Configure robert-batch deployment
+    - cd $basepath/robert-server-batch/src/k8s/base
+    - kustomize edit set image batch-image=$K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
+    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-server-batch/deployment.yml
+    # Configure robert-ws deployment
+    - cd $basepath/robert-server-ws-rest/src/k8s/base
+    - kustomize edit set image ws-image=$K8S_REGISTRY/robert-ws:$CI_COMMIT_SHORT_SHA
+    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-server-ws-rest/deployment.yml
+    - sed -i "s/\$K8S_INGRESS_HOST/$K8S_INGRESS_HOST/g" /tmp/deployments/$ENVIRONMENT/robert-server-ws-rest/deployment.yml
+    # Add deployments and push
+    - cd /tmp/deployments
+    - git add .
+    - git commit -m "$CI_COMMIT_SHORT_SHA"
+    - git push origin master
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
 e2e-tests-kubernetes:
   image: eclipse-temurin:11-jre-alpine
   stage: build
@@ -67,50 +112,5 @@ e2e-tests-kubernetes:
       - "kubernetes*.log.gz"
   tags:
     - kubernetes
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-
-e2e-tests-docker:
-  script:
-    # wait for services to be healthy but exclude 'flyway' and 'batch' which are short-lived services and may lead --wait option to deadlock
-    - docker-compose up --wait $(docker-compose ps --services | grep -v flyway | grep -v batch)
-    - java -jar robert-e2e-tests/target/robert-e2e-tests-*.jar
-
-publish-deployment:
-  stage: publish
-  variables:
-    ENVIRONMENT: "int"
-  script:
-    # Configure robert-crypto deployment
-    - basepath=$(pwd)
-    - cd $basepath/robert-crypto-grpc-server/src/k8s/base
-    - kustomize edit set image crypto-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA
-    - kustomize edit set image flyway-image=$K8S_REGISTRY/robert-crypto:$CI_COMMIT_SHORT_SHA-flyway
-    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-crypto-grpc-server/deployment.yml
-    # Configure robert-batch deployment
-    - cd $basepath/robert-server-batch/src/k8s/base
-    - kustomize edit set image batch-image=$K8S_REGISTRY/robert-batch:$CI_COMMIT_SHORT_SHA
-    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-server-batch/deployment.yml
-    # Configure robert-ws deployment
-    - cd $basepath/robert-server-ws-rest/src/k8s/base
-    - kustomize edit set image ws-image=$K8S_REGISTRY/robert-ws:$CI_COMMIT_SHORT_SHA
-    - kustomize build . > /tmp/deployments/$ENVIRONMENT/robert-server-ws-rest/deployment.yml
-    - sed -i "s/\$K8S_INGRESS_HOST/$K8S_INGRESS_HOST/g" /tmp/deployments/$ENVIRONMENT/robert-server-ws-rest/deployment.yml
-    # Add deployments and push
-    - cd /tmp/deployments
-    - git add .
-    - git commit -m "$CI_COMMIT_SHORT_SHA"
-    - git push origin master
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-
-deploy-int:
-  stage: deploy
-  variables:
-    APP_VERSION: develop-SNAPSHOT
-  trigger:
-    project: stemcovid19/infrastructure/functional-zone/services/robert/robert-ansible
-    branch: master
-    strategy: depend
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
