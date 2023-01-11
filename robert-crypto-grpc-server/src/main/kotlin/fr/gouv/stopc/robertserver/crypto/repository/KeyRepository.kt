@@ -71,14 +71,22 @@ class KeystoreKeyRepository(
         keysNames.forEach { alias ->
             log.info("loading key {}", alias)
             val key = keystore.getKey(alias, pin)
-            cachedKeys.replace(alias, key)
+            if (null != key) {
+                cachedKeys.putIfAbsent(alias, key)
+            }
         }
 
         val dates = keysNames.map { LocalDate.parse(it, serverKeyFormatter) }
         val minDate = dates.min()
         val maxDate = dates.max()
         val missingKeys = minDate.datesUntil(maxDate).toList() - dates.toSet()
-        log.warn("The server key repository is missing {} keys: {}", missingKeys.size, missingKeys.joinToString(","))
+        if (missingKeys.isNotEmpty()) {
+            log.warn(
+                "The server key repository is missing {} keys: {}",
+                missingKeys.size,
+                missingKeys.joinToString(",")
+            )
+        }
     }
 
     override fun getServerKeyPair(): KeyPair {
