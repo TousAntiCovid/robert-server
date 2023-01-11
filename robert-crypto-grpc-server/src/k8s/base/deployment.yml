@@ -38,11 +38,11 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_FILE
+            - name: SPRING_PROFILES_ACTIVE
+              value: "jks"
+            - name: ROBERTCRYPTO_KEYSTORECONFIGURATIONURI
               value: "file:/keystore.p12"
-            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_TYPE
-              value: "PKCS12"
-            - name: ROBERT_CRYPTO_SERVER_KEYSTORE_PASSWORD
+            - name: ROBERTCRYPTO_KEYSTOREPASSWORD
               value: "1234"
             - name: SPRING_DATASOURCE_URL
               valueFrom:
