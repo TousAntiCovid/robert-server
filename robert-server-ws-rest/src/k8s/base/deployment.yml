@@ -20,7 +20,20 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              cpu: "2"
+              memory: 2Gi
+            limit:
+              cpu: "2"
+              memory: 2Gi
           env:
+            - name: ROBERTWS_EPHEMERALTUPLESBUNDLEDAYS
+              value: "4"
+            - name: ROBERTWS_MINEPOCHSBETWEENSTATUSREQUESTS
+              value: "0"
+            - name: ROBERTWS_MAXAUTHREQUESTCLOCKSKEW
+              value: 10d
             - name: SPRING_DATA_MONGODB_URI
               valueFrom:
                 secretKeyRef:

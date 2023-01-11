@@ -6,3 +6,4 @@ resources:
   - role.yml
   - rolebinding.yml
   - serviceMonitor.yml
+  - horizontalPodAutoscaler.yml

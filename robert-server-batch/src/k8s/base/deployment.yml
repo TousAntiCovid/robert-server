@@ -34,6 +34,13 @@ spec:
                   value: "true"
                 - name: SPRING_FLYWAY_BASELINE_VERSION
                   value: "0"
+              resources:
+                limits:
+                  cpu: "2"
+                  memory: 4Gi
+                requests:
+                  cpu: "1"
+                  memory: 2Gi
           restartPolicy: Never
           imagePullSecrets:
             - name: poc-inttac-poc-img-push-pull-secret
