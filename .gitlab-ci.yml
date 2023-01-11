@@ -30,7 +30,7 @@ build-docker:
 e2e-tests-kubernetes:
   image: eclipse-temurin:11-jre-alpine
   stage: build
-  needs: ["build"]
+  needs: ["build-docker"]
   variables:
     SPRING_DATA_MONGODB_URI: $E2E_SPRING_DATA_MONGODB_URI
     SPRING_PROFILES_ACTIVE: "real-captcha"
