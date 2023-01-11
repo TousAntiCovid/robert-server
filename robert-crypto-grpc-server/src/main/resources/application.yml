@@ -1,21 +1,20 @@
-robert:
-  server.time-start: ${ROBERT_SERVER_TIMESTART:2020-06-01}
-  protocol.hello-message-timestamp-tolerance: ${ROBERT_PROTOCOL_HELLO_TOLERANCE:180}
-  crypto.server:
-    port: ${ROBERT_CRYPTO_SERVER_PORT:9090}
-    # The pin of the keystore
-    keystore.password: ${ROBERT_CRYPTO_SERVER_KEYSTORE_PASSWORD:1234}
-    # The configuration file of the keystore
-    keystore.config.file: ${ROBERT_CRYPTO_SERVER_CONFIG_FILE:/config/SoftHSMv2/softhsm2.cfg}
+robert-crypto:
+  server-port: 8080
+  service-start-date: 2020-06-01
+  keystore-password: 1234
+  keystore-configuration-uri: /config/SoftHSMv2/softhsm2.cfg
+  hello-message-timestamp-tolerance: 3m
 
 spring:
   datasource:
-    url: ${ROBERT_CRYPTO_SERVER_DB_URL:jdbc:postgresql://localhost:5432/robert}
-    username: ${ROBERT_CRYPTO_SERVER_DB_USR:robert}
-    password: ${ROBERT_CRYPTO_SERVER_DB_PWD:robert}
-  cloud:
-    consul.enabled: false
-    vault.enabled: false
+    url: jdbc:postgresql://localhost:5432/robert
+    username: robert
+    password: robert
+  cloud.vault.enabled: false
 
-server.port: 8081
-management.endpoints.web.exposure.include: info,health,metrics,prometheus
+# we don't need webserver, that's why we expose it on the same port as management-port
+server.port: ${management.server.port}
+
+management:
+  server.port: 8081
+  endpoints.web.exposure.include: health,info,prometheus

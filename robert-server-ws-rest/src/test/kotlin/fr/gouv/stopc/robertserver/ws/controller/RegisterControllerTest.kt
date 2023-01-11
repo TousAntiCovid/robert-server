@@ -2,8 +2,8 @@ package fr.gouv.stopc.robertserver.ws.controller
 
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.base64Encode
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatErrorLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.givenMongodbIsOffline
+import fr.gouv.stopc.robertserver.test.assertThatErrorLogs
 import fr.gouv.stopc.robertserver.test.matchers.isBase64Encoded
 import fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.Companion.givenCryptoServerIsOffline
 import fr.gouv.stopc.robertserver.ws.test.GrpcMockManager.Companion.verifyNoInteractionsWithCryptoServer

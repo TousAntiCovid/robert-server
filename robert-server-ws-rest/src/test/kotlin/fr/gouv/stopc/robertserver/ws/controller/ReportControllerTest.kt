@@ -1,12 +1,12 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
 import fr.gouv.stopc.robertserver.common.base64Encode
-import fr.gouv.stopc.robertserver.test.LogbackManager.Companion.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.MongodbManager
 import fr.gouv.stopc.robertserver.test.MongodbManager.Companion.assertThatContactsToProcessCollection
 import fr.gouv.stopc.robertserver.test.MongodbManager.HelloMessageToProcess
 import fr.gouv.stopc.robertserver.test.MongodbManager.MongoContactToProcess
 import fr.gouv.stopc.robertserver.test.MongodbManager.MongoMessageDetails
+import fr.gouv.stopc.robertserver.test.assertThatInfoLogs
 import fr.gouv.stopc.robertserver.test.matchers.isJwtSignedBy
 import fr.gouv.stopc.robertserver.test.matchers.isUnixTimestamp
 import fr.gouv.stopc.robertserver.ws.test.IntegrationTest

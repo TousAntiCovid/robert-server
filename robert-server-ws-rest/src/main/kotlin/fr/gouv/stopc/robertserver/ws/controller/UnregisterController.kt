@@ -1,9 +1,9 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
+import fr.gouv.stopc.robertserver.common.RobertRequestType.UNREGISTER
 import fr.gouv.stopc.robertserver.ws.api.UnregisterApi
 import fr.gouv.stopc.robertserver.ws.api.model.UnregisterRequest
 import fr.gouv.stopc.robertserver.ws.api.model.UnregisterResponse
-import fr.gouv.stopc.robertserver.ws.common.RequestType.UNREGISTER
 import fr.gouv.stopc.robertserver.ws.service.IdentityService
 import fr.gouv.stopc.robertserver.ws.service.RegistrationService
 import fr.gouv.stopc.robertserver.ws.service.RobertCredentials

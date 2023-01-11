@@ -9,10 +9,10 @@ import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromAuthRequest
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.GetIdFromStatusRequest
 import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.common.RobertClock.RobertInstant
+import fr.gouv.stopc.robertserver.common.RobertRequestType
+import fr.gouv.stopc.robertserver.common.model.IdA
 import fr.gouv.stopc.robertserver.ws.RobertWsProperties
-import fr.gouv.stopc.robertserver.ws.common.RequestType
 import fr.gouv.stopc.robertserver.ws.repository.RegistrationRepository
-import fr.gouv.stopc.robertserver.ws.service.model.IdA
 import org.springframework.stereotype.Service
 import org.springframework.validation.BindException
 
@@ -42,7 +42,7 @@ class IdentityService(
             handleGrpcError(response.error)
         }
         return EncryptedEphemeralTuplesBundle(
-            IdA(response.idA),
+            IdA(response.idA.toList()),
             response.tuples.toList()
         )
     }
@@ -53,7 +53,7 @@ class IdentityService(
     fun authenticate(credentials: RobertCredentials): IdA {
         validateAttributes(credentials)
         val getIdRequest = GetIdFromAuthRequest.newBuilder()
-            .setRequestType(credentials.requestType.code)
+            .setRequestType(credentials.requestType.salt.toInt())
             .setEbid(credentials.ebid.toByteString())
             .setEpochId(credentials.epochId)
             .setTime(clock.atTime32(credentials.time.toByteArray()).asNtpTimestamp())
@@ -64,7 +64,7 @@ class IdentityService(
         if (response.hasError()) {
             handleGrpcError(response.error)
         }
-        return IdA(response.idA)
+        return IdA(response.idA.toList())
     }
 
     /**
@@ -87,7 +87,7 @@ class IdentityService(
             handleGrpcError(response.error)
         }
         return EncryptedEphemeralTuplesBundle(
-            IdA(response.idA),
+            IdA(response.idA.toList()),
             response.tuples.toList()
         )
     }
@@ -108,7 +108,7 @@ class IdentityService(
         if (response.hasError()) {
             handleGrpcError(response.error)
         }
-        return IdA(response.idA)
+        return IdA(response.idA.toList())
     }
 
     /**
@@ -183,7 +183,7 @@ class GrpcServerErrorException(code: Int, description: String) : GrpcClientRespo
  * @see <a href="https://github.com/ROBERT-proximity-tracing/documents/blob/master/ROBERT-specification-EN-v1_1.pdf">Robert protocol</a> C. Authenticated Requests
  */
 data class RobertCredentials(
-    val requestType: RequestType,
+    val requestType: RobertRequestType,
     val ebid: List<Byte>,
     val epochId: Int,
     val time: List<Byte>,

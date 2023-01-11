@@ -1,6 +1,7 @@
 package fr.gouv.stopc.robertserver.batch.test;
 
 import fr.gouv.stopc.robertserver.common.RobertClock;
+import fr.gouv.stopc.robertserver.common.RobertClockKt;
 import fr.gouv.stopc.robertserver.database.model.Contact;
 import fr.gouv.stopc.robertserver.database.model.HelloMessageDetail;
 import lombok.Builder;
@@ -88,7 +89,7 @@ public class ContactFactory {
                     .map(HelloMessageDetail::getMac)
                     .map(String::new)
                     .map(fakeMac -> fakeMac.replaceFirst("^[^:]*:", ""))
-                    .map(RobertClock::parse)
+                    .map(RobertClockKt::parseRobertInstant)
                     .map(RobertClock.RobertInstant::asEpochId)
                     .orElse(clock.now().asEpochId());
 

@@ -14,6 +14,34 @@ import org.slf4j.LoggerFactory
 import org.springframework.test.context.TestContext
 import org.springframework.test.context.TestExecutionListener
 
+private val LOG_EVENTS = ListAppender<ILoggingEvent>()
+
+private var warnLogsChecked = false
+
+private var errorLogsChecked = false
+
+fun assertThatInfoLogs(): ListAssert<String> = assertThatLogs(INFO)
+    .describedAs("Info logs")
+
+fun assertThatWarnLogs(): ListAssert<String> {
+    warnLogsChecked = true
+    return assertThatLogs(WARN)
+        .describedAs("Warn logs")
+}
+
+fun assertThatErrorLogs(): ListAssert<String> {
+    errorLogsChecked = true
+    return assertThatLogs(ERROR)
+        .describedAs("Error logs")
+}
+
+private fun assertThatLogs(level: Level): ListAssert<String> {
+    val infoLogEvents = LOG_EVENTS.list
+        .filter { level == it.level }
+        .map { it.formattedMessage }
+    return Assertions.assertThat(infoLogEvents)
+}
+
 /**
  * Captures logs during test execution and provides assert* functions.
  *
@@ -36,37 +64,6 @@ class LogbackManager : TestExecutionListener {
         }
         if (!errorLogsChecked) {
             assertThatErrorLogs().isEmpty()
-        }
-    }
-
-    companion object {
-
-        private val LOG_EVENTS = ListAppender<ILoggingEvent>()
-
-        private var warnLogsChecked = false
-
-        private var errorLogsChecked = false
-
-        fun assertThatInfoLogs(): ListAssert<String> = assertThatLogs(INFO)
-            .describedAs("Info logs")
-
-        fun assertThatWarnLogs(): ListAssert<String> {
-            warnLogsChecked = true
-            return assertThatLogs(WARN)
-                .describedAs("Warn logs")
-        }
-
-        fun assertThatErrorLogs(): ListAssert<String> {
-            errorLogsChecked = true
-            return assertThatLogs(ERROR)
-                .describedAs("Error logs")
-        }
-
-        private fun assertThatLogs(level: Level): ListAssert<String> {
-            val infoLogEvents = LOG_EVENTS.list
-                .filter { level == it.level }
-                .map { it.formattedMessage }
-            return Assertions.assertThat(infoLogEvents)
         }
     }
 }

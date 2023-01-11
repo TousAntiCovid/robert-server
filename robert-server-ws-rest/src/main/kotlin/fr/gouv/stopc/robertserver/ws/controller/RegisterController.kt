@@ -1,10 +1,10 @@
 package fr.gouv.stopc.robertserver.ws.controller
 
 import fr.gouv.stopc.robertserver.common.RobertClock
+import fr.gouv.stopc.robertserver.common.base64Decode
 import fr.gouv.stopc.robertserver.ws.api.RegisterApi
 import fr.gouv.stopc.robertserver.ws.api.model.RegisterRequest
 import fr.gouv.stopc.robertserver.ws.api.model.RegisterSuccessResponse
-import fr.gouv.stopc.robertserver.ws.common.base64Decode
 import fr.gouv.stopc.robertserver.ws.service.CaptchaService
 import fr.gouv.stopc.robertserver.ws.service.IdentityService
 import fr.gouv.stopc.robertserver.ws.service.RegistrationService
