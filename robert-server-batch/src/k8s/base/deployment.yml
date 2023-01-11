@@ -24,7 +24,7 @@ spec:
                 - name: ROBERT_CRYPTO_SERVER_HOST
                   value: "robert-crypto-service.robert-crypto.svc.cluster.local"
                 - name: ROBERT_CRYPTO_SERVER_PORT
-                  value: "9090"
+                  value: "8080"
                 - name: SPRING_DATA_MONGODB_URI
                   valueFrom:
                     secretKeyRef:

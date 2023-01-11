@@ -40,7 +40,7 @@ spec:
                   name: robert-ws-secrets
                   key: SPRING_DATA_MONGODB_URI
             - name: ROBERTWS_CRYPTOSERVERURI
-              value: dns:///robert-crypto-service.robert-crypto:9090
+              value: dns:///robert-crypto-service.robert-crypto:8080
             - name: ROBERTWS_PUSHSERVERBASEURL
               value: http://fake/private/api/v1
             - name: ROBERTWS_CAPTCHASERVER_BASEURL
