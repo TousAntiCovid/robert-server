@@ -77,7 +77,7 @@ deploy-kubernetes:
 e2e-tests-kubernetes:
   image: eclipse-temurin:11-jre-alpine
   stage: deploy
-  needs: ["deploy-kubernetes"]
+  needs: ["build", "deploy-kubernetes"]
   variables:
     SPRING_DATA_MONGODB_URI: $E2E_SPRING_DATA_MONGODB_URI
     SPRING_PROFILES_ACTIVE: "real-captcha"
