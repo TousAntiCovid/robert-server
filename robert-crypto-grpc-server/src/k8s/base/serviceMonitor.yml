@@ -13,9 +13,9 @@ spec:
       relabelings:
         - replacement: app
           targetLabel: caascad_com_prometheus_monitor_scope
-      namespaceSelector:
-        matchNames:
-          - "robert-crypto"
+  namespaceSelector:
+    matchNames:
+      - "robert-crypto"
   selector: # Select by labels which service are scraped
     matchLabels:
       app: robert-crypto
