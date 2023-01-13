@@ -45,7 +45,7 @@ spec:
             requests:
               cpu: "2"
               memory: 2Gi
-            limit:
+            limits:
               cpu: "2"
               memory: 2Gi
           env:
