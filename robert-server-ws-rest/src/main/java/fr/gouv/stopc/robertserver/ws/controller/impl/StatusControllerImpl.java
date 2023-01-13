@@ -194,9 +194,10 @@ public class StatusControllerImpl implements IStatusController {
         // notifications
         // The status atRisk will be reinitialized by the batch
         if (riskLevel != RiskLevel.NONE) {
-            record.setNotified(true);
-            kpiService.incrementAlertedUsers();
-
+            if (!record.isNotified()) {
+                kpiService.incrementAlertedUsers();
+                record.setNotified(true);
+            }
             // Include lastContactDate only if any and if user is evaluated at risk
             if (record.getLastContactTimestamp() > 0) {
                 statusResponse.setLastContactDate(Long.toString(record.getLastContactTimestamp()));
