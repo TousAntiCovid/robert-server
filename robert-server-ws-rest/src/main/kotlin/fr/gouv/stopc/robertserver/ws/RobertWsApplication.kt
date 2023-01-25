@@ -5,33 +5,79 @@ import fr.gouv.stopc.pushserver.api.PushTokenApi
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc
 import fr.gouv.stopc.robert.crypto.grpc.server.messaging.CryptoGrpcServiceImplGrpc.CryptoGrpcServiceImplBlockingStub
 import fr.gouv.stopc.robertserver.common.RobertClock
+import fr.gouv.stopc.robertserver.common.logger
 import fr.gouv.stopc.submissioncode.api.SubmissionCodeApi
+import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import io.grpc.internal.DnsNameResolver
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
+import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.scheduling.annotation.Scheduled
 import fr.gouv.stopc.captchaserver.ApiClient as CaptchaApiClient
 import fr.gouv.stopc.pushserver.ApiClient as PushApiClient
 import fr.gouv.stopc.submissioncode.ApiClient as SubmissionApiClient
 
 @SpringBootApplication
+@EnableScheduling
 @EnableMongoRepositories
 @EnableConfigurationProperties(RobertWsProperties::class)
 class RobertWsApplication(
     private val config: RobertWsProperties
 ) {
+
+    private val log = logger()
+
     @Bean
     fun robertClock() = RobertClock(config.serviceStartDate)
 
+    @Bean(destroyMethod = "shutdown")
+    fun cryptoGrpcChannel(): ManagedChannel = ManagedChannelBuilder.forTarget(config.cryptoServerUri.toString())
+        .defaultLoadBalancingPolicy("round_robin")
+        .usePlaintext()
+        .build()
+
     @Bean
-    fun cryptoGrpcService(): CryptoGrpcServiceImplBlockingStub {
-        val channel = ManagedChannelBuilder.forTarget(config.cryptoServerUri.toString())
-            .defaultLoadBalancingPolicy("round_robin")
-            .usePlaintext()
-            .build()
-        return CryptoGrpcServiceImplGrpc.newBlockingStub(channel)
+    fun cryptoGrpcService(): CryptoGrpcServiceImplBlockingStub =
+        CryptoGrpcServiceImplGrpc.newBlockingStub(cryptoGrpcChannel())
+
+    /**
+     * Expose the [DnsNameResolver] of our GRPC [ManagedChannel] to be able to implement our low-cost kubernetes PODs
+     * discovery.
+     *
+     * @see dnsRefreshPeriodicTask
+     */
+    @Bean
+    fun cryptoGrpcDnsResolver(): DnsNameResolver {
+        val channel = cryptoGrpcChannel()
+        val managedChannelImpl = channel::class.java.superclass.declaredFields
+            .find { it.name == "delegate" }
+            ?.apply { isAccessible = true }
+            ?.get(channel)!!
+        return managedChannelImpl::class.java.declaredFields
+            .find { it.name == "nameResolver" }
+            ?.apply { isAccessible = true }
+            ?.get(managedChannelImpl)
+            as DnsNameResolver
+    }
+
+    /**
+     * This is a low-cost way to enable Kubernetes PODs scale-up discovery: we schedule a forced refresh of the service
+     * DNS record every 30s (30s is the default TTL of kubernetes headless service record).
+     *
+     * ℹ Service Mesh like Istio of Linkerd would be better production solution.
+     */
+    @Scheduled(fixedDelayString = "PT30s")
+    fun dnsRefreshPeriodicTask() {
+        val dnsNameResolver = cryptoGrpcDnsResolver()
+        try {
+            dnsNameResolver.refresh()
+        } catch (e: Exception) {
+            log.info("Unable to refresh $dnsNameResolver: ${e.message}")
+        }
     }
 
     @Bean
