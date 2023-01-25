@@ -4,6 +4,8 @@ import fr.gouv.stopc.robertserver.common.RobertClock
 import fr.gouv.stopc.robertserver.crypto.grpc.RobertCryptoGrpcService
 import io.grpc.Server
 import io.grpc.ServerBuilder
+import io.micrometer.core.aop.TimedAspect
+import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.netty.NettyAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -20,6 +22,9 @@ import kotlin.io.path.toPath
 class RobertCryptoApplication(
     private val config: RobertCryptoProperties
 ) {
+
+    @Bean
+    fun timedAspect(meterRegistry: MeterRegistry) = TimedAspect(meterRegistry)
 
     @Bean
     fun robertClock() = RobertClock(config.serviceStartDate)
