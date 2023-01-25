@@ -6,6 +6,9 @@ metadata:
   name: robert-crypto-service
   namespace: robert-crypto
 spec:
+  clusterIP: None
+  clusterIPs:
+    - None
   selector:
     app: robert-crypto
   ports:

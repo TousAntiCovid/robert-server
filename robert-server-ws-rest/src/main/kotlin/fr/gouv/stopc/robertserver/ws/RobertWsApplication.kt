@@ -28,15 +28,7 @@ class RobertWsApplication(
     @Bean
     fun cryptoGrpcService(): CryptoGrpcServiceImplBlockingStub {
         val channel = ManagedChannelBuilder.forTarget(config.cryptoServerUri.toString())
-            .defaultServiceConfig(
-                mapOf(
-                    "loadBalancingConfig" to listOf(
-                        mapOf(
-                            "round_robin" to emptyMap<Any, Any>()
-                        )
-                    )
-                )
-            )
+            .defaultLoadBalancingPolicy("round_robin")
             .usePlaintext()
             .build()
         return CryptoGrpcServiceImplGrpc.newBlockingStub(channel)
